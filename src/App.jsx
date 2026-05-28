@@ -16,6 +16,7 @@ import stadiumBg from "./assets/stadium-bg.png";
 import quizBg from "./assets/quiz-bg.png";
 
 const HARD_TIME_LIMIT = 20;
+const DAILY_SCAN_STEP_MS = 210;
 const STREAK_TARGETS = [5, 10, 20, 30, 50];
 
 const STREAK_MILESTONES = [
@@ -294,6 +295,8 @@ export default function FootballQuizMVP() {
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [coinsMenuOpen, setCoinsMenuOpen] = useState(false);
+  const [coinShopNotice, setCoinShopNotice] = useState("");
   const [leaderboardTab, setLeaderboardTab] = useState("daily");
   const [leaderboardMode, setLeaderboardMode] = useState("general");
   const [gameMode, setGameMode] = useState("general");
@@ -334,6 +337,7 @@ export default function FootballQuizMVP() {
   const [dailyInput, setDailyInput] = useState("");
   const [dailyCoinsEarned, setDailyCoinsEarned] = useState(0);
   const [dailyReveal, setDailyReveal] = useState(null);
+  const [dailyCelebratedAnswer, setDailyCelebratedAnswer] = useState(null);
   const [isRevealing, setIsRevealing] = useState(false);
 
   const [dailyPlayed, setDailyPlayed] = useState(() => {
@@ -600,6 +604,7 @@ export default function FootballQuizMVP() {
     setDailyInput("");
     setDailyCoinsEarned(0);
     setDailyReveal(null);
+    setDailyCelebratedAnswer(null);
     setIsRevealing(false);
     setQuestionIndex(0);
     setSelected(null);
@@ -620,6 +625,7 @@ export default function FootballQuizMVP() {
     setModeMenuOpen(false);
     setProfileOpen(false);
     setLeaderboardOpen(false);
+    setCoinsMenuOpen(false);
     setGameMode("general");
 
     setQuestions(buildGameQuestions("general"));
@@ -640,6 +646,7 @@ export default function FootballQuizMVP() {
     setDailyInput("");
     setDailyCoinsEarned(0);
     setDailyReveal(null);
+    setDailyCelebratedAnswer(null);
     setIsRevealing(false);
   };
 
@@ -736,6 +743,8 @@ export default function FootballQuizMVP() {
   const checkDailyAnswer = () => {
     if (!dailyInput.trim() || rewardPopup || wrongPopup || isRevealing) return;
 
+    setDailyCelebratedAnswer(null);
+
     const matchedAnswer = todayChallenge.answers.find((answer) =>
       isCorrectAnswer(dailyInput, answer)
     );
@@ -750,6 +759,8 @@ export default function FootballQuizMVP() {
       let displayRank = todayChallenge.answers.length;
 
       setDailyReveal({
+        type: "correct",
+        phase: "scan",
         answer: matchedAnswer,
         rank,
         displayRank,
@@ -762,6 +773,8 @@ export default function FootballQuizMVP() {
           clearInterval(interval);
 
           setDailyReveal({
+            type: "correct",
+            phase: "result",
             answer: matchedAnswer,
             rank,
             displayRank: rank,
@@ -774,6 +787,7 @@ export default function FootballQuizMVP() {
             const newDailyCoinsEarned = dailyCoinsEarned + rewardPerCorrect;
 
             setFoundAnswers(newFoundAnswers);
+            setDailyCelebratedAnswer(matchedAnswer);
             setScore(newScore);
             setDailyCoinsEarned(newDailyCoinsEarned);
             saveCoins(newCoins);
@@ -781,41 +795,87 @@ export default function FootballQuizMVP() {
 
             setDailyReveal(null);
             setIsRevealing(false);
+            setTimeout(() => {
+              setDailyCelebratedAnswer(null);
+            }, 900);
 
             if (newFoundAnswers.length === todayChallenge.answers.length) {
               finishDaily(newFoundAnswers.length, newDailyCoinsEarned);
             }
-          }, 1100);
+          }, 900);
         } else {
           setDailyReveal({
+            type: "correct",
+            phase: "scan",
             answer: matchedAnswer,
             rank,
             displayRank,
           });
         }
-      }, 160);
+      }, DAILY_SCAN_STEP_MS);
     } else {
       const newLives = Math.max(lives - 1, 0);
+      const wrongMessage = matchedAnswer
+        ? "Already guessed"
+        : "Not in today’s Top 10";
 
       setLives(newLives);
       setDailyInput("");
+      setIsRevealing(true);
 
-      setWrongPopup({
-        answer: matchedAnswer ? "Already guessed" : "Not in today’s Top 10",
+      let displayRank = todayChallenge.answers.length;
+
+      setDailyReveal({
+        type: "wrong",
+        phase: "scan",
+        answer: wrongMessage,
+        rank: 0,
+        displayRank,
       });
 
-      playWrongSound();
+      const interval = setInterval(() => {
+        displayRank -= 1;
 
-      if (newLives <= 0) {
-        setTimeout(() => {
-          setWrongPopup(null);
-          finishDaily(foundAnswers.length, dailyCoinsEarned);
-        }, 1400);
-      } else {
-        setTimeout(() => {
-          setWrongPopup(null);
-        }, 1200);
-      }
+        if (displayRank <= 0) {
+          clearInterval(interval);
+
+          setDailyReveal({
+            type: "wrong",
+            phase: "result",
+            answer: wrongMessage,
+            rank: 0,
+            displayRank: 0,
+          });
+
+          setTimeout(() => {
+            setDailyReveal(null);
+            setIsRevealing(false);
+            setWrongPopup({
+              answer: wrongMessage,
+            });
+            playWrongSound();
+
+            if (newLives <= 0) {
+              setTimeout(() => {
+                setWrongPopup(null);
+                finishDaily(foundAnswers.length, dailyCoinsEarned);
+              }, 1400);
+            } else {
+              setTimeout(() => {
+                setWrongPopup(null);
+              }, 1200);
+            }
+          }, 260);
+        } else {
+          setDailyReveal({
+            type: "wrong",
+            phase: "scan",
+            answer: wrongMessage,
+            rank: 0,
+            displayRank,
+          });
+        }
+      }, DAILY_SCAN_STEP_MS);
     }
   };
 
@@ -846,6 +906,93 @@ export default function FootballQuizMVP() {
     const newCoins = coins + 50;
     saveCoins(newCoins);
   };
+
+  const openCoinShop = () => {
+    playClickSound();
+    setCoinShopNotice("");
+    setCoinsMenuOpen(true);
+  };
+
+  const claimVideoRewardMock = () => {
+    saveCoins(coins + 100);
+    playCoinSound();
+    setCoinShopNotice("+100 coins added");
+  };
+
+  const showMockPurchaseNotice = () => {
+    playClickSound();
+    setCoinShopNotice("Coming soon");
+  };
+
+  const coinShopModal = (
+    <AnimatePresence>
+      {coinsMenuOpen && (
+        <motion.div
+          className="coin-shop-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="coin-shop-card"
+            initial={{ scale: 0.86, y: 28 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.92, y: 18, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 170, damping: 15 }}
+          >
+            <div className="coin-shop-coin">🪙</div>
+            <h2 className="coin-shop-title">Coin Shop</h2>
+
+            <div className="coin-shop-balance">
+              <span>Current coins</span>
+              <strong>🪙 {coins}</strong>
+            </div>
+
+            <div className="coin-shop-options">
+              <div className="coin-shop-option featured">
+                <div>
+                  <strong>Watch video ad</strong>
+                  <small>Ad reward mockup</small>
+                </div>
+                <button onClick={claimVideoRewardMock}>Watch video</button>
+                <em>+100 coins</em>
+              </div>
+
+              {[
+                ["Small coin pack", "500 coins", "$0.99"],
+                ["Big coin pack", "2,500 coins", "$3.99"],
+                ["Mega coin pack", "10,000 coins", "$9.99"],
+              ].map(([title, amount, price]) => (
+                <div className="coin-shop-option" key={title}>
+                  <div>
+                    <strong>{title}</strong>
+                    <small>{amount}</small>
+                  </div>
+                  <button onClick={showMockPurchaseNotice}>{price}</button>
+                  <em>Mock pack</em>
+                </div>
+              ))}
+            </div>
+
+            <p className="coin-shop-note">
+              Purchases are mockups for now
+              {coinShopNotice && <span> • {coinShopNotice}</span>}
+            </p>
+
+            <button
+              className="coin-shop-close"
+              onClick={() => {
+                playClickSound();
+                setCoinsMenuOpen(false);
+              }}
+            >
+              CLOSE
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 
   const handleResultButton = (isDaily) => {
     if (isDaily) {
@@ -908,6 +1055,7 @@ export default function FootballQuizMVP() {
           backgroundImage: `linear-gradient(rgba(255,255,255,0.06), rgba(0,0,0,0.34)), url(${stadiumBg})`,
         }}
       >
+        {coinShopModal}
         <AnimatePresence>
           {showDailyCompletePopup && lastDailyResult && (
             <motion.div
@@ -1165,11 +1313,14 @@ export default function FootballQuizMVP() {
                   <small>Best score</small>
                 </div>
 
-                <div className="profile-stat-card">
+                <button
+                  className="profile-stat-card profile-stat-button"
+                  onClick={openCoinShop}
+                >
                   <span>🪙</span>
                   <strong>{coins}</strong>
                   <small>Coins</small>
-                </div>
+                </button>
 
                 <div className="profile-stat-card">
                   <span>📅</span>
@@ -1261,7 +1412,7 @@ export default function FootballQuizMVP() {
               </div>
 
               <div className="leaderboard-list">
-                {leaderboardRows.map((row, index) => (
+                {leaderboardRows.map((row) => (
                   <div
                     key={`${leaderboardTab}-${leaderboardMode}-${row.username}`}
                     className={`leaderboard-row rank-${row.rank}`}
@@ -1322,11 +1473,14 @@ export default function FootballQuizMVP() {
                   <small>Daily streak</small>
                 </div>
 
-                <div className="home-stat-pill home-coins-pill">
+                <button
+                  className="home-stat-pill home-coins-pill coin-clickable"
+                  onClick={openCoinShop}
+                >
                   <span>🪙</span>
                   <strong>{coins}</strong>
                   <small>Coins</small>
-                </div>
+                </button>
               </div>
 
               <div className="home-level-box">
@@ -1470,26 +1624,38 @@ export default function FootballQuizMVP() {
           backgroundImage: `linear-gradient(rgba(255,255,255,0.03), rgba(0,0,0,0.58)), url(${quizBg})`,
         }}
       >
+        {coinShopModal}
         <button className="home-button" onClick={restart}>
           ← Home
         </button>
 
         <AnimatePresence>
-          {dailyReveal && (
+          {dailyReveal?.phase === "result" && (
             <motion.div
-              className="rank-reveal-overlay"
+              className={`rank-reveal-overlay ${dailyReveal.type || ""}`}
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.1 }}
               transition={{ duration: 0.25 }}
             >
-              <div className="rank-reveal-label">RANKING</div>
-
-              <div className="rank-reveal-number">
-                #{dailyReveal.displayRank}
+              <div className="rank-reveal-label">
+                {dailyReveal.type === "wrong"
+                  ? dailyReveal.displayRank === 0
+                    ? "NOT FOUND"
+                    : "SEARCHING"
+                  : dailyReveal.displayRank === dailyReveal.rank
+                  ? "FOUND"
+                  : "SCANNING"}
               </div>
 
-              {dailyReveal.displayRank === dailyReveal.rank && (
+              <div className="rank-reveal-number">
+                {dailyReveal.displayRank > 0
+                  ? `#${dailyReveal.displayRank}`
+                  : "OUT"}
+              </div>
+
+              {dailyReveal.type === "correct" &&
+                dailyReveal.displayRank === dailyReveal.rank && (
                 <div className="rank-reveal-player">
                   {dailyReveal.answer}
                 </div>
@@ -1536,18 +1702,34 @@ export default function FootballQuizMVP() {
           <div className="pyramid-list">
             {todayChallenge.answers.map((answer, index) => {
               const isFound = foundAnswers.includes(answer);
+              const rank = index + 1;
+              const isScanning =
+                dailyReveal?.displayRank === rank && isRevealing;
+              const isRevealTarget =
+                dailyReveal?.type === "correct" && dailyReveal.rank === rank;
+              const isJustFound = dailyCelebratedAnswer === answer;
               const width = 46 + index * 4.6;
 
               return (
                 <motion.div
                   key={answer}
-                  className={`pyramid-slot ${isFound ? "found" : ""}`}
+                  className={`pyramid-slot ${isFound ? "found" : ""} ${
+                    isScanning ? "scanning" : ""
+                  } ${isRevealTarget ? "reveal-target" : ""} ${
+                    isJustFound ? "just-found" : ""
+                  }`}
                   style={{ width: `${width}%` }}
                   initial={false}
-                  animate={isFound ? { scale: [1, 1.08, 1] } : {}}
-                  transition={{ duration: 0.35 }}
+                  animate={
+                    isJustFound
+                      ? { scale: [1, 1.12, 1], y: [0, -7, 0] }
+                      : isFound
+                      ? { scale: [1, 1.08, 1] }
+                      : {}
+                  }
+                  transition={{ duration: 0.45 }}
                 >
-                  <span className="pyramid-rank">#{index + 1}</span>
+                  <span className="pyramid-rank">#{rank}</span>
                   <span>{isFound ? answer : "?????"}</span>
                 </motion.div>
               );
@@ -1587,6 +1769,7 @@ export default function FootballQuizMVP() {
           backgroundImage: `linear-gradient(rgba(255,255,255,0.05), rgba(0,0,0,0.62)), url(${quizBg})`,
         }}
       >
+        {coinShopModal}
         <div className={`result-card ${isDaily ? "daily-result-card" : ""}`}>
           <Trophy size={70} />
 
@@ -1691,6 +1874,7 @@ export default function FootballQuizMVP() {
         backgroundImage: `linear-gradient(rgba(255,255,255,0.04), rgba(0,0,0,0.58)), url(${quizBg})`,
       }}
     >
+      {coinShopModal}
       <button
         className="home-button"
         onClick={() => {
@@ -1775,10 +1959,10 @@ export default function FootballQuizMVP() {
           <span className="hud-value">🏆 {highScore}</span>
         </div>
 
-        <div className="hud-card">
+        <button className="hud-card hud-button" onClick={openCoinShop}>
           <span className="hud-label">COINS</span>
           <span className="hud-value">🪙 {coins}</span>
-        </div>
+        </button>
 
         <div className="hud-card">
           <span className="hud-label">LIVES</span>

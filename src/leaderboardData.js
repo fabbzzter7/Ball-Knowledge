@@ -59,9 +59,12 @@ function normalizeName(name) {
   return String(name || "").trim().toLowerCase();
 }
 
-function decorateRows(rows) {
+function decorateRows(rows, { mode, leaderboardType }) {
   return rows.map((row, index) => ({
     ...row,
+    mode,
+    leaderboard_type: leaderboardType,
+    created_at: row.created_at || "mock",
     rank: index + 1,
     medal: LEADERBOARD_MEDALS[index] || null,
   }));
@@ -73,7 +76,10 @@ export function getMockLeaderboard({ tab, mode, username, highScore }) {
   // Expected fields: username, mode, score, leaderboard_type, created_at.
   const leaderboardType = tab === "allTime" ? "all_time" : "daily";
   const mockRows = MOCK_LEADERBOARD_ROWS[tab]?.[mode] || [];
-  const rows = decorateRows(mockRows.slice(0, 10));
+  const rows = decorateRows(mockRows.slice(0, 10), {
+    mode,
+    leaderboardType,
+  });
 
   // TODO Supabase submit:
   // Submit local score after eligible games with username, mode, score,
