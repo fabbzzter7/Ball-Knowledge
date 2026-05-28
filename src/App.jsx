@@ -328,6 +328,25 @@ export default function FootballQuizMVP() {
 
   const current = questions[questionIndex];
   const playerLevel = getPlayerLevel(highScore);
+  useEffect(() => {
+  if (gameStarted || !username) return;
+
+  if (playerLevel.levelNumber > lastSeenLevel) {
+    const oldLevel =
+      PLAYER_LEVELS[lastSeenLevel - 1] || PLAYER_LEVELS[0];
+
+    setLevelUpPopup({
+      oldLevel,
+      newLevel: playerLevel,
+    });
+
+    setLastSeenLevel(playerLevel.levelNumber);
+    localStorage.setItem(
+      "ballKnowledgeLastSeenLevel",
+      String(playerLevel.levelNumber)
+    );
+  }
+}, [gameStarted, username, playerLevel, lastSeenLevel]);
 
   const revivePrices = [250, 400, 800, 1600, 5000];
   const reviveCost = revivePrices[revivesUsed] || 5000;
@@ -910,7 +929,118 @@ export default function FootballQuizMVP() {
               </button>
             </motion.div>
           )}
-        </AnimatePresence>
+        </AnimatePresence><AnimatePresence>
+  {levelUpPopup && (
+    <motion.div
+      className="level-up-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.div
+        className={`level-up-card level-${levelUpPopup.newLevel.color}`}
+        initial={{ scale: 0.72, y: 60, rotate: -3 }}
+        animate={{ scale: 1, y: 0, rotate: 0 }}
+        exit={{ scale: 0.86, y: -30, opacity: 0 }}
+        transition={{
+          type: "spring",
+          stiffness: 170,
+          damping: 12,
+        }}
+      >
+        <motion.div
+          className="level-up-burst"
+          initial={{ scale: 0, rotate: 0 }}
+          animate={{ scale: 1, rotate: 180 }}
+          transition={{ duration: 0.55, ease: "easeOut" }}
+        >
+          ✨
+        </motion.div>
+
+        <motion.div
+          className="level-up-title"
+          initial={{ y: 12, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.12 }}
+        >
+          LEVEL UP!
+        </motion.div>
+
+        <div className="level-up-evolution">
+          <motion.div
+            className="level-up-icon old"
+            initial={{ scale: 1, x: 0 }}
+            animate={{ scale: [1, 0.88, 1], x: [-4, 0, -4] }}
+            transition={{ duration: 0.7, repeat: 1 }}
+          >
+            {levelUpPopup.oldLevel.emoji}
+          </motion.div>
+
+          <motion.div
+            className="level-up-arrow"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.35, type: "spring", stiffness: 220 }}
+          >
+            →
+          </motion.div>
+
+          <motion.div
+            className="level-up-icon new"
+            initial={{ scale: 0.2, rotate: -20, opacity: 0 }}
+            animate={{
+              scale: [0.2, 1.25, 1],
+              rotate: [-20, 8, 0],
+              opacity: 1,
+            }}
+            transition={{
+              delay: 0.45,
+              duration: 0.6,
+              ease: "easeOut",
+            }}
+          >
+            {levelUpPopup.newLevel.emoji}
+          </motion.div>
+        </div>
+
+        <motion.div
+          className="level-up-unlocked"
+          initial={{ y: 18, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.68 }}
+        >
+          {levelUpPopup.newLevel.name}
+        </motion.div>
+
+        <motion.div
+          className="level-up-subtitle"
+          initial={{ y: 14, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.82 }}
+        >
+          New rank unlocked
+        </motion.div>
+
+        <motion.div
+          className="level-up-progress-glow"
+          initial={{ width: "0%" }}
+          animate={{ width: "100%" }}
+          transition={{ delay: 0.85, duration: 0.75 }}
+        />
+
+        <button
+          className="level-up-button"
+          onClick={() => {
+            playClickSound();
+            setLevelUpPopup(null);
+          }}
+        >
+          AWESOME
+        </button>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
         {profileOpen ? (
           <div className="profile-screen">
