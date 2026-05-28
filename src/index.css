@@ -2747,4 +2747,47 @@ input {
     padding: 9px 22px;
     font-size: 21px;
   }
+}/* FIX DAILY MISSING ANSWERS CENTERING ON MOBILE */
+
+.daily-missing-answers {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box !important;
+}
+
+.daily-missing-list {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 768px) {
+  .daily-result-card {
+    width: min(430px, 94vw) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  .daily-result-content {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .daily-missing-answers {
+    width: 100% !important;
+    max-width: 360px !important;
+    margin: 16px auto 12px !important;
+    padding: 13px !important;
+    box-sizing: border-box !important;
+  }
+
+  .daily-missing-row {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
 }
