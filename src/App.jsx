@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, RotateCcw, CheckCircle2, XCircle } from "lucide-react";
 
@@ -7,6 +7,7 @@ import { CAREER_QUESTIONS } from "./CAREER_QUESTIONS";
 import { DAILY_LIST_CHALLENGES } from "./DAILY_LIST_CHALLENGES";
 import { WORLD_CUP_QUESTIONS } from "./WORLD_CUP_QUESTIONS";
 
+import clickSound from "./assets/Click.mp3";
 import coinSound from "./assets/Coins.mp3";
 import wrongSound from "./assets/wrong.wav";
 import stadiumBg from "./assets/stadium-bg.png";
@@ -209,16 +210,20 @@ function buildGameQuestions(mode = "general") {
   }
 
   if (mode === "world-cup") {
-    const easy = WORLD_CUP_QUESTIONS.filter((q) => q.difficulty === "Easy");
-    const medium = WORLD_CUP_QUESTIONS.filter((q) => q.difficulty === "Medium");
-    const hard = WORLD_CUP_QUESTIONS.filter((q) => q.difficulty === "Hard");
+  const easy = WORLD_CUP_QUESTIONS.filter((q) => q.difficulty === "Easy");
+  const medium = WORLD_CUP_QUESTIONS.filter((q) => q.difficulty === "Medium");
+  const hard = WORLD_CUP_QUESTIONS.filter((q) => q.difficulty === "Hard");
+  const veryHard = WORLD_CUP_QUESTIONS.filter(
+    (q) => q.difficulty === "Very Hard"
+  );
 
-    return [
-      ...shuffle(easy).slice(0, 10),
-      ...shuffle(medium).slice(0, 15),
-      ...shuffle(hard),
-    ];
-  }
+  return [
+    ...shuffle(easy).slice(0, 10),
+    ...shuffle(medium).slice(0, 15),
+    ...shuffle(hard).slice(0, 25),
+    ...shuffle(veryHard),
+  ];
+}
 
   const easy = QUESTIONS.filter((q) => q.difficulty === "Easy");
   const medium = QUESTIONS.filter((q) => q.difficulty === "Medium");
@@ -370,7 +375,7 @@ function getPlayerLevel(highScore) {
     pointsToNext: next.min - highScore,
   };
 }
-
+const HARD_TIME_LIMIT = 15;
 export default function FootballQuizMVP() {
   const STREAK_TARGETS = [5, 10, 20, 30, 50];
 
@@ -407,8 +412,8 @@ function getStreakProgress(streak) {
 
   const [gameStarted, setGameStarted] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
-  const [gameMode, setGameMode] = useState("general");
-
+const [profileOpen, setProfileOpen] = useState(false);
+const [gameMode, setGameMode] = useState("general");
   const [questions, setQuestions] = useState(() =>
     buildGameQuestions("general")
   );
@@ -419,7 +424,7 @@ function getStreakProgress(streak) {
   const [lives, setLives] = useState(3);
   const [finished, setFinished] = useState(false);
   const [streak, setStreak] = useState(0);
-
+const [timeLeft, setTimeLeft] = useState(HARD_TIME_LIMIT);
   const [highScore, setHighScore] = useState(() => {
     return Number(localStorage.getItem("footballQuizHighScore")) || 0;
   });
@@ -459,7 +464,23 @@ function getStreakProgress(streak) {
   const [showDailyCompletePopup, setShowDailyCompletePopup] = useState(false);
 
   const current = questions[questionIndex];
-const playerLevel = getPlayerLevel(highScore);
+const playerLevel = getPlayerLevel(highScore);useEffect(() => {
+  const handleButtonHaptic = (event) => {
+    if (event.target.closest("button")) {
+      if ("vibrate" in navigator) {
+        navigator.vibrate(10);
+      }
+    }
+  };
+
+  document.addEventListener("pointerdown", handleButtonHaptic, {
+    passive: true,
+  });
+
+  return () => {
+    document.removeEventListener("pointerdown", handleButtonHaptic);
+  };
+}, []);
   const revivePrices = [250, 400, 800, 1600, 5000];
   const reviveCost = revivePrices[revivesUsed] || 5000;
 
@@ -474,7 +495,15 @@ const playerLevel = getPlayerLevel(highScore);
     audio.volume = 1;
     audio.currentTime = 0;
     audio.play().catch((err) => console.log("Wrong sound error:", err));
-  };
+  };const playClickSound = () => {
+  const audio = new Audio(clickSound);
+  audio.volume = 0.22;
+
+  audio.addEventListener("loadedmetadata", () => {
+    audio.currentTime = 0.43;
+    audio.play().catch(() => {});
+  });
+};
 
   const saveCoins = (newCoins) => {
     setCoins(newCoins);
@@ -535,19 +564,21 @@ const playerLevel = getPlayerLevel(highScore);
   };
 
   const startGame = (mode) => {
-    setShowDailyCompletePopup(false);
-    setGameMode(mode);
-    setQuestions(buildGameQuestions(mode));
-    setQuestionIndex(0);
-    setSelected(null);
-    setScore(0);
-    setLives(3);
-    setFinished(false);
-    setRevivesUsed(0);
-    setRewardPopup(null);
-    setWrongPopup(null);
-    setGameStarted(true);
-  };
+  setShowDailyCompletePopup(false);
+  setGameMode(mode);
+  setQuestions(buildGameQuestions(mode));
+  setQuestionIndex(0);
+  setSelected(null);
+  setScore(0);
+  setLives(3);
+  setStreak(0);
+  setTimeLeft(HARD_TIME_LIMIT);
+  setFinished(false);
+  setRevivesUsed(0);
+  setRewardPopup(null);
+  setWrongPopup(null);
+  setGameStarted(true);
+};
 
   const startDailyChallenge = () => {
     if (dailyPlayed) return;
@@ -572,28 +603,30 @@ const playerLevel = getPlayerLevel(highScore);
   };
 
   const restart = () => {
-    setGameStarted(false);
-    setModeMenuOpen(false);
-    setGameMode("general");
+  setGameStarted(false);
+  setModeMenuOpen(false);
+  setProfileOpen(false);
+  setGameMode("general");
 
-    setQuestions(buildGameQuestions("general"));
-    setQuestionIndex(0);
+  setQuestions(buildGameQuestions("general"));
+  setQuestionIndex(0);
 
-    setSelected(null);
-    setScore(0);
-    setLives(3);
-    setFinished(false);
-    setRevivesUsed(0);
+  setSelected(null);
+  setScore(0);
+  setLives(3);
+  setStreak(0);
+  setFinished(false);
+  setRevivesUsed(0);
 
-    setRewardPopup(null);
-    setWrongPopup(null);
+  setRewardPopup(null);
+  setWrongPopup(null);
 
-    setFoundAnswers([]);
-    setDailyInput("");
-    setDailyCoinsEarned(0);
-    setDailyReveal(null);
-    setIsRevealing(false);
-  };
+  setFoundAnswers([]);
+  setDailyInput("");
+  setDailyCoinsEarned(0);
+  setDailyReveal(null);
+  setIsRevealing(false);
+};
 
   const nextQuestion = () => {
     setQuestionIndex((i) => (i + 1) % questions.length);
@@ -610,8 +643,10 @@ const playerLevel = getPlayerLevel(highScore);
   };
 
   const handleWrongAnswer = (correctAnswer) => {
-    const newLives = Math.max(lives - 1, 0);
-    setLives(newLives);
+  setStreak(0);
+
+  const newLives = Math.max(lives - 1, 0);
+  setLives(newLives);
 
     setWrongPopup({
       answer: correctAnswer,
@@ -633,7 +668,51 @@ const playerLevel = getPlayerLevel(highScore);
       }, 1200);
     }
   };
+useEffect(() => {
+  if (
+    !gameStarted ||
+    finished ||
+    gameMode !== "general" ||
+    current?.difficulty !== "Hard"
+  ) {
+    return;
+  }
 
+  setTimeLeft(HARD_TIME_LIMIT);
+}, [questionIndex, gameStarted, finished, gameMode, current?.difficulty]);
+
+useEffect(() => {
+  const hardTimerActive =
+    gameStarted &&
+    !finished &&
+    gameMode === "general" &&
+    current?.difficulty === "Hard" &&
+    !selected &&
+    !rewardPopup &&
+    !wrongPopup;
+
+  if (!hardTimerActive) return;
+
+  if (timeLeft <= 0) {
+    handleWrongAnswer(current.answer);
+    return;
+  }
+
+  const timer = setTimeout(() => {
+    setTimeLeft((time) => time - 1);
+  }, 1000);
+
+  return () => clearTimeout(timer);
+}, [
+  timeLeft,
+  gameStarted,
+  finished,
+  gameMode,
+  current,
+  selected,
+  rewardPopup,
+  wrongPopup,
+]);
   const chooseAnswer = (option) => {
     if (selected || rewardPopup || wrongPopup) return;
     setSelected(option);
@@ -657,10 +736,10 @@ setStreak(newStreak);
         saveCoins(newCoins);
 
         setRewardPopup({
-          streak: newScore,
-          coins: reward,
-          onCollect: "next-question",
-        });
+  streak: newStreak,
+  coins: reward,
+  onCollect: "next-question",
+});
 
         playCoinSound();
       } else {
@@ -904,8 +983,71 @@ setStreak(newStreak);
           )}
         </AnimatePresence>
 
-        {!modeMenuOpen ? (
-          <div className="main-menu">
+        {profileOpen ? (
+  <div className="profile-screen">
+    <div className={`profile-card level-${playerLevel.color}`}>
+      <div className="profile-avatar">{playerLevel.emoji}</div>
+
+      <div className="profile-title">Your Profile</div>
+
+      <div className="profile-level-name">{playerLevel.name}</div>
+
+      <div className="profile-level-meta">
+        Level {playerLevel.levelNumber} / {playerLevel.totalLevels}
+      </div>
+
+      <div className="profile-bar-outer">
+        <div
+          className="profile-bar-inner"
+          style={{ width: `${playerLevel.progress}%` }}
+        />
+      </div>
+
+      <div className="profile-next-level">
+        {playerLevel.next
+          ? `${playerLevel.pointsToNext} more best-score points to unlock ${playerLevel.next.name}`
+          : "Max level reached"}
+      </div>
+
+      <div className="profile-stats-grid">
+        <div className="profile-stat-card">
+          <span>🔥</span>
+          <strong>{highScore}</strong>
+          <small>Best score</small>
+        </div>
+
+        <div className="profile-stat-card">
+          <span>🪙</span>
+          <strong>{coins}</strong>
+          <small>Coins</small>
+        </div>
+
+        <div className="profile-stat-card">
+          <span>📅</span>
+          <strong>{dailyStreak}</strong>
+          <small>Daily streak</small>
+        </div>
+
+        <div className="profile-stat-card">
+          <span>🏆</span>
+          <strong>{streak}</strong>
+          <small>Current streak</small>
+        </div>
+      </div>
+
+      <button
+        className="profile-back-button"
+        onClick={() => {
+          playClickSound();
+          setProfileOpen(false);
+        }}
+      >
+        BACK
+      </button>
+    </div>
+  </div>
+) : !modeMenuOpen ? (
+  <div className="main-menu">
             <h1 className="main-title">BALL KNOWLEDGE</h1><div className={`home-progress-card level-${playerLevel.color}`}>
   <div className="home-progress-top">
     <div className="home-stat-pill home-streak-pill">
@@ -953,19 +1095,33 @@ setStreak(newStreak);
   </div>
 </div>
 
-            <button
-              className="main-menu-button"
-              onClick={() => setModeMenuOpen(true)}
-            >
-              SINGLE PLAYER
-            </button>
+<button
+  className="profile-main-button"
+  onClick={() => {
+    playClickSound();
+    setProfileOpen(true);
+  }}
+>
+  👤 PROFILE
+</button>
+
+<button
+  className="main-menu-button"
+  onClick={() => {
+    playClickSound();
+    setModeMenuOpen(true);
+  }}
+>
+  SINGLE PLAYER
+</button>
 
             <button
-              className={`daily-main-button ${
-                dailyPlayed ? "daily-completed" : ""
-              }`}
-              onClick={startDailyChallenge}
-              disabled={dailyPlayed}
+  className={`daily-main-button ${dailyPlayed ? "daily-completed" : ""}`}
+  onClick={() => {
+    playClickSound();
+    startDailyChallenge();
+  }}
+  disabled={dailyPlayed}
             >
               {dailyPlayed ? "✅ DAILY COMPLETED" : "🔥 DAILY CHALLENGE"}
             </button>
@@ -986,30 +1142,42 @@ setStreak(newStreak);
         ) : (
           <div className="mode-menu">
             <button
-              className="mode-button"
-              onClick={() => startGame("general")}
-            >
-              General Ball Knowledge
-            </button>
+  className="mode-button"
+  onClick={() => {
+    playClickSound();
+    startGame("general");
+  }}
+>
+  General Ball Knowledge
+</button>
 
             <button
-              className="mode-button"
-              onClick={() => startGame("career")}
-            >
-              Career Path
-            </button><button
   className="mode-button"
-  onClick={() => startGame("world-cup")}
+  onClick={() => {
+    playClickSound();
+    startGame("career");
+  }}
+>
+  Career Path
+</button><button
+  className="mode-button"
+  onClick={() => {
+    playClickSound();
+    startGame("world-cup");
+  }}
 >
   World Cup
 </button>
 
             <button
-              className="mode-back-button"
-              onClick={() => setModeMenuOpen(false)}
-            >
-              Back
-            </button>
+  className="mode-back-button"
+  onClick={() => {
+    playClickSound();
+    setModeMenuOpen(false);
+  }}
+>
+  Back
+</button>
           </div>
         )}
       </div>
@@ -1175,7 +1343,28 @@ setStreak(newStreak);
                   +{lastDailyResult?.streakBonus || streakRewardEarned} streak
                   bonus
                 </div>
-              )}
+              )}{!dailyCompleted && (
+  <div className="daily-missing-answers">
+    <div className="daily-missing-title">Missing answers</div>
+
+    <div className="daily-missing-list">
+      {todayChallenge.answers.map((answer, index) => {
+        const found = foundAnswers.includes(answer);
+
+        return (
+          <div
+            key={answer}
+            className={`daily-missing-row ${found ? "found" : "missed"}`}
+          >
+            <span>#{index + 1}</span>
+            <strong>{answer}</strong>
+            <em>{found ? "Found" : "Missed"}</em>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+)}
             </div>
           ) : (
             <>
@@ -1220,9 +1409,15 @@ setStreak(newStreak);
         backgroundImage: `linear-gradient(rgba(255,255,255,0.04), rgba(0,0,0,0.58)), url(${quizBg})`,
       }}
     >
-      <button className="home-button" onClick={restart}>
-        ← Home
-      </button>
+      <button
+  className="home-button"
+  onClick={() => {
+    playClickSound();
+    restart();
+  }}
+>
+  ← Home
+</button>
 
       <AnimatePresence>
         {rewardPopup && (
@@ -1236,9 +1431,15 @@ setStreak(newStreak);
             <div className="reward-title">🔥 {rewardPopup.streak} STREAK</div>
             <div className="reward-coins">+{rewardPopup.coins} COINS</div>
 
-            <button className="collect-button" onClick={collectReward}>
-              COLLECT
-            </button>
+            <button
+  className="collect-button"
+  onClick={() => {
+    playClickSound();
+    collectReward();
+  }}
+>
+  COLLECT
+</button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1320,7 +1521,13 @@ setStreak(newStreak);
     : current.difficulty}
 </div>
 
-          <h1 className="question-title">{current.question}</h1>
+{gameMode === "general" && current.difficulty === "Hard" && (
+  <div className={`hard-timer ${timeLeft <= 3 ? "danger" : ""}`}>
+    ⏱ {timeLeft}s
+  </div>
+)}
+
+<h1 className="question-title">{current.question}</h1>
 
           {gameMode === "career" || gameMode === "world-cup" ? (
             <>
@@ -1358,8 +1565,11 @@ setStreak(newStreak);
 
                 return (
                   <button
-                    key={option}
-                    onClick={() => chooseAnswer(option)}
+  key={option}
+  onClick={() => {
+    playClickSound();
+    chooseAnswer(option);
+  }}
                     className={`answer-button ${
                       showCorrect ? "correct" : showWrong ? "wrong" : ""
                     }`}
