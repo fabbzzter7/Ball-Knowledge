@@ -199,7 +199,18 @@ function getStreakReward(streak) {
 
 function getNextMilestone(streak) {
   return STREAK_MILESTONES.find((milestone) => milestone.day > streak) || null;
-}
+}const saveUsername = () => {
+  const cleanedName = nameInput.trim();
+
+  if (!cleanedName) return;
+
+  const finalName = cleanedName.slice(0, 16);
+
+  setUsername(finalName);
+  localStorage.setItem("ballKnowledgeUsername", finalName);
+  setNameInput("");
+  playClickSound();
+};
 
 function buildGameQuestions(mode = "general") {
   if (mode === "career") {
@@ -414,6 +425,11 @@ function getStreakProgress(streak) {
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
 const [profileOpen, setProfileOpen] = useState(false);
 const [gameMode, setGameMode] = useState("general");
+const [username, setUsername] = useState(() => {
+  return localStorage.getItem("ballKnowledgeUsername") || "";
+});
+
+const [nameInput, setNameInput] = useState("");
   const [questions, setQuestions] = useState(() =>
     buildGameQuestions("general")
   );
@@ -668,7 +684,44 @@ const playerLevel = getPlayerLevel(highScore);useEffect(() => {
       }, 1200);
     }
   };
-useEffect(() => {
+useEffect(() => {if (!username) {
+  return (
+    <div
+      className="fullscreen-bg"
+      style={{
+        backgroundImage: `linear-gradient(rgba(255,255,255,0.08), rgba(0,0,0,0.48)), url(${stadiumBg})`,
+      }}
+    >
+      <div className="name-screen">
+        <div className="name-card">
+          <div className="name-ball">⚽</div>
+
+          <h1 className="name-title">Choose your player name</h1>
+
+          <p className="name-subtitle">
+            This will show on your profile and future leaderboards.
+          </p>
+
+          <input
+            className="name-input"
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") saveUsername();
+            }}
+            placeholder="Fabbe99"
+            maxLength={16}
+            autoFocus
+          />
+
+          <button className="name-save-button" onClick={saveUsername}>
+            START PLAYING
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
   if (
     !gameStarted ||
     finished ||
@@ -990,7 +1043,7 @@ if (reward > 0) {
     <div className={`profile-card level-${playerLevel.color}`}>
       <div className="profile-avatar">{playerLevel.emoji}</div>
 
-      <div className="profile-title">Your Profile</div>
+      <div className="profile-title">Your Profile</div><div className="profile-username">@{username}</div>
 
       <div className="profile-level-name">{playerLevel.name}</div>
 
@@ -1038,6 +1091,16 @@ if (reward > 0) {
       </div>
 
       <button
+  className="profile-change-name-button"
+  onClick={() => {
+    playClickSound();
+    localStorage.removeItem("ballKnowledgeUsername");
+    setUsername("");
+    setProfileOpen(false);
+  }}
+>
+  CHANGE NAME
+</button><button
         className="profile-back-button"
         onClick={() => {
           playClickSound();
@@ -1050,7 +1113,9 @@ if (reward > 0) {
   </div>
 ) : !modeMenuOpen ? (
   <div className="main-menu">
-            <h1 className="main-title">BALL KNOWLEDGE</h1><div className={`home-progress-card level-${playerLevel.color}`}>
+            <h1 className="main-title">BALL KNOWLEDGE</h1><div className="main-username-pill">
+  👤 {username}
+</div><div className={`home-progress-card level-${playerLevel.color}`}>
   <div className="home-progress-top">
     <div className="home-stat-pill home-streak-pill">
       <span>🔥</span>

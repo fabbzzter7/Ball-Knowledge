@@ -3058,4 +3058,271 @@ input {
 
     font-size: 16px !important;
   }
+}/* USERNAME SETUP */
+
+.name-screen {
+  min-height: 100svh;
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+}
+
+.name-card {
+  width: min(620px, 92vw);
+
+  padding: 34px 30px 38px;
+
+  border-radius: 42px;
+
+  text-align: center;
+
+  background:
+    radial-gradient(circle at top left, rgba(255,255,255,1), rgba(255,255,255,0.72) 42%, rgba(255,255,255,0.35) 100%),
+    linear-gradient(180deg, rgba(255,255,255,0.96), rgba(235,243,255,0.9));
+
+  border: 5px solid rgba(255,255,255,0.55);
+
+  box-shadow:
+    0 14px 0 rgba(200,210,230,0.95),
+    0 30px 70px rgba(0,0,0,0.34),
+    inset 0 3px 0 rgba(255,255,255,0.85);
+
+  backdrop-filter: blur(16px);
+}
+
+.name-ball {
+  width: 92px;
+  height: 92px;
+
+  margin: 0 auto 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 32px;
+
+  font-size: 52px;
+
+  background: linear-gradient(180deg, #fff6c7 0%, #ffd84d 100%);
+
+  box-shadow:
+    0 10px 0 #d6a500,
+    0 20px 34px rgba(0,0,0,0.2),
+    inset 0 3px 0 rgba(255,255,255,0.65);
+}
+
+.name-title {
+  margin: 0;
+
+  color: #101828;
+
+  font-size: clamp(38px, 6vw, 58px);
+  font-weight: 1000;
+  line-height: 0.96;
+  letter-spacing: -2px;
+}
+
+.name-subtitle {
+  width: min(430px, 90%);
+  margin: 14px auto 24px;
+
+  color: rgba(16,24,40,0.68);
+
+  font-size: 18px;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.name-input {
+  width: min(420px, 92%);
+
+  border: none;
+  outline: none;
+
+  padding: 20px 22px;
+  border-radius: 28px;
+
+  background: white;
+  color: #101828;
+
+  font-size: 28px;
+  font-weight: 1000;
+  text-align: center;
+
+  box-shadow:
+    0 8px 0 rgba(180,190,210,0.85),
+    0 18px 30px rgba(0,0,0,0.16),
+    inset 0 2px 0 rgba(255,255,255,0.85);
+
+  border: 4px solid rgba(16,24,40,0.08);
+}
+
+.name-save-button {
+  display: block;
+
+  width: min(420px, 92%);
+
+  margin: 24px auto 0;
+  padding: 20px 26px;
+
+  border: none;
+  border-radius: 30px;
+
+  background: linear-gradient(180deg, #73e84d 0%, #58cc02 100%);
+  color: white;
+
+  font-size: 28px;
+  font-weight: 1000;
+  letter-spacing: 0.5px;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 10px 0 #2f9e44,
+    0 20px 34px rgba(0,0,0,0.22),
+    inset 0 3px 0 rgba(255,255,255,0.35);
+}
+
+.name-save-button:active {
+  transform: translateY(5px);
+  box-shadow:
+    0 5px 0 #2f9e44,
+    0 12px 24px rgba(0,0,0,0.18);
+}
+
+/* USERNAME DISPLAY */
+
+.main-username-pill {
+  width: fit-content;
+
+  margin: -4px auto 14px;
+  padding: 10px 22px;
+
+  border-radius: 999px;
+
+  background: linear-gradient(180deg, #dff3ff 0%, #8fd8ff 100%);
+  color: #123d5f;
+
+  font-size: 20px;
+  font-weight: 1000;
+
+  box-shadow:
+    0 6px 0 #459bd0,
+    0 14px 24px rgba(0,0,0,0.18),
+    inset 0 2px 0 rgba(255,255,255,0.55);
+
+  border: 3px solid rgba(255,255,255,0.45);
+}
+
+.profile-username {
+  width: fit-content;
+
+  margin: 10px auto 8px;
+  padding: 9px 20px;
+
+  border-radius: 999px;
+
+  background: linear-gradient(180deg, #dff3ff 0%, #89d7ff 100%);
+  color: #0f4d75;
+
+  font-size: 22px;
+  font-weight: 1000;
+
+  box-shadow:
+    0 6px 0 #459bd0,
+    0 12px 22px rgba(0,0,0,0.15),
+    inset 0 2px 0 rgba(255,255,255,0.55);
+}
+
+.profile-change-name-button {
+  margin-top: 22px;
+  margin-right: 10px;
+
+  border: none;
+  border-radius: 26px;
+
+  padding: 15px 28px;
+
+  background: linear-gradient(180deg, #ffd86b 0%, #ffb703 100%);
+  color: #633600;
+
+  font-size: 18px;
+  font-weight: 1000;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 7px 0 #c98200,
+    0 14px 24px rgba(0,0,0,0.18),
+    inset 0 2px 0 rgba(255,255,255,0.45);
+}
+
+.profile-change-name-button:active {
+  transform: translateY(4px);
+  box-shadow:
+    0 3px 0 #c98200,
+    0 8px 18px rgba(0,0,0,0.15);
+}
+
+@media (max-width: 768px) {
+  .name-screen {
+    align-items: flex-start;
+    padding: 86px 16px 26px;
+  }
+
+  .name-card {
+    padding: 26px 18px 30px;
+    border-radius: 34px;
+  }
+
+  .name-ball {
+    width: 74px;
+    height: 74px;
+    border-radius: 26px;
+    font-size: 42px;
+  }
+
+  .name-title {
+    font-size: 38px;
+  }
+
+  .name-subtitle {
+    font-size: 15px;
+    margin-bottom: 20px;
+  }
+
+  .name-input {
+    padding: 17px 18px;
+    border-radius: 24px;
+    font-size: 24px;
+  }
+
+  .name-save-button {
+    padding: 18px 22px;
+    border-radius: 26px;
+    font-size: 23px;
+  }
+
+  .main-username-pill {
+    margin: 0 auto 10px;
+    padding: 8px 18px;
+    font-size: 16px;
+  }
+
+  .profile-username {
+    font-size: 17px;
+    padding: 7px 16px;
+  }
+
+  .profile-change-name-button {
+    width: min(260px, 80vw);
+    margin: 18px auto 0;
+    display: block;
+    font-size: 16px;
+  }
 }
