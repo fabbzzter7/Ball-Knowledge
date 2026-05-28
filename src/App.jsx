@@ -326,27 +326,47 @@ export default function FootballQuizMVP() {
   const [streakRewardEarned, setStreakRewardEarned] = useState(0);
   const [showDailyCompletePopup, setShowDailyCompletePopup] = useState(false);
 
-  const current = questions[questionIndex];
-  const playerLevel = getPlayerLevel(highScore);
+const [lastSeenLevel, setLastSeenLevel] = useState(() => {
+  const saved = Number(localStorage.getItem("ballKnowledgeLastSeenLevel"));
+
+  if (saved) return saved;
+
+  const savedHighScore =
+    Number(localStorage.getItem("footballQuizHighScore")) || 0;
+
+  return getPlayerLevel(savedHighScore).levelNumber;
+});
+
+const [levelUpPopup, setLevelUpPopup] = useState(null);
+
+const current = questions[questionIndex];
+const playerLevel = getPlayerLevel(highScore);
   useEffect(() => {
   if (gameStarted || !username) return;
 
   if (playerLevel.levelNumber > lastSeenLevel) {
-    const oldLevel =
-      PLAYER_LEVELS[lastSeenLevel - 1] || PLAYER_LEVELS[0];
+    const oldLevel = PLAYER_LEVELS[lastSeenLevel - 1] || PLAYER_LEVELS[0];
+
+    const unlockedLevels = PLAYER_LEVELS.slice(
+      lastSeenLevel,
+      playerLevel.levelNumber
+    );
 
     setLevelUpPopup({
       oldLevel,
       newLevel: playerLevel,
+      unlockedLevels,
+      levelsGained: playerLevel.levelNumber - lastSeenLevel,
     });
 
     setLastSeenLevel(playerLevel.levelNumber);
+
     localStorage.setItem(
       "ballKnowledgeLastSeenLevel",
       String(playerLevel.levelNumber)
     );
   }
-}, [gameStarted, username, playerLevel, lastSeenLevel]);
+}, [gameStarted, username, playerLevel.levelNumber, lastSeenLevel]);
 
   const revivePrices = [250, 400, 800, 1600, 5000];
   const reviveCost = revivePrices[revivesUsed] || 5000;
@@ -966,7 +986,7 @@ export default function FootballQuizMVP() {
           LEVEL UP!
         </motion.div>
 
-        <div className="level-up-evolution">
+        <div className="level-up-evolution multi">
           <motion.div
             className="level-up-icon old"
             initial={{ scale: 1, x: 0 }}
@@ -976,31 +996,43 @@ export default function FootballQuizMVP() {
             {levelUpPopup.oldLevel.emoji}
           </motion.div>
 
-          <motion.div
-            className="level-up-arrow"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.35, type: "spring", stiffness: 220 }}
-          >
-            →
-          </motion.div>
+          {levelUpPopup.unlockedLevels.map((level, index) => (
+            <React.Fragment key={`${level.name}-${level.min}`}>
+              <motion.div
+                className="level-up-arrow"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{
+                  delay: 0.25 + index * 0.18,
+                  type: "spring",
+                  stiffness: 220,
+                }}
+              >
+                →
+              </motion.div>
 
-          <motion.div
-            className="level-up-icon new"
-            initial={{ scale: 0.2, rotate: -20, opacity: 0 }}
-            animate={{
-              scale: [0.2, 1.25, 1],
-              rotate: [-20, 8, 0],
-              opacity: 1,
-            }}
-            transition={{
-              delay: 0.45,
-              duration: 0.6,
-              ease: "easeOut",
-            }}
-          >
-            {levelUpPopup.newLevel.emoji}
-          </motion.div>
+              <motion.div
+                className={`level-up-icon ${
+                  index === levelUpPopup.unlockedLevels.length - 1
+                    ? "new"
+                    : "middle"
+                }`}
+                initial={{ scale: 0.2, rotate: -20, opacity: 0 }}
+                animate={{
+                  scale: [0.2, 1.22, 1],
+                  rotate: [-20, 8, 0],
+                  opacity: 1,
+                }}
+                transition={{
+                  delay: 0.35 + index * 0.18,
+                  duration: 0.5,
+                  ease: "easeOut",
+                }}
+              >
+                {level.emoji}
+              </motion.div>
+            </React.Fragment>
+          ))}
         </div>
 
         <motion.div
@@ -1018,7 +1050,9 @@ export default function FootballQuizMVP() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.82 }}
         >
-          New rank unlocked
+          {levelUpPopup.levelsGained > 1
+            ? `${levelUpPopup.levelsGained} new ranks unlocked`
+            : "New rank unlocked"}
         </motion.div>
 
         <motion.div
