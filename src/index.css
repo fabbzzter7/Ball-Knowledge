@@ -2855,4 +2855,207 @@ input {
     font-size: 22px;
     border-radius: 26px;
   }
+}/* MOBILE START + DAILY TIGHTENING ONLY */
+@media (max-width: 768px) {
+  /* START PAGE: remove dead space above progress card */
+  .main-menu {
+    width: 100% !important;
+    min-height: 100svh !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+
+    padding-top: 74px !important;
+    gap: 10px !important;
+  }
+
+  .main-title {
+    display: none !important;
+  }
+
+  .home-progress-card {
+    width: min(420px, 92vw) !important;
+    margin: 18px auto 14px !important;
+    padding: 14px 14px 16px !important;
+    border-radius: 28px !important;
+  }
+
+  .home-progress-top {
+    gap: 9px !important;
+    margin-bottom: 11px !important;
+  }
+
+  .home-stat-pill {
+    padding: 10px 9px !important;
+    border-radius: 19px !important;
+  }
+
+  .home-stat-pill span {
+    font-size: 22px !important;
+  }
+
+  .home-stat-pill strong {
+    font-size: 22px !important;
+  }
+
+  .home-stat-pill small {
+    font-size: 9px !important;
+  }
+
+  .home-level-box {
+    padding: 12px !important;
+    border-radius: 22px !important;
+  }
+
+  .home-level-emoji {
+    width: 42px !important;
+    height: 42px !important;
+    font-size: 25px !important;
+    border-radius: 14px !important;
+  }
+
+  .home-level-name {
+    font-size: 18px !important;
+  }
+
+  .home-level-score {
+    font-size: 12px !important;
+    padding: 7px 9px !important;
+  }
+
+  .home-level-bar-outer {
+    height: 16px !important;
+    margin-top: 12px !important;
+  }
+
+  .home-next-level {
+    margin-top: 8px !important;
+    font-size: 11.5px !important;
+    line-height: 1.2 !important;
+  }
+
+  .profile-main-button,
+  .main-menu-button,
+  .daily-main-button {
+    width: min(360px, 84vw) !important;
+    padding: 17px 24px !important;
+    margin-bottom: 10px !important;
+
+    border-radius: 28px !important;
+
+    font-size: 28px !important;
+    line-height: 1 !important;
+  }
+
+  .daily-completed-note {
+    width: min(360px, 86vw) !important;
+    font-size: 13px !important;
+    margin-top: 0 !important;
+  }
+
+  /* SINGLE PLAYER MODE MENU: smaller and lower but not huge */
+  .mode-menu {
+    width: 100% !important;
+    min-height: 100svh !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+
+    margin-top: 150px !important;
+    gap: 16px !important;
+  }
+
+  .mode-button,
+  .mode-back-button {
+    width: min(355px, 84vw) !important;
+
+    padding: 18px 22px !important;
+    border-radius: 28px !important;
+
+    font-size: 29px !important;
+    line-height: 1.05 !important;
+  }
+
+  /* DAILY CHALLENGE: compact layout */
+  .daily-list-wrapper {
+    width: min(420px, 94vw) !important;
+
+    margin: 54px auto 20px !important;
+    padding: 16px 14px 18px !important;
+
+    border-radius: 28px !important;
+  }
+
+  .daily-list-label {
+    font-size: 17px !important;
+    margin-bottom: 6px !important;
+    letter-spacing: 1.5px !important;
+  }
+
+  .daily-list-title {
+    font-size: 28px !important;
+    line-height: 0.98 !important;
+    margin-bottom: 6px !important;
+  }
+
+  .daily-list-question {
+    font-size: 14px !important;
+    line-height: 1.2 !important;
+    margin: 0 auto 10px !important;
+  }
+
+  .daily-list-stats {
+    padding: 8px 12px !important;
+    border-radius: 18px !important;
+    margin-bottom: 10px !important;
+
+    font-size: 13px !important;
+  }
+
+  .pyramid-list {
+    gap: 5px !important;
+    margin: 8px auto 12px !important;
+  }
+
+  .pyramid-slot {
+    min-height: 28px !important;
+    padding: 5px 10px !important;
+
+    border-radius: 13px !important;
+
+    font-size: 13px !important;
+    line-height: 1 !important;
+  }
+
+  .pyramid-rank {
+    font-size: 11px !important;
+    margin-right: 6px !important;
+  }
+
+  .daily-input-row {
+    gap: 8px !important;
+    margin-top: 8px !important;
+  }
+
+  .daily-list-input {
+    height: 50px !important;
+    padding: 10px 14px !important;
+
+    border-radius: 18px !important;
+
+    font-size: 17px !important;
+  }
+
+  .daily-submit-button {
+    height: 50px !important;
+    padding: 0 16px !important;
+
+    border-radius: 18px !important;
+
+    font-size: 16px !important;
+  }
 }
