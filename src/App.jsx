@@ -731,20 +731,22 @@ setStreak(newStreak);
 
       const reward = getRewardForScore(newScore);
 
-      if (reward > 0) {
-        const newCoins = coins + reward;
-        saveCoins(newCoins);
+if (reward > 0) {
+  const newCoins = coins + reward;
+  saveCoins(newCoins);
 
-        setRewardPopup({
-  streak: newStreak,
-  coins: reward,
-  onCollect: "next-question",
-});
+  setRewardPopup({
+    streak: newStreak,
+    coins: reward,
+    onCollect: "next-question",
+  });
 
-        playCoinSound();
-      } else {
-        setTimeout(nextQuestion, 800);
-      }
+  playCoinSound();
+} else {
+  playCoinSound();
+
+  setTimeout(nextQuestion, 950);
+}
     } else {
       handleWrongAnswer(current.answer);
     }
@@ -1550,10 +1552,18 @@ setStreak(newStreak);
               </div>
 
               {selected && (
-                <div className="career-correct-answer">
-                  Correct answer: {current.answer}
-                </div>
-              )}
+  <div
+    className={`career-feedback ${
+      isCorrectAnswer(selected, current.answer) ? "correct" : "wrong"
+    }`}
+  >
+    {isCorrectAnswer(selected, current.answer) ? (
+      <>✅ CORRECT! {current.answer}</>
+    ) : (
+      <>❌ Correct answer: {current.answer}</>
+    )}
+  </div>
+)}
             </>
           ) : (
             <div className="answers-grid">
