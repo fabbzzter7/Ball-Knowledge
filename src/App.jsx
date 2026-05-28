@@ -7,6 +7,7 @@ import { QUESTIONS } from "./QUESTIONS";
 import { CAREER_QUESTIONS } from "./CAREER_QUESTIONS";
 import { DAILY_LIST_CHALLENGES } from "./DAILY_LIST_CHALLENGES";
 import { WORLD_CUP_QUESTIONS } from "./WORLD_CUP_QUESTIONS";
+import { getMockLeaderboard } from "./leaderboardData";
 
 import clickSound from "./assets/Click.mp3";
 import coinSound from "./assets/Coins.mp3";
@@ -42,35 +43,6 @@ const PLAYER_LEVELS = [
   { min: 320, name: "Ball Knowledge Master", emoji: "👑", color: "orange" },
   { min: 400, name: "Ball Knowledge Legend", emoji: "💎", color: "legend" },
 ];
-
-const MOCK_LEADERBOARD = {
-  daily: {
-    general: [
-      { name: "ball.knowledge", score: 42 },
-      { name: "sunday.scout", score: 31 },
-      { name: "goal.guru", score: 24 },
-    ],
-    "world-cup": [
-      { name: "worldcup.wiz", score: 38 },
-      { name: "finals.fan", score: 29 },
-      { name: "goal.guru", score: 22 },
-    ],
-  },
-  allTime: {
-    general: [
-      { name: "ball.knowledge", score: 142 },
-      { name: "sunday.scout", score: 117 },
-      { name: "goal.guru", score: 96 },
-    ],
-    "world-cup": [
-      { name: "worldcup.wiz", score: 121 },
-      { name: "finals.fan", score: 104 },
-      { name: "ball.knowledge", score: 88 },
-    ],
-  },
-};
-
-const LEADERBOARD_MEDALS = ["🥇", "🥈", "🥉"];
 
 function shuffle(array) {
   const newArray = [...array];
@@ -390,8 +362,14 @@ export default function FootballQuizMVP() {
   const playerLevel = getPlayerLevel(highScore);
   const isHomeScreen =
     !gameStarted && !profileOpen && !leaderboardOpen && !modeMenuOpen;
-  const leaderboardRows =
-    MOCK_LEADERBOARD[leaderboardTab]?.[leaderboardMode] || [];
+  const leaderboard = getMockLeaderboard({
+    tab: leaderboardTab,
+    mode: leaderboardMode,
+    username,
+    highScore,
+  });
+  const leaderboardRows = leaderboard.rows;
+  const currentUserLeaderboardRow = leaderboard.currentUserRow;
 
   useEffect(() => {
     if (!isHomeScreen || !username) return;
@@ -1285,15 +1263,15 @@ export default function FootballQuizMVP() {
               <div className="leaderboard-list">
                 {leaderboardRows.map((row, index) => (
                   <div
-                    key={`${leaderboardTab}-${leaderboardMode}-${row.name}`}
-                    className={`leaderboard-row rank-${index + 1}`}
+                    key={`${leaderboardTab}-${leaderboardMode}-${row.username}`}
+                    className={`leaderboard-row rank-${row.rank}`}
                   >
                     <div className="leaderboard-rank">
-                      {LEADERBOARD_MEDALS[index] || index + 1}
+                      {row.medal || row.rank}
                     </div>
 
                     <div className="leaderboard-player">
-                      <strong>{row.name}</strong>
+                      <strong>{row.username}</strong>
                       <small>
                         {leaderboardMode === "world-cup"
                           ? "World Cup"
@@ -1310,11 +1288,13 @@ export default function FootballQuizMVP() {
                 <div className="leaderboard-rank">👤</div>
 
                 <div className="leaderboard-player">
-                  <strong>{username}</strong>
+                  <strong>{currentUserLeaderboardRow.username}</strong>
                   <small>Your local best score</small>
                 </div>
 
-                <div className="leaderboard-score">{highScore}</div>
+                <div className="leaderboard-score">
+                  {currentUserLeaderboardRow.score}
+                </div>
               </div>
 
               <button
@@ -1379,6 +1359,27 @@ export default function FootballQuizMVP() {
               </div>
             </div>
 
+            <button
+              className="main-menu-button"
+              onClick={() => {
+                playClickSound();
+                setModeMenuOpen(true);
+              }}
+            >
+              SINGLE PLAYER
+            </button>
+
+            <button
+              className={`daily-main-button ${dailyPlayed ? "daily-completed" : ""}`}
+              onClick={() => {
+                playClickSound();
+                startDailyChallenge();
+              }}
+              disabled={dailyPlayed}
+            >
+              {dailyPlayed ? "✅ DAILY COMPLETED" : "🔥 DAILY CHALLENGE"}
+            </button>
+
             <div className="home-secondary-actions">
               <button
                 className="profile-main-button"
@@ -1400,27 +1401,6 @@ export default function FootballQuizMVP() {
                 🏆 RANKINGS
               </button>
             </div>
-
-            <button
-              className="main-menu-button"
-              onClick={() => {
-                playClickSound();
-                setModeMenuOpen(true);
-              }}
-            >
-              SINGLE PLAYER
-            </button>
-
-            <button
-              className={`daily-main-button ${dailyPlayed ? "daily-completed" : ""}`}
-              onClick={() => {
-                playClickSound();
-                startDailyChallenge();
-              }}
-              disabled={dailyPlayed}
-            >
-              {dailyPlayed ? "✅ DAILY COMPLETED" : "🔥 DAILY CHALLENGE"}
-            </button>
 
             {dailyPlayed && (
               <div className="daily-completed-note">
