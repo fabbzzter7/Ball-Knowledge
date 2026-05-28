@@ -3219,56 +3219,6 @@ input {
   border: 3px solid rgba(255,255,255,0.45);
 }
 
-.profile-username {
-  width: fit-content;
-
-  margin: 10px auto 8px;
-  padding: 9px 20px;
-
-  border-radius: 999px;
-
-  background: linear-gradient(180deg, #dff3ff 0%, #89d7ff 100%);
-  color: #0f4d75;
-
-  font-size: 22px;
-  font-weight: 1000;
-
-  box-shadow:
-    0 6px 0 #459bd0,
-    0 12px 22px rgba(0,0,0,0.15),
-    inset 0 2px 0 rgba(255,255,255,0.55);
-}
-
-.profile-change-name-button {
-  margin-top: 22px;
-  margin-right: 10px;
-
-  border: none;
-  border-radius: 26px;
-
-  padding: 15px 28px;
-
-  background: linear-gradient(180deg, #ffd86b 0%, #ffb703 100%);
-  color: #633600;
-
-  font-size: 18px;
-  font-weight: 1000;
-
-  cursor: pointer;
-
-  box-shadow:
-    0 7px 0 #c98200,
-    0 14px 24px rgba(0,0,0,0.18),
-    inset 0 2px 0 rgba(255,255,255,0.45);
-}
-
-.profile-change-name-button:active {
-  transform: translateY(4px);
-  box-shadow:
-    0 3px 0 #c98200,
-    0 8px 18px rgba(0,0,0,0.15);
-}
-
 @media (max-width: 768px) {
   .name-screen {
     align-items: flex-start;
@@ -3314,17 +3264,6 @@ input {
     font-size: 16px;
   }
 
-  .profile-username {
-    font-size: 17px;
-    padding: 7px 16px;
-  }
-
-  .profile-change-name-button {
-    width: min(260px, 80vw);
-    margin: 18px auto 0;
-    display: block;
-    font-size: 16px;
-  }
 }/* PROFILE NAME POLISH */
 
 .profile-hero-row {

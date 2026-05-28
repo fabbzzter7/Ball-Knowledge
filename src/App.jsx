@@ -260,6 +260,32 @@ function getPlayerLevel(highScore) {
   };
 }
 
+function getSavedDailyResult() {
+  const saved = localStorage.getItem("ballKnowledgeDailyResult");
+
+  if (!saved) return null;
+
+  try {
+    return JSON.parse(saved);
+  } catch {
+    localStorage.removeItem("ballKnowledgeDailyResult");
+    return null;
+  }
+}
+
+function getSavedLastSeenLevel() {
+  const savedLevel = Number(localStorage.getItem("ballKnowledgeLastSeenLevel"));
+
+  if (Number.isFinite(savedLevel) && savedLevel >= 1) {
+    return Math.min(savedLevel, PLAYER_LEVELS.length);
+  }
+
+  const savedHighScore =
+    Number(localStorage.getItem("footballQuizHighScore")) || 0;
+
+  return getPlayerLevel(savedHighScore).levelNumber;
+}
+
 export default function FootballQuizMVP() {
   const todayChallenge = getTodayChallenge();
 
@@ -311,8 +337,7 @@ export default function FootballQuizMVP() {
   });
 
   const [lastDailyResult, setLastDailyResult] = useState(() => {
-    const saved = localStorage.getItem("ballKnowledgeDailyResult");
-    return saved ? JSON.parse(saved) : null;
+    return getSavedDailyResult();
   });
 
   const [dailyStreak, setDailyStreak] = useState(() => {
@@ -326,47 +351,48 @@ export default function FootballQuizMVP() {
   const [streakRewardEarned, setStreakRewardEarned] = useState(0);
   const [showDailyCompletePopup, setShowDailyCompletePopup] = useState(false);
 
-const [lastSeenLevel, setLastSeenLevel] = useState(() => {
-  const saved = Number(localStorage.getItem("ballKnowledgeLastSeenLevel"));
+  const [lastSeenLevel, setLastSeenLevel] = useState(getSavedLastSeenLevel);
+  const [levelUpPopup, setLevelUpPopup] = useState(null);
 
-  if (saved) return saved;
+  const current = questions[questionIndex];
+  const playerLevel = getPlayerLevel(highScore);
+  const isHomeScreen = !gameStarted && !profileOpen && !modeMenuOpen;
 
-  const savedHighScore =
-    Number(localStorage.getItem("footballQuizHighScore")) || 0;
-
-  return getPlayerLevel(savedHighScore).levelNumber;
-});
-
-const [levelUpPopup, setLevelUpPopup] = useState(null);
-
-const current = questions[questionIndex];
-const playerLevel = getPlayerLevel(highScore);
   useEffect(() => {
-  if (gameStarted || !username) return;
+    if (!isHomeScreen || !username) return;
 
-  if (playerLevel.levelNumber > lastSeenLevel) {
-    const oldLevel = PLAYER_LEVELS[lastSeenLevel - 1] || PLAYER_LEVELS[0];
+    const newLevel = getPlayerLevel(highScore);
+    const safeLastSeenLevel = Math.max(
+      1,
+      Math.min(lastSeenLevel, PLAYER_LEVELS.length)
+    );
 
+    if (newLevel.levelNumber <= safeLastSeenLevel) return;
+
+    const oldLevel = PLAYER_LEVELS[safeLastSeenLevel - 1] || PLAYER_LEVELS[0];
     const unlockedLevels = PLAYER_LEVELS.slice(
-      lastSeenLevel,
-      playerLevel.levelNumber
+      safeLastSeenLevel,
+      newLevel.levelNumber
     );
 
-    setLevelUpPopup({
+    const popup = {
       oldLevel,
-      newLevel: playerLevel,
+      newLevel,
       unlockedLevels,
-      levelsGained: playerLevel.levelNumber - lastSeenLevel,
-    });
+      levelsGained: newLevel.levelNumber - safeLastSeenLevel,
+    };
 
-    setLastSeenLevel(playerLevel.levelNumber);
+    const popupTimer = window.setTimeout(() => {
+      setLevelUpPopup(popup);
+      setLastSeenLevel(newLevel.levelNumber);
+      localStorage.setItem(
+        "ballKnowledgeLastSeenLevel",
+        String(newLevel.levelNumber)
+      );
+    }, 0);
 
-    localStorage.setItem(
-      "ballKnowledgeLastSeenLevel",
-      String(playerLevel.levelNumber)
-    );
-  }
-}, [gameStarted, username, playerLevel.levelNumber, lastSeenLevel]);
+    return () => window.clearTimeout(popupTimer);
+  }, [isHomeScreen, username, highScore, lastSeenLevel]);
 
   const revivePrices = [250, 400, 800, 1600, 5000];
   const reviveCost = revivePrices[revivesUsed] || 5000;
@@ -840,7 +866,7 @@ const playerLevel = getPlayerLevel(highScore);
               onKeyDown={(e) => {
                 if (e.key === "Enter") saveUsername();
               }}
-              placeholder="mr,Ballknowledge"
+              placeholder="ball.knowledge"
               maxLength={16}
               autoFocus
             />
@@ -950,7 +976,7 @@ const playerLevel = getPlayerLevel(highScore);
             </motion.div>
           )}
         </AnimatePresence><AnimatePresence>
-  {levelUpPopup && (
+  {levelUpPopup && isHomeScreen && (
     <motion.div
       className="level-up-overlay"
       initial={{ opacity: 0 }}
