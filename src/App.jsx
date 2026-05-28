@@ -801,7 +801,7 @@ export default function FootballQuizMVP() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") saveUsername();
               }}
-              placeholder="Fabbe99"
+              placeholder="mr,Ballknowledge"
               maxLength={16}
               autoFocus
             />
@@ -931,9 +931,9 @@ export default function FootballQuizMVP() {
 
               <div className="profile-level-name">{playerLevel.name}</div>
 
-              <div className="profile-level-meta">
-                Level {playerLevel.levelNumber} / {playerLevel.totalLevels}
-              </div>
+              <div className="home-level-label">
+  Level {playerLevel.levelNumber}
+</div>
 
               <div className="profile-bar-outer">
                 <div
@@ -1020,9 +1020,9 @@ export default function FootballQuizMVP() {
                   <div className="home-level-emoji">{playerLevel.emoji}</div>
 
                   <div>
-                    <div className="home-level-label">
-                      Level {playerLevel.levelNumber} / {playerLevel.totalLevels}
-                    </div>
+                    <div className="profile-level-meta">
+  Level {playerLevel.levelNumber}
+</div>
 
                     <div className="home-level-name">{playerLevel.name}</div>
                   </div>
