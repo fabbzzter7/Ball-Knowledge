@@ -43,6 +43,35 @@ const PLAYER_LEVELS = [
   { min: 400, name: "Ball Knowledge Legend", emoji: "💎", color: "legend" },
 ];
 
+const MOCK_LEADERBOARD = {
+  daily: {
+    general: [
+      { name: "ball.knowledge", score: 42 },
+      { name: "sunday.scout", score: 31 },
+      { name: "goal.guru", score: 24 },
+    ],
+    "world-cup": [
+      { name: "worldcup.wiz", score: 38 },
+      { name: "finals.fan", score: 29 },
+      { name: "goal.guru", score: 22 },
+    ],
+  },
+  allTime: {
+    general: [
+      { name: "ball.knowledge", score: 142 },
+      { name: "sunday.scout", score: 117 },
+      { name: "goal.guru", score: 96 },
+    ],
+    "world-cup": [
+      { name: "worldcup.wiz", score: 121 },
+      { name: "finals.fan", score: 104 },
+      { name: "ball.knowledge", score: 88 },
+    ],
+  },
+};
+
+const LEADERBOARD_MEDALS = ["🥇", "🥈", "🥉"];
+
 function shuffle(array) {
   const newArray = [...array];
 
@@ -292,6 +321,9 @@ export default function FootballQuizMVP() {
   const [gameStarted, setGameStarted] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [leaderboardTab, setLeaderboardTab] = useState("daily");
+  const [leaderboardMode, setLeaderboardMode] = useState("general");
   const [gameMode, setGameMode] = useState("general");
 
   const [username, setUsername] = useState(() => {
@@ -356,7 +388,10 @@ export default function FootballQuizMVP() {
 
   const current = questions[questionIndex];
   const playerLevel = getPlayerLevel(highScore);
-  const isHomeScreen = !gameStarted && !profileOpen && !modeMenuOpen;
+  const isHomeScreen =
+    !gameStarted && !profileOpen && !leaderboardOpen && !modeMenuOpen;
+  const leaderboardRows =
+    MOCK_LEADERBOARD[leaderboardTab]?.[leaderboardMode] || [];
 
   useEffect(() => {
     if (!isHomeScreen || !username) return;
@@ -490,6 +525,7 @@ export default function FootballQuizMVP() {
     localStorage.setItem("ballKnowledgeUsername", finalName);
     setNameInput(finalName);
     setProfileOpen(false);
+    setLeaderboardOpen(false);
     setModeMenuOpen(false);
     setGameStarted(false);
   };
@@ -500,6 +536,7 @@ export default function FootballQuizMVP() {
     localStorage.removeItem("ballKnowledgeUsername");
     setUsername("");
     setProfileOpen(false);
+    setLeaderboardOpen(false);
     setModeMenuOpen(false);
     setGameStarted(false);
   };
@@ -557,6 +594,8 @@ export default function FootballQuizMVP() {
     setLastDailyResult(result);
   };  const startGame = (mode) => {
     setShowDailyCompletePopup(false);
+    setLeaderboardOpen(false);
+    setProfileOpen(false);
     setGameMode(mode);
     setQuestions(buildGameQuestions(mode));
     setQuestionIndex(0);
@@ -576,6 +615,8 @@ export default function FootballQuizMVP() {
     if (dailyPlayed) return;
 
     setShowDailyCompletePopup(false);
+    setLeaderboardOpen(false);
+    setProfileOpen(false);
     setGameMode("daily-list");
     setFoundAnswers([]);
     setDailyInput("");
@@ -600,6 +641,7 @@ export default function FootballQuizMVP() {
     setGameStarted(false);
     setModeMenuOpen(false);
     setProfileOpen(false);
+    setLeaderboardOpen(false);
     setGameMode("general");
 
     setQuestions(buildGameQuestions("general"));
@@ -1184,6 +1226,108 @@ export default function FootballQuizMVP() {
               </div>
             </motion.div>
           </div>
+        ) : leaderboardOpen ? (
+          <div className="leaderboard-screen">
+            <motion.div
+              className="leaderboard-card"
+              initial={{ opacity: 0, scale: 0.92, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 160, damping: 14 }}
+            >
+              <div className="leaderboard-kicker">Community</div>
+              <h1 className="leaderboard-title">Leaderboard</h1>
+              <p className="leaderboard-subtitle">Online rankings coming soon</p>
+
+              <div className="leaderboard-tabs" aria-label="Leaderboard period">
+                <button
+                  className={leaderboardTab === "daily" ? "active" : ""}
+                  onClick={() => {
+                    playClickSound();
+                    setLeaderboardTab("daily");
+                  }}
+                >
+                  Daily
+                </button>
+
+                <button
+                  className={leaderboardTab === "allTime" ? "active" : ""}
+                  onClick={() => {
+                    playClickSound();
+                    setLeaderboardTab("allTime");
+                  }}
+                >
+                  All Time
+                </button>
+              </div>
+
+              <div className="leaderboard-filters" aria-label="Leaderboard mode">
+                <button
+                  className={leaderboardMode === "general" ? "active" : ""}
+                  onClick={() => {
+                    playClickSound();
+                    setLeaderboardMode("general");
+                  }}
+                >
+                  General
+                </button>
+
+                <button
+                  className={leaderboardMode === "world-cup" ? "active" : ""}
+                  onClick={() => {
+                    playClickSound();
+                    setLeaderboardMode("world-cup");
+                  }}
+                >
+                  World Cup
+                </button>
+              </div>
+
+              <div className="leaderboard-list">
+                {leaderboardRows.map((row, index) => (
+                  <div
+                    key={`${leaderboardTab}-${leaderboardMode}-${row.name}`}
+                    className={`leaderboard-row rank-${index + 1}`}
+                  >
+                    <div className="leaderboard-rank">
+                      {LEADERBOARD_MEDALS[index] || index + 1}
+                    </div>
+
+                    <div className="leaderboard-player">
+                      <strong>{row.name}</strong>
+                      <small>
+                        {leaderboardMode === "world-cup"
+                          ? "World Cup"
+                          : "General"}
+                      </small>
+                    </div>
+
+                    <div className="leaderboard-score">{row.score}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="leaderboard-your-row">
+                <div className="leaderboard-rank">👤</div>
+
+                <div className="leaderboard-player">
+                  <strong>{username}</strong>
+                  <small>Your local best score</small>
+                </div>
+
+                <div className="leaderboard-score">{highScore}</div>
+              </div>
+
+              <button
+                className="leaderboard-back-button"
+                onClick={() => {
+                  playClickSound();
+                  setLeaderboardOpen(false);
+                }}
+              >
+                BACK
+              </button>
+            </motion.div>
+          </div>
         ) : !modeMenuOpen ? (
           <div className="main-menu">
             <h1 className="main-title">BALL KNOWLEDGE</h1>
@@ -1235,15 +1379,27 @@ export default function FootballQuizMVP() {
               </div>
             </div>
 
-            <button
-              className="profile-main-button"
-              onClick={() => {
-                playClickSound();
-                setProfileOpen(true);
-              }}
-            >
-              👤 PROFILE
-            </button>
+            <div className="home-secondary-actions">
+              <button
+                className="profile-main-button"
+                onClick={() => {
+                  playClickSound();
+                  setProfileOpen(true);
+                }}
+              >
+                👤 PROFILE
+              </button>
+
+              <button
+                className="leaderboard-main-button"
+                onClick={() => {
+                  playClickSound();
+                  setLeaderboardOpen(true);
+                }}
+              >
+                🏆 RANKINGS
+              </button>
+            </div>
 
             <button
               className="main-menu-button"
