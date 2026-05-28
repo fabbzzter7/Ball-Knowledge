@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, RotateCcw, CheckCircle2, XCircle } from "lucide-react";
+import { ANSWER_ALIASES, LAST_WORD_BLACKLIST } from "./answerAliases";
 
 import { QUESTIONS } from "./QUESTIONS";
 import { CAREER_QUESTIONS } from "./CAREER_QUESTIONS";
@@ -13,12 +14,33 @@ import wrongSound from "./assets/wrong.wav";
 import stadiumBg from "./assets/stadium-bg.png";
 import quizBg from "./assets/quiz-bg.png";
 
+const HARD_TIME_LIMIT = 20;
+const STREAK_TARGETS = [5, 10, 20, 30, 50];
+
 const STREAK_MILESTONES = [
   { day: 2, reward: 25 },
   { day: 4, reward: 50 },
   { day: 6, reward: 75 },
   { day: 8, reward: 90 },
   { day: 10, reward: 100 },
+];
+
+const PLAYER_LEVELS = [
+  { min: 0, name: "Beginner", emoji: "🌱", color: "green" },
+  { min: 5, name: "Bench Warmer", emoji: "🪑", color: "green" },
+  { min: 10, name: "Sunday League", emoji: "⚽", color: "green" },
+  { min: 20, name: "Rising Baller", emoji: "🔥", color: "yellow" },
+  { min: 35, name: "Football Fan", emoji: "📣", color: "yellow" },
+  { min: 50, name: "Semi Ball Knowledge", emoji: "🧠", color: "yellow" },
+  { min: 70, name: "Sharp Scout", emoji: "🔎", color: "blue" },
+  { min: 90, name: "Tactical Mind", emoji: "📋", color: "blue" },
+  { min: 110, name: "Elite Ball Knowledge", emoji: "🏆", color: "blue" },
+  { min: 140, name: "Champions League Brain", emoji: "⭐", color: "purple" },
+  { min: 170, name: "World Class", emoji: "🌍", color: "purple" },
+  { min: 210, name: "Football Professor", emoji: "🎓", color: "purple" },
+  { min: 260, name: "GOAT Debate Expert", emoji: "🐐", color: "orange" },
+  { min: 320, name: "Ball Knowledge Master", emoji: "👑", color: "orange" },
+  { min: 400, name: "Ball Knowledge Legend", emoji: "💎", color: "legend" },
 ];
 
 function shuffle(array) {
@@ -31,78 +53,6 @@ function shuffle(array) {
 
   return newArray;
 }
-
-const ANSWER_ALIASES = {
-  "lionel messi": ["messi", "leo messi"],
-  "cristiano ronaldo": ["ronaldo", "cr7", "c ronaldo", "cristiano"],
-  "kylian mbappe": ["mbappe", "mbappé"],
-  "zinedine zidane": ["zidane", "zizou"],
-  "diego maradona": ["maradona"],
-  "ronaldo": ["r9", "ronaldo nazario", "ronaldo nazário"],
-  "ronaldo nazario": ["ronaldo", "r9", "ronaldo nazário"],
-  "ronaldo nazário": ["ronaldo", "r9", "ronaldo nazario"],
-  "roberto baggio": ["baggio"],
-  "mario gotze": ["gotze", "götze", "mario götze"],
-  "miroslav klose": ["klose"],
-  "andres iniesta": ["iniesta", "andrés iniesta"],
-  "emiliano martinez": ["martinez", "emiliano martínez", "dibu martinez"],
-  "angel di maria": ["di maria", "ángel di maría", "di maría"],
-  "james rodriguez": ["james", "james rodríguez", "rodriguez", "rodríguez"],
-  "thomas muller": ["muller", "müller", "thomas müller"],
-  "geoff hurst": ["hurst"],
-  "gerd muller": ["muller", "müller", "gerd müller"],
-  "luka modric": ["modric", "modrić"],
-  "harry kane": ["kane"],
-  "neymar": ["neymar jr", "neymar junior"],
-  "zlatan ibrahimovic": ["zlatan", "ibrahimovic", "ibrahimović"],
-  "mohamed salah": ["salah", "mo salah"],
-  "sadio mane": ["mane", "mané", "sadio mané"],
-  "kevin de bruyne": ["de bruyne", "kdb"],
-  "erling haaland": ["haaland"],
-  "robert lewandowski": ["lewandowski"],
-  "bukayo saka": ["saka"],
-
-  "netherlands": ["holland", "the netherlands"],
-  "united states": ["usa", "us", "america", "united states of america"],
-  "south korea": ["korea", "republic of korea"],
-  "north korea": ["dpr korea"],
-  "west germany": ["germany"],
-  "czech republic": ["czechia"],
-  "ivory coast": ["cote divoire", "côte d'ivoire"],
-  "bosnia and herzogovina": ["bosnia"],
-  "bosnia and herzegovina": ["bosnia"],
-  "serbia and montenegro": ["serbia"],
-  "soviet union": ["ussr"],
-  "saudi arabia": ["saudi"],
-  "south africa": ["rsa"],
-  "new zealand": ["nz"],
-  "united arab emirates": ["uae"],
-};
-
-const LAST_WORD_BLACKLIST = new Set([
-  "united states",
-  "south korea",
-  "north korea",
-  "west germany",
-  "east germany",
-  "czech republic",
-  "ivory coast",
-  "south africa",
-  "saudi arabia",
-  "bosnia and herzegovina",
-  "serbia and montenegro",
-  "soviet union",
-  "real madrid",
-  "manchester united",
-  "manchester city",
-  "bayern munich",
-  "borussia dortmund",
-  "atletico madrid",
-  "atlético madrid",
-  "ac milan",
-  "inter miami",
-  "inter milan",
-]);
 
 function normalizeAnswer(text) {
   return String(text)
@@ -117,9 +67,7 @@ function normalizeAnswer(text) {
 function getAcceptedAnswers(correctAnswer) {
   const normalizedCorrect = normalizeAnswer(correctAnswer);
   const aliases = ANSWER_ALIASES[normalizedCorrect] || [];
-
   const accepted = [correctAnswer, ...aliases];
-
   const words = normalizedCorrect.split(" ");
 
   const canUseLastWord =
@@ -137,7 +85,6 @@ function getAcceptedAnswers(correctAnswer) {
 function isCorrectAnswer(input, correctAnswer) {
   const userAnswer = normalizeAnswer(input);
   const acceptedAnswers = getAcceptedAnswers(correctAnswer);
-
   return acceptedAnswers.includes(userAnswer);
 }
 
@@ -172,7 +119,6 @@ function getTodayChallenge() {
   }
 
   const today = new Date();
-
   const startDate = new Date(2026, 0, 1);
   const todayDate = new Date(
     today.getFullYear(),
@@ -182,7 +128,6 @@ function getTodayChallenge() {
 
   const oneDay = 1000 * 60 * 60 * 24;
   const daysPassed = Math.floor((todayDate - startDate) / oneDay);
-
   const index = daysPassed % DAILY_LIST_CHALLENGES.length;
 
   return DAILY_LIST_CHALLENGES[index];
@@ -199,42 +144,61 @@ function getStreakReward(streak) {
 
 function getNextMilestone(streak) {
   return STREAK_MILESTONES.find((milestone) => milestone.day > streak) || null;
-}const saveUsername = () => {
-  const cleanedName = nameInput.trim();
+}
 
-  if (!cleanedName) return;
+function getNextStreakTarget(streak) {
+  return (
+    STREAK_TARGETS.find((target) => streak < target) ??
+    STREAK_TARGETS[STREAK_TARGETS.length - 1]
+  );
+}
 
-  const finalName = cleanedName.slice(0, 16);
+function getPrevStreakTarget(streak) {
+  let prev = 0;
 
-  setUsername(finalName);
-  localStorage.setItem("ballKnowledgeUsername", finalName);
-  setNameInput("");
-  playClickSound();
-};
+  for (const target of STREAK_TARGETS) {
+    if (streak >= target) {
+      prev = target;
+    }
+  }
+
+  return prev;
+}
+
+function getStreakProgress(streak) {
+  const next = getNextStreakTarget(streak);
+  const prev = getPrevStreakTarget(streak);
+
+  if (streak >= STREAK_TARGETS[STREAK_TARGETS.length - 1]) {
+    return 100;
+  }
+
+  const range = next - prev;
+  const progress = streak - prev;
+
+  return Math.max(0, Math.min(100, (progress / range) * 100));
+}
 
 function buildGameQuestions(mode = "general") {
   if (mode === "career") {
-    return shuffle(CAREER_QUESTIONS).map((q) => ({
-      ...q,
-      options: shuffle(q.options || []),
-    }));
+    return shuffle(CAREER_QUESTIONS);
   }
 
   if (mode === "world-cup") {
-  const easy = WORLD_CUP_QUESTIONS.filter((q) => q.difficulty === "Easy");
-  const medium = WORLD_CUP_QUESTIONS.filter((q) => q.difficulty === "Medium");
-  const hard = WORLD_CUP_QUESTIONS.filter((q) => q.difficulty === "Hard");
-  const veryHard = WORLD_CUP_QUESTIONS.filter(
-    (q) => q.difficulty === "Very Hard"
-  );
+    const easy = WORLD_CUP_QUESTIONS.filter((q) => q.difficulty === "Easy");
+    const medium = WORLD_CUP_QUESTIONS.filter((q) => q.difficulty === "Medium");
+    const hard = WORLD_CUP_QUESTIONS.filter((q) => q.difficulty === "Hard");
+    const veryHard = WORLD_CUP_QUESTIONS.filter(
+      (q) => q.difficulty === "Very Hard"
+    );
 
-  return [
-    ...shuffle(easy).slice(0, 10),
-    ...shuffle(medium).slice(0, 15),
-    ...shuffle(hard).slice(0, 25),
-    ...shuffle(veryHard),
-  ];
-}
+    return [
+      ...shuffle(easy).slice(0, 10),
+      ...shuffle(medium).slice(0, 15),
+      ...shuffle(hard).slice(0, 25),
+      ...shuffle(veryHard),
+    ];
+  }
 
   const easy = QUESTIONS.filter((q) => q.difficulty === "Easy");
   const medium = QUESTIONS.filter((q) => q.difficulty === "Medium");
@@ -250,98 +214,7 @@ function buildGameQuestions(mode = "general") {
     ...q,
     options: shuffle(q.options),
   }));
-}const PLAYER_LEVELS = [
-  {
-    min: 0,
-    name: "Beginner",
-    emoji: "🌱",
-    color: "green",
-  },
-  {
-    min: 5,
-    name: "Bench Warmer",
-    emoji: "🪑",
-    color: "green",
-  },
-  {
-    min: 10,
-    name: "Sunday League",
-    emoji: "⚽",
-    color: "green",
-  },
-  {
-    min: 20,
-    name: "Rising Baller",
-    emoji: "🔥",
-    color: "yellow",
-  },
-  {
-    min: 35,
-    name: "Football Fan",
-    emoji: "📣",
-    color: "yellow",
-  },
-  {
-    min: 50,
-    name: "Semi Ball Knowledge",
-    emoji: "🧠",
-    color: "yellow",
-  },
-  {
-    min: 70,
-    name: "Sharp Scout",
-    emoji: "🔎",
-    color: "blue",
-  },
-  {
-    min: 90,
-    name: "Tactical Mind",
-    emoji: "📋",
-    color: "blue",
-  },
-  {
-    min: 110,
-    name: "Elite Ball Knowledge",
-    emoji: "🏆",
-    color: "blue",
-  },
-  {
-    min: 140,
-    name: "Champions League Brain",
-    emoji: "⭐",
-    color: "purple",
-  },
-  {
-    min: 170,
-    name: "World Class",
-    emoji: "🌍",
-    color: "purple",
-  },
-  {
-    min: 210,
-    name: "Football Professor",
-    emoji: "🎓",
-    color: "purple",
-  },
-  {
-    min: 260,
-    name: "GOAT Debate Expert",
-    emoji: "🐐",
-    color: "orange",
-  },
-  {
-    min: 320,
-    name: "Ball Knowledge Master",
-    emoji: "👑",
-    color: "orange",
-  },
-  {
-    min: 400,
-    name: "Ball Knowledge Legend",
-    emoji: "💎",
-    color: "legend",
-  },
-];
+}
 
 function getPlayerLevel(highScore) {
   let currentIndex = 0;
@@ -386,50 +259,23 @@ function getPlayerLevel(highScore) {
     pointsToNext: next.min - highScore,
   };
 }
-const HARD_TIME_LIMIT = 15;
+
 export default function FootballQuizMVP() {
-  const STREAK_TARGETS = [5, 10, 20, 30, 50];
-
-function getNextStreakTarget(streak) {
-  return STREAK_TARGETS.find((target) => streak < target) ?? STREAK_TARGETS[STREAK_TARGETS.length - 1];
-}
-
-function getPrevStreakTarget(streak) {
-  let prev = 0;
-
-  for (const target of STREAK_TARGETS) {
-    if (streak >= target) {
-      prev = target;
-    }
-  }
-
-  return prev;
-}
-
-function getStreakProgress(streak) {
-  const next = getNextStreakTarget(streak);
-  const prev = getPrevStreakTarget(streak);
-
-  if (streak >= STREAK_TARGETS[STREAK_TARGETS.length - 1]) {
-    return 100;
-  }
-
-  const range = next - prev;
-  const progress = streak - prev;
-
-  return Math.max(0, Math.min(100, (progress / range) * 100));
-}
   const todayChallenge = getTodayChallenge();
 
   const [gameStarted, setGameStarted] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
-const [profileOpen, setProfileOpen] = useState(false);
-const [gameMode, setGameMode] = useState("general");
-const [username, setUsername] = useState(() => {
-  return localStorage.getItem("ballKnowledgeUsername") || "";
-});
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [gameMode, setGameMode] = useState("general");
 
-const [nameInput, setNameInput] = useState("");
+  const [username, setUsername] = useState(() => {
+    return localStorage.getItem("ballKnowledgeUsername") || "";
+  });
+
+  const [nameInput, setNameInput] = useState(() => {
+    return localStorage.getItem("ballKnowledgeUsername") || "";
+  });
+
   const [questions, setQuestions] = useState(() =>
     buildGameQuestions("general")
   );
@@ -440,7 +286,8 @@ const [nameInput, setNameInput] = useState("");
   const [lives, setLives] = useState(3);
   const [finished, setFinished] = useState(false);
   const [streak, setStreak] = useState(0);
-const [timeLeft, setTimeLeft] = useState(HARD_TIME_LIMIT);
+  const [timeLeft, setTimeLeft] = useState(HARD_TIME_LIMIT);
+
   const [highScore, setHighScore] = useState(() => {
     return Number(localStorage.getItem("footballQuizHighScore")) || 0;
   });
@@ -480,25 +327,63 @@ const [timeLeft, setTimeLeft] = useState(HARD_TIME_LIMIT);
   const [showDailyCompletePopup, setShowDailyCompletePopup] = useState(false);
 
   const current = questions[questionIndex];
-const playerLevel = getPlayerLevel(highScore);useEffect(() => {
-  const handleButtonHaptic = (event) => {
-    if (event.target.closest("button")) {
-      if ("vibrate" in navigator) {
-        navigator.vibrate(10);
-      }
-    }
-  };
+  const playerLevel = getPlayerLevel(highScore);
 
-  document.addEventListener("pointerdown", handleButtonHaptic, {
-    passive: true,
-  });
-
-  return () => {
-    document.removeEventListener("pointerdown", handleButtonHaptic);
-  };
-}, []);
   const revivePrices = [250, 400, 800, 1600, 5000];
   const reviveCost = revivePrices[revivesUsed] || 5000;
+
+  const isTimedQuestion =
+    gameStarted &&
+    !finished &&
+    (gameMode === "general" || gameMode === "world-cup") &&
+    ["Hard", "Very Hard"].includes(current?.difficulty);
+
+  useEffect(() => {
+    const handleButtonHaptic = (event) => {
+      if (event.target.closest("button") && "vibrate" in navigator) {
+        navigator.vibrate(10);
+      }
+    };
+
+    document.addEventListener("pointerdown", handleButtonHaptic, {
+      passive: true,
+    });
+
+    return () => {
+      document.removeEventListener("pointerdown", handleButtonHaptic);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isTimedQuestion) return;
+
+    setTimeLeft(HARD_TIME_LIMIT);
+  }, [questionIndex, isTimedQuestion]);
+
+  useEffect(() => {
+    const timerActive =
+      isTimedQuestion && !selected && !rewardPopup && !wrongPopup;
+
+    if (!timerActive) return;
+
+    if (timeLeft <= 0) {
+      handleWrongAnswer(current.answer);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setTimeLeft((time) => time - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [
+    timeLeft,
+    isTimedQuestion,
+    selected,
+    rewardPopup,
+    wrongPopup,
+    current?.answer,
+  ]);
 
   const playCoinSound = () => {
     const audio = new Audio(coinSound);
@@ -511,19 +396,47 @@ const playerLevel = getPlayerLevel(highScore);useEffect(() => {
     audio.volume = 1;
     audio.currentTime = 0;
     audio.play().catch((err) => console.log("Wrong sound error:", err));
-  };const playClickSound = () => {
-  const audio = new Audio(clickSound);
-  audio.volume = 0.22;
+  };
 
-  audio.addEventListener("loadedmetadata", () => {
-    audio.currentTime = 0.43;
-    audio.play().catch(() => {});
-  });
-};
+  const playClickSound = () => {
+    const audio = new Audio(clickSound);
+    audio.volume = 0.22;
+
+    audio.addEventListener("loadedmetadata", () => {
+      audio.currentTime = 0.43;
+      audio.play().catch(() => {});
+    });
+  };
 
   const saveCoins = (newCoins) => {
     setCoins(newCoins);
     localStorage.setItem("footballQuizCoins", String(newCoins));
+  };
+
+  const saveUsername = () => {
+    const cleanedName = nameInput.trim();
+
+    if (!cleanedName) return;
+
+    const finalName = cleanedName.slice(0, 16);
+
+    playClickSound();
+    setUsername(finalName);
+    localStorage.setItem("ballKnowledgeUsername", finalName);
+    setNameInput(finalName);
+    setProfileOpen(false);
+    setModeMenuOpen(false);
+    setGameStarted(false);
+  };
+
+  const changeUsername = () => {
+    playClickSound();
+    setNameInput(username);
+    localStorage.removeItem("ballKnowledgeUsername");
+    setUsername("");
+    setProfileOpen(false);
+    setModeMenuOpen(false);
+    setGameStarted(false);
   };
 
   const awardDailyStreakBonus = () => {
@@ -577,24 +490,22 @@ const playerLevel = getPlayerLevel(highScore);useEffect(() => {
 
     setDailyPlayed(true);
     setLastDailyResult(result);
+  };  const startGame = (mode) => {
+    setShowDailyCompletePopup(false);
+    setGameMode(mode);
+    setQuestions(buildGameQuestions(mode));
+    setQuestionIndex(0);
+    setSelected(null);
+    setScore(0);
+    setLives(3);
+    setStreak(0);
+    setTimeLeft(HARD_TIME_LIMIT);
+    setFinished(false);
+    setRevivesUsed(0);
+    setRewardPopup(null);
+    setWrongPopup(null);
+    setGameStarted(true);
   };
-
-  const startGame = (mode) => {
-  setShowDailyCompletePopup(false);
-  setGameMode(mode);
-  setQuestions(buildGameQuestions(mode));
-  setQuestionIndex(0);
-  setSelected(null);
-  setScore(0);
-  setLives(3);
-  setStreak(0);
-  setTimeLeft(HARD_TIME_LIMIT);
-  setFinished(false);
-  setRevivesUsed(0);
-  setRewardPopup(null);
-  setWrongPopup(null);
-  setGameStarted(true);
-};
 
   const startDailyChallenge = () => {
     if (dailyPlayed) return;
@@ -610,6 +521,8 @@ const playerLevel = getPlayerLevel(highScore);useEffect(() => {
     setSelected(null);
     setScore(0);
     setLives(3);
+    setStreak(0);
+    setTimeLeft(HARD_TIME_LIMIT);
     setFinished(false);
     setRevivesUsed(0);
     setRewardPopup(null);
@@ -619,30 +532,31 @@ const playerLevel = getPlayerLevel(highScore);useEffect(() => {
   };
 
   const restart = () => {
-  setGameStarted(false);
-  setModeMenuOpen(false);
-  setProfileOpen(false);
-  setGameMode("general");
+    setGameStarted(false);
+    setModeMenuOpen(false);
+    setProfileOpen(false);
+    setGameMode("general");
 
-  setQuestions(buildGameQuestions("general"));
-  setQuestionIndex(0);
+    setQuestions(buildGameQuestions("general"));
+    setQuestionIndex(0);
 
-  setSelected(null);
-  setScore(0);
-  setLives(3);
-  setStreak(0);
-  setFinished(false);
-  setRevivesUsed(0);
+    setSelected(null);
+    setScore(0);
+    setLives(3);
+    setStreak(0);
+    setTimeLeft(HARD_TIME_LIMIT);
+    setFinished(false);
+    setRevivesUsed(0);
 
-  setRewardPopup(null);
-  setWrongPopup(null);
+    setRewardPopup(null);
+    setWrongPopup(null);
 
-  setFoundAnswers([]);
-  setDailyInput("");
-  setDailyCoinsEarned(0);
-  setDailyReveal(null);
-  setIsRevealing(false);
-};
+    setFoundAnswers([]);
+    setDailyInput("");
+    setDailyCoinsEarned(0);
+    setDailyReveal(null);
+    setIsRevealing(false);
+  };
 
   const nextQuestion = () => {
     setQuestionIndex((i) => (i + 1) % questions.length);
@@ -659,10 +573,10 @@ const playerLevel = getPlayerLevel(highScore);useEffect(() => {
   };
 
   const handleWrongAnswer = (correctAnswer) => {
-  setStreak(0);
+    setStreak(0);
 
-  const newLives = Math.max(lives - 1, 0);
-  setLives(newLives);
+    const newLives = Math.max(lives - 1, 0);
+    setLives(newLives);
 
     setWrongPopup({
       answer: correctAnswer,
@@ -684,122 +598,40 @@ const playerLevel = getPlayerLevel(highScore);useEffect(() => {
       }, 1200);
     }
   };
-useEffect(() => {if (!username) {
-  return (
-    <div
-      className="fullscreen-bg"
-      style={{
-        backgroundImage: `linear-gradient(rgba(255,255,255,0.08), rgba(0,0,0,0.48)), url(${stadiumBg})`,
-      }}
-    >
-      <div className="name-screen">
-        <div className="name-card">
-          <div className="name-ball">⚽</div>
 
-          <h1 className="name-title">Choose your player name</h1>
-
-          <p className="name-subtitle">
-            This will show on your profile and future leaderboards.
-          </p>
-
-          <input
-            className="name-input"
-            value={nameInput}
-            onChange={(e) => setNameInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") saveUsername();
-            }}
-            placeholder="Fabbe99"
-            maxLength={16}
-            autoFocus
-          />
-
-          <button className="name-save-button" onClick={saveUsername}>
-            START PLAYING
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-  if (
-    !gameStarted ||
-    finished ||
-    gameMode !== "general" ||
-    current?.difficulty !== "Hard"
-  ) {
-    return;
-  }
-
-  setTimeLeft(HARD_TIME_LIMIT);
-}, [questionIndex, gameStarted, finished, gameMode, current?.difficulty]);
-
-useEffect(() => {
-  const hardTimerActive =
-    gameStarted &&
-    !finished &&
-    gameMode === "general" &&
-    current?.difficulty === "Hard" &&
-    !selected &&
-    !rewardPopup &&
-    !wrongPopup;
-
-  if (!hardTimerActive) return;
-
-  if (timeLeft <= 0) {
-    handleWrongAnswer(current.answer);
-    return;
-  }
-
-  const timer = setTimeout(() => {
-    setTimeLeft((time) => time - 1);
-  }, 1000);
-
-  return () => clearTimeout(timer);
-}, [
-  timeLeft,
-  gameStarted,
-  finished,
-  gameMode,
-  current,
-  selected,
-  rewardPopup,
-  wrongPopup,
-]);
   const chooseAnswer = (option) => {
     if (selected || rewardPopup || wrongPopup) return;
+
     setSelected(option);
 
     if (isCorrectAnswer(option, current.answer)) {
       const newScore = score + 1;
-      setScore(newScore);
       const newStreak = streak + 1;
-setStreak(newStreak);
+      const reward = getRewardForScore(newScore);
 
+      setScore(newScore);
+      setStreak(newStreak);
 
       if (newScore > highScore) {
         setHighScore(newScore);
         localStorage.setItem("footballQuizHighScore", String(newScore));
       }
 
-      const reward = getRewardForScore(newScore);
+      if (reward > 0) {
+        const newCoins = coins + reward;
+        saveCoins(newCoins);
 
-if (reward > 0) {
-  const newCoins = coins + reward;
-  saveCoins(newCoins);
+        setRewardPopup({
+          streak: newStreak,
+          coins: reward,
+          onCollect: "next-question",
+        });
 
-  setRewardPopup({
-    streak: newStreak,
-    coins: reward,
-    onCollect: "next-question",
-  });
-
-  playCoinSound();
-} else {
-  playCoinSound();
-
-  setTimeout(nextQuestion, 950);
-}
+        playCoinSound();
+      } else {
+        playCoinSound();
+        setTimeout(nextQuestion, 950);
+      }
     } else {
       handleWrongAnswer(current.answer);
     }
@@ -819,11 +651,9 @@ if (reward > 0) {
   const checkDailyAnswer = () => {
     if (!dailyInput.trim() || rewardPopup || wrongPopup || isRevealing) return;
 
-    const input = normalizeAnswer(dailyInput);
-
     const matchedAnswer = todayChallenge.answers.find((answer) =>
-  isCorrectAnswer(dailyInput, answer)
-);
+      isCorrectAnswer(dailyInput, answer)
+    );
 
     if (matchedAnswer && !foundAnswers.includes(matchedAnswer)) {
       const rank = todayChallenge.answers.indexOf(matchedAnswer) + 1;
@@ -941,6 +771,50 @@ if (reward > 0) {
     }
   };
 
+  if (!username) {
+    return (
+      <div
+        className="fullscreen-bg"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.08), rgba(0,0,0,0.48)), url(${stadiumBg})`,
+        }}
+      >
+        <div className="name-screen">
+          <motion.div
+            className="name-card"
+            initial={{ opacity: 0, scale: 0.88, y: 30 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 160, damping: 13 }}
+          >
+            <div className="name-ball">⚽</div>
+
+            <h1 className="name-title">Choose your player name</h1>
+
+            <p className="name-subtitle">
+              Your name will show on your profile and future leaderboards.
+            </p>
+
+            <input
+              className="name-input"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveUsername();
+              }}
+              placeholder="Fabbe99"
+              maxLength={16}
+              autoFocus
+            />
+
+            <button className="name-save-button" onClick={saveUsername}>
+              START PLAYING
+            </button>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
   if (!gameStarted) {
     return (
       <div
@@ -993,14 +867,14 @@ if (reward > 0) {
               <div className="daily-reward-road">
                 {STREAK_MILESTONES.map((milestone) => {
                   const reached = lastDailyResult.streak >= milestone.day;
-                  const current = lastDailyResult.streak === milestone.day;
+                  const currentMilestone = lastDailyResult.streak === milestone.day;
 
                   return (
                     <div
                       key={milestone.day}
                       className={`daily-reward-day ${
                         reached ? "reached" : ""
-                      } ${current ? "current" : ""}`}
+                      } ${currentMilestone ? "current" : ""}`}
                     >
                       <div className="daily-reward-ball">
                         {reached ? "✅" : "⚽"}
@@ -1039,156 +913,165 @@ if (reward > 0) {
         </AnimatePresence>
 
         {profileOpen ? (
-  <div className="profile-screen">
-    <div className={`profile-card level-${playerLevel.color}`}>
-      <div className="profile-avatar">{playerLevel.emoji}</div>
+          <div className="profile-screen">
+            <motion.div
+              className={`profile-card level-${playerLevel.color}`}
+              initial={{ opacity: 0, scale: 0.9, y: 26 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 160, damping: 14 }}
+            >
+              <div className="profile-hero-row">
+                <div className="profile-avatar">{playerLevel.emoji}</div>
 
-      <div className="profile-title">Your Profile</div><div className="profile-username">@{username}</div>
+                <div className="profile-name-wrap">
+                  <div className="profile-title">Your Profile</div>
+                  <div className="profile-name-pill">👤 {username}</div>
+                </div>
+              </div>
 
-      <div className="profile-level-name">{playerLevel.name}</div>
+              <div className="profile-level-name">{playerLevel.name}</div>
 
-      <div className="profile-level-meta">
-        Level {playerLevel.levelNumber} / {playerLevel.totalLevels}
-      </div>
+              <div className="profile-level-meta">
+                Level {playerLevel.levelNumber} / {playerLevel.totalLevels}
+              </div>
 
-      <div className="profile-bar-outer">
-        <div
-          className="profile-bar-inner"
-          style={{ width: `${playerLevel.progress}%` }}
-        />
-      </div>
+              <div className="profile-bar-outer">
+                <div
+                  className="profile-bar-inner"
+                  style={{ width: `${playerLevel.progress}%` }}
+                />
+              </div>
 
-      <div className="profile-next-level">
-        {playerLevel.next
-          ? `${playerLevel.pointsToNext} more best-score points to unlock ${playerLevel.next.name}`
-          : "Max level reached"}
-      </div>
+              <div className="profile-next-level">
+                {playerLevel.next
+                  ? `${playerLevel.pointsToNext} more best-score points to unlock ${playerLevel.next.name}`
+                  : "Max level reached"}
+              </div>
 
-      <div className="profile-stats-grid">
-        <div className="profile-stat-card">
-          <span>🔥</span>
-          <strong>{highScore}</strong>
-          <small>Best score</small>
-        </div>
+              <div className="profile-stats-grid">
+                <div className="profile-stat-card">
+                  <span>🔥</span>
+                  <strong>{highScore}</strong>
+                  <small>Best score</small>
+                </div>
 
-        <div className="profile-stat-card">
-          <span>🪙</span>
-          <strong>{coins}</strong>
-          <small>Coins</small>
-        </div>
+                <div className="profile-stat-card">
+                  <span>🪙</span>
+                  <strong>{coins}</strong>
+                  <small>Coins</small>
+                </div>
 
-        <div className="profile-stat-card">
-          <span>📅</span>
-          <strong>{dailyStreak}</strong>
-          <small>Daily streak</small>
-        </div>
+                <div className="profile-stat-card">
+                  <span>📅</span>
+                  <strong>{dailyStreak}</strong>
+                  <small>Daily streak</small>
+                </div>
 
-        <div className="profile-stat-card">
-          <span>🏆</span>
-          <strong>{streak}</strong>
-          <small>Current streak</small>
-        </div>
-      </div>
+                <div className="profile-stat-card">
+                  <span>🏆</span>
+                  <strong>{playerLevel.levelNumber}</strong>
+                  <small>Level</small>
+                </div>
+              </div>
 
-      <button
-  className="profile-change-name-button"
-  onClick={() => {
-    playClickSound();
-    localStorage.removeItem("ballKnowledgeUsername");
-    setUsername("");
-    setProfileOpen(false);
-  }}
->
-  CHANGE NAME
-</button><button
-        className="profile-back-button"
-        onClick={() => {
-          playClickSound();
-          setProfileOpen(false);
-        }}
-      >
-        BACK
-      </button>
-    </div>
-  </div>
-) : !modeMenuOpen ? (
-  <div className="main-menu">
-            <h1 className="main-title">BALL KNOWLEDGE</h1><div className="main-username-pill">
-  👤 {username}
-</div><div className={`home-progress-card level-${playerLevel.color}`}>
-  <div className="home-progress-top">
-    <div className="home-stat-pill home-streak-pill">
-      <span>🔥</span>
-      <strong>{dailyStreak}</strong>
-      <small>Daily streak</small>
-    </div>
+              <div className="profile-actions">
+                <button
+                  className="profile-change-name-button"
+                  onClick={changeUsername}
+                >
+                  CHANGE NAME
+                </button>
 
-    <div className="home-stat-pill home-coins-pill">
-      <span>🪙</span>
-      <strong>{coins}</strong>
-      <small>Coins</small>
-    </div>
-  </div>
+                <button
+                  className="profile-back-button"
+                  onClick={() => {
+                    playClickSound();
+                    setProfileOpen(false);
+                  }}
+                >
+                  BACK
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        ) : !modeMenuOpen ? (
+          <div className="main-menu">
+            <h1 className="main-title">BALL KNOWLEDGE</h1>
 
-  <div className="home-level-box">
-    <div className="home-level-left">
-      <div className="home-level-emoji">{playerLevel.emoji}</div>
+            <div className="main-username-pill">👤 {username}</div>
 
-      <div>
-        <div className="home-level-label">
-          Level {playerLevel.levelNumber} / {playerLevel.totalLevels}
-        </div>
+            <div className={`home-progress-card level-${playerLevel.color}`}>
+              <div className="home-progress-top">
+                <div className="home-stat-pill home-streak-pill">
+                  <span>🔥</span>
+                  <strong>{dailyStreak}</strong>
+                  <small>Daily streak</small>
+                </div>
 
-        <div className="home-level-name">{playerLevel.name}</div>
-      </div>
-    </div>
+                <div className="home-stat-pill home-coins-pill">
+                  <span>🪙</span>
+                  <strong>{coins}</strong>
+                  <small>Coins</small>
+                </div>
+              </div>
 
-    <div className="home-level-score">
-      Best: {highScore}
-    </div>
-  </div>
+              <div className="home-level-box">
+                <div className="home-level-left">
+                  <div className="home-level-emoji">{playerLevel.emoji}</div>
 
-  <div className="home-level-bar-outer">
-    <div
-      className="home-level-bar-inner"
-      style={{ width: `${playerLevel.progress}%` }}
-    />
-  </div>
+                  <div>
+                    <div className="home-level-label">
+                      Level {playerLevel.levelNumber} / {playerLevel.totalLevels}
+                    </div>
 
-  <div className="home-next-level">
-    {playerLevel.next
-      ? `${playerLevel.pointsToNext} more best-score points to unlock ${playerLevel.next.name}`
-      : "Max level reached • true ball knowledge legend"}
-  </div>
-</div>
+                    <div className="home-level-name">{playerLevel.name}</div>
+                  </div>
+                </div>
 
-<button
-  className="profile-main-button"
-  onClick={() => {
-    playClickSound();
-    setProfileOpen(true);
-  }}
->
-  👤 PROFILE
-</button>
+                <div className="home-level-score">Best: {highScore}</div>
+              </div>
 
-<button
-  className="main-menu-button"
-  onClick={() => {
-    playClickSound();
-    setModeMenuOpen(true);
-  }}
->
-  SINGLE PLAYER
-</button>
+              <div className="home-level-bar-outer">
+                <div
+                  className="home-level-bar-inner"
+                  style={{ width: `${playerLevel.progress}%` }}
+                />
+              </div>
+
+              <div className="home-next-level">
+                {playerLevel.next
+                  ? `${playerLevel.pointsToNext} more best-score points to unlock ${playerLevel.next.name}`
+                  : "Max level reached • true ball knowledge legend"}
+              </div>
+            </div>
 
             <button
-  className={`daily-main-button ${dailyPlayed ? "daily-completed" : ""}`}
-  onClick={() => {
-    playClickSound();
-    startDailyChallenge();
-  }}
-  disabled={dailyPlayed}
+              className="profile-main-button"
+              onClick={() => {
+                playClickSound();
+                setProfileOpen(true);
+              }}
+            >
+              👤 PROFILE
+            </button>
+
+            <button
+              className="main-menu-button"
+              onClick={() => {
+                playClickSound();
+                setModeMenuOpen(true);
+              }}
+            >
+              SINGLE PLAYER
+            </button>
+
+            <button
+              className={`daily-main-button ${dailyPlayed ? "daily-completed" : ""}`}
+              onClick={() => {
+                playClickSound();
+                startDailyChallenge();
+              }}
+              disabled={dailyPlayed}
             >
               {dailyPlayed ? "✅ DAILY COMPLETED" : "🔥 DAILY CHALLENGE"}
             </button>
@@ -1209,42 +1092,44 @@ if (reward > 0) {
         ) : (
           <div className="mode-menu">
             <button
-  className="mode-button"
-  onClick={() => {
-    playClickSound();
-    startGame("general");
-  }}
->
-  General Ball Knowledge
-</button>
+              className="mode-button"
+              onClick={() => {
+                playClickSound();
+                startGame("general");
+              }}
+            >
+              General Ball Knowledge
+            </button>
 
             <button
-  className="mode-button"
-  onClick={() => {
-    playClickSound();
-    startGame("career");
-  }}
->
-  Career Path
-</button><button
-  className="mode-button"
-  onClick={() => {
-    playClickSound();
-    startGame("world-cup");
-  }}
->
-  World Cup
-</button>
+              className="mode-button"
+              onClick={() => {
+                playClickSound();
+                startGame("career");
+              }}
+            >
+              Career Path
+            </button>
 
             <button
-  className="mode-back-button"
-  onClick={() => {
-    playClickSound();
-    setModeMenuOpen(false);
-  }}
->
-  Back
-</button>
+              className="mode-button"
+              onClick={() => {
+                playClickSound();
+                startGame("world-cup");
+              }}
+            >
+              World Cup
+            </button>
+
+            <button
+              className="mode-back-button"
+              onClick={() => {
+                playClickSound();
+                setModeMenuOpen(false);
+              }}
+            >
+              Back
+            </button>
           </div>
         )}
       </div>
@@ -1410,28 +1295,32 @@ if (reward > 0) {
                   +{lastDailyResult?.streakBonus || streakRewardEarned} streak
                   bonus
                 </div>
-              )}{!dailyCompleted && (
-  <div className="daily-missing-answers">
-    <div className="daily-missing-title">Missing answers</div>
+              )}
 
-    <div className="daily-missing-list">
-      {todayChallenge.answers.map((answer, index) => {
-        const found = foundAnswers.includes(answer);
+              {!dailyCompleted && (
+                <div className="daily-missing-answers">
+                  <div className="daily-missing-title">Missing answers</div>
 
-        return (
-          <div
-            key={answer}
-            className={`daily-missing-row ${found ? "found" : "missed"}`}
-          >
-            <span>#{index + 1}</span>
-            <strong>{answer}</strong>
-            <em>{found ? "Found" : "Missed"}</em>
-          </div>
-        );
-      })}
-    </div>
-  </div>
-)}
+                  <div className="daily-missing-list">
+                    {todayChallenge.answers.map((answer, index) => {
+                      const found = foundAnswers.includes(answer);
+
+                      return (
+                        <div
+                          key={answer}
+                          className={`daily-missing-row ${
+                            found ? "found" : "missed"
+                          }`}
+                        >
+                          <span>#{index + 1}</span>
+                          <strong>{answer}</strong>
+                          <em>{found ? "Found" : "Missed"}</em>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -1477,14 +1366,14 @@ if (reward > 0) {
       }}
     >
       <button
-  className="home-button"
-  onClick={() => {
-    playClickSound();
-    restart();
-  }}
->
-  ← Home
-</button>
+        className="home-button"
+        onClick={() => {
+          playClickSound();
+          restart();
+        }}
+      >
+        ← Home
+      </button>
 
       <AnimatePresence>
         {rewardPopup && (
@@ -1499,14 +1388,14 @@ if (reward > 0) {
             <div className="reward-coins">+{rewardPopup.coins} COINS</div>
 
             <button
-  className="collect-button"
-  onClick={() => {
-    playClickSound();
-    collectReward();
-  }}
->
-  COLLECT
-</button>
+              className="collect-button"
+              onClick={() => {
+                playClickSound();
+                collectReward();
+              }}
+            >
+              COLLECT
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1529,24 +1418,27 @@ if (reward > 0) {
 
       <div className="hud-row">
         <div className="streak-meter">
-  <div className="streak-meter-top">
-    <div className="streak-left">
-      <span className="streak-fire">🔥</span>
-      <span className="streak-title">STREAK {streak}</span>
-    </div>
+          <div className="streak-meter-top">
+            <div className="streak-left">
+              <span className="streak-fire">🔥</span>
+              <span className="streak-title">STREAK {streak}</span>
+            </div>
 
-    <div className="streak-right">
-      {streak >= 50 ? "MAXED" : `Next reward: ${getNextStreakTarget(streak)}`}
-    </div>
-  </div>
+            <div className="streak-right">
+              {streak >= 50
+                ? "MAXED"
+                : `Next reward: ${getNextStreakTarget(streak)}`}
+            </div>
+          </div>
 
-  <div className="streak-bar-outer">
-    <div
-      className="streak-bar-inner"
-      style={{ width: `${getStreakProgress(streak)}%` }}
-    />
-  </div>
-</div>
+          <div className="streak-bar-outer">
+            <div
+              className="streak-bar-inner"
+              style={{ width: `${getStreakProgress(streak)}%` }}
+            />
+          </div>
+        </div>
+
         <div className="hud-card">
           <span className="hud-label">SCORE</span>
           <span className="hud-value">🔥 {score}</span>
@@ -1581,20 +1473,24 @@ if (reward > 0) {
           transition={{ duration: 0.25 }}
         >
           <div className="difficulty-pill">
-  {gameMode === "career"
-    ? "Career Path"
-    : gameMode === "world-cup"
-    ? `World Cup • ${current.difficulty}`
-    : current.difficulty}
-</div>
+            {gameMode === "career"
+              ? "Career Path"
+              : gameMode === "world-cup"
+              ? `World Cup • ${current.difficulty}`
+              : current.difficulty}
+          </div>
 
-{gameMode === "general" && current.difficulty === "Hard" && (
-  <div className={`hard-timer ${timeLeft <= 3 ? "danger" : ""}`}>
-    ⏱ {timeLeft}s
-  </div>
-)}
+          {isTimedQuestion && (
+            <div
+              className={`hard-timer ${
+                current.difficulty === "Very Hard" ? "very-hard" : ""
+              } ${timeLeft <= 5 ? "danger" : ""}`}
+            >
+              ⏱ {timeLeft}s
+            </div>
+          )}
 
-<h1 className="question-title">{current.question}</h1>
+          <h1 className="question-title">{current.question}</h1>
 
           {gameMode === "career" || gameMode === "world-cup" ? (
             <>
@@ -1602,10 +1498,10 @@ if (reward > 0) {
                 <input
                   type="text"
                   placeholder={
-  gameMode === "world-cup"
-    ? "Type your answer..."
-    : "Type player name..."
-}
+                    gameMode === "world-cup"
+                      ? "Type your answer..."
+                      : "Type player name..."
+                  }
                   className="career-input"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
@@ -1617,18 +1513,20 @@ if (reward > 0) {
               </div>
 
               {selected && (
-  <div
-    className={`career-feedback ${
-      isCorrectAnswer(selected, current.answer) ? "correct" : "wrong"
-    }`}
-  >
-    {isCorrectAnswer(selected, current.answer) ? (
-      <>✅ CORRECT! {current.answer}</>
-    ) : (
-      <>❌ Correct answer: {current.answer}</>
-    )}
-  </div>
-)}
+                <div
+                  className={`career-feedback ${
+                    isCorrectAnswer(selected, current.answer)
+                      ? "correct"
+                      : "wrong"
+                  }`}
+                >
+                  {isCorrectAnswer(selected, current.answer) ? (
+                    <>✅ CORRECT! {current.answer}</>
+                  ) : (
+                    <>❌ Correct answer: {current.answer}</>
+                  )}
+                </div>
+              )}
             </>
           ) : (
             <div className="answers-grid">
@@ -1640,11 +1538,11 @@ if (reward > 0) {
 
                 return (
                   <button
-  key={option}
-  onClick={() => {
-    playClickSound();
-    chooseAnswer(option);
-  }}
+                    key={option}
+                    onClick={() => {
+                      playClickSound();
+                      chooseAnswer(option);
+                    }}
                     className={`answer-button ${
                       showCorrect ? "correct" : showWrong ? "wrong" : ""
                     }`}
