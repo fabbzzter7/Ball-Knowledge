@@ -8,6 +8,11 @@ import { CAREER_QUESTIONS } from "./CAREER_QUESTIONS";
 import { DAILY_LIST_CHALLENGES } from "./DAILY_LIST_CHALLENGES";
 import { WORLD_CUP_QUESTIONS } from "./WORLD_CUP_QUESTIONS";
 import { getMockLeaderboard } from "./leaderboardData";
+import { isSupabaseConfigured, supabase } from "./lib/supabaseClient";
+import {
+  resolveMultiplayerQuestions,
+  selectMultiplayerQuestionIds,
+} from "./lib/multiplayerQuestions";
 
 import clickSound from "./assets/Click.mp3";
 import coinSound from "./assets/Coins.mp3";
@@ -18,6 +23,12 @@ import quizBg from "./assets/quiz-bg.png";
 const HARD_TIME_LIMIT = 20;
 const DAILY_SCAN_STEP_MS = 210;
 const STREAK_TARGETS = [5, 10, 20, 30, 50];
+const MULTIPLAYER_CATEGORIES = [
+  { id: "general", label: "General", mode: "general", available: true },
+  { id: "world-cup", label: "World Cup", mode: "world-cup", available: true },
+  { id: "legends", label: "Legends", mode: "general", available: false },
+  { id: "clubs", label: "Clubs", mode: "general", available: false },
+];
 
 const STREAK_MILESTONES = [
   { day: 2, reward: 25 },
@@ -303,6 +314,13 @@ function createMockOpponentScore(finalScore) {
   return Math.max(0, finalScore + swing);
 }
 
+function getCategoryLabel(categoryId) {
+  return (
+    MULTIPLAYER_CATEGORIES.find((category) => category.id === categoryId)
+      ?.label || "General"
+  );
+}
+
 export default function FootballQuizMVP() {
   const todayChallenge = getTodayChallenge();
 
@@ -313,8 +331,19 @@ export default function FootballQuizMVP() {
   const [multiplayerOpen, setMultiplayerOpen] = useState(false);
   const [multiplayerStep, setMultiplayerStep] = useState("menu");
   const [multiplayerMode, setMultiplayerMode] = useState("general");
+  const [activeMatch, setActiveMatch] = useState(null);
+  const [activeRound, setActiveRound] = useState(null);
+  const [matchRounds, setMatchRounds] = useState([]);
+  const [nextCategoryPickerOpen, setNextCategoryPickerOpen] = useState(false);
+  const [multiplayerRoundOpen, setMultiplayerRoundOpen] = useState(false);
+  const [multiplayerRoundIndex, setMultiplayerRoundIndex] = useState(0);
+  const [multiplayerRoundSelected, setMultiplayerRoundSelected] = useState(null);
+  const [multiplayerRoundScore, setMultiplayerRoundScore] = useState(0);
+  const [multiplayerRoundDone, setMultiplayerRoundDone] = useState(false);
   const [multiplayerRoomCode, setMultiplayerRoomCode] = useState("");
   const [joinRoomCode, setJoinRoomCode] = useState("");
+  const [multiplayerLoading, setMultiplayerLoading] = useState(false);
+  const [multiplayerError, setMultiplayerError] = useState("");
   const [isMockMultiplayer, setIsMockMultiplayer] = useState(false);
   const [mockOpponentScore, setMockOpponentScore] = useState(null);
   const [coinsMenuOpen, setCoinsMenuOpen] = useState(false);
@@ -400,6 +429,34 @@ export default function FootballQuizMVP() {
   });
   const leaderboardRows = leaderboard.rows;
   const currentUserLeaderboardRow = leaderboard.currentUserRow;
+  const hasBothMultiplayerPlayers =
+    Boolean(activeMatch?.player1_username) && Boolean(activeMatch?.player2_username);
+  const canChooseMultiplayerCategory =
+    hasBothMultiplayerPlayers &&
+    (activeMatch?.phase === "choose_category" ||
+      (activeMatch?.phase === "round_finished" && nextCategoryPickerOpen)) &&
+    activeMatch?.current_turn === username;
+  const canOpenNextCategoryPicker =
+    hasBothMultiplayerPlayers &&
+    activeMatch?.phase === "round_finished" &&
+    activeMatch?.current_turn === username;
+  const multiplayerPlayerSlot =
+    activeMatch?.player1_username === username
+      ? "player1"
+      : activeMatch?.player2_username === username
+      ? "player2"
+      : null;
+  const hasPlayedActiveRound =
+    multiplayerPlayerSlot === "player1"
+      ? Boolean(activeRound?.player1_finished)
+      : multiplayerPlayerSlot === "player2"
+      ? Boolean(activeRound?.player2_finished)
+      : false;
+  const activeRoundQuestions = resolveMultiplayerQuestions(
+    activeRound?.question_ids || []
+  );
+  const currentMultiplayerRoundQuestion =
+    activeRoundQuestions[multiplayerRoundIndex];
 
   useEffect(() => {
     if (!isHomeScreen || !username) return;
@@ -631,33 +688,461 @@ export default function FootballQuizMVP() {
     setProfileOpen(false);
     setLeaderboardOpen(false);
     setMultiplayerStep("menu");
+    setActiveMatch(null);
+    setActiveRound(null);
+    setMatchRounds([]);
+    setNextCategoryPickerOpen(false);
     setMultiplayerRoomCode("");
     setJoinRoomCode("");
+    setMultiplayerError("");
   };
 
-  const createMultiplayerMatch = () => {
-    // TODO Supabase: create matches row, match_players host row, room code,
-    // status "waiting", and initial match_rounds/match_questions records.
+  const refreshMultiplayerMatch = async () => {
+    if (!activeMatch?.id || !supabase) return;
+
+    setMultiplayerLoading(true);
+    setMultiplayerError("");
+
+    const { data, error } = await supabase
+      .from("matches")
+      .select("*")
+      .eq("id", activeMatch.id)
+      .single();
+
+    if (error || !data) {
+      setMultiplayerLoading(false);
+      setMultiplayerError("Could not refresh room");
+      return;
+    }
+
+    const { data: rounds, error: roundError } = await supabase
+      .from("multiplayer_rounds")
+      .select("*")
+      .eq("match_id", data.id)
+      .order("round_number", { ascending: false })
+      .limit(5);
+
+    setMultiplayerLoading(false);
+
+    if (roundError) {
+      setMultiplayerError("Could not refresh round");
+      return;
+    }
+
+    setActiveMatch(data);
+    setActiveRound(rounds?.[0] || null);
+    setMatchRounds(rounds || []);
+    setNextCategoryPickerOpen(false);
+    setMultiplayerRoomCode(data.room_code);
+    if (data.status === "ready") {
+      setMultiplayerStep("joined");
+    }
+  };
+
+  const createMultiplayerMatch = async () => {
+    // TODO Supabase later: create match_rounds/match_questions records when
+    // replacing Start Test Round with the real turn-based round flow.
     playClickSound();
-    setMultiplayerRoomCode(createMockRoomCode());
+
+    if (!isSupabaseConfigured || !supabase) {
+      setMultiplayerError("Supabase env vars are missing");
+      return;
+    }
+
+    setMultiplayerLoading(true);
+    setMultiplayerError("");
+
+    const roomCode = createMockRoomCode();
+    const { data: match, error: matchError } = await supabase
+      .from("matches")
+      .insert({
+        room_code: roomCode,
+        mode: multiplayerMode,
+        created_by: username,
+        current_turn: username,
+        player1_username: username,
+        status: "waiting",
+        phase: "waiting_for_opponent",
+        round_number: 0,
+      })
+      .select()
+      .single();
+
+    if (matchError || !match) {
+      setMultiplayerLoading(false);
+      setMultiplayerError("Could not create match");
+      return;
+    }
+
+    const { error: playerError } = await supabase.from("match_players").insert({
+      match_id: match.id,
+      username,
+      player_slot: "player1",
+    });
+
+    setMultiplayerLoading(false);
+
+    if (playerError) {
+      setMultiplayerError("Match created, but player join failed");
+      return;
+    }
+
+    setActiveMatch(match);
+    setActiveRound(null);
+    setMatchRounds([]);
+    setNextCategoryPickerOpen(false);
+    setMultiplayerRoomCode(match.room_code);
     setMultiplayerStep("created");
   };
 
-  const joinMultiplayerMatch = () => {
-    // TODO Supabase: look up room code, join match_players, subscribe to
-    // realtime updates or poll match status until active/finished.
+  const joinMultiplayerMatch = async () => {
+    // TODO Supabase later: replace manual Refresh with realtime updates or
+    // polling for match status and opponent readiness.
     if (!joinRoomCode.trim()) return;
 
     playClickSound();
-    setMultiplayerRoomCode(joinRoomCode.trim().toUpperCase());
+
+    if (!isSupabaseConfigured || !supabase) {
+      setMultiplayerError("Supabase env vars are missing");
+      return;
+    }
+
+    setMultiplayerLoading(true);
+    setMultiplayerError("");
+
+    const roomCode = joinRoomCode.trim().toUpperCase();
+    const { data: match, error: lookupError } = await supabase
+      .from("matches")
+      .select("*")
+      .eq("room_code", roomCode)
+      .maybeSingle();
+
+    if (lookupError) {
+      setMultiplayerLoading(false);
+      setMultiplayerError("Could not join room");
+      return;
+    }
+
+    if (!match) {
+      setMultiplayerLoading(false);
+      setMultiplayerError("Room not found");
+      return;
+    }
+
+    if (match.player2_username && match.player2_username !== username) {
+      setMultiplayerLoading(false);
+      setMultiplayerError("Room already full");
+      return;
+    }
+
+    const { data: updatedMatch, error: updateError } = await supabase
+      .from("matches")
+      .update({
+        player2_username: username,
+        status: "ready",
+        phase: "choose_category",
+      })
+      .eq("id", match.id)
+      .select()
+      .single();
+
+    if (updateError || !updatedMatch) {
+      setMultiplayerLoading(false);
+      setMultiplayerError("Could not update room");
+      return;
+    }
+
+    const { error: playerError } = await supabase.from("match_players").insert({
+      match_id: updatedMatch.id,
+      username,
+      player_slot: "player2",
+    });
+
+    setMultiplayerLoading(false);
+
+    if (playerError) {
+      setMultiplayerError("Joined room, but player save failed");
+      return;
+    }
+
+    setActiveMatch(updatedMatch);
+    setActiveRound(null);
+    setMatchRounds([]);
+    setNextCategoryPickerOpen(false);
+    setMultiplayerRoomCode(updatedMatch.room_code);
+    setMultiplayerMode(updatedMatch.mode || multiplayerMode);
+    setMultiplayerStep("joined");
+  };
+
+  const selectMultiplayerCategory = async (category) => {
+    if (!category.available || !activeMatch?.id || !supabase) return;
+
+    playClickSound();
+    setMultiplayerLoading(true);
+    setMultiplayerError("");
+
+    const nextRoundNumber = (activeMatch.round_number || 0) + 1;
+    const questionIds = selectMultiplayerQuestionIds(category.id, 5);
+
+    if (questionIds.length !== 5) {
+      setMultiplayerLoading(false);
+      setMultiplayerError("Could not select enough questions");
+      return;
+    }
+
+    const { data: existingRound, error: existingRoundError } = await supabase
+      .from("multiplayer_rounds")
+      .select("*")
+      .eq("match_id", activeMatch.id)
+      .eq("round_number", nextRoundNumber)
+      .maybeSingle();
+
+    if (existingRoundError) {
+      setMultiplayerLoading(false);
+      setMultiplayerError("Could not check existing round");
+      return;
+    }
+
+    if (existingRound) {
+      setActiveRound(existingRound);
+      setMatchRounds((rounds) => [
+        existingRound,
+        ...rounds.filter((round) => round.id !== existingRound.id),
+      ]);
+      setNextCategoryPickerOpen(false);
+      setMultiplayerLoading(false);
+      return;
+    }
+
+    const { data: round, error: roundError } = await supabase
+      .from("multiplayer_rounds")
+      .insert({
+        match_id: activeMatch.id,
+        round_number: nextRoundNumber,
+        category: category.id,
+        chosen_by: username,
+        question_ids: questionIds,
+        player1_score: 0,
+        player2_score: 0,
+        player1_finished: false,
+        player2_finished: false,
+        status: "active",
+      })
+      .select()
+      .single();
+
+    if (roundError) {
+      const { data: duplicateRound } = await supabase
+        .from("multiplayer_rounds")
+        .select("*")
+        .eq("match_id", activeMatch.id)
+        .eq("round_number", nextRoundNumber)
+        .maybeSingle();
+
+      if (duplicateRound) {
+        setActiveRound(duplicateRound);
+        setMatchRounds((rounds) => [
+          duplicateRound,
+          ...rounds.filter((item) => item.id !== duplicateRound.id),
+        ]);
+        setNextCategoryPickerOpen(false);
+        setMultiplayerLoading(false);
+        return;
+      }
+
+      setMultiplayerLoading(false);
+      setMultiplayerError("Could not create round");
+      return;
+    }
+
+    if (!round) {
+      setMultiplayerLoading(false);
+      setMultiplayerError("Could not create round");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("matches")
+      .update({
+        selected_category: category.id,
+        mode: category.mode,
+        phase: "round_active",
+        round_number: nextRoundNumber,
+        current_turn: username,
+      })
+      .eq("id", activeMatch.id)
+      .select()
+      .single();
+
+    setMultiplayerLoading(false);
+
+    if (error || !data) {
+      setMultiplayerError("Could not update category");
+      return;
+    }
+
+    setActiveMatch(data);
+    setActiveRound(round);
+    setMatchRounds((rounds) => [
+      round,
+      ...rounds.filter((item) => item.id !== round.id),
+    ]);
+    setNextCategoryPickerOpen(false);
+    setMultiplayerMode(data.mode || category.mode);
     setMultiplayerStep("joined");
   };
 
   const startMockMultiplayerMatch = () => {
-    // TODO Supabase: replace local mock start with match status transition
-    // waiting -> active and sync submitted answers/scores per player.
+    // TODO Supabase: replace Start Test Round with real turn-based round flow.
     playClickSound();
     startGame(multiplayerMode, { multiplayer: true });
+  };
+
+  const startActiveMultiplayerRound = () => {
+    if (!activeRound || activeRoundQuestions.length !== 5) {
+      setMultiplayerError("Round questions are not ready");
+      return;
+    }
+
+    playClickSound();
+    setMultiplayerRoundIndex(0);
+    setMultiplayerRoundSelected(null);
+    setMultiplayerRoundScore(0);
+    setMultiplayerRoundDone(false);
+    setMultiplayerRoundOpen(true);
+    setMultiplayerOpen(false);
+  };
+
+  const chooseMultiplayerRoundAnswer = (option) => {
+    if (multiplayerRoundSelected || !currentMultiplayerRoundQuestion) return;
+
+    setMultiplayerRoundSelected(option);
+
+    if (isCorrectAnswer(option, currentMultiplayerRoundQuestion.answer)) {
+      setMultiplayerRoundScore((value) => value + 1);
+      playCoinSound();
+    } else {
+      playWrongSound();
+    }
+
+    setTimeout(() => {
+      if (multiplayerRoundIndex >= activeRoundQuestions.length - 1) {
+        setMultiplayerRoundDone(true);
+      } else {
+        setMultiplayerRoundIndex((value) => value + 1);
+        setMultiplayerRoundSelected(null);
+      }
+    }, 850);
+  };
+
+  const submitMultiplayerRoundScore = async () => {
+    if (!supabase || !activeRound?.id || !activeMatch?.id || !multiplayerPlayerSlot) {
+      setMultiplayerError("Could not submit round");
+      return;
+    }
+
+    setMultiplayerLoading(true);
+    setMultiplayerError("");
+
+    const scoreField =
+      multiplayerPlayerSlot === "player1" ? "player1_score" : "player2_score";
+    const finishedField =
+      multiplayerPlayerSlot === "player1"
+        ? "player1_finished"
+        : "player2_finished";
+
+    const roundPatch = {
+      [scoreField]: multiplayerRoundScore,
+      [finishedField]: true,
+    };
+
+    const otherPlayerFinished =
+      multiplayerPlayerSlot === "player1"
+        ? Boolean(activeRound.player2_finished)
+        : Boolean(activeRound.player1_finished);
+
+    let winner = null;
+
+    if (otherPlayerFinished) {
+      const player1Score =
+        multiplayerPlayerSlot === "player1"
+          ? multiplayerRoundScore
+          : activeRound.player1_score || 0;
+      const player2Score =
+        multiplayerPlayerSlot === "player2"
+          ? multiplayerRoundScore
+          : activeRound.player2_score || 0;
+
+      if (player1Score > player2Score) winner = activeMatch.player1_username;
+      if (player2Score > player1Score) winner = activeMatch.player2_username;
+      if (player1Score === player2Score) winner = "draw";
+
+      roundPatch.winner = winner;
+      roundPatch.status = "finished";
+    }
+
+    const { data: updatedRound, error: roundError } = await supabase
+      .from("multiplayer_rounds")
+      .update(roundPatch)
+      .eq("id", activeRound.id)
+      .select()
+      .single();
+
+    if (roundError || !updatedRound) {
+      setMultiplayerLoading(false);
+      setMultiplayerError("Could not submit round");
+      return;
+    }
+
+    let matchPatch = {};
+
+    if (otherPlayerFinished) {
+      // Next chooser rule: the player who submits second chooses the next
+      // category, which keeps async play moving without requiring both players
+      // to be online together.
+      matchPatch = {
+        phase: "round_finished",
+        current_turn: username,
+      };
+
+      if (winner === activeMatch.player1_username) {
+        matchPatch.player1_wins = (activeMatch.player1_wins || 0) + 1;
+      }
+
+      if (winner === activeMatch.player2_username) {
+        matchPatch.player2_wins = (activeMatch.player2_wins || 0) + 1;
+      }
+    }
+
+    let updatedMatch = activeMatch;
+
+    if (Object.keys(matchPatch).length > 0) {
+      const { data: matchData, error: matchError } = await supabase
+        .from("matches")
+        .update(matchPatch)
+        .eq("id", activeMatch.id)
+        .select()
+        .single();
+
+      if (matchError || !matchData) {
+        setMultiplayerLoading(false);
+        setMultiplayerError("Round saved, but match update failed");
+        return;
+      }
+
+      updatedMatch = matchData;
+    }
+
+    setMultiplayerLoading(false);
+    setActiveRound(updatedRound);
+    setMatchRounds((rounds) => [
+      updatedRound,
+      ...rounds.filter((round) => round.id !== updatedRound.id),
+    ]);
+    setActiveMatch(updatedMatch);
+    setMultiplayerRoundOpen(false);
+    setMultiplayerOpen(true);
+    setMultiplayerStep("joined");
   };
 
   const startDailyChallenge = () => {
@@ -700,8 +1185,14 @@ export default function FootballQuizMVP() {
     setIsMockMultiplayer(false);
     setMockOpponentScore(null);
     setMultiplayerStep("menu");
+    setActiveMatch(null);
+    setActiveRound(null);
+    setMatchRounds([]);
+    setNextCategoryPickerOpen(false);
     setMultiplayerRoomCode("");
     setJoinRoomCode("");
+    setMultiplayerError("");
+    setMultiplayerLoading(false);
     setGameMode("general");
 
     setQuestions(buildGameQuestions("general"));
@@ -1078,6 +1569,10 @@ export default function FootballQuizMVP() {
   // match_rounds or match_questions table, submitted answers/scores,
   // match status values: waiting, active, finished, room code lookup,
   // and realtime updates or polling for opponent state.
+  // TODO production multiplayer:
+  // Add realtime subscriptions instead of manual Refresh, real user accounts,
+  // server-side score validation to prevent cheating, friend list/rematch,
+  // and push notifications when it is your turn.
 
   const handleResultButton = (isDaily) => {
     if (isDaily) {
@@ -1127,6 +1622,72 @@ export default function FootballQuizMVP() {
               START PLAYING
             </button>
           </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  if (multiplayerRoundOpen && currentMultiplayerRoundQuestion) {
+    return (
+      <div
+        className="fullscreen-bg"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.04), rgba(0,0,0,0.58)), url(${quizBg})`,
+        }}
+      >
+        <div className="multiplayer-round-card">
+          <div className="difficulty-pill">
+            Async Round {activeRound?.round_number || 1} •{" "}
+            {getCategoryLabel(activeRound?.category)}
+          </div>
+
+          <div className="multiplayer-round-progress">
+            Question {multiplayerRoundIndex + 1} / {activeRoundQuestions.length}
+          </div>
+
+          <h1 className="question-title">
+            {currentMultiplayerRoundQuestion.question}
+          </h1>
+
+          <div className="answers-grid">
+            {currentMultiplayerRoundQuestion.options.map((option) => {
+              const isCorrect = isCorrectAnswer(
+                option,
+                currentMultiplayerRoundQuestion.answer
+              );
+              const isChosen = multiplayerRoundSelected === option;
+              const showCorrect = multiplayerRoundSelected && isCorrect;
+              const showWrong =
+                multiplayerRoundSelected && isChosen && !isCorrect;
+
+              return (
+                <button
+                  key={option}
+                  onClick={() => chooseMultiplayerRoundAnswer(option)}
+                  className={`answer-button ${
+                    showCorrect ? "correct" : showWrong ? "wrong" : ""
+                  }`}
+                >
+                  <span>{option}</span>
+                  {showCorrect && <CheckCircle2 size={28} />}
+                  {showWrong && <XCircle size={28} />}
+                </button>
+              );
+            })}
+          </div>
+
+          {multiplayerRoundDone && (
+            <div className="multiplayer-submit-card">
+              <strong>{multiplayerRoundScore}/5</strong>
+              <span>Round complete</span>
+              <button
+                onClick={submitMultiplayerRoundScore}
+                disabled={multiplayerLoading}
+              >
+                {multiplayerLoading ? "Submitting..." : "Submit Score"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -1585,14 +2146,21 @@ export default function FootballQuizMVP() {
                 </button>
               </div>
 
+              {multiplayerError && (
+                <div className="multiplayer-error">{multiplayerError}</div>
+              )}
+
               {multiplayerStep === "menu" && (
                 <div className="multiplayer-actions">
                   <button
                     className="multiplayer-action-card create"
                     onClick={createMultiplayerMatch}
+                    disabled={multiplayerLoading}
                   >
                     <span>🏟️</span>
-                    <strong>Create Match</strong>
+                    <strong>
+                      {multiplayerLoading ? "Creating match..." : "Create Match"}
+                    </strong>
                     <small>Start a private room</small>
                   </button>
 
@@ -1614,14 +2182,140 @@ export default function FootballQuizMVP() {
                 <div className="multiplayer-room-card">
                   <div className="room-status">Match created</div>
                   <div className="room-code">Room code: {multiplayerRoomCode}</div>
-                  <div className="waiting-pulse">
-                    <span />
-                    <span />
-                    <span />
+                  <div className="multiplayer-player-list">
+                    <span>👤 {activeMatch?.player1_username || username}</span>
+                    {activeMatch?.player2_username && (
+                      <span>⚔️ {activeMatch.player2_username}</span>
+                    )}
                   </div>
-                  <p>Waiting for opponent...</p>
-                  <button onClick={startMockMultiplayerMatch}>
-                    Start Mock Match
+                  {activeMatch?.status === "ready" ? (
+                    <div className="opponent-found">Opponent found</div>
+                  ) : (
+                    <>
+                      <div className="waiting-pulse">
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+                      <p>Waiting for opponent...</p>
+                    </>
+                  )}
+                  {hasBothMultiplayerPlayers &&
+                    activeMatch?.phase === "choose_category" && (
+                      <div className="category-turn-note">
+                        {canChooseMultiplayerCategory
+                          ? "Your turn to choose a category"
+                          : `${activeMatch.current_turn} chooses first`}
+                      </div>
+                    )}
+                  {canChooseMultiplayerCategory && (
+                    <div className="multiplayer-category-grid">
+                      {MULTIPLAYER_CATEGORIES.map((category) => (
+                        <button
+                          key={category.id}
+                          className={!category.available ? "coming-soon" : ""}
+                          disabled={!category.available || multiplayerLoading}
+                          onClick={() => selectMultiplayerCategory(category)}
+                        >
+                          <strong>{category.label}</strong>
+                          {!category.available && <small>Coming soon</small>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {activeMatch?.phase === "category_selected" && (
+                    <div className="category-selected-card">
+                      <strong>
+                        Category selected:{" "}
+                        {getCategoryLabel(activeMatch.selected_category)}
+                      </strong>
+                      <span>
+                        Round {activeMatch.round_number || 1} is ready
+                      </span>
+                    </div>
+                  )}
+                  {activeMatch?.phase === "round_active" && activeRound && (
+                    <div className="category-selected-card">
+                      <strong>
+                        Round {activeRound.round_number} •{" "}
+                        {getCategoryLabel(activeRound.category)}
+                      </strong>
+                      {hasPlayedActiveRound ? (
+                        <span>Waiting for opponent to play this round</span>
+                      ) : (
+                        <>
+                          <span>Your 5-question round is ready</span>
+                          <button onClick={startActiveMultiplayerRound}>
+                            Play Round
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {activeMatch?.phase === "round_finished" && activeRound && (
+                    <div className="multiplayer-round-result-card">
+                      <strong>Round {activeRound.round_number} Result</strong>
+                      <span>{getCategoryLabel(activeRound.category)}</span>
+                      <div className="round-score-grid">
+                        <div>
+                          <small>{activeMatch.player1_username}</small>
+                          <b>{activeRound.player1_score ?? 0}</b>
+                        </div>
+                        <div>
+                          <small>{activeMatch.player2_username}</small>
+                          <b>{activeRound.player2_score ?? 0}</b>
+                        </div>
+                      </div>
+                      <em>
+                        Winner:{" "}
+                        {activeRound.winner === "draw"
+                          ? "Draw"
+                          : activeRound.winner}
+                      </em>
+                      <p>
+                        Match wins: {activeMatch.player1_wins || 0} -{" "}
+                        {activeMatch.player2_wins || 0}
+                      </p>
+                      <p>
+                        Next: {activeMatch.current_turn} chooses a category
+                      </p>
+                      {canOpenNextCategoryPicker ? (
+                        <button
+                          onClick={() => {
+                            playClickSound();
+                            setNextCategoryPickerOpen(true);
+                          }}
+                        >
+                          Choose Next Category
+                        </button>
+                      ) : (
+                        <p>
+                          Waiting for {activeMatch.current_turn} to choose the
+                          next category
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {matchRounds.length > 0 && (
+                    <div className="match-history-card">
+                      <strong>Rounds</strong>
+                      {matchRounds.slice(0, 4).map((round) => (
+                        <span key={round.id}>
+                          Round {round.round_number} •{" "}
+                          {getCategoryLabel(round.category)} •{" "}
+                          {round.status === "finished"
+                            ? `${activeMatch.player1_username} ${
+                                round.player1_score ?? 0
+                              } - ${round.player2_score ?? 0} ${
+                                activeMatch.player2_username
+                              }`
+                            : "waiting"}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <button onClick={refreshMultiplayerMatch}>
+                    {multiplayerLoading ? "Refreshing..." : "Refresh"}
                   </button>
                 </div>
               )}
@@ -1639,7 +2333,12 @@ export default function FootballQuizMVP() {
                     placeholder="BK-4831"
                     autoFocus
                   />
-                  <button onClick={joinMultiplayerMatch}>Join Match</button>
+                  <button
+                    onClick={joinMultiplayerMatch}
+                    disabled={multiplayerLoading}
+                  >
+                    {multiplayerLoading ? "Joining match..." : "Join Match"}
+                  </button>
                 </div>
               )}
 
@@ -1648,14 +2347,133 @@ export default function FootballQuizMVP() {
                   <div className="room-status">Joined room</div>
                   <div className="room-code">Room code: {multiplayerRoomCode}</div>
                   <div className="opponent-found">Opponent found</div>
-                  <button onClick={startMockMultiplayerMatch}>
-                    Start Mock Match
+                  {activeMatch && (
+                    <div className="multiplayer-player-list">
+                      <span>👤 {activeMatch.player1_username}</span>
+                      <span>⚔️ {activeMatch.player2_username}</span>
+                    </div>
+                  )}
+                  {activeMatch?.phase === "choose_category" && (
+                    <div className="category-turn-note">
+                      {canChooseMultiplayerCategory
+                        ? "Your turn to choose a category"
+                        : `${activeMatch.current_turn} chooses first`}
+                    </div>
+                  )}
+                  {canChooseMultiplayerCategory && (
+                    <div className="multiplayer-category-grid">
+                      {MULTIPLAYER_CATEGORIES.map((category) => (
+                        <button
+                          key={category.id}
+                          className={!category.available ? "coming-soon" : ""}
+                          disabled={!category.available || multiplayerLoading}
+                          onClick={() => selectMultiplayerCategory(category)}
+                        >
+                          <strong>{category.label}</strong>
+                          {!category.available && <small>Coming soon</small>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {activeMatch?.phase === "category_selected" && (
+                    <div className="category-selected-card">
+                      <strong>
+                        Category selected:{" "}
+                        {getCategoryLabel(activeMatch.selected_category)}
+                      </strong>
+                      <span>
+                        Round {activeMatch.round_number || 1} is ready
+                      </span>
+                    </div>
+                  )}
+                  {activeMatch?.phase === "round_active" && activeRound && (
+                    <div className="category-selected-card">
+                      <strong>
+                        Round {activeRound.round_number} •{" "}
+                        {getCategoryLabel(activeRound.category)}
+                      </strong>
+                      {hasPlayedActiveRound ? (
+                        <span>Waiting for opponent to play this round</span>
+                      ) : (
+                        <>
+                          <span>Your 5-question round is ready</span>
+                          <button onClick={startActiveMultiplayerRound}>
+                            Play Round
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {activeMatch?.phase === "round_finished" && activeRound && (
+                    <div className="multiplayer-round-result-card">
+                      <strong>Round {activeRound.round_number} Result</strong>
+                      <span>{getCategoryLabel(activeRound.category)}</span>
+                      <div className="round-score-grid">
+                        <div>
+                          <small>{activeMatch.player1_username}</small>
+                          <b>{activeRound.player1_score ?? 0}</b>
+                        </div>
+                        <div>
+                          <small>{activeMatch.player2_username}</small>
+                          <b>{activeRound.player2_score ?? 0}</b>
+                        </div>
+                      </div>
+                      <em>
+                        Winner:{" "}
+                        {activeRound.winner === "draw"
+                          ? "Draw"
+                          : activeRound.winner}
+                      </em>
+                      <p>
+                        Match wins: {activeMatch.player1_wins || 0} -{" "}
+                        {activeMatch.player2_wins || 0}
+                      </p>
+                      <p>
+                        Next: {activeMatch.current_turn} chooses a category
+                      </p>
+                      {canOpenNextCategoryPicker ? (
+                        <button
+                          onClick={() => {
+                            playClickSound();
+                            setNextCategoryPickerOpen(true);
+                          }}
+                        >
+                          Choose Next Category
+                        </button>
+                      ) : (
+                        <p>
+                          Waiting for {activeMatch.current_turn} to choose the
+                          next category
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {matchRounds.length > 0 && (
+                    <div className="match-history-card">
+                      <strong>Rounds</strong>
+                      {matchRounds.slice(0, 4).map((round) => (
+                        <span key={round.id}>
+                          Round {round.round_number} •{" "}
+                          {getCategoryLabel(round.category)} •{" "}
+                          {round.status === "finished"
+                            ? `${activeMatch.player1_username} ${
+                                round.player1_score ?? 0
+                              } - ${round.player2_score ?? 0} ${
+                                activeMatch.player2_username
+                              }`
+                            : "waiting"}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <button onClick={refreshMultiplayerMatch}>
+                    {multiplayerLoading ? "Refreshing..." : "Refresh"}
                   </button>
                 </div>
               )}
 
               <div className="multiplayer-todo-note">
-                Mock lobby only. Realtime rooms come later.
+                Supabase rounds are saved. Realtime updates come later.
               </div>
 
               <button
