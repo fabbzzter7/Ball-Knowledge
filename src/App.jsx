@@ -419,6 +419,54 @@ function getMatchActionLabel(match, latestRound, playerSlot, isPlayerTurn) {
   return match.status || "Open match";
 }
 
+function getMatchActionKind(match, latestRound, playerSlot, isPlayerTurn) {
+  if (!match) return "neutral";
+
+  if (match.phase === "waiting_for_opponent" || match.status === "waiting") {
+    return "waiting-join";
+  }
+
+  if (match.phase === "choose_category") {
+    return isPlayerTurn ? "your-turn" : "waiting";
+  }
+
+  if (match.phase === "round_active") {
+    return hasPlayerFinishedRound(latestRound, playerSlot) ? "waiting" : "your-turn";
+  }
+
+  if (match.phase === "round_finished") {
+    return "result";
+  }
+
+  return "neutral";
+}
+
+function getMatchCtaLabel(actionKind, match) {
+  if (actionKind === "your-turn" && match?.phase === "choose_category") {
+    return "Choose Category";
+  }
+
+  if (actionKind === "your-turn" && match?.phase === "round_active") {
+    return "Play Turn";
+  }
+
+  if (actionKind === "waiting") return "Waiting";
+  if (actionKind === "result") return "View Result";
+
+  return "Open Match";
+}
+
+function getCategoryClass(categoryId) {
+  if (categoryId === "world-cup" || categoryId === "world_cup") {
+    return "category-world-cup";
+  }
+
+  if (categoryId === "premier_league") return "category-premier-league";
+  if (categoryId === "career_path") return "category-career-path";
+
+  return "category-general";
+}
+
 export default function FootballQuizMVP() {
   const todayChallenge = getTodayChallenge();
 
@@ -441,12 +489,15 @@ export default function FootballQuizMVP() {
     MULTIPLAYER_TIME_LIMIT
   );
   const [multiplayerRoundDone, setMultiplayerRoundDone] = useState(false);
+  const [isSubmittingRound, setIsSubmittingRound] = useState(false);
   const [multiplayerRoomCode, setMultiplayerRoomCode] = useState("");
   const [joinRoomCode, setJoinRoomCode] = useState("");
   const [multiplayerLoading, setMultiplayerLoading] = useState(false);
   const [multiplayerError, setMultiplayerError] = useState("");
   const [activeGames, setActiveGames] = useState([]);
   const [activeGamesLoading, setActiveGamesLoading] = useState(false);
+  const [matchDeleteCandidate, setMatchDeleteCandidate] = useState(null);
+  const [multiplayerNotice, setMultiplayerNotice] = useState("");
   const [isMockMultiplayer, setIsMockMultiplayer] = useState(false);
   const [mockOpponentScore, setMockOpponentScore] = useState(null);
   const [coinsMenuOpen, setCoinsMenuOpen] = useState(false);
@@ -514,6 +565,7 @@ export default function FootballQuizMVP() {
 
   const [streakRewardEarned, setStreakRewardEarned] = useState(0);
   const [showDailyCompletePopup, setShowDailyCompletePopup] = useState(false);
+  const [dailyRewardMeterOpen, setDailyRewardMeterOpen] = useState(false);
 
   const [lastSeenLevel, setLastSeenLevel] = useState(getSavedLastSeenLevel);
   const [levelUpPopup, setLevelUpPopup] = useState(null);
@@ -589,6 +641,7 @@ export default function FootballQuizMVP() {
       setTimeout(() => {
         if (multiplayerRoundIndex >= activeRoundQuestions.length - 1) {
           setMultiplayerRoundDone(true);
+          submitMultiplayerRoundScore(multiplayerRoundScore);
         } else {
           setMultiplayerRoundIndex((value) => value + 1);
           setMultiplayerRoundSelected(null);
@@ -610,9 +663,67 @@ export default function FootballQuizMVP() {
     multiplayerRoundDone,
     multiplayerRoundIndex,
     multiplayerRoundOpen,
+    multiplayerRoundScore,
     multiplayerRoundSelected,
     multiplayerTimeLeft,
   ]);
+
+  useEffect(() => {
+    if (!multiplayerOpen || multiplayerStep !== "active-games") return;
+
+    const interval = window.setInterval(() => {
+      fetchActiveGames({ silent: true });
+    }, 7000);
+
+    return () => window.clearInterval(interval);
+  }, [multiplayerOpen, multiplayerStep, playerId, username]);
+
+  useEffect(() => {
+    if (!multiplayerOpen || !activeMatch?.id || !supabase) return;
+
+    const channel = supabase
+      .channel(`ball-knowledge-match-${activeMatch.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "matches",
+          filter: `id=eq.${activeMatch.id}`,
+        },
+        () => refreshMultiplayerMatch({ silent: true })
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "multiplayer_rounds",
+          filter: `match_id=eq.${activeMatch.id}`,
+        },
+        () => refreshMultiplayerMatch({ silent: true })
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "match_players",
+          filter: `match_id=eq.${activeMatch.id}`,
+        },
+        () => refreshMultiplayerMatch({ silent: true })
+      )
+      .subscribe();
+
+    const fallbackPoll = window.setInterval(() => {
+      refreshMultiplayerMatch({ silent: true });
+    }, 6000);
+
+    return () => {
+      window.clearInterval(fallbackPoll);
+      supabase.removeChannel(channel);
+    };
+  }, [activeMatch?.id, multiplayerOpen]);
 
   useEffect(() => {
     if (!isHomeScreen || !username) return;
@@ -878,14 +989,16 @@ export default function FootballQuizMVP() {
     };
   };
 
-  const fetchActiveGames = async () => {
+  const fetchActiveGames = async ({ silent = false } = {}) => {
     if (!isSupabaseConfigured || !supabase) {
       setMultiplayerError("Supabase env vars are missing");
       return;
     }
 
-    setActiveGamesLoading(true);
-    setMultiplayerError("");
+    if (!silent) {
+      setActiveGamesLoading(true);
+      setMultiplayerError("");
+    }
 
     const playerFilters = [`player_id.eq.${playerId}`];
 
@@ -899,8 +1012,8 @@ export default function FootballQuizMVP() {
       .or(playerFilters.join(","));
 
     if (playersError) {
-      setActiveGamesLoading(false);
-      setMultiplayerError("Could not load active games");
+      if (!silent) setActiveGamesLoading(false);
+      setMultiplayerError("Could not load active matches");
       return;
     }
 
@@ -910,7 +1023,7 @@ export default function FootballQuizMVP() {
 
     if (matchIds.length === 0) {
       setActiveGames([]);
-      setActiveGamesLoading(false);
+      if (!silent) setActiveGamesLoading(false);
       return;
     }
 
@@ -921,7 +1034,7 @@ export default function FootballQuizMVP() {
       .order("updated_at", { ascending: false, nullsFirst: false });
 
     if (matchesError) {
-      setActiveGamesLoading(false);
+      if (!silent) setActiveGamesLoading(false);
       setMultiplayerError("Could not load matches");
       return;
     }
@@ -943,13 +1056,29 @@ export default function FootballQuizMVP() {
     );
 
     setActiveGames(games);
-    setActiveGamesLoading(false);
+    if (!silent) setActiveGamesLoading(false);
   };
 
   const openActiveGames = async () => {
     playClickSound();
     setMultiplayerStep("active-games");
     await fetchActiveGames();
+  };
+
+  const goBackMultiplayer = () => {
+    playClickSound();
+
+    if (multiplayerStep === "menu") {
+      setMultiplayerOpen(false);
+      return;
+    }
+
+    setMultiplayerStep("menu");
+    setActiveMatch(null);
+    setActiveRound(null);
+    setMatchRounds([]);
+    setNextCategoryPickerOpen(false);
+    setMultiplayerError("");
   };
 
   const openExistingMatch = async (matchId) => {
@@ -980,21 +1109,95 @@ export default function FootballQuizMVP() {
     setMultiplayerStep(match.status === "waiting" ? "created" : "joined");
   };
 
-  const refreshMultiplayerMatch = async () => {
-    if (!activeMatch?.id || !supabase) return;
+  const requestDeleteMatch = (match) => {
+    playClickSound();
+    setMatchDeleteCandidate(match);
+  };
 
+  const cancelDeleteMatch = () => {
+    playClickSound();
+    setMatchDeleteCandidate(null);
+  };
+
+  const confirmDeleteMatch = async () => {
+    if (!matchDeleteCandidate?.id || !supabase) return;
+
+    playClickSound();
     setMultiplayerLoading(true);
     setMultiplayerError("");
+
+    const { error: roundsDeleteError } = await supabase
+      .from("multiplayer_rounds")
+      .delete()
+      .eq("match_id", matchDeleteCandidate.id);
+
+    if (roundsDeleteError) {
+      console.error("Could not delete multiplayer rounds", roundsDeleteError);
+      setMultiplayerLoading(false);
+      setMultiplayerError("Could not delete match");
+      return;
+    }
+
+    const { error: playersDeleteError } = await supabase
+      .from("match_players")
+      .delete()
+      .eq("match_id", matchDeleteCandidate.id);
+
+    if (playersDeleteError) {
+      console.error("Could not delete match players", playersDeleteError);
+      setMultiplayerLoading(false);
+      setMultiplayerError("Could not delete match");
+      return;
+    }
+
+    const { error: matchDeleteError } = await supabase
+      .from("matches")
+      .delete()
+      .eq("id", matchDeleteCandidate.id);
+
+    if (matchDeleteError) {
+      console.error("Could not delete match", matchDeleteError);
+      setMultiplayerLoading(false);
+      setMultiplayerError("Could not delete match");
+      return;
+    }
+
+    setActiveGames((games) =>
+      games.filter(({ match }) => match.id !== matchDeleteCandidate.id)
+    );
+
+    if (activeMatch?.id === matchDeleteCandidate.id) {
+      setActiveMatch(null);
+      setActiveRound(null);
+      setMatchRounds([]);
+      setMultiplayerStep("menu");
+    }
+
+    setMultiplayerNotice("Match deleted");
+    setMatchDeleteCandidate(null);
+    setMultiplayerLoading(false);
+  };
+
+  const refreshMultiplayerMatch = async ({ silent = false } = {}) => {
+    if (!activeMatch?.id || !supabase) return;
+
+    if (!silent) {
+      setMultiplayerLoading(true);
+      setMultiplayerError("");
+    }
 
     const { match: data, rounds, error } = await loadMatchById(activeMatch.id);
 
     if (error || !data) {
-      setMultiplayerLoading(false);
+      if (!silent) setMultiplayerLoading(false);
+      setActiveMatch(null);
+      setActiveRound(null);
+      setMatchRounds([]);
       setMultiplayerError("Could not refresh room");
       return;
     }
 
-    setMultiplayerLoading(false);
+    if (!silent) setMultiplayerLoading(false);
 
     setActiveMatch(data);
     setActiveRound(rounds?.[0] || null);
@@ -1313,23 +1516,37 @@ export default function FootballQuizMVP() {
       return;
     }
 
+    if (hasPlayedActiveRound) {
+      setMultiplayerError("You have already played this round");
+      return;
+    }
+
     playClickSound();
     setMultiplayerRoundIndex(0);
     setMultiplayerRoundSelected(null);
     setMultiplayerRoundScore(0);
     setMultiplayerTimeLeft(MULTIPLAYER_TIME_LIMIT);
     setMultiplayerRoundDone(false);
+    setIsSubmittingRound(false);
     setMultiplayerRoundOpen(true);
     setMultiplayerOpen(false);
   };
 
   const chooseMultiplayerRoundAnswer = (option) => {
-    if (multiplayerRoundSelected || !currentMultiplayerRoundQuestion) return;
+    if (
+      multiplayerRoundSelected ||
+      isSubmittingRound ||
+      !currentMultiplayerRoundQuestion
+    ) {
+      return;
+    }
 
     setMultiplayerRoundSelected(option);
+    const isCorrect = isCorrectAnswer(option, currentMultiplayerRoundQuestion.answer);
+    const nextScore = isCorrect ? multiplayerRoundScore + 1 : multiplayerRoundScore;
 
-    if (isCorrectAnswer(option, currentMultiplayerRoundQuestion.answer)) {
-      setMultiplayerRoundScore((value) => value + 1);
+    if (isCorrect) {
+      setMultiplayerRoundScore(nextScore);
       playCoinSound();
     } else {
       playWrongSound();
@@ -1338,6 +1555,7 @@ export default function FootballQuizMVP() {
     setTimeout(() => {
       if (multiplayerRoundIndex >= activeRoundQuestions.length - 1) {
         setMultiplayerRoundDone(true);
+        submitMultiplayerRoundScore(nextScore);
       } else {
         setMultiplayerRoundIndex((value) => value + 1);
         setMultiplayerRoundSelected(null);
@@ -1346,12 +1564,20 @@ export default function FootballQuizMVP() {
     }, 850);
   };
 
-  const submitMultiplayerRoundScore = async () => {
+  const submitMultiplayerRoundScore = async (scoreOverride = multiplayerRoundScore) => {
     if (!supabase || !activeRound?.id || !activeMatch?.id || !multiplayerPlayerSlot) {
       setMultiplayerError("Could not submit round");
       return;
     }
 
+    if (isSubmittingRound || hasPlayerFinishedRound(activeRound, multiplayerPlayerSlot)) {
+      setMultiplayerRoundOpen(false);
+      setMultiplayerOpen(true);
+      setMultiplayerStep("joined");
+      return;
+    }
+
+    setIsSubmittingRound(true);
     setMultiplayerLoading(true);
     setMultiplayerError("");
 
@@ -1363,7 +1589,7 @@ export default function FootballQuizMVP() {
         : "player2_finished";
 
     const roundPatch = {
-      [scoreField]: multiplayerRoundScore,
+      [scoreField]: scoreOverride,
       [finishedField]: true,
     };
 
@@ -1377,11 +1603,11 @@ export default function FootballQuizMVP() {
     if (otherPlayerFinished) {
       const player1Score =
         multiplayerPlayerSlot === "player1"
-          ? multiplayerRoundScore
+          ? scoreOverride
           : activeRound.player1_score || 0;
       const player2Score =
         multiplayerPlayerSlot === "player2"
-          ? multiplayerRoundScore
+          ? scoreOverride
           : activeRound.player2_score || 0;
 
       if (player1Score > player2Score) winner = activeMatch.player1_username;
@@ -1401,6 +1627,7 @@ export default function FootballQuizMVP() {
 
     if (roundError || !updatedRound) {
       setMultiplayerLoading(false);
+      setIsSubmittingRound(false);
       setMultiplayerError("Could not submit round");
       return;
     }
@@ -1441,6 +1668,7 @@ export default function FootballQuizMVP() {
 
       if (matchError || !matchData) {
         setMultiplayerLoading(false);
+        setIsSubmittingRound(false);
         setMultiplayerError("Round saved, but match update failed");
         return;
       }
@@ -1449,6 +1677,8 @@ export default function FootballQuizMVP() {
     }
 
     setMultiplayerLoading(false);
+    setIsSubmittingRound(false);
+    setMultiplayerNotice("Score submitted");
     setActiveRound(updatedRound);
     setMatchRounds((rounds) => [
       updatedRound,
@@ -1798,6 +2028,11 @@ export default function FootballQuizMVP() {
     setCoinsMenuOpen(true);
   };
 
+  const openDailyRewardMeter = () => {
+    playClickSound();
+    setDailyRewardMeterOpen(true);
+  };
+
   const claimVideoRewardMock = () => {
     saveCoins(coins + 100);
     playCoinSound();
@@ -1879,6 +2114,90 @@ export default function FootballQuizMVP() {
     </AnimatePresence>
   );
 
+  const dailyRewardMeterModal = (
+    <AnimatePresence>
+      {dailyRewardMeterOpen && (
+        <motion.div
+          className="daily-reward-view-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="daily-reward-popup daily-reward-view-card"
+            initial={{ opacity: 0, scale: 0.84, y: 30 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.92, y: 18 }}
+            transition={{ type: "spring", stiffness: 170, damping: 14 }}
+          >
+            <div className="daily-reward-top">
+              <div className="daily-reward-fire">🔥</div>
+
+              <div>
+                <div className="daily-reward-title">Daily Streak</div>
+                <div className="daily-reward-subtitle">
+                  {dailyStreak} day{dailyStreak === 1 ? "" : "s"} strong
+                </div>
+              </div>
+            </div>
+
+            <div className="daily-reward-earned">
+              <span>{dailyPlayed ? "Today completed" : "Today waiting"}</span>
+              <strong>{dailyPlayed ? "✅ Reward locked in" : "🎯 Play Daily Challenge"}</strong>
+            </div>
+
+            <div className="daily-reward-road">
+              {STREAK_MILESTONES.map((milestone) => {
+                const reached = dailyStreak >= milestone.day;
+                const nextMilestone = getNextMilestone(dailyStreak);
+                const currentMilestone = nextMilestone?.day === milestone.day;
+
+                return (
+                  <div
+                    key={milestone.day}
+                    className={`daily-reward-day ${reached ? "reached" : ""} ${
+                      currentMilestone ? "current" : ""
+                    }`}
+                  >
+                    <div className="daily-reward-ball">
+                      {reached ? "✅" : "⚽"}
+                    </div>
+
+                    <div className="daily-reward-day-label">
+                      Day {milestone.day}
+                    </div>
+
+                    <div className="daily-reward-day-coins">
+                      +{milestone.reward}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="daily-reward-next">
+              {getNextMilestone(dailyStreak)
+                ? `Next reward: Day ${getNextMilestone(dailyStreak).day} • +${
+                    getNextMilestone(dailyStreak).reward
+                  } coins`
+                : "Max reward reached • +100 coins every day"}
+            </div>
+
+            <button
+              className="daily-reward-claim"
+              onClick={() => {
+                playClickSound();
+                setDailyRewardMeterOpen(false);
+              }}
+            >
+              CLOSE
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
   // TODO Supabase multiplayer foundation:
   // Add profiles/users table, matches table, match_players table,
   // match_rounds or match_questions table, submitted answers/scores,
@@ -1950,8 +2269,16 @@ export default function FootballQuizMVP() {
           backgroundImage: `linear-gradient(rgba(255,255,255,0.04), rgba(0,0,0,0.58)), url(${quizBg})`,
         }}
       >
+        <button
+          className="multiplayer-round-back"
+          onClick={() => submitMultiplayerRoundScore(multiplayerRoundScore)}
+          disabled={isSubmittingRound || multiplayerLoading}
+        >
+          Save & Exit
+        </button>
+
         <div className="multiplayer-round-card">
-          <div className="difficulty-pill">
+          <div className={`difficulty-pill ${getCategoryClass(activeRound?.category)}`}>
             Async Round {activeRound?.round_number || 1} •{" "}
             {getCategoryLabel(activeRound?.category)}
           </div>
@@ -1996,7 +2323,7 @@ export default function FootballQuizMVP() {
                 <button
                   key={option}
                   onClick={() => chooseMultiplayerRoundAnswer(option)}
-                  disabled={Boolean(multiplayerRoundSelected)}
+                  disabled={Boolean(multiplayerRoundSelected) || isSubmittingRound}
                   className={`answer-button ${
                     showCorrect ? "correct" : showWrong ? "wrong" : ""
                   }`}
@@ -2012,13 +2339,11 @@ export default function FootballQuizMVP() {
           {multiplayerRoundDone && (
             <div className="multiplayer-submit-card">
               <strong>{multiplayerRoundScore}/5</strong>
-              <span>Round complete</span>
-              <button
-                onClick={submitMultiplayerRoundScore}
-                disabled={multiplayerLoading}
-              >
-                {multiplayerLoading ? "Submitting..." : "Submit Score"}
-              </button>
+              <span>
+                {isSubmittingRound || multiplayerLoading
+                  ? "Submitting score..."
+                  : "Score submitted"}
+              </span>
             </div>
           )}
         </div>
@@ -2035,6 +2360,7 @@ export default function FootballQuizMVP() {
         }}
       >
         {coinShopModal}
+        {dailyRewardMeterModal}
         <AnimatePresence>
           {showDailyCompletePopup && lastDailyResult && (
             <motion.div
@@ -2301,11 +2627,14 @@ export default function FootballQuizMVP() {
                   <small>Coins</small>
                 </button>
 
-                <div className="profile-stat-card">
+                <button
+                  className="profile-stat-card profile-stat-button"
+                  onClick={openDailyRewardMeter}
+                >
                   <span>📅</span>
                   <strong>{dailyStreak}</strong>
                   <small>Daily streak</small>
-                </div>
+                </button>
 
                 <div className="profile-stat-card">
                   <span>🏆</span>
@@ -2446,13 +2775,18 @@ export default function FootballQuizMVP() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ type: "spring", stiffness: 160, damping: 14 }}
             >
+              <div className="multiplayer-topbar">
+                <button onClick={goBackMultiplayer}>← Back</button>
+              </div>
+
               <div className="multiplayer-badge">⚔️ Arena</div>
-              <h1 className="multiplayer-title">Multiplayer</h1>
+              <h1 className="multiplayer-title">Arena</h1>
               <p className="multiplayer-subtitle">
-                Play against another baller
+                Your async football battles
               </p>
 
-              <div className="multiplayer-mode-pills">
+              {multiplayerStep === "menu" && (
+                <div className="multiplayer-mode-pills">
                 {MULTIPLAYER_CATEGORIES.map((category) => (
                   <button
                     key={category.id}
@@ -2465,14 +2799,31 @@ export default function FootballQuizMVP() {
                     {category.label}
                   </button>
                 ))}
-              </div>
+                </div>
+              )}
 
               {multiplayerError && (
                 <div className="multiplayer-error">{multiplayerError}</div>
               )}
 
+              {multiplayerNotice && (
+                <div className="multiplayer-notice">{multiplayerNotice}</div>
+              )}
+
               {multiplayerStep === "menu" && (
                 <div className="multiplayer-actions">
+                  <button
+                    className="multiplayer-action-card active-games"
+                    onClick={openActiveGames}
+                    disabled={activeGamesLoading}
+                  >
+                    <span>🎮</span>
+                    <strong>
+                      {activeGamesLoading ? "Loading matches..." : "Active Matches"}
+                    </strong>
+                    <small>Your turn, results, and waiting rooms</small>
+                  </button>
+
                   <button
                     className="multiplayer-action-card create"
                     onClick={createMultiplayerMatch}
@@ -2480,7 +2831,7 @@ export default function FootballQuizMVP() {
                   >
                     <span>🏟️</span>
                     <strong>
-                      {multiplayerLoading ? "Creating match..." : "Create Match"}
+                      {multiplayerLoading ? "Creating match..." : "Create New Match"}
                     </strong>
                     <small>Start a private room</small>
                   </button>
@@ -2496,18 +2847,6 @@ export default function FootballQuizMVP() {
                     <strong>Join Match</strong>
                     <small>Enter a room code</small>
                   </button>
-
-                  <button
-                    className="multiplayer-action-card active-games"
-                    onClick={openActiveGames}
-                    disabled={activeGamesLoading}
-                  >
-                    <span>🎮</span>
-                    <strong>
-                      {activeGamesLoading ? "Loading games..." : "Active Games"}
-                    </strong>
-                    <small>Resume your matches</small>
-                  </button>
                 </div>
               )}
 
@@ -2515,8 +2854,8 @@ export default function FootballQuizMVP() {
                 <div className="active-games-panel">
                   <div className="active-games-header">
                     <div>
-                      <strong>My Matches</strong>
-                      <span>Resume async games anytime</span>
+                      <strong>Active Matches</strong>
+                      <span>Your Quizkampen-style inbox</span>
                     </div>
 
                     <button onClick={fetchActiveGames} disabled={activeGamesLoading}>
@@ -2526,7 +2865,7 @@ export default function FootballQuizMVP() {
 
                   {activeGames.length === 0 && !activeGamesLoading ? (
                     <div className="active-games-empty">
-                      <strong>No active games yet</strong>
+                      <strong>No active matches yet</strong>
                       <span>Create a match or join with a room code</span>
                     </div>
                   ) : (
@@ -2543,10 +2882,20 @@ export default function FootballQuizMVP() {
                           playerSlot,
                           isCurrentPlayersTurn(match, playerId, username)
                         );
+                        const actionKind = getMatchActionKind(
+                          match,
+                          latestRound,
+                          playerSlot,
+                          isCurrentPlayersTurn(match, playerId, username)
+                        );
                         const timestamp = match.updated_at || match.created_at;
+                        const category = latestRound?.category || match.selected_category;
 
                         return (
-                          <div className="active-game-card" key={match.id}>
+                          <div
+                            className={`active-game-card ${getCategoryClass(category)}`}
+                            key={match.id}
+                          >
                             <div className="active-game-top">
                               <strong>{getOpponentName(match, playerId, username)}</strong>
                               <span>{match.room_code}</span>
@@ -2557,11 +2906,18 @@ export default function FootballQuizMVP() {
                               {match.player2_wins || 0}
                             </div>
 
+                            {category && (
+                              <div className={`active-game-category ${getCategoryClass(category)}`}>
+                                Round {latestRound?.round_number || match.round_number || 1} •{" "}
+                                {getCategoryLabel(category)}
+                              </div>
+                            )}
+
                             <div className="active-game-phase">
                               {match.phase || match.status || "active"}
                             </div>
 
-                            <div className="active-game-status">
+                            <div className={`active-game-status ${actionKind}`}>
                               {actionLabel}
                             </div>
 
@@ -2576,26 +2932,29 @@ export default function FootballQuizMVP() {
                                 : "Recently active"}
                             </small>
 
-                            <button
-                              onClick={() => openExistingMatch(match.id)}
-                              disabled={multiplayerLoading}
-                            >
-                              Open Match
-                            </button>
+                            <div className="active-game-actions">
+                              <button
+                                className="open-match-button"
+                                onClick={() => openExistingMatch(match.id)}
+                                disabled={multiplayerLoading}
+                              >
+                                {getMatchCtaLabel(actionKind, match)}
+                              </button>
+
+                              <button
+                                className="delete-match-button"
+                                onClick={() => requestDeleteMatch(match)}
+                                disabled={multiplayerLoading}
+                              >
+                                Delete
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
                     </div>
                   )}
 
-                  <button
-                    onClick={() => {
-                      playClickSound();
-                      setMultiplayerStep("menu");
-                    }}
-                  >
-                    Back
-                  </button>
                 </div>
               )}
 
@@ -2634,7 +2993,9 @@ export default function FootballQuizMVP() {
                       {MULTIPLAYER_CATEGORIES.map((category) => (
                         <button
                           key={category.id}
-                          className={!category.available ? "coming-soon" : ""}
+                          className={`${getCategoryClass(category.id)} ${
+                            !category.available ? "coming-soon" : ""
+                          }`}
                           disabled={!category.available || multiplayerLoading}
                           onClick={() => selectMultiplayerCategory(category)}
                         >
@@ -2645,7 +3006,7 @@ export default function FootballQuizMVP() {
                     </div>
                   )}
                   {activeMatch?.phase === "category_selected" && (
-                    <div className="category-selected-card">
+                    <div className={`category-selected-card ${getCategoryClass(activeRound.category)}`}>
                       <strong>
                         Category selected:{" "}
                         {getCategoryLabel(activeMatch.selected_category)}
@@ -2721,7 +3082,10 @@ export default function FootballQuizMVP() {
                     <div className="match-history-card">
                       <strong>Rounds</strong>
                       {matchRounds.slice(0, 4).map((round) => (
-                        <span key={round.id}>
+                        <span
+                          key={round.id}
+                          className={getCategoryClass(round.category)}
+                        >
                           Round {round.round_number} •{" "}
                           {getCategoryLabel(round.category)} •{" "}
                           {round.status === "finished"
@@ -2786,7 +3150,9 @@ export default function FootballQuizMVP() {
                       {MULTIPLAYER_CATEGORIES.map((category) => (
                         <button
                           key={category.id}
-                          className={!category.available ? "coming-soon" : ""}
+                          className={`${getCategoryClass(category.id)} ${
+                            !category.available ? "coming-soon" : ""
+                          }`}
                           disabled={!category.available || multiplayerLoading}
                           onClick={() => selectMultiplayerCategory(category)}
                         >
@@ -2797,7 +3163,7 @@ export default function FootballQuizMVP() {
                     </div>
                   )}
                   {activeMatch?.phase === "category_selected" && (
-                    <div className="category-selected-card">
+                    <div className={`category-selected-card ${getCategoryClass(activeRound.category)}`}>
                       <strong>
                         Category selected:{" "}
                         {getCategoryLabel(activeMatch.selected_category)}
@@ -2873,7 +3239,10 @@ export default function FootballQuizMVP() {
                     <div className="match-history-card">
                       <strong>Rounds</strong>
                       {matchRounds.slice(0, 4).map((round) => (
-                        <span key={round.id}>
+                        <span
+                          key={round.id}
+                          className={getCategoryClass(round.category)}
+                        >
                           Round {round.round_number} •{" "}
                           {getCategoryLabel(round.category)} •{" "}
                           {round.status === "finished"
@@ -2894,18 +3263,27 @@ export default function FootballQuizMVP() {
               )}
 
               <div className="multiplayer-todo-note">
-                Supabase rounds are saved. Realtime updates come later.
+                Live updates are on. Manual Refresh stays as backup.
               </div>
 
-              <button
-                className="multiplayer-back-button"
-                onClick={() => {
-                  playClickSound();
-                  setMultiplayerOpen(false);
-                }}
-              >
-                Back
-              </button>
+              {matchDeleteCandidate && (
+                <div className="match-delete-overlay">
+                  <div className="match-delete-modal">
+                    <strong>Delete this match?</strong>
+                    <span>This removes it from your Active Matches.</span>
+                    <div>
+                      <button onClick={cancelDeleteMatch}>Cancel</button>
+                      <button
+                        className="danger"
+                        onClick={confirmDeleteMatch}
+                        disabled={multiplayerLoading}
+                      >
+                        {multiplayerLoading ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </div>
         ) : !modeMenuOpen ? (
@@ -2916,11 +3294,14 @@ export default function FootballQuizMVP() {
 
             <div className={`home-progress-card level-${playerLevel.color}`}>
               <div className="home-progress-top">
-                <div className="home-stat-pill home-streak-pill">
+                <button
+                  className="home-stat-pill home-streak-pill stat-clickable"
+                  onClick={openDailyRewardMeter}
+                >
                   <span>🔥</span>
                   <strong>{dailyStreak}</strong>
                   <small>Daily streak</small>
-                </div>
+                </button>
 
                 <button
                   className="home-stat-pill home-coins-pill coin-clickable"
@@ -3081,6 +3462,7 @@ export default function FootballQuizMVP() {
         }}
       >
         {coinShopModal}
+        {dailyRewardMeterModal}
         <button className="home-button" onClick={restart}>
           ← Home
         </button>
@@ -3229,6 +3611,7 @@ export default function FootballQuizMVP() {
         }}
       >
         {coinShopModal}
+        {dailyRewardMeterModal}
         <div className={`result-card ${isDaily ? "daily-result-card" : ""}`}>
           <Trophy size={70} />
 
@@ -3372,6 +3755,7 @@ export default function FootballQuizMVP() {
       }}
     >
       {coinShopModal}
+      {dailyRewardMeterModal}
       <button
         className="home-button"
         onClick={() => {

@@ -911,6 +911,22 @@ input {
 
 /* DAILY REWARD POPUP */
 
+.daily-reward-view-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(16,32,51,0.48);
+  backdrop-filter: blur(7px);
+}
+
+.daily-reward-view-card {
+  position: relative;
+  z-index: 9999;
+}
+
 .daily-reward-popup {
   position: fixed;
   z-index: 9999;
@@ -2257,18 +2273,21 @@ input {
   border: 3px solid rgba(255,255,255,0.4);
 }
 
-.coin-clickable {
+.coin-clickable,
+.stat-clickable {
   border: 3px solid rgba(255,255,255,0.4);
   cursor: pointer;
   font-family: inherit;
   transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
 }
 
-.coin-clickable:hover {
+.coin-clickable:hover,
+.stat-clickable:hover {
   filter: brightness(1.04);
 }
 
-.coin-clickable:active {
+.coin-clickable:active,
+.stat-clickable:active {
   transform: translateY(4px);
   box-shadow:
     0 4px 0 rgba(0,0,0,0.14),
@@ -2278,6 +2297,11 @@ input {
 
 .home-streak-pill {
   background: linear-gradient(180deg, #fff3c6 0%, #ffd86b 100%);
+  box-shadow:
+    0 8px 0 rgba(201,130,0,0.72),
+    0 16px 28px rgba(255,184,45,0.28),
+    0 0 24px rgba(255,216,107,0.32),
+    inset 0 3px 0 rgba(255,255,255,0.58);
 }
 
 .home-coins-pill {
@@ -3329,6 +3353,7 @@ input {
 }
 
 .multiplayer-card {
+  position: relative;
   width: min(680px, 94vw);
   max-height: calc(100vh - 44px);
   overflow-y: auto;
@@ -3348,9 +3373,40 @@ input {
   box-shadow:
     0 13px 0 rgba(133,93,214,0.8),
     0 28px 60px rgba(0,0,0,0.34),
+    0 0 44px rgba(124,58,237,0.28),
     inset 0 3px 0 rgba(255,255,255,0.85);
 
   backdrop-filter: blur(16px);
+}
+
+.multiplayer-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: flex-end;
+  margin: -10px -8px 6px;
+  pointer-events: none;
+}
+
+.multiplayer-topbar button {
+  pointer-events: auto;
+  border: none;
+  border-radius: 999px;
+  padding: 9px 14px;
+
+  background: rgba(255,255,255,0.92);
+  color: #24324a;
+
+  font-size: 13px;
+  font-weight: 1000;
+  cursor: pointer;
+
+  box-shadow:
+    0 5px 0 rgba(190,205,230,0.95),
+    0 10px 18px rgba(0,0,0,0.14),
+    0 0 18px rgba(255,255,255,0.45),
+    inset 0 2px 0 rgba(255,255,255,0.72);
 }
 
 .multiplayer-badge {
@@ -3389,7 +3445,7 @@ input {
 
 .multiplayer-mode-pills {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   margin-bottom: 18px;
 }
@@ -3461,20 +3517,50 @@ input {
   cursor: pointer;
   font-family: inherit;
   text-align: center;
+  transition: transform 0.13s ease, filter 0.13s ease, box-shadow 0.13s ease;
+}
+
+.multiplayer-action-card:hover,
+.active-games-panel button:hover,
+.multiplayer-room-card button:hover,
+.multiplayer-join-card button:hover {
+  filter: brightness(1.04) saturate(1.04);
+}
+
+.multiplayer-action-card:active,
+.active-games-panel button:active,
+.multiplayer-room-card button:active,
+.multiplayer-join-card button:active {
+  transform: translateY(4px);
 }
 
 .multiplayer-action-card.create {
   background: linear-gradient(180deg, #fff3c6 0%, #ffd86b 100%);
+  box-shadow:
+    0 9px 0 #c87900,
+    0 20px 34px rgba(245,164,0,0.24),
+    0 0 28px rgba(255,216,107,0.36),
+    inset 0 3px 0 rgba(255,255,255,0.58);
 }
 
 .multiplayer-action-card.join {
   background: linear-gradient(180deg, #dff3ff 0%, #89d7ff 100%);
+  box-shadow:
+    0 9px 0 #2586bd,
+    0 20px 34px rgba(37,134,189,0.22),
+    0 0 28px rgba(137,215,255,0.34),
+    inset 0 3px 0 rgba(255,255,255,0.58);
 }
 
 .multiplayer-action-card.active-games {
   grid-column: 1 / -1;
   min-height: 126px;
   background: linear-gradient(180deg, #e7f8dc 0%, #8de66f 100%);
+  box-shadow:
+    0 9px 0 #2f9e44,
+    0 22px 36px rgba(88,204,2,0.22),
+    0 0 34px rgba(141,230,111,0.38),
+    inset 0 3px 0 rgba(255,255,255,0.58);
 }
 
 .multiplayer-action-card span {
@@ -3574,6 +3660,24 @@ input {
     inset 0 2px 0 rgba(255,255,255,0.48);
 }
 
+.multiplayer-notice {
+  width: min(410px, 100%);
+  margin: 0 auto 14px;
+  padding: 10px 13px;
+  border-radius: 18px;
+
+  background: linear-gradient(180deg, #dcffcf 0%, #8ff077 100%);
+  color: #14532d;
+
+  font-size: 13px;
+  font-weight: 1000;
+
+  box-shadow:
+    0 5px 0 #2f9e44,
+    0 10px 18px rgba(0,0,0,0.14),
+    inset 0 2px 0 rgba(255,255,255,0.42);
+}
+
 .active-games-panel {
   display: grid;
   gap: 12px;
@@ -3631,6 +3735,46 @@ input {
   text-align: left;
 }
 
+.active-game-card.category-general {
+  background: linear-gradient(180deg, #f2ffe9 0%, #d9f7c8 100%);
+  box-shadow:
+    0 8px 0 rgba(47,158,68,0.58),
+    0 16px 28px rgba(88,204,2,0.18),
+    0 0 24px rgba(141,230,111,0.22),
+    inset 0 3px 0 rgba(255,255,255,0.58);
+}
+
+.active-game-card.category-world-cup {
+  background: linear-gradient(180deg, #edf7ff 0%, #cce9ff 100%);
+  box-shadow:
+    0 8px 0 rgba(37,134,189,0.56),
+    0 16px 28px rgba(37,134,189,0.18),
+    0 0 24px rgba(137,215,255,0.24),
+    inset 0 3px 0 rgba(255,255,255,0.58);
+}
+
+.active-game-card.category-premier-league {
+  background: linear-gradient(180deg, #f4edff 0%, #dfcaff 100%);
+  box-shadow:
+    0 8px 0 rgba(124,58,237,0.58),
+    0 16px 28px rgba(124,58,237,0.18),
+    0 0 24px rgba(185,149,255,0.26),
+    inset 0 3px 0 rgba(255,255,255,0.58);
+}
+
+.active-game-card.category-career-path {
+  background: linear-gradient(180deg, #fff4dc 0%, #ffdda3 100%);
+  box-shadow:
+    0 8px 0 rgba(200,121,0,0.58),
+    0 16px 28px rgba(245,164,0,0.18),
+    0 0 24px rgba(255,216,107,0.26),
+    inset 0 3px 0 rgba(255,255,255,0.58);
+}
+
+.active-game-card:has(.active-game-status.your-turn) {
+  animation: activeTurnGlow 1.8s ease-in-out infinite alternate;
+}
+
 .active-game-top {
   display: flex;
   align-items: center;
@@ -3663,6 +3807,39 @@ input {
   text-transform: uppercase;
 }
 
+.active-game-category {
+  width: fit-content;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 1000;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.45);
+}
+
+.active-game-category.category-general,
+.multiplayer-category-grid button.category-general {
+  background: linear-gradient(180deg, #dcffcf 0%, #8ff077 100%);
+  color: #14532d;
+}
+
+.active-game-category.category-world-cup,
+.multiplayer-category-grid button.category-world-cup {
+  background: linear-gradient(180deg, #dff3ff 0%, #89d7ff 100%);
+  color: #143a63;
+}
+
+.active-game-category.category-premier-league,
+.multiplayer-category-grid button.category-premier-league {
+  background: linear-gradient(180deg, #eadcff 0%, #b995ff 100%);
+  color: #3b1c72;
+}
+
+.active-game-category.category-career-path,
+.multiplayer-category-grid button.category-career-path {
+  background: linear-gradient(180deg, #fff3c6 0%, #ffd86b 100%);
+  color: #633600;
+}
+
 .active-game-status {
   width: fit-content;
   padding: 8px 11px;
@@ -3674,13 +3851,48 @@ input {
   box-shadow: inset 0 2px 0 rgba(255,255,255,0.45);
 }
 
+.active-game-status.your-turn {
+  background: linear-gradient(180deg, #dcffcf 0%, #8ff077 100%);
+  color: #14532d;
+  box-shadow:
+    0 0 18px rgba(88,204,2,0.35),
+    inset 0 2px 0 rgba(255,255,255,0.45);
+}
+
+.active-game-status.waiting {
+  background: linear-gradient(180deg, #fff3c6 0%, #ffd86b 100%);
+  color: #633600;
+}
+
+.active-game-status.result {
+  background: linear-gradient(180deg, #eadcff 0%, #b995ff 100%);
+  color: #3b1c72;
+  box-shadow:
+    0 0 18px rgba(124,58,237,0.28),
+    inset 0 2px 0 rgba(255,255,255,0.45);
+}
+
+.active-game-status.waiting-join,
+.active-game-status.neutral {
+  background: linear-gradient(180deg, #eef4ff 0%, #dce8ff 100%);
+  color: #24324a;
+}
+
 .active-game-card small {
   font-size: 11px;
   font-weight: 900;
   color: rgba(20,33,61,0.58);
 }
 
-.active-games-panel button {
+.active-game-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 9px;
+  align-items: center;
+}
+
+.active-games-panel button,
+.match-delete-modal button {
   border: none;
   border-radius: 20px;
   padding: 11px 16px;
@@ -3702,6 +3914,79 @@ input {
 .active-games-panel button:disabled {
   opacity: 0.7;
   cursor: wait;
+}
+
+.active-games-panel .delete-match-button,
+.match-delete-modal .danger {
+  background: linear-gradient(180deg, #ffd6e2 0%, #ff8cab 100%);
+  color: #721427;
+  box-shadow:
+    0 6px 0 #c92a4d,
+    0 12px 20px rgba(0,0,0,0.14),
+    inset 0 2px 0 rgba(255,255,255,0.42);
+}
+
+.match-delete-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  border-radius: 42px;
+  background: rgba(16,32,51,0.42);
+  backdrop-filter: blur(5px);
+}
+
+.match-delete-modal {
+  width: min(360px, 100%);
+  padding: 18px;
+  border-radius: 28px;
+
+  background: linear-gradient(180deg, #ffffff 0%, #eef4ff 100%);
+  color: #14213d;
+  text-align: center;
+
+  box-shadow:
+    0 10px 0 rgba(190,205,230,0.95),
+    0 24px 44px rgba(0,0,0,0.26),
+    inset 0 3px 0 rgba(255,255,255,0.72);
+}
+
+.match-delete-modal strong,
+.match-delete-modal span {
+  display: block;
+}
+
+.match-delete-modal strong {
+  font-size: 23px;
+  font-weight: 1000;
+}
+
+.match-delete-modal span {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 900;
+  color: rgba(20,33,61,0.66);
+}
+
+.match-delete-modal div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+@keyframes activeTurnGlow {
+  from {
+    transform: translateY(0);
+    filter: saturate(1);
+  }
+
+  to {
+    transform: translateY(-2px);
+    filter: saturate(1.08) brightness(1.02);
+  }
 }
 
 .multiplayer-player-list {
@@ -3848,6 +4133,26 @@ input {
     inset 0 2px 0 rgba(255,255,255,0.35);
 }
 
+.category-selected-card.category-general {
+  background: linear-gradient(180deg, #dcffcf 0%, #8ff077 100%);
+  color: #14532d;
+}
+
+.category-selected-card.category-world-cup {
+  background: linear-gradient(180deg, #dff3ff 0%, #89d7ff 100%);
+  color: #143a63;
+}
+
+.category-selected-card.category-premier-league {
+  background: linear-gradient(180deg, #eadcff 0%, #b995ff 100%);
+  color: #3b1c72;
+}
+
+.category-selected-card.category-career-path {
+  background: linear-gradient(180deg, #fff3c6 0%, #ffd86b 100%);
+  color: #633600;
+}
+
 .multiplayer-round-result-card {
   margin: 14px auto;
   padding: 15px;
@@ -3968,6 +4273,22 @@ input {
   line-height: 1.25;
 }
 
+.match-history-card span.category-general {
+  background: rgba(220,255,207,0.92);
+}
+
+.match-history-card span.category-world-cup {
+  background: rgba(211,237,255,0.92);
+}
+
+.match-history-card span.category-premier-league {
+  background: rgba(234,220,255,0.92);
+}
+
+.match-history-card span.category-career-path {
+  background: rgba(255,236,196,0.94);
+}
+
 .match-history-card span + span {
   margin-top: 7px;
 }
@@ -3976,6 +4297,35 @@ input {
   width: min(1040px, 92vw);
   margin: 0 auto;
   text-align: center;
+}
+
+.multiplayer-round-back {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  right: 14px;
+  z-index: 12;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 14px;
+
+  background: rgba(255,255,255,0.92);
+  color: #24324a;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 1000;
+  cursor: pointer;
+
+  box-shadow:
+    0 5px 0 rgba(190,205,230,0.95),
+    0 10px 18px rgba(0,0,0,0.18),
+    0 0 18px rgba(255,255,255,0.45),
+    inset 0 2px 0 rgba(255,255,255,0.72);
+}
+
+.multiplayer-round-back:disabled {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 .multiplayer-round-progress {
@@ -4047,6 +4397,26 @@ input {
     0 6px 0 #e11d48,
     0 12px 20px rgba(0,0,0,0.18),
     inset 0 2px 0 rgba(255,255,255,0.38);
+}
+
+.difficulty-pill.category-general {
+  background: linear-gradient(180deg, #dcffcf 0%, #8ff077 100%);
+  color: #14532d;
+}
+
+.difficulty-pill.category-world-cup {
+  background: linear-gradient(180deg, #dff3ff 0%, #89d7ff 100%);
+  color: #143a63;
+}
+
+.difficulty-pill.category-premier-league {
+  background: linear-gradient(180deg, #eadcff 0%, #b995ff 100%);
+  color: #3b1c72;
+}
+
+.difficulty-pill.category-career-path {
+  background: linear-gradient(180deg, #fff3c6 0%, #ffd86b 100%);
+  color: #633600;
 }
 
 @keyframes timerPulse {
