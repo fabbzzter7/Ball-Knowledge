@@ -565,6 +565,12 @@ input {
   margin-top: 8px;
 }
 
+.daily-list-bg {
+  align-items: flex-start;
+  overflow-y: auto;
+  padding-top: max(28px, env(safe-area-inset-top));
+}
+
 .daily-list-label {
   font-size: 34px;
   font-weight: 1000;
@@ -1427,6 +1433,18 @@ input {
   background: linear-gradient(180deg, #8da2ff 0%, #667fff 100%);
   box-shadow: 0 8px 0 #4e62d9, 0 12px 24px rgba(0,0,0,0.18);
   margin-bottom: 26px;
+}
+
+.difficulty-pill.very-hard {
+  background:
+    radial-gradient(circle at top left, rgba(255,215,107,0.95), rgba(255,87,127,0.82) 38%, rgba(124,58,237,0.95) 100%);
+  color: white;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  box-shadow:
+    0 8px 0 #4c1d95,
+    0 0 28px rgba(255,87,127,0.36),
+    0 14px 28px rgba(0,0,0,0.24),
+    inset 0 2px 0 rgba(255,255,255,0.34);
 }
 
 .question-title {
@@ -5870,7 +5888,7 @@ input {
   .daily-list-wrapper {
     width: min(420px, 94vw) !important;
 
-    margin: 54px auto 20px !important;
+    margin: 18px auto 20px !important;
     padding: 16px 14px 18px !important;
 
     border-radius: 28px !important;

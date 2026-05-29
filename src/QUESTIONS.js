@@ -23,7 +23,7 @@ export const QUESTIONS = [
 
 { difficulty: "Easy", question: "Which country is Virgil van Dijk from?", options: ["Netherlands", "Belgium", "Germany", "Denmark"], answer: "Netherlands" },
 
-{ difficulty: "Easy", question: "Which club does Mohamed Salah play for?", options: ["Liverpool", "Arsenal", "Chelsea", "Manchester City"], answer: "Liverpool" },
+{ difficulty: "Easy", question: "Which club did Mohamed Salah win the 2019 Champions League with?", options: ["Liverpool", "Arsenal", "Chelsea", "Manchester City"], answer: "Liverpool" },
 
 { difficulty: "Easy", question: "Which country is Bruno Fernandes from?", options: ["Portugal", "Brazil", "Spain", "Italy"], answer: "Portugal" },
 
@@ -51,7 +51,7 @@ export const QUESTIONS = [
 
 { difficulty: "Easy", question: "Which country is Federico Valverde from?", options: ["Uruguay", "Argentina", "Brazil", "Paraguay"], answer: "Uruguay" },
 
-{ difficulty: "Easy", question: "Which club does Kevin De Bruyne play for?", options: ["Manchester City", "Liverpool", "Chelsea", "Arsenal"], answer: "Manchester City" },
+{ difficulty: "Easy", question: "Which club did Kevin De Bruyne join in 2025 after leaving Manchester City?", options: ["Napoli", "Inter", "PSG", "Bayern Munich"], answer: "Napoli" },
 
 { difficulty: "Easy", question: "Which country is Phil Foden from?", options: ["England", "Wales", "Scotland", "Ireland"], answer: "England" },
 
@@ -73,15 +73,15 @@ export const QUESTIONS = [
 
 { difficulty: "Easy", question: "Which country is Rodri from?", options: ["Spain", "Portugal", "Italy", "France"], answer: "Spain" },
 
-{ difficulty: "Easy", question: "Which club does Rodri play for?", options: ["Manchester City", "Real Madrid", "Barcelona", "Bayern Munich"], answer: "Manchester City" },
+{ difficulty: "Easy", question: "Which club did Rodri win the 2023 Champions League with?", options: ["Manchester City", "Real Madrid", "Barcelona", "Bayern Munich"], answer: "Manchester City" },
 
 { difficulty: "Easy", question: "Which country is Declan Rice from?", options: ["England", "Ireland", "Scotland", "Wales"], answer: "England" },
 
-{ difficulty: "Easy", question: "Which club does Declan Rice play for?", options: ["Arsenal", "Chelsea", "Tottenham", "Liverpool"], answer: "Arsenal" },
+{ difficulty: "Easy", question: "Which club did Declan Rice join in 2023?", options: ["Arsenal", "Chelsea", "Tottenham", "Liverpool"], answer: "Arsenal" },
 
 { difficulty: "Easy", question: "Which country is Martin Ødegaard from?", options: ["Norway", "Sweden", "Denmark", "Iceland"], answer: "Norway" },
 
-{ difficulty: "Easy", question: "Which club does Martin Ødegaard captain?", options: ["Arsenal", "Real Madrid", "Tottenham", "Liverpool"], answer: "Arsenal" },
+{ difficulty: "Easy", question: "Which club did Martin Ødegaard join permanently from Real Madrid?", options: ["Arsenal", "Real Sociedad", "Tottenham", "Liverpool"], answer: "Arsenal" },
 
 { difficulty: "Easy", question: "Which country is Florian Wirtz from?", options: ["Germany", "Austria", "Switzerland", "Netherlands"], answer: "Germany" },
 
@@ -110,7 +110,7 @@ export const QUESTIONS = [
 { difficulty: "Easy", question: "Which country is Sergio Ramos from?", options: ["Spain", "Portugal", "Brazil", "Argentina"], answer: "Spain" },
 
 { difficulty: "Easy", question: "Which club is Sergio Ramos most associated with?", options: ["Real Madrid", "Barcelona", "Sevilla", "PSG"], answer: "Real Madrid" },
-{ difficulty: "Easy", question: "Which club does Harry Kane play for?", options: ["Bayern Munich", "Tottenham", "Manchester United", "Milan"], answer: "Bayern Munich" },
+{ difficulty: "Easy", question: "Which club did Harry Kane join in 2023?", options: ["Bayern Munich", "Tottenham", "Manchester United", "Milan"], answer: "Bayern Munich" },
 
 { difficulty: "Easy", question: "Which country won Euro 2020?", options: ["Italy", "England", "France", "Portugal"], answer: "Italy" },
 
@@ -120,7 +120,7 @@ export const QUESTIONS = [
 
 { difficulty: "Easy", question: "Which country is Luka Modrić from?", options: ["Croatia", "Serbia", "Slovenia", "Poland"], answer: "Croatia" },
 
-{ difficulty: "Easy", question: "Which club does Vinícius Jr play for?", options: ["Real Madrid", "Barcelona", "PSG", "Juventus"], answer: "Real Madrid" },
+{ difficulty: "Easy", question: "Which club did Vinícius Jr win the 2024 Champions League with?", options: ["Real Madrid", "Barcelona", "PSG", "Juventus"], answer: "Real Madrid" },
 
 { difficulty: "Easy", question: "Which country won the Women's World Cup 2023?", options: ["Spain", "England", "USA", "Germany"], answer: "Spain" },
 
@@ -146,11 +146,11 @@ export const QUESTIONS = [
 
 { difficulty: "Easy", question: "Which country won the 2014 World Cup?", options: ["Germany", "Argentina", "Brazil", "Spain"], answer: "Germany" },
 
-{ difficulty: "Easy", question: "Which club does Bukayo Saka play for?", options: ["Arsenal", "Chelsea", "Liverpool", "Newcastle"], answer: "Arsenal" },
+{ difficulty: "Easy", question: "Which club's academy produced Bukayo Saka?", options: ["Arsenal", "Chelsea", "Liverpool", "Newcastle"], answer: "Arsenal" },
 
 { difficulty: "Easy", question: "Which country is Kevin De Bruyne from?", options: ["Belgium", "Netherlands", "Germany", "France"], answer: "Belgium" },
 
-{ difficulty: "Easy", question: "Which club did Son Heung-min play for?", options: ["Tottenham", "Chelsea", "Liverpool", "Bayern Munich"], answer: "Tottenham" },
+{ difficulty: "Easy", question: "Which MLS club did Son Heung-min join in 2025?", options: ["LAFC", "Inter Miami", "LA Galaxy", "Seattle Sounders"], answer: "LAFC" },
 
 { difficulty: "Easy", question: "Which country hosted the 2014 World Cup?", options: ["Brazil", "Russia", "South Africa", "Germany"], answer: "Brazil" },
 
@@ -164,7 +164,7 @@ export const QUESTIONS = [
 
 { difficulty: "Easy", question: "Which country is Pedri from?", options: ["Spain", "Portugal", "Argentina", "Brazil"], answer: "Spain" },
 
-{ difficulty: "Easy", question: "Which club does Jamal Musiala play for?", options: ["Bayern Munich", "Borussia Dortmund", "RB Leipzig", "Arsenal"], answer: "Bayern Munich" },
+{ difficulty: "Easy", question: "Which club did Jamal Musiala join after leaving Chelsea's academy?", options: ["Bayern Munich", "Borussia Dortmund", "RB Leipzig", "Arsenal"], answer: "Bayern Munich" },
 
 { difficulty: "Easy", question: "Which country won the 2010 World Cup?", options: ["Spain", "Netherlands", "Germany", "Brazil"], answer: "Spain" },
 
@@ -174,7 +174,7 @@ export const QUESTIONS = [
 
 { difficulty: "Easy", question: "Which country is Achraf Hakimi from?", options: ["Morocco", "Algeria", "Tunisia", "Egypt"], answer: "Morocco" },
 
-{ difficulty: "Easy", question: "Which club does Antoine Griezmann play for?", options: ["Atlético Madrid", "Barcelona", "PSG", "Marseille"], answer: "Atlético Madrid" },
+{ difficulty: "Easy", question: "Which club did Antoine Griezmann first join from Real Sociedad?", options: ["Atlético Madrid", "Barcelona", "PSG", "Marseille"], answer: "Atlético Madrid" },
 
 { difficulty: "Easy", question: "Which country won Euro 2016?", options: ["Portugal", "France", "Germany", "Spain"], answer: "Portugal" },
 
@@ -714,4 +714,61 @@ export const QUESTIONS = [
 
 { difficulty: "Hard", question: "Which country did Diego Simeone represent as a player?", options: ["Argentina", "Uruguay", "Chile", "Paraguay"], answer: "Argentina" },
 { difficulty: "Hard", question: "Which Italian club did Diego Simeone play for before Lazio?", options: ["Inter", "AC Milan", "Roma", "Fiorentina"], answer: "Inter" },
+
+{ difficulty: "Easy", question: "Which country did Pelé win three World Cups with?", options: ["Brazil", "Argentina", "Italy", "France"], answer: "Brazil" },
+{ difficulty: "Easy", question: "Which club is associated with the anthem 'You'll Never Walk Alone'?", options: ["Liverpool", "Chelsea", "Arsenal", "Leeds United"], answer: "Liverpool" },
+{ difficulty: "Easy", question: "Which manager is most associated with Barcelona's tiki-taka era?", options: ["Pep Guardiola", "José Mourinho", "Carlo Ancelotti", "Jürgen Klopp"], answer: "Pep Guardiola" },
+{ difficulty: "Easy", question: "Which trophy is awarded to the Champions League winner?", options: ["European Cup", "FA Cup", "Copa del Rey", "Community Shield"], answer: "European Cup" },
+{ difficulty: "Easy", question: "Which nation is known as the Azzurri?", options: ["Italy", "France", "Spain", "Portugal"], answer: "Italy" },
+{ difficulty: "Easy", question: "Which club did Lionel Messi join after leaving Barcelona in 2021?", options: ["PSG", "Inter Miami", "Manchester City", "Newell's Old Boys"], answer: "PSG" },
+{ difficulty: "Easy", question: "Which city is home to Real Madrid and Atlético Madrid?", options: ["Madrid", "Barcelona", "Seville", "Valencia"], answer: "Madrid" },
+{ difficulty: "Easy", question: "Which player is famous for the Panenka penalty style?", options: ["Antonín Panenka", "Andrea Pirlo", "Zinedine Zidane", "Francesco Totti"], answer: "Antonín Panenka" },
+{ difficulty: "Easy", question: "Which country did Eusébio represent?", options: ["Portugal", "Brazil", "Mozambique", "Spain"], answer: "Portugal" },
+
+{ difficulty: "Medium", question: "Which club won the first Premier League season in 1992/93?", options: ["Manchester United", "Blackburn Rovers", "Arsenal", "Leeds United"], answer: "Manchester United" },
+{ difficulty: "Medium", question: "Which manager led Greece to victory at Euro 2004?", options: ["Otto Rehhagel", "Luiz Felipe Scolari", "Marcello Lippi", "Guus Hiddink"], answer: "Otto Rehhagel" },
+{ difficulty: "Medium", question: "Which player scored the volley in the 2002 Champions League final for Real Madrid?", options: ["Zinedine Zidane", "Raúl", "Luís Figo", "Roberto Carlos"], answer: "Zinedine Zidane" },
+{ difficulty: "Medium", question: "Which club did Diego Maradona lead to two Serie A titles?", options: ["Napoli", "Juventus", "Roma", "Inter"], answer: "Napoli" },
+{ difficulty: "Medium", question: "Which country won the 1995 Women's World Cup?", options: ["Norway", "USA", "Germany", "Sweden"], answer: "Norway" },
+{ difficulty: "Medium", question: "Which club did Johan Cruyff manage to the 1992 European Cup?", options: ["Barcelona", "Ajax", "Feyenoord", "PSV"], answer: "Barcelona" },
+{ difficulty: "Medium", question: "Which African nation reached the 2022 World Cup semi-finals?", options: ["Morocco", "Senegal", "Ghana", "Cameroon"], answer: "Morocco" },
+{ difficulty: "Medium", question: "Which club won the 1995 Champions League with a young Ajax team?", options: ["Ajax", "Milan", "Juventus", "Dortmund"], answer: "Ajax" },
+{ difficulty: "Medium", question: "Which player scored England's only goal in the Euro 2020 final?", options: ["Luke Shaw", "Harry Kane", "Raheem Sterling", "Mason Mount"], answer: "Luke Shaw" },
+
+{ difficulty: "Hard", question: "Which country won the first World Cup in 1930?", options: ["Uruguay", "Argentina", "Brazil", "Italy"], answer: "Uruguay" },
+{ difficulty: "Hard", question: "Which club did Brian Clough lead to back-to-back European Cups?", options: ["Nottingham Forest", "Derby County", "Leeds United", "Aston Villa"], answer: "Nottingham Forest" },
+{ difficulty: "Hard", question: "Which player scored the winning goal in the Euro 2000 final?", options: ["David Trezeguet", "Sylvain Wiltord", "Zinedine Zidane", "Thierry Henry"], answer: "David Trezeguet" },
+{ difficulty: "Hard", question: "Which country did Lev Yashin represent?", options: ["Soviet Union", "Russia", "Ukraine", "Belarus"], answer: "Soviet Union" },
+{ difficulty: "Hard", question: "Which club won the 1982 European Cup final against Bayern Munich?", options: ["Aston Villa", "Liverpool", "Hamburg", "Nottingham Forest"], answer: "Aston Villa" },
+{ difficulty: "Hard", question: "Which player scored both goals for Argentina in the 1986 World Cup quarter-final against England?", options: ["Diego Maradona", "Jorge Valdano", "Jorge Burruchaga", "Oscar Ruggeri"], answer: "Diego Maradona" },
+{ difficulty: "Hard", question: "Which manager led Porto to the 2011 Europa League title?", options: ["André Villas-Boas", "José Mourinho", "Vítor Pereira", "Sérgio Conceição"], answer: "André Villas-Boas" },
+{ difficulty: "Hard", question: "Which club did Ferenc Puskás famously play for in Spain?", options: ["Real Madrid", "Barcelona", "Atlético Madrid", "Valencia"], answer: "Real Madrid" },
+{ difficulty: "Hard", question: "Which nation finished third at the 1998 World Cup?", options: ["Croatia", "Netherlands", "Brazil", "Italy"], answer: "Croatia" },
+{ difficulty: "Hard", question: "Which goalkeeper won the Ballon d'Or in 1963?", options: ["Lev Yashin", "Gordon Banks", "Dino Zoff", "Sepp Maier"], answer: "Lev Yashin" },
+
+{ difficulty: "Very Hard", question: "Who scored the winning goal for West Germany in the 1990 World Cup final?", options: ["Andreas Brehme", "Lothar Matthäus", "Jürgen Klinsmann", "Rudi Völler"], answer: "Andreas Brehme" },
+{ difficulty: "Very Hard", question: "Which club won the 1991 European Cup after a penalty shootout against Marseille?", options: ["Red Star Belgrade", "Steaua București", "Ajax", "Benfica"], answer: "Red Star Belgrade" },
+{ difficulty: "Very Hard", question: "Which Denmark player was top scorer at Euro 1992 with three goals?", options: ["Henrik Larsen", "Brian Laudrup", "Kim Vilfort", "Flemming Povlsen"], answer: "Henrik Larsen" },
+{ difficulty: "Very Hard", question: "Which club did Kaká play for before AC Milan?", options: ["São Paulo", "Flamengo", "Palmeiras", "Santos"], answer: "São Paulo" },
+{ difficulty: "Very Hard", question: "Which country knocked Italy out of the 2002 World Cup with a golden goal?", options: ["South Korea", "Japan", "Turkey", "Croatia"], answer: "South Korea" },
+{ difficulty: "Very Hard", question: "Who scored the golden goal in the Euro 1996 final?", options: ["Oliver Bierhoff", "Jürgen Klinsmann", "Matthias Sammer", "Andreas Möller"], answer: "Oliver Bierhoff" },
+{ difficulty: "Very Hard", question: "Which club won the 1979 European Cup final?", options: ["Nottingham Forest", "Malmö", "Liverpool", "Hamburg"], answer: "Nottingham Forest" },
+{ difficulty: "Very Hard", question: "Which player scored Brazil's goal in the 1998 World Cup final?", options: ["No Brazil player scored", "Ronaldo", "Rivaldo", "Bebeto"], answer: "No Brazil player scored" },
+{ difficulty: "Very Hard", question: "Which country won the 1976 European Championship on a Panenka penalty?", options: ["Czechoslovakia", "West Germany", "Netherlands", "Yugoslavia"], answer: "Czechoslovakia" },
+{ difficulty: "Very Hard", question: "Which club did Ruud Gullit join from PSV in 1987?", options: ["AC Milan", "Sampdoria", "Chelsea", "Feyenoord"], answer: "AC Milan" },
+{ difficulty: "Very Hard", question: "Which manager led Denmark to the Euro 1992 title?", options: ["Richard Møller Nielsen", "Sepp Piontek", "Morten Olsen", "Åge Hareide"], answer: "Richard Møller Nielsen" },
+{ difficulty: "Very Hard", question: "Which nation did Roger Milla represent?", options: ["Cameroon", "Nigeria", "Ghana", "Ivory Coast"], answer: "Cameroon" },
+{ difficulty: "Very Hard", question: "Which club won the 1986 European Cup final on penalties against Barcelona?", options: ["Steaua București", "Porto", "PSV", "Benfica"], answer: "Steaua București" },
+{ difficulty: "Very Hard", question: "Which goalkeeper saved four penalties in the 1986 European Cup final shootout?", options: ["Helmuth Duckadam", "Andoni Zubizarreta", "Dino Zoff", "Rinat Dasayev"], answer: "Helmuth Duckadam" },
+{ difficulty: "Very Hard", question: "Which team did Greece beat in the Euro 2004 final?", options: ["Portugal", "Czech Republic", "France", "Netherlands"], answer: "Portugal" },
+{ difficulty: "Very Hard", question: "Which club did George Weah play for when he won the 1995 Ballon d'Or?", options: ["AC Milan", "PSG", "Monaco", "Chelsea"], answer: "AC Milan" },
+{ difficulty: "Very Hard", question: "Which country finished third at the 2002 World Cup?", options: ["Turkey", "South Korea", "Germany", "Brazil"], answer: "Turkey" },
+{ difficulty: "Very Hard", question: "Who scored Turkey's fastest World Cup goal in 2002 against South Korea?", options: ["Hakan Şükür", "İlhan Mansız", "Hasan Şaş", "Ümit Davala"], answer: "Hakan Şükür" },
+{ difficulty: "Very Hard", question: "Which club did Deco play for before Barcelona?", options: ["Porto", "Benfica", "Sporting CP", "Chelsea"], answer: "Porto" },
+{ difficulty: "Very Hard", question: "Which nation won the 1996 Olympic men's football gold medal?", options: ["Nigeria", "Brazil", "Argentina", "Mexico"], answer: "Nigeria" },
+{ difficulty: "Very Hard", question: "Which club won the 1988 European Cup final?", options: ["PSV", "Benfica", "Steaua București", "Milan"], answer: "PSV" },
+{ difficulty: "Very Hard", question: "Which country hosted the 1982 World Cup?", options: ["Spain", "Italy", "Mexico", "Argentina"], answer: "Spain" },
+{ difficulty: "Very Hard", question: "Which player scored a hat-trick for England in the 1966 World Cup final?", options: ["Geoff Hurst", "Bobby Charlton", "Roger Hunt", "Martin Peters"], answer: "Geoff Hurst" },
+{ difficulty: "Very Hard", question: "Which club did Luka Modrić play for before Tottenham?", options: ["Dinamo Zagreb", "Hajduk Split", "Zadar", "Rijeka"], answer: "Dinamo Zagreb" },
+{ difficulty: "Very Hard", question: "Which country won the first Women's World Cup in 1991?", options: ["USA", "Norway", "Germany", "China"], answer: "USA" },
 ];

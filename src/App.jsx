@@ -28,7 +28,7 @@ import wrongSound from "./assets/wrong.wav";
 import stadiumBg from "./assets/stadium-bg.png";
 import quizBg from "./assets/quiz-bg.png";
 
-const HARD_TIME_LIMIT = 20;
+const HARD_TIME_LIMIT = 15;
 const MULTIPLAYER_TIME_LIMIT = 8;
 const MULTIPLAYER_TIMEOUT_VALUE = "__time_up__";
 const DAILY_SCAN_STEP_MS = 210;
@@ -232,11 +232,14 @@ function buildGameQuestions(mode = "general") {
   const easy = QUESTIONS.filter((q) => q.difficulty === "Easy");
   const medium = QUESTIONS.filter((q) => q.difficulty === "Medium");
   const hard = QUESTIONS.filter((q) => q.difficulty === "Hard");
+  const veryHard = QUESTIONS.filter((q) => q.difficulty === "Very Hard");
 
   const selectedQuestions = [
     ...shuffle(easy).slice(0, 10),
     ...shuffle(medium).slice(0, 20),
-    ...shuffle(hard),
+    ...shuffle(hard).slice(0, 20),
+    ...shuffle(veryHard),
+    ...shuffle(hard).slice(20),
   ];
 
   return selectedQuestions.map((q) => ({
@@ -844,6 +847,12 @@ export default function FootballQuizMVP() {
     connectionsRewardClaimed,
   ]);
 
+  useEffect(() => {
+    if (gameMode !== "daily-list" || !gameStarted) return;
+
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [gameMode, gameStarted]);
+
   const revivePrices = [250, 400, 800, 1600, 5000];
   const reviveCost = revivePrices[revivesUsed] || 5000;
 
@@ -882,7 +891,7 @@ export default function FootballQuizMVP() {
     if (!timerActive) return;
 
     if (timeLeft <= 0) {
-      handleWrongAnswer(current.answer);
+      handleWrongAnswer(current.answer, "Time's up!");
       return;
     }
 
@@ -2261,7 +2270,7 @@ export default function FootballQuizMVP() {
     return 0;
   };
 
-  const handleWrongAnswer = (correctAnswer) => {
+  const handleWrongAnswer = (correctAnswer, message = "Wrong") => {
     setStreak(0);
 
     const newLives = Math.max(lives - 1, 0);
@@ -2269,6 +2278,7 @@ export default function FootballQuizMVP() {
 
     setWrongPopup({
       answer: correctAnswer,
+      message,
     });
 
     playWrongSound();
@@ -2918,7 +2928,7 @@ export default function FootballQuizMVP() {
   if (!username) {
     return (
       <div
-        className="fullscreen-bg"
+        className="fullscreen-bg daily-list-bg"
         style={{
           backgroundImage: `linear-gradient(rgba(255,255,255,0.08), rgba(0,0,0,0.48)), url(${stadiumBg})`,
         }}
@@ -4013,10 +4023,6 @@ export default function FootballQuizMVP() {
           <div className="main-menu">
             <h1 className="main-title">BALL KNOWLEDGE</h1>
 
-            <div className="main-username-pill">
-              {profileAvatarEmoji} {displayName}
-            </div>
-
             <motion.div
               className={`home-progress-card home-progress-clickable level-${playerLevel.color}`}
               onClick={openLevelModal}
@@ -4475,7 +4481,7 @@ export default function FootballQuizMVP() {
               exit={{ opacity: 0, scale: 1.1 }}
               transition={{ duration: 0.25 }}
             >
-              <div className="wrong-title">❌ WRONG</div>
+              <div className="wrong-title">❌ {wrongPopup.message || "WRONG"}</div>
               <div className="wrong-answer">{wrongPopup.answer}</div>
               <div className="wrong-life">-1 LIFE ❤️</div>
             </motion.div>
@@ -4764,7 +4770,7 @@ export default function FootballQuizMVP() {
             exit={{ opacity: 0, scale: 1.1 }}
             transition={{ duration: 0.25 }}
           >
-            <div className="wrong-title">❌ WRONG</div>
+              <div className="wrong-title">❌ {wrongPopup.message || "WRONG"}</div>
             <div className="wrong-answer">Correct: {wrongPopup.answer}</div>
             <div className="wrong-life">-1 LIFE ❤️</div>
           </motion.div>
@@ -4827,7 +4833,11 @@ export default function FootballQuizMVP() {
           exit={{ opacity: 0, y: -25 }}
           transition={{ duration: 0.25 }}
         >
-          <div className="difficulty-pill">
+          <div
+            className={`difficulty-pill ${
+              current.difficulty === "Very Hard" ? "very-hard" : ""
+            }`}
+          >
             {isMockMultiplayer
               ? `Multiplayer • ${getModeLabel(gameMode)}`
               : gameMode === "career"
@@ -4841,7 +4851,7 @@ export default function FootballQuizMVP() {
             <div
               className={`hard-timer ${
                 current.difficulty === "Very Hard" ? "very-hard" : ""
-              } ${timeLeft <= 5 ? "danger" : ""}`}
+              } ${timeLeft <= 3 ? "danger" : ""}`}
             >
               ⏱ {timeLeft}s
             </div>
