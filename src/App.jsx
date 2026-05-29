@@ -288,6 +288,21 @@ function getSavedLastSeenLevel() {
   return getPlayerLevel(savedHighScore).levelNumber;
 }
 
+function getModeLabel(mode) {
+  if (mode === "world-cup") return "World Cup";
+  if (mode === "career") return "Career Path";
+  return "General";
+}
+
+function createMockRoomCode() {
+  return `BK-${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
+function createMockOpponentScore(finalScore) {
+  const swing = Math.floor(Math.random() * 9) - 4;
+  return Math.max(0, finalScore + swing);
+}
+
 export default function FootballQuizMVP() {
   const todayChallenge = getTodayChallenge();
 
@@ -295,6 +310,13 @@ export default function FootballQuizMVP() {
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [multiplayerOpen, setMultiplayerOpen] = useState(false);
+  const [multiplayerStep, setMultiplayerStep] = useState("menu");
+  const [multiplayerMode, setMultiplayerMode] = useState("general");
+  const [multiplayerRoomCode, setMultiplayerRoomCode] = useState("");
+  const [joinRoomCode, setJoinRoomCode] = useState("");
+  const [isMockMultiplayer, setIsMockMultiplayer] = useState(false);
+  const [mockOpponentScore, setMockOpponentScore] = useState(null);
   const [coinsMenuOpen, setCoinsMenuOpen] = useState(false);
   const [coinShopNotice, setCoinShopNotice] = useState("");
   const [leaderboardTab, setLeaderboardTab] = useState("daily");
@@ -365,7 +387,11 @@ export default function FootballQuizMVP() {
   const current = questions[questionIndex];
   const playerLevel = getPlayerLevel(highScore);
   const isHomeScreen =
-    !gameStarted && !profileOpen && !leaderboardOpen && !modeMenuOpen;
+    !gameStarted &&
+    !profileOpen &&
+    !leaderboardOpen &&
+    !multiplayerOpen &&
+    !modeMenuOpen;
   const leaderboard = getMockLeaderboard({
     tab: leaderboardTab,
     mode: leaderboardMode,
@@ -508,6 +534,7 @@ export default function FootballQuizMVP() {
     setNameInput(finalName);
     setProfileOpen(false);
     setLeaderboardOpen(false);
+    setMultiplayerOpen(false);
     setModeMenuOpen(false);
     setGameStarted(false);
   };
@@ -519,6 +546,7 @@ export default function FootballQuizMVP() {
     setUsername("");
     setProfileOpen(false);
     setLeaderboardOpen(false);
+    setMultiplayerOpen(false);
     setModeMenuOpen(false);
     setGameStarted(false);
   };
@@ -574,10 +602,13 @@ export default function FootballQuizMVP() {
 
     setDailyPlayed(true);
     setLastDailyResult(result);
-  };  const startGame = (mode) => {
+  };  const startGame = (mode, options = {}) => {
     setShowDailyCompletePopup(false);
     setLeaderboardOpen(false);
     setProfileOpen(false);
+    setMultiplayerOpen(false);
+    setIsMockMultiplayer(Boolean(options.multiplayer));
+    setMockOpponentScore(null);
     setGameMode(mode);
     setQuestions(buildGameQuestions(mode));
     setQuestionIndex(0);
@@ -593,12 +624,51 @@ export default function FootballQuizMVP() {
     setGameStarted(true);
   };
 
+  const openMultiplayer = () => {
+    playClickSound();
+    setMultiplayerOpen(true);
+    setModeMenuOpen(false);
+    setProfileOpen(false);
+    setLeaderboardOpen(false);
+    setMultiplayerStep("menu");
+    setMultiplayerRoomCode("");
+    setJoinRoomCode("");
+  };
+
+  const createMultiplayerMatch = () => {
+    // TODO Supabase: create matches row, match_players host row, room code,
+    // status "waiting", and initial match_rounds/match_questions records.
+    playClickSound();
+    setMultiplayerRoomCode(createMockRoomCode());
+    setMultiplayerStep("created");
+  };
+
+  const joinMultiplayerMatch = () => {
+    // TODO Supabase: look up room code, join match_players, subscribe to
+    // realtime updates or poll match status until active/finished.
+    if (!joinRoomCode.trim()) return;
+
+    playClickSound();
+    setMultiplayerRoomCode(joinRoomCode.trim().toUpperCase());
+    setMultiplayerStep("joined");
+  };
+
+  const startMockMultiplayerMatch = () => {
+    // TODO Supabase: replace local mock start with match status transition
+    // waiting -> active and sync submitted answers/scores per player.
+    playClickSound();
+    startGame(multiplayerMode, { multiplayer: true });
+  };
+
   const startDailyChallenge = () => {
     if (dailyPlayed) return;
 
     setShowDailyCompletePopup(false);
     setLeaderboardOpen(false);
     setProfileOpen(false);
+    setMultiplayerOpen(false);
+    setIsMockMultiplayer(false);
+    setMockOpponentScore(null);
     setGameMode("daily-list");
     setFoundAnswers([]);
     setDailyInput("");
@@ -625,7 +695,13 @@ export default function FootballQuizMVP() {
     setModeMenuOpen(false);
     setProfileOpen(false);
     setLeaderboardOpen(false);
+    setMultiplayerOpen(false);
     setCoinsMenuOpen(false);
+    setIsMockMultiplayer(false);
+    setMockOpponentScore(null);
+    setMultiplayerStep("menu");
+    setMultiplayerRoomCode("");
+    setJoinRoomCode("");
     setGameMode("general");
 
     setQuestions(buildGameQuestions("general"));
@@ -678,6 +754,9 @@ export default function FootballQuizMVP() {
 
     if (newLives <= 0) {
       setSelected(correctAnswer);
+      if (isMockMultiplayer) {
+        setMockOpponentScore(createMockOpponentScore(score));
+      }
 
       setTimeout(() => {
         setWrongPopup(null);
@@ -993,6 +1072,12 @@ export default function FootballQuizMVP() {
       )}
     </AnimatePresence>
   );
+
+  // TODO Supabase multiplayer foundation:
+  // Add profiles/users table, matches table, match_players table,
+  // match_rounds or match_questions table, submitted answers/scores,
+  // match status values: waiting, active, finished, room code lookup,
+  // and realtime updates or polling for opponent state.
 
   const handleResultButton = (isDaily) => {
     if (isDaily) {
@@ -1459,6 +1544,131 @@ export default function FootballQuizMVP() {
               </button>
             </motion.div>
           </div>
+        ) : multiplayerOpen ? (
+          <div className="multiplayer-screen">
+            <motion.div
+              className="multiplayer-card"
+              initial={{ opacity: 0, scale: 0.92, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 160, damping: 14 }}
+            >
+              <div className="multiplayer-badge">⚔️ Arena</div>
+              <h1 className="multiplayer-title">Multiplayer</h1>
+              <p className="multiplayer-subtitle">
+                Play against another baller
+              </p>
+
+              <div className="multiplayer-mode-pills">
+                <button
+                  className={multiplayerMode === "general" ? "active" : ""}
+                  onClick={() => {
+                    playClickSound();
+                    setMultiplayerMode("general");
+                  }}
+                >
+                  General
+                </button>
+
+                <button
+                  className={multiplayerMode === "world-cup" ? "active" : ""}
+                  onClick={() => {
+                    playClickSound();
+                    setMultiplayerMode("world-cup");
+                  }}
+                >
+                  World Cup
+                </button>
+
+                <button className="coming-soon" disabled>
+                  Career Path
+                  <span>Coming soon</span>
+                </button>
+              </div>
+
+              {multiplayerStep === "menu" && (
+                <div className="multiplayer-actions">
+                  <button
+                    className="multiplayer-action-card create"
+                    onClick={createMultiplayerMatch}
+                  >
+                    <span>🏟️</span>
+                    <strong>Create Match</strong>
+                    <small>Start a private room</small>
+                  </button>
+
+                  <button
+                    className="multiplayer-action-card join"
+                    onClick={() => {
+                      playClickSound();
+                      setMultiplayerStep("join");
+                    }}
+                  >
+                    <span>👤</span>
+                    <strong>Join Match</strong>
+                    <small>Enter a room code</small>
+                  </button>
+                </div>
+              )}
+
+              {multiplayerStep === "created" && (
+                <div className="multiplayer-room-card">
+                  <div className="room-status">Match created</div>
+                  <div className="room-code">Room code: {multiplayerRoomCode}</div>
+                  <div className="waiting-pulse">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  <p>Waiting for opponent...</p>
+                  <button onClick={startMockMultiplayerMatch}>
+                    Start Mock Match
+                  </button>
+                </div>
+              )}
+
+              {multiplayerStep === "join" && (
+                <div className="multiplayer-join-card">
+                  <label htmlFor="room-code-input">Enter room code</label>
+                  <input
+                    id="room-code-input"
+                    value={joinRoomCode}
+                    onChange={(event) => setJoinRoomCode(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") joinMultiplayerMatch();
+                    }}
+                    placeholder="BK-4831"
+                    autoFocus
+                  />
+                  <button onClick={joinMultiplayerMatch}>Join Match</button>
+                </div>
+              )}
+
+              {multiplayerStep === "joined" && (
+                <div className="multiplayer-room-card joined">
+                  <div className="room-status">Joined room</div>
+                  <div className="room-code">Room code: {multiplayerRoomCode}</div>
+                  <div className="opponent-found">Opponent found</div>
+                  <button onClick={startMockMultiplayerMatch}>
+                    Start Mock Match
+                  </button>
+                </div>
+              )}
+
+              <div className="multiplayer-todo-note">
+                Mock lobby only. Realtime rooms come later.
+              </div>
+
+              <button
+                className="multiplayer-back-button"
+                onClick={() => {
+                  playClickSound();
+                  setMultiplayerOpen(false);
+                }}
+              >
+                Back
+              </button>
+            </motion.div>
+          </div>
         ) : !modeMenuOpen ? (
           <div className="main-menu">
             <h1 className="main-title">BALL KNOWLEDGE</h1>
@@ -1521,6 +1731,13 @@ export default function FootballQuizMVP() {
               }}
             >
               SINGLE PLAYER
+            </button>
+
+            <button
+              className="multiplayer-main-button"
+              onClick={openMultiplayer}
+            >
+              ⚔️ MULTIPLAYER
             </button>
 
             <button
@@ -1761,6 +1978,9 @@ export default function FootballQuizMVP() {
     const isDaily = gameMode === "daily-list";
     const dailyCompleted =
       isDaily && foundAnswers.length === todayChallenge.answers.length;
+    const opponentScore =
+      mockOpponentScore ?? createMockOpponentScore(score);
+    const multiplayerWon = score >= opponentScore;
 
     return (
       <div
@@ -1831,6 +2051,29 @@ export default function FootballQuizMVP() {
                 </div>
               )}
             </div>
+          ) : isMockMultiplayer ? (
+            <div className="multiplayer-result-content">
+              <div className="daily-result-badge">MULTIPLAYER RESULT</div>
+              <h3>{multiplayerWon ? "You Win" : "You Lose"}</h3>
+
+              <div className="versus-card">
+                <div>
+                  <span>👤 You</span>
+                  <strong>{score}</strong>
+                </div>
+
+                <div className="versus-divider">VS</div>
+
+                <div>
+                  <span>⚔️ Opponent</span>
+                  <strong>{opponentScore}</strong>
+                </div>
+              </div>
+
+              <p className="multiplayer-result-note">
+                Mock opponent score. Realtime match results come later.
+              </p>
+            </div>
           ) : (
             <>
               <p>🔥 Final Score: {score}</p>
@@ -1838,30 +2081,45 @@ export default function FootballQuizMVP() {
             </>
           )}
 
-          {!isDaily && coins >= reviveCost && (
+          {!isDaily && !isMockMultiplayer && coins >= reviveCost && (
             <button className="play-again-button" onClick={revive}>
               ❤️ Revive for {reviveCost} coins
             </button>
           )}
 
-          {!isDaily && (
+          {!isDaily && !isMockMultiplayer && (
             <button className="play-again-button" onClick={watchAdMock}>
               ▶ Watch ad +50 coins
             </button>
           )}
 
-          <button
-            className="play-again-button"
-            onClick={() => handleResultButton(isDaily)}
-          >
-            {isDaily ? (
-              "COLLECT & HOME"
-            ) : (
-              <>
-                <RotateCcw size={24} /> Play again
-              </>
-            )}
-          </button>
+          {isMockMultiplayer ? (
+            <>
+              <button
+                className="play-again-button"
+                onClick={() => startMockMultiplayerMatch()}
+              >
+                <RotateCcw size={24} /> Play Again
+              </button>
+
+              <button className="play-again-button" onClick={restart}>
+                Back Home
+              </button>
+            </>
+          ) : (
+            <button
+              className="play-again-button"
+              onClick={() => handleResultButton(isDaily)}
+            >
+              {isDaily ? (
+                "COLLECT & HOME"
+              ) : (
+                <>
+                  <RotateCcw size={24} /> Play again
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
     );
@@ -1983,7 +2241,9 @@ export default function FootballQuizMVP() {
           transition={{ duration: 0.25 }}
         >
           <div className="difficulty-pill">
-            {gameMode === "career"
+            {isMockMultiplayer
+              ? `Multiplayer • ${getModeLabel(gameMode)}`
+              : gameMode === "career"
               ? "Career Path"
               : gameMode === "world-cup"
               ? `World Cup • ${current.difficulty}`
