@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, RotateCcw, CheckCircle2, XCircle } from "lucide-react";
 import { ANSWER_ALIASES, LAST_WORD_BLACKLIST } from "./answerAliases";
@@ -10,9 +10,9 @@ import { WORLD_CUP_QUESTIONS } from "./WORLD_CUP_QUESTIONS";
 import { getMockLeaderboard } from "./leaderboardData";
 import { isSupabaseConfigured, supabase } from "./lib/supabaseClient";
 import {
-  resolveMultiplayerQuestions,
-  selectMultiplayerQuestionIds,
-} from "./lib/multiplayerQuestions";
+  getMultiplayerQuestionsByIds,
+  pickMultiplayerQuestionIds,
+} from "./multiplayerQuestionBank";
 
 import clickSound from "./assets/Click.mp3";
 import coinSound from "./assets/Coins.mp3";
@@ -21,13 +21,20 @@ import stadiumBg from "./assets/stadium-bg.png";
 import quizBg from "./assets/quiz-bg.png";
 
 const HARD_TIME_LIMIT = 20;
+const MULTIPLAYER_TIME_LIMIT = 8;
+const MULTIPLAYER_TIMEOUT_VALUE = "__time_up__";
 const DAILY_SCAN_STEP_MS = 210;
 const STREAK_TARGETS = [5, 10, 20, 30, 50];
 const MULTIPLAYER_CATEGORIES = [
-  { id: "general", label: "General", mode: "general", available: true },
-  { id: "world-cup", label: "World Cup", mode: "world-cup", available: true },
-  { id: "legends", label: "Legends", mode: "general", available: false },
-  { id: "clubs", label: "Clubs", mode: "general", available: false },
+  { id: "general", label: "General Knowledge", mode: "general", available: true },
+  { id: "world_cup", label: "World Cup", mode: "world_cup", available: true },
+  {
+    id: "premier_league",
+    label: "Premier League",
+    mode: "premier_league",
+    available: true,
+  },
+  { id: "career_path", label: "Career Path", mode: "career_path", available: true },
 ];
 
 const STREAK_MILESTONES = [
@@ -300,8 +307,9 @@ function getSavedLastSeenLevel() {
 }
 
 function getModeLabel(mode) {
-  if (mode === "world-cup") return "World Cup";
-  if (mode === "career") return "Career Path";
+  if (mode === "world-cup" || mode === "world_cup") return "World Cup";
+  if (mode === "premier_league") return "Premier League";
+  if (mode === "career" || mode === "career_path") return "Career Path";
   return "General";
 }
 
@@ -315,6 +323,10 @@ function createMockOpponentScore(finalScore) {
 }
 
 function getCategoryLabel(categoryId) {
+  if (categoryId === "world-cup") return "World Cup";
+  if (categoryId === "premier_league") return "Premier League";
+  if (categoryId === "career_path") return "Career Path";
+
   return (
     MULTIPLAYER_CATEGORIES.find((category) => category.id === categoryId)
       ?.label || "General"
@@ -339,6 +351,9 @@ export default function FootballQuizMVP() {
   const [multiplayerRoundIndex, setMultiplayerRoundIndex] = useState(0);
   const [multiplayerRoundSelected, setMultiplayerRoundSelected] = useState(null);
   const [multiplayerRoundScore, setMultiplayerRoundScore] = useState(0);
+  const [multiplayerTimeLeft, setMultiplayerTimeLeft] = useState(
+    MULTIPLAYER_TIME_LIMIT
+  );
   const [multiplayerRoundDone, setMultiplayerRoundDone] = useState(false);
   const [multiplayerRoomCode, setMultiplayerRoomCode] = useState("");
   const [joinRoomCode, setJoinRoomCode] = useState("");
@@ -452,11 +467,64 @@ export default function FootballQuizMVP() {
       : multiplayerPlayerSlot === "player2"
       ? Boolean(activeRound?.player2_finished)
       : false;
-  const activeRoundQuestions = resolveMultiplayerQuestions(
-    activeRound?.question_ids || []
+  const activeRoundQuestionIds = activeRound?.question_ids || [];
+  const activeRoundQuestions = useMemo(
+    () => getMultiplayerQuestionsByIds(activeRoundQuestionIds),
+    [activeRoundQuestionIds]
   );
   const currentMultiplayerRoundQuestion =
     activeRoundQuestions[multiplayerRoundIndex];
+
+  useEffect(() => {
+    if (!multiplayerRoundOpen || !currentMultiplayerRoundQuestion) return;
+
+    setMultiplayerTimeLeft(MULTIPLAYER_TIME_LIMIT);
+  }, [
+    currentMultiplayerRoundQuestion,
+    multiplayerRoundIndex,
+    multiplayerRoundOpen,
+  ]);
+
+  useEffect(() => {
+    if (
+      !multiplayerRoundOpen ||
+      multiplayerRoundDone ||
+      multiplayerRoundSelected ||
+      !currentMultiplayerRoundQuestion
+    ) {
+      return;
+    }
+
+    if (multiplayerTimeLeft <= 0) {
+      setMultiplayerRoundSelected(MULTIPLAYER_TIMEOUT_VALUE);
+
+      setTimeout(() => {
+        if (multiplayerRoundIndex >= activeRoundQuestions.length - 1) {
+          setMultiplayerRoundDone(true);
+        } else {
+          setMultiplayerRoundIndex((value) => value + 1);
+          setMultiplayerRoundSelected(null);
+          setMultiplayerTimeLeft(MULTIPLAYER_TIME_LIMIT);
+        }
+      }, 950);
+
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setMultiplayerTimeLeft((time) => time - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [
+    activeRoundQuestions.length,
+    currentMultiplayerRoundQuestion,
+    multiplayerRoundDone,
+    multiplayerRoundIndex,
+    multiplayerRoundOpen,
+    multiplayerRoundSelected,
+    multiplayerTimeLeft,
+  ]);
 
   useEffect(() => {
     if (!isHomeScreen || !username) return;
@@ -882,11 +950,11 @@ export default function FootballQuizMVP() {
     setMultiplayerError("");
 
     const nextRoundNumber = (activeMatch.round_number || 0) + 1;
-    const questionIds = selectMultiplayerQuestionIds(category.id, 5);
+    const questionIds = pickMultiplayerQuestionIds(category.id, 5);
 
     if (questionIds.length !== 5) {
       setMultiplayerLoading(false);
-      setMultiplayerError("Could not select enough questions");
+      setMultiplayerError("Not enough questions in this category yet");
       return;
     }
 
@@ -1008,6 +1076,7 @@ export default function FootballQuizMVP() {
     setMultiplayerRoundIndex(0);
     setMultiplayerRoundSelected(null);
     setMultiplayerRoundScore(0);
+    setMultiplayerTimeLeft(MULTIPLAYER_TIME_LIMIT);
     setMultiplayerRoundDone(false);
     setMultiplayerRoundOpen(true);
     setMultiplayerOpen(false);
@@ -1031,6 +1100,7 @@ export default function FootballQuizMVP() {
       } else {
         setMultiplayerRoundIndex((value) => value + 1);
         setMultiplayerRoundSelected(null);
+        setMultiplayerTimeLeft(MULTIPLAYER_TIME_LIMIT);
       }
     }, 850);
   };
@@ -1645,9 +1715,26 @@ export default function FootballQuizMVP() {
             Question {multiplayerRoundIndex + 1} / {activeRoundQuestions.length}
           </div>
 
+          <div
+            className={`multiplayer-timer ${
+              multiplayerTimeLeft <= 3 ? "danger" : ""
+            }`}
+          >
+            <span>⏱</span>
+            <strong>{multiplayerTimeLeft}s</strong>
+          </div>
+
+          <div className="multiplayer-live-score">
+            Score {multiplayerRoundScore}/5
+          </div>
+
           <h1 className="question-title">
             {currentMultiplayerRoundQuestion.question}
           </h1>
+
+          {multiplayerRoundSelected === MULTIPLAYER_TIMEOUT_VALUE && (
+            <div className="multiplayer-timeup-card">Time's up!</div>
+          )}
 
           <div className="answers-grid">
             {currentMultiplayerRoundQuestion.options.map((option) => {
@@ -1664,6 +1751,7 @@ export default function FootballQuizMVP() {
                 <button
                   key={option}
                   onClick={() => chooseMultiplayerRoundAnswer(option)}
+                  disabled={Boolean(multiplayerRoundSelected)}
                   className={`answer-button ${
                     showCorrect ? "correct" : showWrong ? "wrong" : ""
                   }`}
@@ -2120,30 +2208,18 @@ export default function FootballQuizMVP() {
               </p>
 
               <div className="multiplayer-mode-pills">
-                <button
-                  className={multiplayerMode === "general" ? "active" : ""}
-                  onClick={() => {
-                    playClickSound();
-                    setMultiplayerMode("general");
-                  }}
-                >
-                  General
-                </button>
-
-                <button
-                  className={multiplayerMode === "world-cup" ? "active" : ""}
-                  onClick={() => {
-                    playClickSound();
-                    setMultiplayerMode("world-cup");
-                  }}
-                >
-                  World Cup
-                </button>
-
-                <button className="coming-soon" disabled>
-                  Career Path
-                  <span>Coming soon</span>
-                </button>
+                {MULTIPLAYER_CATEGORIES.map((category) => (
+                  <button
+                    key={category.id}
+                    className={multiplayerMode === category.mode ? "active" : ""}
+                    onClick={() => {
+                      playClickSound();
+                      setMultiplayerMode(category.mode);
+                    }}
+                  >
+                    {category.label}
+                  </button>
+                ))}
               </div>
 
               {multiplayerError && (

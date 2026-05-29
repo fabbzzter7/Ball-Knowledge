@@ -3860,6 +3860,69 @@ input {
     inset 0 2px 0 rgba(255,255,255,0.75);
 }
 
+.multiplayer-timer,
+.multiplayer-live-score {
+  width: fit-content;
+  margin: 0 auto 10px;
+  border-radius: 999px;
+
+  font-weight: 1000;
+  box-shadow:
+    0 6px 0 rgba(190,205,230,0.9),
+    0 12px 20px rgba(0,0,0,0.16),
+    inset 0 2px 0 rgba(255,255,255,0.72);
+}
+
+.multiplayer-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background: linear-gradient(180deg, #ecfdf5 0%, #bbf7d0 100%);
+  color: #14532d;
+  font-size: 18px;
+}
+
+.multiplayer-timer.danger {
+  background: linear-gradient(180deg, #ffe4e6 0%, #fb7185 100%);
+  color: #7f1d1d;
+  animation: timerPulse 0.55s ease-in-out infinite alternate;
+}
+
+.multiplayer-live-score {
+  padding: 8px 15px;
+  background: rgba(255,255,255,0.9);
+  color: #14213d;
+  font-size: 14px;
+}
+
+.multiplayer-timeup-card {
+  width: fit-content;
+  margin: -4px auto 14px;
+  padding: 10px 16px;
+  border-radius: 18px;
+
+  background: linear-gradient(180deg, #ffe4e6 0%, #fb7185 100%);
+  color: #7f1d1d;
+
+  font-size: 18px;
+  font-weight: 1000;
+  box-shadow:
+    0 6px 0 #e11d48,
+    0 12px 20px rgba(0,0,0,0.18),
+    inset 0 2px 0 rgba(255,255,255,0.38);
+}
+
+@keyframes timerPulse {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.05);
+  }
+}
+
 .multiplayer-submit-card {
   width: min(380px, 88vw);
   margin: 24px auto 0;
