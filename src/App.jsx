@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, RotateCcw, CheckCircle2, XCircle, Trash2, X } from "lucide-react";
 import { ANSWER_ALIASES, LAST_WORD_BLACKLIST } from "./answerAliases";
+import PlayerAvatar, { getAvatarConfig } from "./components/PlayerAvatar";
 
 import { QUESTIONS } from "./QUESTIONS";
 import { CAREER_QUESTIONS } from "./CAREER_QUESTIONS";
@@ -55,7 +56,48 @@ const MULTIPLAYER_TIME_LIMIT = 8;
 const MULTIPLAYER_TIMEOUT_VALUE = "__time_up__";
 const DAILY_SCAN_STEP_MS = 210;
 const STREAK_TARGETS = [5, 10, 20, 30, 50];
-const AVATAR_EMOJI_OPTIONS = ["⚽", "🏆", "🔥", "🧠", "🐐", "⭐", "👑", "🧤", "🥶", "⚡"];
+const AVATAR_ICON_OPTIONS = [
+  "⚽",
+  "🏆",
+  "🔥",
+  "🧠",
+  "🐐",
+  "⭐",
+  "👑",
+  "🧤",
+  "⚡",
+  "🦁",
+  "🦊",
+  "🐺",
+  "🐉",
+  "🦅",
+];
+const AVATAR_STYLE_OPTIONS = [
+  { value: "classic", label: "Classic" },
+  { value: "captain", label: "Captain" },
+  { value: "legend", label: "Legend" },
+  { value: "goalkeeper", label: "Keeper" },
+  { value: "striker", label: "Striker" },
+  { value: "mystery", label: "Mystery" },
+];
+const AVATAR_COLOR_OPTIONS = [
+  { value: "green", label: "Green" },
+  { value: "blue", label: "Blue" },
+  { value: "purple", label: "Purple" },
+  { value: "orange", label: "Orange" },
+  { value: "red", label: "Red" },
+  { value: "gold", label: "Gold" },
+  { value: "pink", label: "Pink" },
+  { value: "ice", label: "Ice" },
+];
+const AVATAR_BG_OPTIONS = [
+  { value: "dark", label: "Dark" },
+  { value: "stadium", label: "Stadium" },
+  { value: "neon", label: "Neon" },
+  { value: "pitch", label: "Pitch" },
+  { value: "trophy", label: "Trophy" },
+  { value: "night", label: "Night" },
+];
 const MULTIPLAYER_CATEGORIES = [
   { id: "general", label: "General Knowledge", mode: "general", available: true },
   { id: "world_cup", label: "World Cup", mode: "world_cup", available: true },
@@ -748,6 +790,9 @@ export default function FootballQuizMVP() {
   const [profileStatus, setProfileStatus] = useState("local");
   const [profileError, setProfileError] = useState("");
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
+  const [avatarDraft, setAvatarDraft] = useState(null);
+  const [avatarNotice, setAvatarNotice] = useState("");
+  const [profileLookup, setProfileLookup] = useState({});
   const [soundOn, setSoundOn] = useState(isSoundEnabled);
   const [avatarEmoji, setAvatarEmoji] = useState(() => {
     return localStorage.getItem("ballKnowledgeAvatarEmoji") || "⚽";
@@ -836,6 +881,11 @@ export default function FootballQuizMVP() {
   const playerLevel = getPlayerLevel(highScore);
   const displayName = profile?.display_name || profile?.username || username;
   const profileAvatarEmoji = profile?.avatar_emoji || avatarEmoji || "⚽";
+  const profileAvatar = getAvatarConfig({
+    avatar_emoji: profileAvatarEmoji,
+    ...profile,
+  });
+  const avatarBuilderPreview = getAvatarConfig(avatarDraft || profileAvatar);
   const profileStats = {
     multiplayerWins: profile?.multiplayer_wins || 0,
     multiplayerLosses: profile?.multiplayer_losses || 0,
@@ -933,6 +983,27 @@ export default function FootballQuizMVP() {
     ? currentWhoAmI.clues.slice(0, whoAmIClueIndex + 1)
     : [];
   const whoAmIPointsAvailable = Math.max(1, 10 - whoAmIClueIndex);
+  const socialProfileIds = useMemo(() => {
+    const ids = new Set();
+
+    activeGames.forEach(({ match }) => {
+      if (match?.player1_id) ids.add(match.player1_id);
+      if (match?.player2_id) ids.add(match.player2_id);
+    });
+
+    if (activeMatch?.player1_id) ids.add(activeMatch.player1_id);
+    if (activeMatch?.player2_id) ids.add(activeMatch.player2_id);
+
+    leagueDashboard?.members?.forEach((member) => {
+      if (member?.player_id) ids.add(member.player_id);
+    });
+
+    leaderboardRows.forEach((row) => {
+      if (row?.id) ids.add(row.id);
+    });
+
+    return [...ids].filter(Boolean);
+  }, [activeGames, activeMatch, leagueDashboard, leaderboardRows]);
 
   useEffect(() => {
     if (!multiplayerRoundOpen || !currentMultiplayerRoundQuestion) return;
@@ -1267,10 +1338,10 @@ export default function FootballQuizMVP() {
 
     if (existingProfile) {
       setProfile(existingProfile);
-      setAvatarEmoji(existingProfile.avatar_emoji || "⚽");
+      setAvatarEmoji(existingProfile.avatar_icon || existingProfile.avatar_emoji || "⚽");
       localStorage.setItem(
         "ballKnowledgeAvatarEmoji",
-        existingProfile.avatar_emoji || "⚽"
+        existingProfile.avatar_icon || existingProfile.avatar_emoji || "⚽"
       );
       setProfileStatus("ready");
       return existingProfile;
@@ -1298,10 +1369,10 @@ export default function FootballQuizMVP() {
     }
 
     setProfile(createdProfile);
-    setAvatarEmoji(createdProfile.avatar_emoji || "⚽");
+    setAvatarEmoji(createdProfile.avatar_icon || createdProfile.avatar_emoji || "⚽");
     localStorage.setItem(
       "ballKnowledgeAvatarEmoji",
-      createdProfile.avatar_emoji || "⚽"
+      createdProfile.avatar_icon || createdProfile.avatar_emoji || "⚽"
     );
     setProfileStatus("ready");
     return createdProfile;
@@ -1327,19 +1398,58 @@ export default function FootballQuizMVP() {
       return null;
     }
 
-    setProfile(updatedProfile);
+    setProfile({
+      ...(updatedProfile || {}),
+      ...updates,
+    });
     setProfileStatus(successStatus);
     setProfileError("");
     return updatedProfile;
   };
 
-  const chooseAvatarEmoji = (emoji) => {
+  const openAvatarBuilder = () => {
     playClickSound();
-    setAvatarEmoji(emoji);
-    localStorage.setItem("ballKnowledgeAvatarEmoji", emoji);
-    setAvatarPickerOpen(false);
+    setAvatarDraft(profileAvatar);
+    setAvatarNotice("");
+    setAvatarPickerOpen(true);
+  };
 
-    updateOnlineProfile({ avatar_emoji: emoji });
+  const updateAvatarDraft = (updates) => {
+    playClickSound();
+    setAvatarDraft((currentDraft) => ({
+      ...profileAvatar,
+      ...currentDraft,
+      ...updates,
+    }));
+  };
+
+  const saveAvatarBuilder = async () => {
+    playClickSound();
+    const nextAvatar = getAvatarConfig(avatarDraft || profileAvatar);
+    const updates = {
+      avatar_emoji: nextAvatar.icon,
+      avatar_icon: nextAvatar.icon,
+      avatar_style: nextAvatar.style,
+      avatar_color: nextAvatar.color,
+      avatar_bg: nextAvatar.bg,
+    };
+
+    setAvatarEmoji(nextAvatar.icon);
+    localStorage.setItem("ballKnowledgeAvatarEmoji", nextAvatar.icon);
+    setProfile((currentProfile) => ({
+      ...(currentProfile || {}),
+      ...updates,
+    }));
+
+    const updatedProfile = await updateOnlineProfile(updates);
+
+    if (!updatedProfile && isSupabaseConfigured && supabase) {
+      setAvatarNotice("Avatar saved locally. Run the avatar SQL for online sync.");
+      return;
+    }
+
+    setAvatarNotice("Avatar saved");
+    setAvatarPickerOpen(false);
   };
 
   const loadGeneralLeaderboard = async () => {
@@ -1354,7 +1464,7 @@ export default function FootballQuizMVP() {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, username, display_name, best_score, avatar_emoji")
+      .select("*")
       .gt("best_score", 0)
       .order("best_score", { ascending: false })
       .limit(10);
@@ -1379,6 +1489,43 @@ export default function FootballQuizMVP() {
         isCurrentUser: row.id === playerId,
       }))
     );
+  };
+
+  const getSocialProfile = (id, fallbackUsername = "Player") => {
+    if (id && id === playerId) {
+      return {
+        ...(profile || {}),
+        id,
+        username: displayName || fallbackUsername,
+        display_name: displayName || fallbackUsername,
+        avatar_emoji: profileAvatar.icon,
+        avatar_icon: profileAvatar.icon,
+        avatar_style: profileAvatar.style,
+        avatar_color: profileAvatar.color,
+        avatar_bg: profileAvatar.bg,
+      };
+    }
+
+    return (
+      (id && profileLookup[id]) || {
+        id,
+        username: fallbackUsername,
+        display_name: fallbackUsername,
+        avatar_emoji: "⚽",
+        avatar_icon: "⚽",
+        avatar_style: "classic",
+        avatar_color: "green",
+        avatar_bg: "dark",
+      }
+    );
+  };
+
+  const getMatchPlayerProfile = (match, slot) => {
+    const id = slot === "player1" ? match?.player1_id : match?.player2_id;
+    const fallbackUsername =
+      slot === "player1" ? match?.player1_username : match?.player2_username;
+
+    return getSocialProfile(id, fallbackUsername || "Player");
   };
 
   const recordMultiplayerRoundResult = async (round, match) => {
@@ -1444,7 +1591,10 @@ export default function FootballQuizMVP() {
       countedKey,
       JSON.stringify([...countedRounds, round.id].slice(-200))
     );
-    setProfile(updatedProfile);
+    setProfile((currentProfile) => ({
+      ...(currentProfile || {}),
+      ...(updatedProfile || {}),
+    }));
     setProfileStatus("ready");
   };
 
@@ -1483,7 +1633,11 @@ export default function FootballQuizMVP() {
           {
             username: finalName,
             display_name: finalName,
-            avatar_emoji: avatarEmoji,
+            avatar_emoji: profileAvatar.icon || avatarEmoji,
+            avatar_icon: profileAvatar.icon || avatarEmoji,
+            avatar_style: profileAvatar.style,
+            avatar_color: profileAvatar.color,
+            avatar_bg: profileAvatar.bg,
             best_score: highScore,
             coins,
             daily_streak: dailyStreak,
@@ -1497,7 +1651,17 @@ export default function FootballQuizMVP() {
           return;
         }
 
-        setProfile(updatedProfile);
+        setProfile((currentProfile) => ({
+          ...(currentProfile || {}),
+          ...(updatedProfile || {}),
+          username: finalName,
+          display_name: finalName,
+          avatar_emoji: profileAvatar.icon || avatarEmoji,
+          avatar_icon: profileAvatar.icon || avatarEmoji,
+          avatar_style: profileAvatar.style,
+          avatar_color: profileAvatar.color,
+          avatar_bg: profileAvatar.bg,
+        }));
         setProfileStatus("ready");
         setProfileError("");
       })();
@@ -3669,8 +3833,8 @@ export default function FootballQuizMVP() {
           >
             <div className="avatar-picker-top">
               <div>
-                <strong>Choose avatar</strong>
-                <span>Your local player identity</span>
+                <strong>Avatar Builder</strong>
+                <span>Build your match identity</span>
               </div>
 
               <button
@@ -3684,16 +3848,110 @@ export default function FootballQuizMVP() {
               </button>
             </div>
 
-            <div className="avatar-picker-grid">
-              {AVATAR_EMOJI_OPTIONS.map((emoji) => (
-                <button
-                  key={emoji}
-                  className={emoji === profileAvatarEmoji ? "selected" : ""}
-                  onClick={() => chooseAvatarEmoji(emoji)}
-                >
-                  {emoji}
-                </button>
-              ))}
+            <div className="avatar-builder-preview">
+              <PlayerAvatar
+                profile={{
+                  avatar_icon: avatarBuilderPreview.icon,
+                  avatar_style: avatarBuilderPreview.style,
+                  avatar_color: avatarBuilderPreview.color,
+                  avatar_bg: avatarBuilderPreview.bg,
+                }}
+                size="large"
+              />
+              <div>
+                <strong>{displayName || "Player"}</strong>
+                <span>
+                  {avatarBuilderPreview.style} • {avatarBuilderPreview.color}
+                </span>
+              </div>
+            </div>
+
+            <div className="avatar-builder-section">
+              <strong>Icon</strong>
+              <div className="avatar-picker-grid">
+                {AVATAR_ICON_OPTIONS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    className={emoji === avatarBuilderPreview.icon ? "selected" : ""}
+                    onClick={() => updateAvatarDraft({ icon: emoji })}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="avatar-builder-section">
+              <strong>Color</strong>
+              <div className="avatar-token-grid color-grid">
+                {AVATAR_COLOR_OPTIONS.map((color) => (
+                  <button
+                    key={color.value}
+                    className={`avatar-token avatar-color-${color.value} ${
+                      color.value === avatarBuilderPreview.color ? "selected" : ""
+                    }`}
+                    onClick={() => updateAvatarDraft({ color: color.value })}
+                  >
+                    {color.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="avatar-builder-section">
+              <strong>Background</strong>
+              <div className="avatar-token-grid">
+                {AVATAR_BG_OPTIONS.map((bg) => (
+                  <button
+                    key={bg.value}
+                    className={`avatar-token ${
+                      bg.value === avatarBuilderPreview.bg ? "selected" : ""
+                    }`}
+                    onClick={() => updateAvatarDraft({ bg: bg.value })}
+                  >
+                    {bg.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="avatar-builder-section">
+              <strong>Style</strong>
+              <div className="avatar-token-grid">
+                {AVATAR_STYLE_OPTIONS.map((style) => (
+                  <button
+                    key={style.value}
+                    className={`avatar-token ${
+                      style.value === avatarBuilderPreview.style ? "selected" : ""
+                    }`}
+                    onClick={() => updateAvatarDraft({ style: style.value })}
+                  >
+                    {style.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {avatarNotice && <div className="avatar-builder-notice">{avatarNotice}</div>}
+
+            <div className="avatar-builder-actions">
+              <button
+                type="button"
+                className="avatar-builder-cancel"
+                onClick={() => {
+                  playClickSound();
+                  setAvatarPickerOpen(false);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="avatar-builder-save"
+                onClick={saveAvatarBuilder}
+              >
+                Save Avatar
+              </button>
             </div>
           </motion.div>
         </motion.div>
@@ -3706,6 +3964,50 @@ export default function FootballQuizMVP() {
 
     ensureOnlineProfile(username);
   }, [username, playerId]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase || socialProfileIds.length === 0) {
+      return;
+    }
+
+    const missingIds = socialProfileIds.filter(
+      (id) => id !== playerId && !profileLookup[id]
+    );
+
+    if (missingIds.length === 0) return;
+
+    let cancelled = false;
+
+    const loadSocialProfiles = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", missingIds);
+
+      if (cancelled) return;
+
+      if (error) {
+        console.error("Could not load player avatars", error);
+        return;
+      }
+
+      setProfileLookup((currentLookup) => {
+        const nextLookup = { ...currentLookup };
+
+        (data || []).forEach((row) => {
+          nextLookup[row.id] = row;
+        });
+
+        return nextLookup;
+      });
+    };
+
+    loadSocialProfiles();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [socialProfileIds, profileLookup, playerId]);
 
   useEffect(() => {
     if (!username || profileStatus !== "ready" || !isSupabaseConfigured || !supabase) {
@@ -3726,7 +4028,10 @@ export default function FootballQuizMVP() {
         return;
       }
 
-      setProfile(updatedProfile);
+      setProfile((currentProfile) => ({
+        ...(currentProfile || {}),
+        ...(updatedProfile || {}),
+      }));
       setProfileStatus("ready");
       setProfileError("");
     }, 700);
@@ -4392,20 +4697,28 @@ export default function FootballQuizMVP() {
               transition={{ type: "spring", stiffness: 160, damping: 14 }}
             >
               <div className="profile-hero-row">
-                <button
-                  className="profile-avatar profile-avatar-button"
-                  onClick={() => {
-                    playClickSound();
-                    setAvatarPickerOpen(true);
+                <PlayerAvatar
+                  profile={{
+                    ...profile,
+                    avatar_emoji: profileAvatarEmoji,
+                    avatar_icon: profileAvatar.icon,
+                    avatar_style: profileAvatar.style,
+                    avatar_color: profileAvatar.color,
+                    avatar_bg: profileAvatar.bg,
                   }}
-                  aria-label="Change avatar"
-                >
-                  {profileAvatarEmoji}
-                </button>
+                  size="large"
+                  button
+                  className="profile-avatar-button"
+                  onClick={openAvatarBuilder}
+                  label="Edit avatar"
+                />
 
                 <div className="profile-name-wrap">
                   <div className="profile-title">Your Profile</div>
                   <div className="profile-name-pill">👤 {displayName}</div>
+                  <button className="profile-edit-avatar-button" onClick={openAvatarBuilder}>
+                    Edit Avatar
+                  </button>
                   <div className={`profile-sync-pill ${profileStatus}`}>
                     {profileStatus === "ready"
                       ? "Online profile saved"
@@ -4578,6 +4891,8 @@ export default function FootballQuizMVP() {
                       <div className="leaderboard-rank">
                         {row.medal || row.rank}
                       </div>
+
+                      <PlayerAvatar profile={row} size="small" />
 
                       <div className="leaderboard-player">
                         <strong>{row.username}</strong>
@@ -4767,6 +5082,8 @@ export default function FootballQuizMVP() {
                         );
                         const timestamp = match.updated_at || match.created_at;
                         const category = latestRound?.category || match.selected_category;
+                        const opponentSlot = playerSlot === "player1" ? "player2" : "player1";
+                        const opponentProfile = getMatchPlayerProfile(match, opponentSlot);
 
                         return (
                           <div
@@ -4774,7 +5091,10 @@ export default function FootballQuizMVP() {
                             key={match.id}
                           >
                             <div className="active-game-top">
-                              <strong>{getOpponentName(match, playerId, username)}</strong>
+                              <div className="active-game-player">
+                                <PlayerAvatar profile={opponentProfile} size="small" />
+                                <strong>{getOpponentName(match, playerId, username)}</strong>
+                              </div>
                               <span>{match.room_code}</span>
                             </div>
 
@@ -5071,6 +5391,10 @@ export default function FootballQuizMVP() {
                         <div className="league-rank">
                           {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1}
                         </div>
+                        <PlayerAvatar
+                          profile={getSocialProfile(member.player_id, member.username)}
+                          size="small"
+                        />
                         <div>
                           <strong>{member.username}</strong>
                           <small>{member.days_played || 0} days played</small>
@@ -5089,7 +5413,13 @@ export default function FootballQuizMVP() {
 
                       return (
                         <div className="league-result-row" key={member.id}>
-                          <strong>{member.username}</strong>
+                          <div className="league-result-player">
+                            <PlayerAvatar
+                              profile={getSocialProfile(member.player_id, member.username)}
+                              size="small"
+                            />
+                            <strong>{member.username}</strong>
+                          </div>
                           {submission ? (
                             <span>
                               {leagueSettings.quizCount > 0
@@ -5133,9 +5463,21 @@ export default function FootballQuizMVP() {
                   <div className="room-status">Match created</div>
                   <div className="room-code">Room code: {multiplayerRoomCode}</div>
                   <div className="multiplayer-player-list">
-                    <span>👤 {activeMatch?.player1_username || username}</span>
+                    <span>
+                      <PlayerAvatar
+                        profile={getMatchPlayerProfile(activeMatch, "player1")}
+                        size="small"
+                      />
+                      {activeMatch?.player1_username || username}
+                    </span>
                     {activeMatch?.player2_username && (
-                      <span>⚔️ {activeMatch.player2_username}</span>
+                      <span>
+                        <PlayerAvatar
+                          profile={getMatchPlayerProfile(activeMatch, "player2")}
+                          size="small"
+                        />
+                        {activeMatch.player2_username}
+                      </span>
                     )}
                   </div>
                   {activeMatch?.status === "ready" ? (
@@ -5304,8 +5646,20 @@ export default function FootballQuizMVP() {
                   <div className="opponent-found">Opponent found</div>
                   {activeMatch && (
                     <div className="multiplayer-player-list">
-                      <span>👤 {activeMatch.player1_username}</span>
-                      <span>⚔️ {activeMatch.player2_username}</span>
+                      <span>
+                        <PlayerAvatar
+                          profile={getMatchPlayerProfile(activeMatch, "player1")}
+                          size="small"
+                        />
+                        {activeMatch.player1_username}
+                      </span>
+                      <span>
+                        <PlayerAvatar
+                          profile={getMatchPlayerProfile(activeMatch, "player2")}
+                          size="small"
+                        />
+                        {activeMatch.player2_username}
+                      </span>
                     </div>
                   )}
                   {activeMatch?.phase === "choose_category" && (
@@ -5565,7 +5919,18 @@ export default function FootballQuizMVP() {
                   setProfileOpen(true);
                 }}
               >
-                👤 PROFILE
+                <PlayerAvatar
+                  profile={{
+                    ...profile,
+                    avatar_emoji: profileAvatarEmoji,
+                    avatar_icon: profileAvatar.icon,
+                    avatar_style: profileAvatar.style,
+                    avatar_color: profileAvatar.color,
+                    avatar_bg: profileAvatar.bg,
+                  }}
+                  size="small"
+                />
+                PROFILE
               </button>
 
               <button

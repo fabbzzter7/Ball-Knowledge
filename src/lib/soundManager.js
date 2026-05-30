@@ -80,5 +80,7 @@ export const playCorrectSound = () => playSound("correct");
 export const playWrongSound = () => playSound("wrong");
 export const playCoinSound = () => playSound("coin");
 export const playLevelUpSound = () => playSound("levelUp");
-export const playButtonTapSound = () => playSound("buttonTap");
+export const playButtonTapSound = () => {
+  // Button tap sound disabled because it made the app feel delayed.
+};
 export const playStreakSound = () => playSound("streak");

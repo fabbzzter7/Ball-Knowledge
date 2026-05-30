@@ -1,4 +1,7 @@
 const DEFAULT_AVATAR_EMOJI = "⚽";
+const DEFAULT_AVATAR_STYLE = "classic";
+const DEFAULT_AVATAR_COLOR = "green";
+const DEFAULT_AVATAR_BG = "dark";
 
 function createLocalPlayerId() {
   if (window.crypto?.randomUUID) {
@@ -34,6 +37,10 @@ export function getDefaultProfile({
     username: safeUsername,
     display_name: safeUsername,
     avatar_emoji: avatarEmoji || DEFAULT_AVATAR_EMOJI,
+    avatar_icon: avatarEmoji || DEFAULT_AVATAR_EMOJI,
+    avatar_style: DEFAULT_AVATAR_STYLE,
+    avatar_color: DEFAULT_AVATAR_COLOR,
+    avatar_bg: DEFAULT_AVATAR_BG,
     best_score: highScore,
     coins,
     daily_streak: dailyStreak,
@@ -63,7 +70,20 @@ export async function createProfile(supabase, profile) {
     .select()
     .single();
 
-  return { profile: data || null, error };
+  if (!error || !isMissingAvatarColumnError(error)) {
+    return { profile: data || null, error };
+  }
+
+  const { avatar_icon, avatar_style, avatar_color, avatar_bg, ...legacyProfile } =
+    profile;
+
+  const retry = await supabase
+    .from("profiles")
+    .insert(legacyProfile)
+    .select()
+    .single();
+
+  return { profile: retry.data || null, error: retry.error };
 }
 
 export async function updateProfile(supabase, playerId, updates) {
@@ -77,7 +97,28 @@ export async function updateProfile(supabase, playerId, updates) {
     .select()
     .single();
 
-  return { profile: data || null, error };
+  if (!error || !isMissingAvatarColumnError(error)) {
+    return { profile: data || null, error };
+  }
+
+  const { avatar_icon, avatar_style, avatar_color, avatar_bg, ...legacyUpdates } =
+    updates;
+
+  if (Object.keys(legacyUpdates).length === 0) {
+    return { profile: null, error };
+  }
+
+  const retry = await supabase
+    .from("profiles")
+    .update({
+      ...legacyUpdates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", playerId)
+    .select()
+    .single();
+
+  return { profile: retry.data || null, error: retry.error };
 }
 
 export async function syncLocalStatsToProfile(
@@ -90,4 +131,16 @@ export async function syncLocalStatsToProfile(
     coins,
     daily_streak: dailyStreak,
   });
+}
+
+function isMissingAvatarColumnError(error) {
+  const message = String(error?.message || "").toLowerCase();
+
+  return (
+    message.includes("avatar_icon") ||
+    message.includes("avatar_style") ||
+    message.includes("avatar_color") ||
+    message.includes("avatar_bg") ||
+    message.includes("schema cache")
+  );
 }
