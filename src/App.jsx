@@ -21,6 +21,20 @@ import {
   getMultiplayerQuestionsByIds,
   pickMultiplayerQuestionIds,
 } from "./multiplayerQuestionBank";
+import {
+  createLeague,
+  fetchLeagueDashboard,
+  fetchMyLeagues,
+  getOrCreateLeagueDay,
+  joinLeague,
+  submitLeagueDailyResult,
+} from "./lib/leagueService";
+import {
+  getLeagueQuestionsByIds,
+  getLeagueSettingsSummary,
+  getLeagueTop10ChallengeById,
+} from "./lib/leagueChallengeUtils";
+import { findOrCreatePublicMatch } from "./lib/matchmakingService";
 
 import clickSound from "./assets/Click.mp3";
 import coinSound from "./assets/Coins.mp3";
@@ -46,12 +60,81 @@ const MULTIPLAYER_CATEGORIES = [
   { id: "career_path", label: "Career Path", mode: "career_path", available: true },
 ];
 
-const STREAK_MILESTONES = [
-  { day: 2, reward: 25 },
-  { day: 4, reward: 50 },
-  { day: 6, reward: 75 },
-  { day: 8, reward: 90 },
-  { day: 10, reward: 100 },
+const LEAGUE_FORMATS = {
+  balanced: {
+    label: "Balanced",
+    quizCount: 5,
+    top10Count: 1,
+    description: "5 quick questions + 1 Top 10",
+  },
+  quick_quiz: {
+    label: "Quick Quiz",
+    quizCount: 10,
+    top10Count: 0,
+    description: "10 quick questions",
+  },
+  top10_only: {
+    label: "Top 10 Only",
+    quizCount: 0,
+    top10Count: 1,
+    description: "1 Top 10 list",
+  },
+  long_mix: {
+    label: "Long Mix",
+    quizCount: 10,
+    top10Count: 1,
+    description: "10 quick questions + 1 Top 10",
+  },
+  custom: {
+    label: "Custom",
+    quizCount: 5,
+    top10Count: 1,
+    description: "Choose your daily structure",
+  },
+};
+
+const LEAGUE_DURATIONS = [
+  { label: "Infinite", value: null },
+  { label: "10 days", value: 10 },
+  { label: "20 days", value: 20 },
+  { label: "30 days", value: 30 },
+];
+
+const CUSTOM_QUIZ_COUNTS = [0, 5, 10, 15];
+const CUSTOM_TOP10_COUNTS = [0, 1];
+
+const CLUB_THEME_MAP = {
+  "manchester united": "manchester-united",
+  "man united": "manchester-united",
+  "real madrid": "real-madrid",
+  barcelona: "barcelona",
+  juventus: "juventus",
+  psg: "psg",
+  milan: "milan",
+  "ac milan": "milan",
+  inter: "inter",
+  "bayern munich": "bayern",
+  bayern: "bayern",
+  liverpool: "liverpool",
+  arsenal: "arsenal",
+  chelsea: "chelsea",
+  ajax: "ajax",
+  tottenham: "tottenham",
+  "sporting cp": "sporting",
+  sporting: "sporting",
+  benfica: "benfica",
+  dortmund: "dortmund",
+  "borussia dortmund": "dortmund",
+};
+
+const DAILY_STREAK_REWARDS = [
+  { dayInRoad: 1, reward: 10 },
+  { dayInRoad: 2, reward: 20 },
+  { dayInRoad: 3, reward: 25 },
+  { dayInRoad: 4, reward: 35 },
+  { dayInRoad: 5, reward: 60 },
+  { dayInRoad: 6, reward: 45 },
+  { dayInRoad: 7, reward: 100 },
 ];
 
 const PLAYER_LEVELS = [
@@ -81,6 +164,20 @@ function shuffle(array) {
   }
 
   return newArray;
+}
+
+function shuffleQuestionOptions(question) {
+  if (!Array.isArray(question?.options)) return question;
+
+  if (!question.options.includes(question.answer)) {
+    console.warn("Question answer missing from options", question);
+    return question;
+  }
+
+  return {
+    ...question,
+    options: shuffle(question.options),
+  };
 }
 
 function normalizeAnswer(text) {
@@ -163,16 +260,34 @@ function getTodayChallenge() {
 }
 
 function getStreakReward(streak) {
-  if (streak >= 10) return 100;
-  if (streak === 8) return 90;
-  if (streak === 6) return 75;
-  if (streak === 4) return 50;
-  if (streak === 2) return 25;
-  return 0;
+  const dayInRoad = ((Math.max(1, streak) - 1) % 7) + 1;
+
+  return (
+    DAILY_STREAK_REWARDS.find((reward) => reward.dayInRoad === dayInRoad)
+      ?.reward || 10
+  );
 }
 
-function getNextMilestone(streak) {
-  return STREAK_MILESTONES.find((milestone) => milestone.day > streak) || null;
+function getStreakRoadStart(streak) {
+  return Math.floor(Math.max(0, streak - 1) / 7) * 7 + 1;
+}
+
+function getStreakRoadDays(streak) {
+  const start = getStreakRoadStart(streak);
+
+  return DAILY_STREAK_REWARDS.map((reward, index) => ({
+    day: start + index,
+    dayInRoad: reward.dayInRoad,
+    reward: reward.reward,
+  }));
+}
+
+function getNextStreakRewardInfo(streak, todayCompleted = false) {
+  const nextDay = todayCompleted ? streak + 1 : Math.max(1, streak + 1);
+  return {
+    day: nextDay,
+    reward: getStreakReward(nextDay),
+  };
 }
 
 function getNextStreakTarget(streak) {
@@ -226,7 +341,7 @@ function buildGameQuestions(mode = "general") {
       ...shuffle(medium).slice(0, 15),
       ...shuffle(hard).slice(0, 25),
       ...shuffle(veryHard),
-    ];
+    ].map(shuffleQuestionOptions);
   }
 
   const easy = QUESTIONS.filter((q) => q.difficulty === "Easy");
@@ -242,10 +357,7 @@ function buildGameQuestions(mode = "general") {
     ...shuffle(hard).slice(20),
   ];
 
-  return selectedQuestions.map((q) => ({
-    ...q,
-    options: shuffle(q.options),
-  }));
+  return selectedQuestions.map(shuffleQuestionOptions);
 }
 
 function getPlayerLevel(highScore) {
@@ -356,6 +468,48 @@ function getModeLabel(mode) {
   if (mode === "premier_league") return "Premier League";
   if (mode === "career" || mode === "career_path") return "Career Path";
   return "General";
+}
+
+function getCareerPathClubs(question = "") {
+  return String(question)
+    .split(/\s*(?:→|->)\s*/)
+    .map((club) => club.trim())
+    .filter(Boolean);
+}
+
+function getClubThemeClass(club) {
+  const key = normalizeAnswer(club).replace(/-/g, " ");
+  return CLUB_THEME_MAP[key] || "default";
+}
+
+function withShuffledOptions(question) {
+  return shuffleQuestionOptions(question);
+}
+
+function getLeagueFormatConfig(format, customQuizCount, customTop10Count) {
+  if (format !== "custom") {
+    const config = LEAGUE_FORMATS[format] || LEAGUE_FORMATS.balanced;
+    return {
+      ...config,
+      maxDailyPoints: config.quizCount + config.top10Count * 10,
+    };
+  }
+
+  const quizCount = Number(customQuizCount);
+  const top10Count = Number(customTop10Count);
+
+  return {
+    ...LEAGUE_FORMATS.custom,
+    quizCount,
+    top10Count,
+    maxDailyPoints: quizCount + top10Count * 10,
+    description:
+      quizCount > 0 && top10Count > 0
+        ? `${quizCount} quick questions + ${top10Count} Top 10`
+        : quizCount > 0
+        ? `${quizCount} quick questions`
+        : `${top10Count} Top 10`,
+  };
 }
 
 function createMockRoomCode() {
@@ -525,6 +679,29 @@ export default function FootballQuizMVP() {
   const [matchDeleteCandidate, setMatchDeleteCandidate] = useState(null);
   const [deletingMatchId, setDeletingMatchId] = useState(null);
   const [multiplayerNotice, setMultiplayerNotice] = useState("");
+  const [leagueNameInput, setLeagueNameInput] = useState("");
+  const [leagueDurationInput, setLeagueDurationInput] = useState(null);
+  const [leagueFormatInput, setLeagueFormatInput] = useState("balanced");
+  const [leagueCustomQuizCount, setLeagueCustomQuizCount] = useState(5);
+  const [leagueCustomTop10Count, setLeagueCustomTop10Count] = useState(1);
+  const [leagueCodeInput, setLeagueCodeInput] = useState("");
+  const [myLeagues, setMyLeagues] = useState([]);
+  const [leagueDashboard, setLeagueDashboard] = useState(null);
+  const [leagueLoading, setLeagueLoading] = useState(false);
+  const [leagueChallengeOpen, setLeagueChallengeOpen] = useState(false);
+  const [leagueChallengePhase, setLeagueChallengePhase] = useState("intro");
+  const [leagueQuizQuestions, setLeagueQuizQuestions] = useState([]);
+  const [leagueQuizIndex, setLeagueQuizIndex] = useState(0);
+  const [leagueQuizSelected, setLeagueQuizSelected] = useState(null);
+  const [leagueQuizScore, setLeagueQuizScore] = useState(0);
+  const [leagueTimeLeft, setLeagueTimeLeft] = useState(15);
+  const [leagueTop10Challenge, setLeagueTop10Challenge] = useState(null);
+  const [leagueTop10Input, setLeagueTop10Input] = useState("");
+  const [leagueTop10Found, setLeagueTop10Found] = useState([]);
+  const [leagueTop10Lives, setLeagueTop10Lives] = useState(3);
+  const [leagueTop10Reveal, setLeagueTop10Reveal] = useState(null);
+  const [leagueTop10Scanning, setLeagueTop10Scanning] = useState(false);
+  const [leagueResult, setLeagueResult] = useState(null);
   const [isMockMultiplayer, setIsMockMultiplayer] = useState(false);
   const [mockOpponentScore, setMockOpponentScore] = useState(null);
   const [coinsMenuOpen, setCoinsMenuOpen] = useState(false);
@@ -558,6 +735,7 @@ export default function FootballQuizMVP() {
   const [questionIndex, setQuestionIndex] = useState(0);
 
   const [selected, setSelected] = useState(null);
+  const [textAnswer, setTextAnswer] = useState("");
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [finished, setFinished] = useState(false);
@@ -667,11 +845,40 @@ export default function FootballQuizMVP() {
   );
   const activeRoundQuestionIds = activeRound?.question_ids || [];
   const activeRoundQuestions = useMemo(
-    () => getMultiplayerQuestionsByIds(activeRoundQuestionIds),
+    () => getMultiplayerQuestionsByIds(activeRoundQuestionIds).map(withShuffledOptions),
     [activeRoundQuestionIds]
   );
   const currentMultiplayerRoundQuestion =
     activeRoundQuestions[multiplayerRoundIndex];
+  const activeLeague = leagueDashboard?.league || null;
+  const activeLeagueDay = leagueDashboard?.leagueDay || null;
+  const activeLeagueSubmission = leagueDashboard?.currentSubmission || null;
+  const currentLeagueQuizQuestion = leagueQuizQuestions[leagueQuizIndex];
+  const leagueTop10Score = leagueTop10Found.length;
+  const leagueSettings = activeLeague
+    ? getLeagueSettingsSummary(activeLeague)
+    : getLeagueFormatConfig(
+        leagueFormatInput,
+        leagueCustomQuizCount,
+        leagueCustomTop10Count
+      );
+  const leagueDayExpired =
+    Boolean(activeLeague?.duration_days) &&
+    Boolean(activeLeagueDay?.day_number) &&
+    activeLeagueDay.day_number > Number(activeLeague.duration_days);
+  const leagueDailyStructureText =
+    leagueSettings.quizCount > 0 && leagueSettings.top10Count > 0
+      ? `${leagueSettings.quizCount} quick questions + ${leagueSettings.top10Count} Top 10`
+      : leagueSettings.quizCount > 0
+      ? `${leagueSettings.quizCount} quick questions`
+      : `${leagueSettings.top10Count} Top 10`;
+  const leagueDayLabel = activeLeagueDay
+    ? activeLeague?.duration_days
+      ? `Day ${activeLeagueDay.day_number} / ${activeLeague.duration_days}`
+      : `Day ${activeLeagueDay.day_number}`
+    : "Day";
+  const careerPathClubs =
+    gameMode === "career" && current ? getCareerPathClubs(current.question) : [];
   const connectionsSolvedIndexes = connectionsSolved.map((group) => group.index);
   const connectionsGameComplete = connectionsSolved.length === 4;
   const connectionsGameOver =
@@ -738,6 +945,34 @@ export default function FootballQuizMVP() {
   ]);
 
   useEffect(() => {
+    if (
+      !leagueChallengeOpen ||
+      leagueChallengePhase !== "quiz" ||
+      !currentLeagueQuizQuestion ||
+      leagueQuizSelected
+    ) {
+      return;
+    }
+
+    if (leagueTimeLeft <= 0) {
+      chooseLeagueQuizAnswer("__time_up__");
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setLeagueTimeLeft((time) => time - 1);
+    }, 1000);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    currentLeagueQuizQuestion,
+    leagueChallengeOpen,
+    leagueChallengePhase,
+    leagueQuizSelected,
+    leagueTimeLeft,
+  ]);
+
+  useEffect(() => {
     if (!multiplayerOpen || multiplayerStep !== "active-games") return;
 
     const interval = window.setInterval(() => {
@@ -746,6 +981,30 @@ export default function FootballQuizMVP() {
 
     return () => window.clearInterval(interval);
   }, [multiplayerOpen, multiplayerStep, playerId, username]);
+
+  useEffect(() => {
+    if (!multiplayerOpen || multiplayerStep !== "league-dashboard" || !activeLeague?.id) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      loadLeagueDashboard(activeLeague.id, { silent: true });
+    }, 8000);
+
+    return () => window.clearInterval(interval);
+  }, [multiplayerOpen, multiplayerStep, activeLeague?.id, playerId]);
+
+  useEffect(() => {
+    if (!multiplayerOpen || multiplayerStep !== "play-now-waiting" || !activeMatch?.id) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      refreshMultiplayerMatch({ silent: true });
+    }, 5000);
+
+    return () => window.clearInterval(interval);
+  }, [multiplayerOpen, multiplayerStep, activeMatch?.id]);
 
   useEffect(() => {
     if (!multiplayerOpen || !activeMatch?.id || !supabase) return;
@@ -853,8 +1112,8 @@ export default function FootballQuizMVP() {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [gameMode, gameStarted]);
 
-  const revivePrices = [250, 400, 800, 1600, 5000];
-  const reviveCost = revivePrices[revivesUsed] || 5000;
+  const revivePrices = [500, 1000, 5000];
+  const reviveCost = revivePrices[revivesUsed] || null;
 
   const isTimedQuestion =
     gameStarted &&
@@ -1224,6 +1483,7 @@ export default function FootballQuizMVP() {
   const awardDailyStreakBonus = () => {
     const today = getDailyDateKey();
     const yesterday = getYesterdayDateKey();
+    const previousStreak = dailyStreak;
 
     let newStreak = 1;
 
@@ -1251,6 +1511,7 @@ export default function FootballQuizMVP() {
     }
 
     return {
+      previousStreak,
       newStreak,
       reward,
     };
@@ -1262,6 +1523,7 @@ export default function FootballQuizMVP() {
       found,
       total: todayChallenge.answers.length,
       coins: earned,
+      previousStreak: streakInfo?.previousStreak ?? Math.max(0, dailyStreak - 1),
       streak: streakInfo?.newStreak || dailyStreak,
       streakBonus: streakInfo?.reward || 0,
       title: todayChallenge.label,
@@ -1403,6 +1665,7 @@ export default function FootballQuizMVP() {
     setQuestions(buildGameQuestions(mode));
     setQuestionIndex(0);
     setSelected(null);
+    setTextAnswer("");
     setScore(0);
     setLives(3);
     setStreak(0);
@@ -1428,6 +1691,13 @@ export default function FootballQuizMVP() {
     setMultiplayerRoomCode("");
     setJoinRoomCode("");
     setMultiplayerError("");
+  };
+
+  const openArenaSection = (section) => {
+    playClickSound();
+    setMultiplayerStep(section);
+    setMultiplayerError("");
+    setMultiplayerNotice("");
   };
 
   const loadMatchById = async (matchId) => {
@@ -1539,6 +1809,44 @@ export default function FootballQuizMVP() {
       return;
     }
 
+    if (
+      ["league-menu", "h2h-menu", "play-now-waiting"].includes(multiplayerStep)
+    ) {
+      setMultiplayerStep("menu");
+      setActiveMatch(null);
+      setActiveRound(null);
+      setMatchRounds([]);
+      setMultiplayerError("");
+      setMultiplayerNotice("");
+      return;
+    }
+
+    if (
+      [
+        "create-league",
+        "join-league",
+        "my-leagues",
+        "league-dashboard",
+      ].includes(multiplayerStep)
+    ) {
+      setMultiplayerStep("league-menu");
+      setLeagueDashboard(null);
+      setLeagueNameInput("");
+      setLeagueCodeInput("");
+      setMultiplayerError("");
+      return;
+    }
+
+    if (["active-games", "created", "join", "joined"].includes(multiplayerStep)) {
+      setMultiplayerStep("h2h-menu");
+      setActiveMatch(null);
+      setActiveRound(null);
+      setMatchRounds([]);
+      setNextCategoryPickerOpen(false);
+      setMultiplayerError("");
+      return;
+    }
+
     setMultiplayerStep("menu");
     setActiveMatch(null);
     setActiveRound(null);
@@ -1573,6 +1881,409 @@ export default function FootballQuizMVP() {
     setMultiplayerRoomCode(match.room_code);
     setMultiplayerMode(match.mode || "general");
     setMultiplayerStep(match.status === "waiting" ? "created" : "joined");
+  };
+
+  const loadLeagueDashboard = async (leagueId, { silent = false } = {}) => {
+    if (!isSupabaseConfigured || !supabase) {
+      setMultiplayerError("Supabase env vars are missing");
+      return;
+    }
+
+    if (!silent) {
+      setLeagueLoading(true);
+      setMultiplayerError("");
+    }
+
+    const { dashboard, error } = await fetchLeagueDashboard(
+      supabase,
+      leagueId,
+      playerId
+    );
+
+    if (!silent) setLeagueLoading(false);
+
+    if (error || !dashboard) {
+      setMultiplayerError("Could not load league");
+      return;
+    }
+
+    setLeagueDashboard(dashboard);
+  };
+
+  const openLeagueDashboard = async (leagueId) => {
+    playClickSound();
+    setMultiplayerStep("league-dashboard");
+    await loadLeagueDashboard(leagueId);
+  };
+
+  const createNewLeague = async () => {
+    playClickSound();
+
+    if (!isSupabaseConfigured || !supabase) {
+      setMultiplayerError("Supabase env vars are missing");
+      return;
+    }
+
+    setLeagueLoading(true);
+    setMultiplayerError("");
+
+    if (leagueSettings.quizCount + leagueSettings.top10Count <= 0) {
+      setLeagueLoading(false);
+      setMultiplayerError("Choose at least one daily challenge type");
+      return;
+    }
+
+    const { league, error } = await createLeague(supabase, {
+      name: leagueNameInput,
+      playerId,
+      username,
+      settings: {
+        durationDays: leagueDurationInput,
+        quizCount: leagueSettings.quizCount,
+        top10Count: leagueSettings.top10Count,
+        maxDailyPoints: leagueSettings.quizCount + leagueSettings.top10Count * 10,
+        leagueFormat: leagueFormatInput,
+      },
+    });
+
+    setLeagueLoading(false);
+
+    if (error || !league) {
+      setMultiplayerError("Could not create league");
+      return;
+    }
+
+    setLeagueNameInput("");
+    setMultiplayerNotice("League created");
+    await openLeagueDashboard(league.id);
+  };
+
+  const joinExistingLeague = async () => {
+    if (!leagueCodeInput.trim()) return;
+
+    playClickSound();
+
+    if (!isSupabaseConfigured || !supabase) {
+      setMultiplayerError("Supabase env vars are missing");
+      return;
+    }
+
+    setLeagueLoading(true);
+    setMultiplayerError("");
+
+    const { league, alreadyJoined, error } = await joinLeague(supabase, {
+      code: leagueCodeInput,
+      playerId,
+      username,
+    });
+
+    setLeagueLoading(false);
+
+    if (error || !league) {
+      setMultiplayerError(error?.message === "League not found" ? "League not found" : "Could not join league");
+      return;
+    }
+
+    setLeagueCodeInput("");
+    setMultiplayerNotice(alreadyJoined ? "League opened" : "Joined league");
+    await openLeagueDashboard(league.id);
+  };
+
+  const loadMyLeagues = async () => {
+    playClickSound();
+
+    if (!isSupabaseConfigured || !supabase) {
+      setMultiplayerError("Supabase env vars are missing");
+      return;
+    }
+
+    setLeagueLoading(true);
+    setMultiplayerError("");
+    setMultiplayerStep("my-leagues");
+
+    const { leagues, error } = await fetchMyLeagues(supabase, playerId);
+
+    setLeagueLoading(false);
+
+    if (error) {
+      setMultiplayerError("Could not load leagues");
+      return;
+    }
+
+    setMyLeagues(leagues);
+  };
+
+  const prepareLeagueChallenge = async () => {
+    if (!activeLeague || activeLeagueSubmission) return;
+
+    playClickSound();
+    setLeagueLoading(true);
+    setMultiplayerError("");
+
+    const { leagueDay, error } = await getOrCreateLeagueDay(supabase, activeLeague);
+    const quizQuestions = getLeagueQuestionsByIds(
+      leagueDay?.quiz_question_ids || []
+    ).map(withShuffledOptions);
+    const top10Challenge = getLeagueTop10ChallengeById(
+      leagueDay?.top10_challenge_id,
+      `${activeLeague.id}:${leagueDay?.day_key}`
+    );
+    const settings = getLeagueSettingsSummary(activeLeague);
+
+    setLeagueLoading(false);
+
+    if (
+      error ||
+      quizQuestions.length !== settings.quizCount ||
+      (settings.top10Count > 0 && !top10Challenge)
+    ) {
+      setMultiplayerError("Today's league challenge is not ready");
+      return;
+    }
+
+    setLeagueDashboard((dashboard) => ({
+      ...dashboard,
+      leagueDay,
+    }));
+    setLeagueQuizQuestions(quizQuestions);
+    setLeagueTop10Challenge(top10Challenge);
+    setLeagueQuizIndex(0);
+    setLeagueQuizSelected(null);
+    setLeagueQuizScore(0);
+    setLeagueTimeLeft(15);
+    setLeagueTop10Found([]);
+    setLeagueTop10Lives(3);
+    setLeagueTop10Reveal(null);
+    setLeagueTop10Scanning(false);
+    setLeagueTop10Input("");
+    setLeagueResult(null);
+    setLeagueChallengePhase("intro");
+    setLeagueChallengeOpen(true);
+    setMultiplayerOpen(false);
+  };
+
+  const startLeagueQuiz = () => {
+    playClickSound();
+    setLeagueChallengePhase(leagueQuizQuestions.length > 0 ? "quiz" : "top10");
+    setLeagueTimeLeft(15);
+  };
+
+  const chooseLeagueQuizAnswer = (option) => {
+    if (leagueQuizSelected || !currentLeagueQuizQuestion) return;
+
+    setLeagueQuizSelected(option);
+    const isCorrect = option === currentLeagueQuizQuestion.answer;
+    const nextScore = isCorrect ? leagueQuizScore + 1 : leagueQuizScore;
+
+    if (isCorrect) {
+      setLeagueQuizScore(nextScore);
+      playCoinSound();
+    } else {
+      playWrongSound();
+    }
+
+    window.setTimeout(() => {
+      if (leagueQuizIndex >= leagueQuizQuestions.length - 1) {
+        if (leagueSettings.top10Count > 0) {
+          setLeagueChallengePhase("top10");
+        } else {
+          completeLeagueChallenge(0);
+        }
+      } else {
+        setLeagueQuizIndex((index) => index + 1);
+        setLeagueQuizSelected(null);
+        setLeagueTimeLeft(15);
+      }
+    }, 750);
+  };
+
+  const submitLeagueTop10Answer = () => {
+    if (
+      !leagueTop10Input.trim() ||
+      !leagueTop10Challenge ||
+      leagueTop10Scanning ||
+      leagueTop10Lives <= 0
+    ) {
+      return;
+    }
+
+    const matchedAnswer = leagueTop10Challenge.answers.find(
+      (answer) => isCorrectAnswer(leagueTop10Input, answer)
+    );
+    const alreadyFound =
+      matchedAnswer && leagueTop10Found.includes(matchedAnswer);
+    const matchedRank = matchedAnswer
+      ? leagueTop10Challenge.answers.indexOf(matchedAnswer) + 1
+      : 0;
+    let displayRank = leagueTop10Challenge.answers.length;
+
+    setLeagueTop10Scanning(true);
+    setLeagueTop10Reveal({
+      phase: "scan",
+      type: "scan",
+      displayRank,
+      rank: matchedRank,
+      answer: matchedAnswer || leagueTop10Input.trim(),
+    });
+
+    const interval = window.setInterval(() => {
+      if (matchedRank && displayRank === matchedRank) {
+        window.clearInterval(interval);
+        setLeagueTop10Scanning(false);
+
+        if (alreadyFound) {
+          setLeagueTop10Reveal({
+            phase: "result",
+            type: "already",
+            displayRank,
+            rank: matchedRank,
+            answer: matchedAnswer,
+          });
+          setLeagueTop10Input("");
+          window.setTimeout(() => setLeagueTop10Reveal(null), 900);
+          return;
+        }
+
+        setLeagueTop10Found((answers) => [...answers, matchedAnswer]);
+        setLeagueTop10Reveal({
+          phase: "result",
+          type: "correct",
+          displayRank,
+          rank: matchedRank,
+          answer: matchedAnswer,
+        });
+        setLeagueTop10Input("");
+        playCoinSound();
+
+        if (leagueTop10Found.length + 1 >= leagueTop10Challenge.answers.length) {
+          window.setTimeout(
+            () => completeLeagueChallenge(leagueTop10Found.length + 1),
+            700
+          );
+        } else {
+          window.setTimeout(() => setLeagueTop10Reveal(null), 900);
+        }
+        return;
+      }
+
+      displayRank -= 1;
+
+      if (displayRank <= 0) {
+        window.clearInterval(interval);
+        const nextLives = Math.max(0, leagueTop10Lives - 1);
+        setLeagueTop10Lives(nextLives);
+        setLeagueTop10Scanning(false);
+        setLeagueTop10Reveal({
+          phase: "result",
+          type: "wrong",
+          displayRank: 0,
+          rank: 0,
+          answer: leagueTop10Input.trim(),
+        });
+        setLeagueTop10Input("");
+        playWrongSound();
+
+        if (nextLives <= 0) {
+          window.setTimeout(() => completeLeagueChallenge(leagueTop10Found.length), 850);
+        } else {
+          window.setTimeout(() => setLeagueTop10Reveal(null), 900);
+        }
+        return;
+      }
+
+      setLeagueTop10Reveal({
+        phase: "scan",
+        type: "scan",
+        displayRank,
+        rank: matchedRank,
+        answer: matchedAnswer || leagueTop10Input.trim(),
+      });
+    }, DAILY_SCAN_STEP_MS);
+  };
+
+  const completeLeagueChallenge = async (top10Override = leagueTop10Score) => {
+    if (!activeLeague || !activeLeagueDay || leagueResult) return;
+
+    playClickSound();
+    setLeagueLoading(true);
+    setMultiplayerError("");
+
+    const { submission, alreadySubmitted, error } = await submitLeagueDailyResult(
+      supabase,
+      {
+        league: activeLeague,
+        leagueDay: activeLeagueDay,
+        playerId,
+        username,
+        quizScore: leagueQuizScore,
+        top10Score: top10Override,
+      }
+    );
+
+    setLeagueLoading(false);
+
+    if (error || !submission) {
+      setMultiplayerError("Could not save league score");
+      return;
+    }
+
+    setLeagueResult({
+      quizScore: submission.quiz_score,
+      top10Score: submission.top10_score,
+      totalPoints: submission.total_points,
+      alreadySubmitted,
+    });
+    setLeagueChallengePhase("complete");
+    await loadLeagueDashboard(activeLeague.id, { silent: true });
+  };
+
+  const closeLeagueChallenge = async () => {
+    playClickSound();
+    setLeagueChallengeOpen(false);
+    setMultiplayerOpen(true);
+    setMultiplayerStep("league-dashboard");
+    if (activeLeague?.id) {
+      await loadLeagueDashboard(activeLeague.id, { silent: true });
+    }
+  };
+
+  const startPlayNow = async () => {
+    playClickSound();
+
+    if (!isSupabaseConfigured || !supabase) {
+      setMultiplayerError("Supabase env vars are missing");
+      return;
+    }
+
+    setMultiplayerLoading(true);
+    setMultiplayerError("");
+    setMultiplayerNotice("Searching for opponent...");
+
+    const { match, created, error } = await findOrCreatePublicMatch(supabase, {
+      playerId,
+      username,
+    });
+
+    setMultiplayerLoading(false);
+
+    if (error || !match) {
+      setMultiplayerError("Could not start matchmaking");
+      return;
+    }
+
+    setActiveMatch(match);
+    setActiveRound(null);
+    setMatchRounds([]);
+    setMultiplayerRoomCode(match.room_code);
+    setMultiplayerMode(match.mode || "general");
+
+    if (created) {
+      setMultiplayerStep("play-now-waiting");
+      return;
+    }
+
+    setMultiplayerNotice("Opponent found");
+    setMultiplayerStep("joined");
   };
 
   const requestDeleteMatch = (match) => {
@@ -2202,6 +2913,7 @@ export default function FootballQuizMVP() {
     setIsRevealing(false);
     setQuestionIndex(0);
     setSelected(null);
+    setTextAnswer("");
     setScore(0);
     setLives(3);
     setStreak(0);
@@ -2238,6 +2950,7 @@ export default function FootballQuizMVP() {
     setQuestionIndex(0);
 
     setSelected(null);
+    setTextAnswer("");
     setScore(0);
     setLives(3);
     setStreak(0);
@@ -2259,6 +2972,7 @@ export default function FootballQuizMVP() {
   const nextQuestion = () => {
     setQuestionIndex((i) => (i + 1) % questions.length);
     setSelected(null);
+    setTextAnswer("");
   };
 
   const getRewardForScore = (newScore) => {
@@ -2505,6 +3219,8 @@ export default function FootballQuizMVP() {
   };
 
   const revive = () => {
+    if (!reviveCost || revivesUsed >= 3 || coins < reviveCost) return;
+
     const newCoins = coins - reviveCost;
     saveCoins(newCoins);
 
@@ -2514,9 +3230,11 @@ export default function FootballQuizMVP() {
     setSelected(null);
   };
 
-  const watchAdMock = () => {
-    const newCoins = coins + 50;
-    saveCoins(newCoins);
+  const submitTextAnswer = () => {
+    if (!textAnswer.trim() || selected) return;
+
+    chooseAnswer(textAnswer);
+    setTextAnswer("");
   };
 
   const openCoinShop = () => {
@@ -2535,15 +3253,9 @@ export default function FootballQuizMVP() {
     setLevelModalOpen(true);
   };
 
-  const claimVideoRewardMock = () => {
-    saveCoins(coins + 100);
-    playCoinSound();
-    setCoinShopNotice("+100 coins added");
-  };
-
-  const showMockPurchaseNotice = () => {
+  const showComingSoonNotice = () => {
     playClickSound();
-    setCoinShopNotice("Coming soon");
+    setCoinShopNotice("Coming soon for the App Store version");
   };
 
   const coinShopModal = (
@@ -2573,31 +3285,31 @@ export default function FootballQuizMVP() {
             <div className="coin-shop-options">
               <div className="coin-shop-option featured">
                 <div>
-                  <strong>Watch video ad</strong>
-                  <small>Ad reward mockup</small>
+                  <strong>Rewarded ads</strong>
+                  <small>Extra lives and bonuses</small>
                 </div>
-                <button onClick={claimVideoRewardMock}>Watch video</button>
-                <em>+100 coins</em>
+                <button disabled>Coming Soon</button>
+                <em>Not available yet</em>
               </div>
 
               {[
-                ["Small coin pack", "500 coins", "$0.99"],
-                ["Big coin pack", "2,500 coins", "$3.99"],
-                ["Mega coin pack", "10,000 coins", "$9.99"],
-              ].map(([title, amount, price]) => (
+                ["Coin packs", "More coin bundles"],
+                ["Starter bundle", "Boost your next run"],
+                ["Premium boosts", "Special offers"],
+              ].map(([title, amount]) => (
                 <div className="coin-shop-option" key={title}>
                   <div>
                     <strong>{title}</strong>
                     <small>{amount}</small>
                   </div>
-                  <button onClick={showMockPurchaseNotice}>{price}</button>
-                  <em>Mock pack</em>
+                  <button onClick={showComingSoonNotice}>Coming Soon</button>
+                  <em>App Store payments not enabled</em>
                 </div>
               ))}
             </div>
 
             <p className="coin-shop-note">
-              Purchases are mockups for now
+              Purchases are disabled until App Store payments are ready
               {coinShopNotice && <span> • {coinShopNotice}</span>}
             </p>
 
@@ -2615,6 +3327,12 @@ export default function FootballQuizMVP() {
       )}
     </AnimatePresence>
   );
+
+  const dailyRewardTargetDay = dailyPlayed
+    ? Math.max(1, dailyStreak)
+    : Math.max(1, dailyStreak + 1);
+  const dailyRewardRoadDays = getStreakRoadDays(dailyRewardTargetDay);
+  const nextDailyReward = getNextStreakRewardInfo(dailyStreak, dailyPlayed);
 
   const dailyRewardMeterModal = (
     <AnimatePresence>
@@ -2649,40 +3367,48 @@ export default function FootballQuizMVP() {
             </div>
 
             <div className="daily-reward-road">
-              {STREAK_MILESTONES.map((milestone) => {
-                const reached = dailyStreak >= milestone.day;
-                const nextMilestone = getNextMilestone(dailyStreak);
-                const currentMilestone = nextMilestone?.day === milestone.day;
+              <div
+                className="daily-reward-road-fill"
+                style={{
+                  width: `${
+                    ((Math.min(7, ((dailyRewardTargetDay - 1) % 7) + 1) - 1) /
+                      6) *
+                    86
+                  }%`,
+                }}
+              />
+              {dailyRewardRoadDays.map((day) => {
+                const reached = dailyStreak >= day.day;
+                const currentDay = dailyRewardTargetDay === day.day;
 
                 return (
-                  <div
-                    key={milestone.day}
+                  <motion.div
+                    key={day.day}
                     className={`daily-reward-day ${reached ? "reached" : ""} ${
-                      currentMilestone ? "current" : ""
+                      currentDay ? "current" : ""
                     }`}
+                    initial={{ opacity: 0, y: 12, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: currentDay ? 1.06 : 1 }}
+                    transition={{ delay: day.dayInRoad * 0.035, duration: 0.22 }}
                   >
                     <div className="daily-reward-ball">
-                      {reached ? "✅" : "⚽"}
+                      {reached ? "✅" : currentDay ? "🔥" : "⚽"}
                     </div>
 
                     <div className="daily-reward-day-label">
-                      Day {milestone.day}
+                      Day {day.day}
                     </div>
 
                     <div className="daily-reward-day-coins">
-                      +{milestone.reward}
+                      +{day.reward}
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
 
             <div className="daily-reward-next">
-              {getNextMilestone(dailyStreak)
-                ? `Next reward: Day ${getNextMilestone(dailyStreak).day} • +${
-                    getNextMilestone(dailyStreak).reward
-                  } coins`
-                : "Max reward reached • +100 coins every day"}
+              Next reward: Day {nextDailyReward.day} • +{nextDailyReward.reward} coins
             </div>
 
             <button
@@ -2915,6 +3641,12 @@ export default function FootballQuizMVP() {
   // TODO production profiles:
   // Add Supabase Auth / real login, secure RLS policies, spoofing protection,
   // friend system, user search, push notifications, and cross-device cloud save.
+  // TODO App Store release:
+  // Integrate real rewarded ads, Apple In-App Purchases for coin packs,
+  // privacy policy link, App Store screenshots, app icon/splash assets,
+  // Supabase Auth, secure RLS policies, and anti-cheat validation.
+  // TODO Career Path:
+  // Future: add optional multiple-choice Career Path mode.
 
   const handleResultButton = (isDaily) => {
     if (isDaily) {
@@ -2965,6 +3697,214 @@ export default function FootballQuizMVP() {
             </button>
           </motion.div>
         </div>
+      </div>
+    );
+  }
+
+  if (leagueChallengeOpen && activeLeague && activeLeagueDay) {
+    return (
+      <div
+        className="fullscreen-bg"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.05), rgba(0,0,0,0.58)), url(${stadiumBg})`,
+        }}
+      >
+        <button className="multiplayer-round-back" onClick={closeLeagueChallenge}>
+          ← League
+        </button>
+
+        <ScreenTransition className="league-challenge-screen">
+          {leagueChallengePhase === "intro" && (
+            <div className="league-challenge-card">
+              <div className="league-kicker">🏆 Daily League</div>
+              <h1>{leagueDayLabel} Challenge</h1>
+              <p>
+                Max {leagueSettings.maxDailyPoints} points: {leagueDailyStructureText}.
+              </p>
+              <button onClick={startLeagueQuiz}>Start</button>
+            </div>
+          )}
+
+          {leagueChallengePhase === "quiz" && currentLeagueQuizQuestion && (
+            <div className="league-challenge-card">
+              <div className="league-quiz-top">
+                <span>
+                  Question {leagueQuizIndex + 1}/{leagueSettings.quizCount}
+                </span>
+                <strong className={leagueTimeLeft <= 3 ? "danger" : ""}>
+                  ⏱ {leagueTimeLeft}s
+                </strong>
+                <span>
+                  {leagueQuizScore}/{leagueSettings.quizCount}
+                </span>
+              </div>
+
+              <h2>{currentLeagueQuizQuestion.question}</h2>
+
+              <div className="league-answer-grid">
+                {currentLeagueQuizQuestion.options.map((option) => {
+                  const isCorrect = option === currentLeagueQuizQuestion.answer;
+                  const isChosen = leagueQuizSelected === option;
+                  const showCorrect = leagueQuizSelected && isCorrect;
+                  const showWrong = leagueQuizSelected && isChosen && !isCorrect;
+
+                  return (
+                    <button
+                      key={option}
+                      className={`${showCorrect ? "correct" : ""} ${
+                        showWrong ? "wrong" : ""
+                      }`}
+                      disabled={Boolean(leagueQuizSelected)}
+                      onClick={() => chooseLeagueQuizAnswer(option)}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {leagueChallengePhase === "top10" && leagueTop10Challenge && (
+            <div className="league-challenge-card league-top10-card">
+              <div className="league-kicker">Top 10</div>
+              <h1>{leagueTop10Challenge.label}</h1>
+              <p>{leagueTop10Challenge.question}</p>
+
+              <div className="league-score-strip">
+                {leagueSettings.quizCount > 0 && (
+                  <span>
+                    Quiz: {leagueQuizScore}/{leagueSettings.quizCount}
+                  </span>
+                )}
+                <span>Top 10: {leagueTop10Score}/10</span>
+                <span>
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <span
+                      key={index}
+                      className={
+                        index >= leagueTop10Lives ? "league-life-used" : ""
+                      }
+                    >
+                      ❤️
+                    </span>
+                  ))}
+                </span>
+                <strong>
+                  Total: {leagueQuizScore + leagueTop10Score}/
+                  {leagueSettings.maxDailyPoints}
+                </strong>
+              </div>
+
+              <AnimatePresence>
+                {leagueTop10Reveal && (
+                  <motion.div
+                    className={`league-rank-reveal ${leagueTop10Reveal.type}`}
+                    initial={{ opacity: 0, scale: 0.9, y: 8 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.96, y: -8 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    <span>
+                      {leagueTop10Reveal.type === "correct"
+                        ? "FOUND"
+                        : leagueTop10Reveal.type === "wrong"
+                        ? "NOT FOUND"
+                        : leagueTop10Reveal.type === "already"
+                        ? "ALREADY FOUND"
+                        : "SCANNING"}
+                    </span>
+                    <strong>
+                      {leagueTop10Reveal.displayRank > 0
+                        ? `#${leagueTop10Reveal.displayRank}`
+                        : "OUT"}
+                    </strong>
+                    {leagueTop10Reveal.type === "correct" && (
+                      <em>{leagueTop10Reveal.answer}</em>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="league-top10-list">
+                {leagueTop10Challenge.answers.map((answer, index) => {
+                  const found = leagueTop10Found.includes(answer);
+                  const rank = index + 1;
+                  const isScanning =
+                    leagueTop10Reveal?.phase === "scan" &&
+                    leagueTop10Reveal.displayRank === rank;
+                  const isRevealTarget =
+                    leagueTop10Reveal?.type === "correct" &&
+                    leagueTop10Reveal.rank === rank;
+
+                  return (
+                    <div
+                      key={answer}
+                      className={`${found ? "found" : ""} ${
+                        isScanning ? "scanning" : ""
+                      } ${isRevealTarget ? "reveal-target" : ""}`}
+                    >
+                      <span>#{index + 1}</span>
+                      <strong>{found ? answer : "?????"}</strong>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="daily-input-row league-input-row">
+                <input
+                  value={leagueTop10Input}
+                  onChange={(event) => setLeagueTop10Input(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") submitLeagueTop10Answer();
+                  }}
+                  placeholder="Type player name..."
+                  className="daily-list-input"
+                  disabled={leagueTop10Scanning || leagueTop10Lives <= 0}
+                  autoFocus
+                />
+                <button
+                  className="daily-submit-button"
+                  onClick={submitLeagueTop10Answer}
+                  disabled={
+                    leagueTop10Scanning ||
+                    leagueTop10Lives <= 0 ||
+                    !leagueTop10Input.trim()
+                  }
+                >
+                  {leagueTop10Scanning ? "Scanning..." : "Guess"}
+                </button>
+              </div>
+
+            </div>
+          )}
+
+          {leagueChallengePhase === "complete" && leagueResult && (
+            <div className="league-challenge-card league-complete-card">
+              <div className="league-kicker">✅ Day Complete</div>
+              <h1>
+                {leagueResult.totalPoints}/{leagueSettings.maxDailyPoints} points
+              </h1>
+              <div className="league-result-grid">
+                {leagueSettings.quizCount > 0 && (
+                  <div>
+                    <span>Quiz</span>
+                    <strong>
+                      {leagueResult.quizScore}/{leagueSettings.quizCount}
+                    </strong>
+                  </div>
+                )}
+                {leagueSettings.top10Count > 0 && (
+                  <div>
+                    <span>Top 10</span>
+                    <strong>{leagueResult.top10Score}/10</strong>
+                  </div>
+                )}
+              </div>
+              <button onClick={closeLeagueChallenge}>Back to League</button>
+            </div>
+          )}
+        </ScreenTransition>
       </div>
     );
   }
@@ -3094,9 +4034,9 @@ export default function FootballQuizMVP() {
 
               <motion.div
                 className="daily-reward-main-ball"
-                initial={{ rotate: -10, scale: 0.8 }}
-                animate={{ rotate: 0, scale: 1 }}
-                transition={{ type: "spring", stiffness: 180, damping: 9 }}
+                initial={{ rotate: -12, scale: 0.72, y: 18 }}
+                animate={{ rotate: [0, -8, 8, 0], scale: [1, 1.12, 1], y: 0 }}
+                transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
               >
                 ⚽
               </motion.div>
@@ -3113,41 +4053,65 @@ export default function FootballQuizMVP() {
               )}
 
               <div className="daily-reward-road">
-                {STREAK_MILESTONES.map((milestone) => {
-                  const reached = lastDailyResult.streak >= milestone.day;
-                  const currentMilestone = lastDailyResult.streak === milestone.day;
+                <div
+                  className="daily-reward-road-fill"
+                  style={{
+                    width: `${
+                      ((Math.min(7, ((lastDailyResult.streak - 1) % 7) + 1) -
+                        1) /
+                        6) *
+                      86
+                    }%`,
+                  }}
+                />
+                {getStreakRoadDays(lastDailyResult.streak).map((day) => {
+                  const reached = lastDailyResult.streak >= day.day;
+                  const currentDay = lastDailyResult.streak === day.day;
+                  const previousReached =
+                    (lastDailyResult.previousStreak || 0) >= day.day;
 
                   return (
-                    <div
-                      key={milestone.day}
+                    <motion.div
+                      key={day.day}
                       className={`daily-reward-day ${
                         reached ? "reached" : ""
-                      } ${currentMilestone ? "current" : ""}`}
+                      } ${currentDay ? "current newly-lit" : ""}`}
+                      initial={{
+                        opacity: previousReached ? 1 : 0.58,
+                        y: currentDay ? 12 : 0,
+                        scale: previousReached ? 1 : 0.95,
+                      }}
+                      animate={{
+                        opacity: reached ? 1 : 0.78,
+                        y: currentDay ? -6 : 0,
+                        scale: currentDay ? [1, 1.14, 1.06] : 1,
+                      }}
+                      transition={{
+                        delay: day.dayInRoad * 0.055,
+                        duration: currentDay ? 0.62 : 0.24,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
                     >
                       <div className="daily-reward-ball">
-                        {reached ? "✅" : "⚽"}
+                        {currentDay ? "🔥" : reached ? "✅" : "⚽"}
                       </div>
 
                       <div className="daily-reward-day-label">
-                        Day {milestone.day}
+                        Day {day.day}
                       </div>
 
                       <div className="daily-reward-day-coins">
-                        +{milestone.reward}
+                        +{day.reward}
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
 
               <div className="daily-reward-next">
-                {getNextMilestone(lastDailyResult.streak)
-                  ? `Next reward: Day ${
-                      getNextMilestone(lastDailyResult.streak).day
-                    } • +${
-                      getNextMilestone(lastDailyResult.streak).reward
-                    } coins`
-                  : "Max reward reached • +100 coins every day"}
+                Next reward: Day{" "}
+                {getNextStreakRewardInfo(lastDailyResult.streak, true).day} • +
+                {getNextStreakRewardInfo(lastDailyResult.streak, true).reward} coins
               </div>
 
               <button
@@ -3510,26 +4474,6 @@ export default function FootballQuizMVP() {
 
               <div className="multiplayer-badge">⚔️ Arena</div>
               <h1 className="multiplayer-title">Arena</h1>
-              <p className="multiplayer-subtitle">
-                Your async football battles
-              </p>
-
-              {multiplayerStep === "menu" && (
-                <div className="multiplayer-mode-pills">
-                {MULTIPLAYER_CATEGORIES.map((category) => (
-                  <button
-                    key={category.id}
-                    className={multiplayerMode === category.mode ? "active" : ""}
-                    onClick={() => {
-                      playClickSound();
-                      setMultiplayerMode(category.mode);
-                    }}
-                  >
-                    {category.label}
-                  </button>
-                ))}
-                </div>
-              )}
 
               {multiplayerError && (
                 <div className="multiplayer-error">{multiplayerError}</div>
@@ -3540,7 +4484,75 @@ export default function FootballQuizMVP() {
               )}
 
               {multiplayerStep === "menu" && (
-                <div className="multiplayer-actions">
+                <div className="arena-hub-grid">
+                  <button
+                    className="arena-hub-card play-now"
+                    onClick={startPlayNow}
+                    disabled={multiplayerLoading}
+                  >
+                    <span>⚡</span>
+                    <strong>{multiplayerLoading ? "Finding..." : "Play Now"}</strong>
+                    <small>Find a quick opponent</small>
+                  </button>
+
+                  <button
+                    className="arena-hub-card h2h"
+                    onClick={() => openArenaSection("h2h-menu")}
+                  >
+                    <span>⚔️</span>
+                    <strong>H2H</strong>
+                    <small>Async 1v1 battles</small>
+                  </button>
+
+                  <button
+                    className="arena-hub-card league"
+                    onClick={() => openArenaSection("league-menu")}
+                  >
+                    <span>🏆</span>
+                    <strong>League</strong>
+                    <small>Daily points with friends</small>
+                  </button>
+                </div>
+              )}
+
+              {multiplayerStep === "league-menu" && (
+                <div className="arena-section-grid league-theme">
+                  <button
+                    className="multiplayer-action-card league-list"
+                    onClick={loadMyLeagues}
+                    disabled={leagueLoading}
+                  >
+                    <span>📊</span>
+                    <strong>My Leagues</strong>
+                  </button>
+
+                  <button
+                    className="multiplayer-action-card league-create"
+                    onClick={() => {
+                      playClickSound();
+                      setLeagueNameInput(`${username}'s League`);
+                      setMultiplayerStep("create-league");
+                    }}
+                  >
+                    <span>🏆</span>
+                    <strong>Create League</strong>
+                  </button>
+
+                  <button
+                    className="multiplayer-action-card league-join"
+                    onClick={() => {
+                      playClickSound();
+                      setMultiplayerStep("join-league");
+                    }}
+                  >
+                    <span>👥</span>
+                    <strong>Join League</strong>
+                  </button>
+                </div>
+              )}
+
+              {multiplayerStep === "h2h-menu" && (
+                <div className="arena-section-grid h2h-theme">
                   <button
                     className="multiplayer-action-card active-games"
                     onClick={openActiveGames}
@@ -3548,9 +4560,8 @@ export default function FootballQuizMVP() {
                   >
                     <span>🎮</span>
                     <strong>
-                      {activeGamesLoading ? "Loading matches..." : "Active Matches"}
+                      {activeGamesLoading ? "Loading..." : "Active Matches"}
                     </strong>
-                    <small>Your turn, results, and waiting rooms</small>
                   </button>
 
                   <button
@@ -3558,11 +4569,8 @@ export default function FootballQuizMVP() {
                     onClick={createMultiplayerMatch}
                     disabled={multiplayerLoading}
                   >
-                    <span>🏟️</span>
-                    <strong>
-                      {multiplayerLoading ? "Creating match..." : "Create New Match"}
-                    </strong>
-                    <small>Start a private room</small>
+                    <span>⚔️</span>
+                    <strong>{multiplayerLoading ? "Creating..." : "Create Match"}</strong>
                   </button>
 
                   <button
@@ -3572,9 +4580,8 @@ export default function FootballQuizMVP() {
                       setMultiplayerStep("join");
                     }}
                   >
-                    <span>👤</span>
+                    <span>🔑</span>
                     <strong>Join Match</strong>
-                    <small>Enter a room code</small>
                   </button>
                 </div>
               )}
@@ -3584,7 +4591,6 @@ export default function FootballQuizMVP() {
                   <div className="active-games-header">
                     <div>
                       <strong>Active Matches</strong>
-                      <span>Your Quizkampen-style inbox</span>
                     </div>
 
                     <button onClick={fetchActiveGames} disabled={activeGamesLoading}>
@@ -3686,6 +4692,297 @@ export default function FootballQuizMVP() {
                     </div>
                   )}
 
+                </div>
+              )}
+
+              {multiplayerStep === "create-league" && (
+                <div className="league-form-card">
+                  <div className="league-kicker">🏆 Create League</div>
+                  <h2>Start a Daily League</h2>
+                  <input
+                    value={leagueNameInput}
+                    onChange={(event) => setLeagueNameInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") createNewLeague();
+                    }}
+                    placeholder={`${username}'s League`}
+                    autoFocus
+                  />
+
+                  <div className="league-picker-section">
+                    <strong>Duration</strong>
+                    <div className="league-duration-grid">
+                      {LEAGUE_DURATIONS.map((duration) => (
+                        <button
+                          key={duration.label}
+                          type="button"
+                          className={`league-option-card ${
+                            leagueDurationInput === duration.value ? "selected" : ""
+                          }`}
+                          onClick={() => setLeagueDurationInput(duration.value)}
+                        >
+                          {duration.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="league-picker-section">
+                    <strong>Format</strong>
+                    <div className="league-format-grid">
+                      {Object.entries(LEAGUE_FORMATS).map(([format, config]) => (
+                        <button
+                          key={format}
+                          type="button"
+                          className={`league-option-card ${
+                            leagueFormatInput === format ? "selected" : ""
+                          }`}
+                          onClick={() => setLeagueFormatInput(format)}
+                        >
+                          <span>{config.label}</span>
+                          <small>{config.description}</small>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {leagueFormatInput === "custom" && (
+                    <div className="league-custom-panel">
+                      <div className="league-custom-row">
+                        <span>Quick questions</span>
+                        <div>
+                          {CUSTOM_QUIZ_COUNTS.map((count) => (
+                            <button
+                              key={count}
+                              type="button"
+                              className={
+                                leagueCustomQuizCount === count ? "selected" : ""
+                              }
+                              onClick={() => setLeagueCustomQuizCount(count)}
+                            >
+                              {count}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="league-custom-row">
+                        <span>Top 10 lists</span>
+                        <div>
+                          {CUSTOM_TOP10_COUNTS.map((count) => (
+                            <button
+                              key={count}
+                              type="button"
+                              className={
+                                leagueCustomTop10Count === count ? "selected" : ""
+                              }
+                              onClick={() => setLeagueCustomTop10Count(count)}
+                            >
+                              {count}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="league-preview-card">
+                    <span>Every day: {leagueDailyStructureText}</span>
+                    <strong>Max daily score: {leagueSettings.maxDailyPoints}</strong>
+                    <small>
+                      Duration:{" "}
+                      {leagueDurationInput ? `${leagueDurationInput} days` : "Infinite"}
+                    </small>
+                  </div>
+
+                  <button
+                    onClick={createNewLeague}
+                    disabled={
+                      leagueLoading ||
+                      leagueSettings.quizCount + leagueSettings.top10Count <= 0
+                    }
+                  >
+                    {leagueLoading ? "Creating..." : "Create League"}
+                  </button>
+                </div>
+              )}
+
+              {multiplayerStep === "join-league" && (
+                <div className="league-form-card">
+                  <div className="league-kicker">👥 Join League</div>
+                  <h2>Enter League Code</h2>
+                  <input
+                    value={leagueCodeInput}
+                    onChange={(event) => setLeagueCodeInput(event.target.value.toUpperCase())}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") joinExistingLeague();
+                    }}
+                    placeholder="LG-4821"
+                    autoFocus
+                  />
+                  <button onClick={joinExistingLeague} disabled={leagueLoading}>
+                    {leagueLoading ? "Joining..." : "Join League"}
+                  </button>
+                </div>
+              )}
+
+              {multiplayerStep === "my-leagues" && (
+                <div className="active-games-panel league-list-panel">
+                  <div className="active-games-header">
+                    <div>
+                      <strong>My Leagues</strong>
+                    </div>
+                    <button onClick={loadMyLeagues} disabled={leagueLoading}>
+                      {leagueLoading ? "Loading..." : "Refresh"}
+                    </button>
+                  </div>
+
+                  {!leagueLoading && myLeagues.length === 0 ? (
+                    <div className="active-games-empty">
+                      <strong>No leagues yet</strong>
+                      <span>Create a league or join with a code</span>
+                    </div>
+                  ) : (
+                    <div className="active-games-list">
+                      {myLeagues.map(({ league, member, memberCount, rank, todayPlayed }) => (
+                        <div className="league-card" key={league.id}>
+                          <div className="league-card-top">
+                            <strong>{league.name}</strong>
+                            <span>{league.league_code}</span>
+                          </div>
+                          <div className="league-card-stats">
+                            <span>Rank #{rank || "-"}</span>
+                            <span>{member?.total_points || 0} pts</span>
+                            <span>{memberCount} players</span>
+                          </div>
+                          <div className={`league-today-status ${todayPlayed ? "played" : ""}`}>
+                            {todayPlayed ? "Played today" : "Not played today"}
+                          </div>
+                          <button onClick={() => openLeagueDashboard(league.id)}>
+                            Open League
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {multiplayerStep === "league-dashboard" && leagueDashboard && (
+                <div className="league-dashboard">
+                  <div className="league-dashboard-hero">
+                    <div>
+                      <div className="league-kicker">🏆 League</div>
+                      <h2>{leagueDashboard.league.name}</h2>
+                    </div>
+                    <div className="league-code-pill">{leagueDashboard.league.league_code}</div>
+                  </div>
+
+                  <div className="league-meta-row">
+                    <span>{leagueDashboard.members.length} players</span>
+                    <span>{leagueDayLabel}</span>
+                    <span>
+                      {leagueDayExpired
+                        ? "League finished"
+                        : activeLeagueSubmission
+                        ? "Played today"
+                        : "Ready today"}
+                    </span>
+                  </div>
+
+                  <div
+                    className={`league-daily-card ${
+                      !activeLeagueSubmission && !leagueDayExpired ? "pulse" : ""
+                    } ${leagueDayExpired ? "finished" : ""}`}
+                  >
+                    <strong>Today's Challenge</strong>
+                    {leagueDayExpired ? (
+                      <>
+                        <span>League finished</span>
+                        <small>Final standings are locked in</small>
+                      </>
+                    ) : activeLeagueSubmission ? (
+                      <>
+                        <span>
+                          Today's score: {activeLeagueSubmission.total_points}/
+                          {leagueSettings.maxDailyPoints}
+                        </span>
+                        <small>Come back tomorrow</small>
+                      </>
+                    ) : (
+                      <>
+                        <span>{leagueDailyStructureText}</span>
+                        <button onClick={prepareLeagueChallenge} disabled={leagueLoading}>
+                          {leagueLoading ? "Loading..." : "Play Today's Challenge"}
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="league-section-title">Leaderboard</div>
+                  <div className="league-leaderboard">
+                    {leagueDashboard.members.map((member, index) => (
+                      <div
+                        className={`league-row ${member.player_id === playerId ? "current-user" : ""}`}
+                        key={member.id}
+                      >
+                        <div className="league-rank">
+                          {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1}
+                        </div>
+                        <div>
+                          <strong>{member.username}</strong>
+                          <small>{member.days_played || 0} days played</small>
+                        </div>
+                        <b>{member.total_points || 0}</b>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="league-section-title">Today</div>
+                  <div className="league-results-list">
+                    {leagueDashboard.members.map((member) => {
+                      const submission = leagueDashboard.submissions.find(
+                        (item) => item.player_id === member.player_id
+                      );
+
+                      return (
+                        <div className="league-result-row" key={member.id}>
+                          <strong>{member.username}</strong>
+                          {submission ? (
+                            <span>
+                              {leagueSettings.quizCount > 0
+                                ? `Quiz ${submission.quiz_score}/${leagueSettings.quizCount} • `
+                                : ""}
+                              {leagueSettings.top10Count > 0
+                                ? `Top 10 ${submission.top10_score}/10 • `
+                                : ""}
+                              <b>{submission.total_points} pts</b>
+                            </span>
+                          ) : (
+                            <span>Not played yet</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {multiplayerStep === "play-now-waiting" && (
+                <div className="multiplayer-room-card play-now-waiting-card">
+                  <div className="room-status">Finding opponent...</div>
+                  <div className="waiting-pulse">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  <div className="room-code">Public match: {multiplayerRoomCode}</div>
+                  <button onClick={refreshMultiplayerMatch} disabled={multiplayerLoading}>
+                    {multiplayerLoading ? "Checking..." : "Check Now"}
+                  </button>
+                  <button className="multiplayer-back-button" onClick={goBackMultiplayer}>
+                    Cancel
+                  </button>
                 </div>
               )}
 
@@ -3993,10 +5290,6 @@ export default function FootballQuizMVP() {
                 </div>
               )}
 
-              <div className="multiplayer-todo-note">
-                Live updates are on. Manual Refresh stays as backup.
-              </div>
-
               {matchDeleteCandidate && (
                 <div className="match-delete-overlay">
                   <div className="match-delete-modal">
@@ -4270,7 +5563,7 @@ export default function FootballQuizMVP() {
                   </div>
                 </div>
                 <h1>Connections</h1>
-                <p>{connectionsPuzzle.title || "Find the 4 football groups"}</p>
+                <p>Find the 4 football groups</p>
               </div>
 
               <div className="connections-mistakes">
@@ -4663,7 +5956,7 @@ export default function FootballQuizMVP() {
               </div>
 
               <p className="multiplayer-result-note">
-                Mock opponent score. Realtime match results come later.
+                Practice match complete.
               </p>
             </div>
           ) : (
@@ -4673,15 +5966,28 @@ export default function FootballQuizMVP() {
             </>
           )}
 
-          {!isDaily && !isMockMultiplayer && coins >= reviveCost && (
+          {!isDaily && !isMockMultiplayer && reviveCost && coins >= reviveCost && (
             <button className="play-again-button" onClick={revive}>
-              ❤️ Revive for {reviveCost} coins
+              ❤️ Buy extra life — {reviveCost} coins
             </button>
           )}
 
+          {!isDaily && !isMockMultiplayer && revivesUsed >= 3 && (
+            <div className="revive-note">Max revives used</div>
+          )}
+
+          {!isDaily &&
+            !isMockMultiplayer &&
+            reviveCost &&
+            coins < reviveCost &&
+            revivesUsed < 3 && (
+              <div className="revive-note">Need {reviveCost} coins for an extra life</div>
+            )}
+
           {!isDaily && !isMockMultiplayer && (
-            <button className="play-again-button" onClick={watchAdMock}>
-              ▶ Watch ad +50 coins
+            <button className="play-again-button ad-revive-button" disabled>
+              ▶ Watch ad for extra life
+              <span>Rewarded ads coming soon</span>
             </button>
           )}
 
@@ -4707,7 +6013,7 @@ export default function FootballQuizMVP() {
                 "COLLECT & HOME"
               ) : (
                 <>
-                  <RotateCcw size={24} /> Play again
+                  Back to Home
                 </>
               )}
             </button>
@@ -4857,11 +6163,38 @@ export default function FootballQuizMVP() {
             </div>
           )}
 
-          <h1 className="question-title">{current.question}</h1>
+          {gameMode === "career" ? (
+            <div className="career-journey-card">
+              <div className="career-journey-kicker">Guess the player</div>
+              <div className="career-journey-path">
+                {careerPathClubs.map((club, index) => (
+                  <React.Fragment key={`${club}-${index}`}>
+                    <motion.div
+                      className={`career-club-pill club-${getClubThemeClass(club)}`}
+                      initial={{ opacity: 0, y: 12, scale: 0.94 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ delay: index * 0.045, duration: 0.2 }}
+                    >
+                      {club}
+                    </motion.div>
+                    {index < careerPathClubs.length - 1 && (
+                      <div className="career-path-arrow">→</div>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <h1 className="question-title">{current.question}</h1>
+          )}
 
           {gameMode === "career" || gameMode === "world-cup" ? (
             <>
-              <div className="career-answer-box">
+              <div
+                className={`career-answer-box ${
+                  gameMode === "career" ? "career-premium-answer" : ""
+                }`}
+              >
                 <input
                   type="text"
                   placeholder={
@@ -4870,13 +6203,21 @@ export default function FootballQuizMVP() {
                       : "Type player name..."
                   }
                   className="career-input"
+                  value={textAnswer}
+                  onChange={(e) => setTextAnswer(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
-                      chooseAnswer(e.target.value);
-                      e.target.value = "";
+                      submitTextAnswer();
                     }
                   }}
                 />
+                <button
+                  className="career-submit-button"
+                  onClick={submitTextAnswer}
+                  disabled={!textAnswer.trim() || Boolean(selected)}
+                >
+                  Guess
+                </button>
               </div>
 
               {selected && (

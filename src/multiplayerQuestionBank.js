@@ -31,7 +31,8 @@ function isValidMultiplayerQuestion(question) {
     question?.answer &&
     Array.isArray(question.options) &&
     question.options.length === 4 &&
-    question.options.every((option) => typeof option === "string" && option.trim())
+    question.options.every((option) => typeof option === "string" && option.trim()) &&
+    question.options.includes(question.answer)
   );
 }
 
