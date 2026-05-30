@@ -6,11 +6,6 @@ export const WORLD_CUP_QUESTIONS = [
   },
   {
     "difficulty": "Easy",
-    "question": "Which country won the 2022 World Cup?",
-    "answer": "Argentina"
-  },
-  {
-    "difficulty": "Easy",
     "question": "Who was Argentina's captain when they won the 2022 World Cup?",
     "answer": "Lionel Messi"
   },
@@ -296,21 +291,6 @@ export const WORLD_CUP_QUESTIONS = [
   },
   {
     "difficulty": "Easy",
-    "question": "Which country hosted the 2018 FIFA World Cup?",
-    "answer": "Russia"
-  },
-  {
-    "difficulty": "Easy",
-    "question": "Which country hosted the 2014 FIFA World Cup?",
-    "answer": "Brazil"
-  },
-  {
-    "difficulty": "Easy",
-    "question": "Which country hosted the 2010 FIFA World Cup?",
-    "answer": "South Africa"
-  },
-  {
-    "difficulty": "Easy",
     "question": "Which player scored the 'Hand of God' goal?",
     "answer": "Diego Maradona"
   },
@@ -353,11 +333,6 @@ export const WORLD_CUP_QUESTIONS = [
     "difficulty": "Easy",
     "question": "Which country won the first ever FIFA World Cup?",
     "answer": "Uruguay"
-  },
-  {
-    "difficulty": "Easy",
-    "question": "Which country hosted the 2022 World Cup?",
-    "answer": "Qatar"
   },
   {
     "difficulty": "Medium",
@@ -1333,5 +1308,55 @@ export const WORLD_CUP_QUESTIONS = [
     "difficulty": "Hard",
     "question": "Who scored Uruguay's famous long-range goal against Germany in the 2010 third-place match?",
     "answer": "Diego Forlan"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Who scored the winning penalty for Italy in the 2006 World Cup final shootout?",
+    "answer": "Fabio Grosso"
+  },
+  {
+    "difficulty": "Hard",
+    "question": "Who scored the only goal of the 1990 World Cup final?",
+    "answer": "Andreas Brehme"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Who scored twice for Brazil in the 2002 World Cup final?",
+    "answer": "Ronaldo"
+  },
+  {
+    "difficulty": "Hard",
+    "question": "Who scored West Germany's winning goal in the 1974 World Cup final?",
+    "answer": "Gerd Muller"
+  },
+  {
+    "difficulty": "Very Hard",
+    "question": "Who scored twice for Argentina in the 1978 World Cup final?",
+    "answer": "Mario Kempes"
+  },
+  {
+    "difficulty": "Hard",
+    "question": "Who scored England's hat-trick in the 1966 World Cup final?",
+    "answer": "Geoff Hurst"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Who scored the Hand of God goal at the 1986 World Cup?",
+    "answer": "Diego Maradona"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Who missed Italy's decisive penalty in the 1994 World Cup final shootout?",
+    "answer": "Roberto Baggio"
+  },
+  {
+    "difficulty": "Hard",
+    "question": "Which goalkeeper saved two penalties for Argentina against the Netherlands in the 2022 World Cup quarter-final shootout?",
+    "answer": "Emiliano Martinez"
+  },
+  {
+    "difficulty": "Very Hard",
+    "question": "Who scored Croatia's equalizer against Brazil in the 2022 World Cup quarter-final?",
+    "answer": "Bruno Petkovic"
   }
 ];

@@ -8,6 +8,7 @@ import { CAREER_QUESTIONS } from "./CAREER_QUESTIONS";
 import { DAILY_LIST_CHALLENGES } from "./DAILY_LIST_CHALLENGES";
 import { WORLD_CUP_QUESTIONS } from "./WORLD_CUP_QUESTIONS";
 import { CONNECTIONS_PUZZLES } from "./CONNECTIONS_PUZZLES";
+import { WHO_AM_I_QUESTIONS } from "./WHO_AM_I_QUESTIONS";
 import { isSupabaseConfigured, supabase } from "./lib/supabaseClient";
 import {
   createProfile,
@@ -35,10 +36,17 @@ import {
   getLeagueTop10ChallengeById,
 } from "./lib/leagueChallengeUtils";
 import { findOrCreatePublicMatch } from "./lib/matchmakingService";
+import {
+  isSoundEnabled,
+  playButtonTapSound,
+  playCoinSound,
+  playCorrectSound,
+  playLevelUpSound,
+  playStreakSound,
+  playWrongSound,
+  setSoundEnabled,
+} from "./lib/soundManager";
 
-import clickSound from "./assets/Click.mp3";
-import coinSound from "./assets/Coins.mp3";
-import wrongSound from "./assets/wrong.wav";
 import stadiumBg from "./assets/stadium-bg.png";
 import quizBg from "./assets/quiz-bg.png";
 
@@ -437,6 +445,25 @@ function getRandomConnectionsPuzzle() {
   ];
 }
 
+function getWhoAmIAcceptedAnswers(question) {
+  const accepted = new Set([
+    normalizeAnswer(question.answer),
+    ...(question.acceptedAnswers || []).map(normalizeAnswer),
+  ]);
+  const words = normalizeAnswer(question.answer).split(" ");
+  const lastName = words.at(-1);
+
+  if (lastName && !["ronaldo"].includes(lastName)) {
+    accepted.add(lastName);
+  }
+
+  return accepted;
+}
+
+function isCorrectWhoAmIAnswer(input, question) {
+  return getWhoAmIAcceptedAnswers(question).has(normalizeAnswer(input));
+}
+
 function getSavedDailyResult() {
   const saved = localStorage.getItem("ballKnowledgeDailyResult");
 
@@ -721,6 +748,7 @@ export default function FootballQuizMVP() {
   const [profileStatus, setProfileStatus] = useState("local");
   const [profileError, setProfileError] = useState("");
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
+  const [soundOn, setSoundOn] = useState(isSoundEnabled);
   const [avatarEmoji, setAvatarEmoji] = useState(() => {
     return localStorage.getItem("ballKnowledgeAvatarEmoji") || "⚽";
   });
@@ -792,8 +820,19 @@ export default function FootballQuizMVP() {
   const [connectionsShake, setConnectionsShake] = useState(0);
   const [connectionsRewardClaimed, setConnectionsRewardClaimed] =
     useState(false);
+  const [whoAmIQuestions, setWhoAmIQuestions] = useState([]);
+  const [whoAmIIndex, setWhoAmIIndex] = useState(0);
+  const [whoAmIClueIndex, setWhoAmIClueIndex] = useState(0);
+  const [whoAmIInput, setWhoAmIInput] = useState("");
+  const [whoAmIScore, setWhoAmIScore] = useState(0);
+  const [whoAmIStreak, setWhoAmIStreak] = useState(0);
+  const [whoAmILives, setWhoAmILives] = useState(3);
+  const [whoAmIFeedback, setWhoAmIFeedback] = useState(null);
+  const [whoAmIShake, setWhoAmIShake] = useState(0);
+  const [whoAmIGameOver, setWhoAmIGameOver] = useState(false);
 
   const current = questions[questionIndex];
+  const currentWhoAmI = whoAmIQuestions[whoAmIIndex];
   const playerLevel = getPlayerLevel(highScore);
   const displayName = profile?.display_name || profile?.username || username;
   const profileAvatarEmoji = profile?.avatar_emoji || avatarEmoji || "⚽";
@@ -890,6 +929,10 @@ export default function FootballQuizMVP() {
     (tile) => !connectionsSolvedIndexes.includes(tile.groupIndex)
   );
   const connectionsMistakesLeft = Math.max(0, 4 - connectionsMistakes);
+  const visibleWhoAmIClues = currentWhoAmI
+    ? currentWhoAmI.clues.slice(0, whoAmIClueIndex + 1)
+    : [];
+  const whoAmIPointsAvailable = Math.max(1, 10 - whoAmIClueIndex);
 
   useEffect(() => {
     if (!multiplayerRoundOpen || !currentMultiplayerRoundQuestion) return;
@@ -1078,6 +1121,7 @@ export default function FootballQuizMVP() {
     };
 
     const popupTimer = window.setTimeout(() => {
+      playLevelUpSound();
       setLevelUpPopup(popup);
       setLastSeenLevel(newLevel.levelNumber);
       localStorage.setItem(
@@ -1168,27 +1212,19 @@ export default function FootballQuizMVP() {
     current?.answer,
   ]);
 
-  const playCoinSound = () => {
-    const audio = new Audio(coinSound);
-    audio.volume = 0.5;
-    audio.play().catch(() => {});
-  };
-
-  const playWrongSound = () => {
-    const audio = new Audio(wrongSound);
-    audio.volume = 1;
-    audio.currentTime = 0;
-    audio.play().catch((err) => console.log("Wrong sound error:", err));
-  };
-
   const playClickSound = () => {
-    const audio = new Audio(clickSound);
-    audio.volume = 0.22;
+    playButtonTapSound();
+  };
 
-    audio.addEventListener("loadedmetadata", () => {
-      audio.currentTime = 0.43;
-      audio.play().catch(() => {});
-    });
+  const toggleSound = () => {
+    const nextValue = !soundOn;
+
+    setSoundEnabled(nextValue);
+    setSoundOn(nextValue);
+
+    if (nextValue) {
+      playButtonTapSound();
+    }
   };
 
   const getProfileErrorMessage = (error) => {
@@ -1507,6 +1543,7 @@ export default function FootballQuizMVP() {
         Number(localStorage.getItem("footballQuizCoins")) || coins;
 
       saveCoins(currentCoins + reward);
+      playStreakSound();
       playCoinSound();
     }
 
@@ -1562,6 +1599,98 @@ export default function FootballQuizMVP() {
     setFinished(false);
     setGameStarted(true);
     resetConnectionsGame();
+  };
+
+  const resetWhoAmIGame = () => {
+    setWhoAmIQuestions(shuffle(WHO_AM_I_QUESTIONS));
+    setWhoAmIIndex(0);
+    setWhoAmIClueIndex(0);
+    setWhoAmIInput("");
+    setWhoAmIScore(0);
+    setWhoAmIStreak(0);
+    setWhoAmILives(3);
+    setWhoAmIFeedback(null);
+    setWhoAmIShake(0);
+    setWhoAmIGameOver(false);
+  };
+
+  const startWhoAmIGame = () => {
+    playClickSound();
+    setShowDailyCompletePopup(false);
+    setLeaderboardOpen(false);
+    setProfileOpen(false);
+    setMultiplayerOpen(false);
+    setModeMenuOpen(false);
+    setIsMockMultiplayer(false);
+    setMockOpponentScore(null);
+    setGameMode("who-am-i");
+    setFinished(false);
+    setGameStarted(true);
+    resetWhoAmIGame();
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
+
+  const moveToNextWhoAmI = () => {
+    if (whoAmILives <= 0 || whoAmIIndex >= whoAmIQuestions.length - 1) {
+      setWhoAmIGameOver(true);
+      return;
+    }
+
+    setWhoAmIIndex((index) => index + 1);
+    setWhoAmIClueIndex(0);
+    setWhoAmIInput("");
+    setWhoAmIFeedback(null);
+  };
+
+  const submitWhoAmIGuess = () => {
+    if (!currentWhoAmI || whoAmIFeedback?.locked || whoAmIGameOver) return;
+
+    const trimmedGuess = whoAmIInput.trim();
+    if (!trimmedGuess) return;
+
+    if (isCorrectWhoAmIAnswer(trimmedGuess, currentWhoAmI)) {
+      const points = whoAmIPointsAvailable;
+      setWhoAmIScore((value) => value + points);
+      setWhoAmIStreak((value) => value + 1);
+      setWhoAmIFeedback({
+        type: "correct",
+        text: `Correct! +${points} points`,
+        locked: true,
+      });
+      setWhoAmIInput("");
+      playCorrectSound();
+      window.setTimeout(moveToNextWhoAmI, 1150);
+      return;
+    }
+
+    setWhoAmIShake((value) => value + 1);
+    setWhoAmIInput("");
+
+    if (whoAmIClueIndex < currentWhoAmI.clues.length - 1) {
+      setWhoAmIClueIndex((index) => index + 1);
+      setWhoAmIFeedback({ type: "wrong", text: "Not yet. New clue unlocked." });
+      playWrongSound();
+      window.setTimeout(() => setWhoAmIFeedback(null), 900);
+      return;
+    }
+
+    const nextLives = Math.max(0, whoAmILives - 1);
+    setWhoAmILives(nextLives);
+    setWhoAmIStreak(0);
+    setWhoAmIFeedback({
+      type: "reveal",
+      text: `Answer: ${currentWhoAmI.answer}`,
+      locked: true,
+    });
+    playWrongSound();
+
+    window.setTimeout(() => {
+      if (nextLives <= 0) {
+        setWhoAmIGameOver(true);
+      } else {
+        moveToNextWhoAmI();
+      }
+    }, 1600);
   };
 
   const toggleConnectionTile = (tile) => {
@@ -1625,7 +1754,7 @@ export default function FootballQuizMVP() {
       ]);
       setConnectionsSelected([]);
       setConnectionsFeedback({ type: "correct", text: "Correct group" });
-      playCoinSound();
+      playCorrectSound();
       return;
     }
 
@@ -2077,7 +2206,7 @@ export default function FootballQuizMVP() {
 
     if (isCorrect) {
       setLeagueQuizScore(nextScore);
-      playCoinSound();
+      playCorrectSound();
     } else {
       playWrongSound();
     }
@@ -2153,7 +2282,7 @@ export default function FootballQuizMVP() {
           answer: matchedAnswer,
         });
         setLeagueTop10Input("");
-        playCoinSound();
+        playCorrectSound();
 
         if (leagueTop10Found.length + 1 >= leagueTop10Challenge.answers.length) {
           window.setTimeout(
@@ -2590,7 +2719,9 @@ export default function FootballQuizMVP() {
   };
 
   const selectMultiplayerCategory = async (category) => {
-    if (!category.available || !activeMatch?.id || !supabase) return;
+    if (!category.available || !activeMatch?.id || !supabase || multiplayerLoading) {
+      return;
+    }
 
     playClickSound();
     setMultiplayerLoading(true);
@@ -2752,7 +2883,7 @@ export default function FootballQuizMVP() {
 
     if (isCorrect) {
       setMultiplayerRoundScore(nextScore);
-      playCoinSound();
+      playCorrectSound();
     } else {
       playWrongSound();
     }
@@ -2967,6 +3098,16 @@ export default function FootballQuizMVP() {
     setDailyReveal(null);
     setDailyCelebratedAnswer(null);
     setIsRevealing(false);
+    setWhoAmIQuestions([]);
+    setWhoAmIIndex(0);
+    setWhoAmIClueIndex(0);
+    setWhoAmIInput("");
+    setWhoAmIScore(0);
+    setWhoAmIStreak(0);
+    setWhoAmILives(3);
+    setWhoAmIFeedback(null);
+    setWhoAmIShake(0);
+    setWhoAmIGameOver(false);
   };
 
   const nextQuestion = () => {
@@ -3045,9 +3186,9 @@ export default function FootballQuizMVP() {
           onCollect: "next-question",
         });
 
-        playCoinSound();
+        playCorrectSound();
       } else {
-        playCoinSound();
+        playCorrectSound();
         setTimeout(nextQuestion, 950);
       }
     } else {
@@ -3117,7 +3258,7 @@ export default function FootballQuizMVP() {
             setScore(newScore);
             setDailyCoinsEarned(newDailyCoinsEarned);
             saveCoins(newCoins);
-            playCoinSound();
+            playCorrectSound();
 
             setDailyReveal(null);
             setIsRevealing(false);
@@ -3208,6 +3349,7 @@ export default function FootballQuizMVP() {
   const collectReward = () => {
     const action = rewardPopup?.onCollect;
     setRewardPopup(null);
+    playCoinSound();
 
     if (action === "next-question") {
       nextQuestion();
@@ -3253,11 +3395,6 @@ export default function FootballQuizMVP() {
     setLevelModalOpen(true);
   };
 
-  const showComingSoonNotice = () => {
-    playClickSound();
-    setCoinShopNotice("Coming soon for the App Store version");
-  };
-
   const coinShopModal = (
     <AnimatePresence>
       {coinsMenuOpen && (
@@ -3285,31 +3422,25 @@ export default function FootballQuizMVP() {
             <div className="coin-shop-options">
               <div className="coin-shop-option featured">
                 <div>
-                  <strong>Rewarded ads</strong>
-                  <small>Extra lives and bonuses</small>
+                  <strong>Earn coins</strong>
+                  <small>Play quizzes, daily challenges and streaks</small>
                 </div>
-                <button disabled>Coming Soon</button>
-                <em>Not available yet</em>
+                <button onClick={() => setCoinsMenuOpen(false)}>Play</button>
+                <em>No purchases needed</em>
               </div>
 
-              {[
-                ["Coin packs", "More coin bundles"],
-                ["Starter bundle", "Boost your next run"],
-                ["Premium boosts", "Special offers"],
-              ].map(([title, amount]) => (
-                <div className="coin-shop-option" key={title}>
-                  <div>
-                    <strong>{title}</strong>
-                    <small>{amount}</small>
-                  </div>
-                  <button onClick={showComingSoonNotice}>Coming Soon</button>
-                  <em>App Store payments not enabled</em>
+              <div className="coin-shop-option">
+                <div>
+                  <strong>Extra lives</strong>
+                  <small>Use coins after game over</small>
                 </div>
-              ))}
+                <button onClick={() => setCoinsMenuOpen(false)}>Got it</button>
+                <em>Revives start at 500 coins</em>
+              </div>
             </div>
 
             <p className="coin-shop-note">
-              Purchases are disabled until App Store payments are ready
+              Keep playing to build your coin balance.
               {coinShopNotice && <span> • {coinShopNotice}</span>}
             </p>
 
@@ -3642,9 +3773,10 @@ export default function FootballQuizMVP() {
   // Add Supabase Auth / real login, secure RLS policies, spoofing protection,
   // friend system, user search, push notifications, and cross-device cloud save.
   // TODO App Store release:
-  // Integrate real rewarded ads, Apple In-App Purchases for coin packs,
-  // privacy policy link, App Store screenshots, app icon/splash assets,
-  // Supabase Auth, secure RLS policies, and anti-cheat validation.
+  // Add Capacitor/iOS build, app icon, splash screen, privacy policy,
+  // App Store screenshots, real rewarded ads, Apple In-App Purchases,
+  // Supabase Auth, secure RLS policies, push notifications, and
+  // anti-cheat/server-side validation.
   // TODO Career Path:
   // Future: add optional multiple-choice Career Path mode.
 
@@ -4370,6 +4502,16 @@ export default function FootballQuizMVP() {
                   Multiplayer rounds counted: {profileStats.multiplayerMatches}
                 </span>
               </div>
+
+              <button
+                className={`profile-sound-toggle ${soundOn ? "on" : "off"}`}
+                onClick={toggleSound}
+                aria-pressed={soundOn}
+              >
+                <span>Sound</span>
+                <strong>{soundOn ? "On" : "Off"}</strong>
+                <i />
+              </button>
 
               <div className="profile-actions">
                 <button
@@ -5506,6 +5648,17 @@ export default function FootballQuizMVP() {
             </button>
 
             <button
+              className="mode-button mode-card mode-whoami"
+              onClick={startWhoAmIGame}
+            >
+              <span className="mode-card-icon">🕵️</span>
+              <span>
+                <strong>Who Am I?</strong>
+                <small>Guess the player from clues</small>
+              </span>
+            </button>
+
+            <button
               className="mode-back-button"
               onClick={() => {
                 playClickSound();
@@ -5518,6 +5671,138 @@ export default function FootballQuizMVP() {
         )}
           </ScreenTransition>
         </AnimatePresence>
+      </div>
+    );
+  }
+
+  if (gameMode === "who-am-i" && currentWhoAmI) {
+    return (
+      <div
+        className="fullscreen-bg"
+        style={{
+          backgroundImage: `linear-gradient(rgba(10,8,35,0.18), rgba(0,0,0,0.58)), url(${stadiumBg})`,
+        }}
+      >
+        {coinShopModal}
+        {dailyRewardMeterModal}
+        <ScreenTransition className="whoami-screen">
+          <button
+            className="connections-back-button whoami-back-button"
+            onClick={() => {
+              playClickSound();
+              setGameStarted(false);
+              setModeMenuOpen(true);
+              setGameMode("general");
+              setWhoAmIFeedback(null);
+            }}
+          >
+            Back
+          </button>
+
+          <motion.div
+            className={`whoami-card ${whoAmIShake ? "shake" : ""}`}
+            key={currentWhoAmI.id}
+            animate={whoAmIShake ? { x: [0, -8, 8, -5, 5, 0] } : { x: 0 }}
+            transition={{ duration: 0.28 }}
+          >
+            <div className="whoami-top">
+              <div>
+                <div className="whoami-kicker">Single Player</div>
+                <h1>Who Am I?</h1>
+              </div>
+              <div className={`whoami-difficulty ${currentWhoAmI.difficulty.toLowerCase()}`}>
+                {currentWhoAmI.difficulty}
+              </div>
+            </div>
+
+            <div className="whoami-hud">
+              <span>Score <strong>{whoAmIScore}</strong></span>
+              <span>Streak <strong>{whoAmIStreak}</strong></span>
+              <span>
+                Lives <strong>{Array.from({ length: whoAmILives }).map((_, i) => <b key={i}>❤️</b>)}</strong>
+              </span>
+            </div>
+
+            <div className="whoami-mystery">
+              <motion.div
+                className="whoami-silhouette"
+                animate={{ scale: [1, 1.04, 1], rotate: [0, -1, 1, 0] }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                ?
+              </motion.div>
+              <div>
+                <span>Clue {whoAmIClueIndex + 1} / 10</span>
+                <strong>{whoAmIPointsAvailable} points available</strong>
+              </div>
+            </div>
+
+            <div className="whoami-clues">
+              <AnimatePresence initial={false}>
+                {visibleWhoAmIClues.map((clue, index) => (
+                  <motion.div
+                    className={`whoami-clue ${index === whoAmIClueIndex ? "latest" : ""}`}
+                    key={`${currentWhoAmI.id}-${index}`}
+                    initial={{ opacity: 0, y: 14, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <span>{index + 1}</span>
+                    <p>{clue}</p>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+
+            <AnimatePresence>
+              {whoAmIFeedback && (
+                <motion.div
+                  className={`whoami-feedback ${whoAmIFeedback.type}`}
+                  initial={{ opacity: 0, y: 10, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                >
+                  {whoAmIFeedback.text}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {whoAmIGameOver ? (
+              <motion.div
+                className="whoami-gameover"
+                initial={{ opacity: 0, scale: 0.9, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+              >
+                <strong>Game Over</strong>
+                <span>Final score: {whoAmIScore}</span>
+                <button onClick={startWhoAmIGame}>Play Again</button>
+              </motion.div>
+            ) : (
+              <div className="whoami-answer-row">
+                <input
+                  value={whoAmIInput}
+                  onChange={(event) => setWhoAmIInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") submitWhoAmIGuess();
+                  }}
+                  disabled={Boolean(whoAmIFeedback?.locked)}
+                  placeholder="Type player name..."
+                  autoFocus
+                />
+                <button
+                  onClick={() => {
+                    playClickSound();
+                    submitWhoAmIGuess();
+                  }}
+                  disabled={!whoAmIInput.trim() || Boolean(whoAmIFeedback?.locked)}
+                >
+                  Guess
+                </button>
+              </div>
+            )}
+          </motion.div>
+        </ScreenTransition>
       </div>
     );
   }
@@ -5955,9 +6240,7 @@ export default function FootballQuizMVP() {
                 </div>
               </div>
 
-              <p className="multiplayer-result-note">
-                Practice match complete.
-              </p>
+              <p className="multiplayer-result-note">Match complete.</p>
             </div>
           ) : (
             <>
@@ -5984,13 +6267,6 @@ export default function FootballQuizMVP() {
               <div className="revive-note">Need {reviveCost} coins for an extra life</div>
             )}
 
-          {!isDaily && !isMockMultiplayer && (
-            <button className="play-again-button ad-revive-button" disabled>
-              ▶ Watch ad for extra life
-              <span>Rewarded ads coming soon</span>
-            </button>
-          )}
-
           {isMockMultiplayer ? (
             <>
               <button
@@ -6001,7 +6277,7 @@ export default function FootballQuizMVP() {
               </button>
 
               <button className="play-again-button" onClick={restart}>
-                Back Home
+                Back to Home
               </button>
             </>
           ) : (
