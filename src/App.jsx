@@ -4041,7 +4041,7 @@ export default function FootballQuizMVP() {
               <div className="level-progress-icon">{playerLevel.emoji}</div>
               <div>
                 <div className="level-progress-label">
-                  Level {playerLevel.levelNumber}/{playerLevel.totalLevels}
+                  Level {playerLevel.levelNumber}
                 </div>
                 <h2>{playerLevel.name}</h2>
                 <p>Best score: {highScore}</p>
@@ -4080,9 +4080,7 @@ export default function FootballQuizMVP() {
                       <strong>
                         {level.emoji} {level.name}
                       </strong>
-                      <span>
-                        Level {playerLevel.levelNumber + index + 1} • {level.min} points
-                      </span>
+                      <span>Unlocks at {level.min} points</span>
                     </div>
                   </div>
                 ))}
@@ -4899,12 +4897,16 @@ export default function FootballQuizMVP() {
               </div>
 
               <motion.div
-                className="daily-reward-main-ball"
+                className="daily-reward-main-ball daily-reward-chest"
                 initial={{ rotate: -12, scale: 0.72, y: 18 }}
-                animate={{ rotate: [0, -8, 8, 0], scale: [1, 1.12, 1], y: 0 }}
+                animate={{
+                  rotate: [0, -7, 7, 0],
+                  scale: [1, 1.14, 1.03],
+                  y: [12, -8, 0],
+                }}
                 transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
               >
-                ⚽
+                🎁
               </motion.div>
 
               <div className="daily-reward-earned">
@@ -6905,18 +6907,20 @@ export default function FootballQuizMVP() {
         </AnimatePresence>
 
         <div className="daily-list-wrapper">
-          <h2 className="daily-list-label">🔥 DAILY CHALLENGE</h2>
+          <div className="daily-question-card">
+            <h2 className="daily-list-label">🔥 DAILY CHALLENGE</h2>
 
-          <h1 className="daily-list-title">{todayChallenge.label}</h1>
+            <h1 className="daily-list-title">{todayChallenge.label}</h1>
 
-          <p className="daily-list-question">{todayChallenge.question}</p>
+            <p className="daily-list-question">{todayChallenge.question}</p>
+          </div>
 
           <div className="daily-list-stats">
-            <span>
+            <span className="daily-stat-pill daily-stat-score">
               {foundAnswers.length} / {todayChallenge.answers.length} FOUND
             </span>
 
-            <span>
+            <span className={`daily-stat-pill daily-stat-lives ${lives <= 1 ? "low" : ""}`}>
               {Array.from({ length: lives }).map((_, i) => (
                 <span key={i}>❤️</span>
               ))}
@@ -7299,7 +7303,13 @@ export default function FootballQuizMVP() {
               </div>
             </div>
           ) : (
-            <h1 className="question-title">{current.question}</h1>
+            <h1
+              className={`question-title quiz-question-card ${
+                gameMode === "world-cup" ? "world-cup-question-card" : ""
+              }`}
+            >
+              {current.question}
+            </h1>
           )}
 
           {gameMode === "career" || gameMode === "world-cup" ? (
@@ -7351,7 +7361,11 @@ export default function FootballQuizMVP() {
               )}
             </>
           ) : (
-            <div className="answers-grid">
+            <div
+              className={`answers-grid ${
+                gameMode === "world-cup" ? "world-cup-answer-grid" : ""
+              }`}
+            >
               {current.options.map((option) => {
                 const isCorrect = option === current.answer;
                 const isChosen = selected === option;
