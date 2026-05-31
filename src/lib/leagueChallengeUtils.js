@@ -1,5 +1,8 @@
 import { DAILY_LIST_CHALLENGES } from "../DAILY_LIST_CHALLENGES";
+import { WHO_AM_I_QUESTIONS } from "../WHO_AM_I_QUESTIONS";
 import { getMultiplayerQuestionsByCategory, getMultiplayerQuestionsByIds } from "../multiplayerQuestionBank";
+
+const LEAGUE_QUIZ_CATEGORIES = ["general", "premier_league", "world_cup", "career_path"];
 
 function shuffleWithSeed(items, seedText) {
   const next = [...items];
@@ -18,6 +21,48 @@ function shuffleWithSeed(items, seedText) {
   return next;
 }
 
+function getValidLeagueQuizQuestions() {
+  return LEAGUE_QUIZ_CATEGORIES.flatMap((category) =>
+    getMultiplayerQuestionsByCategory(category)
+  ).filter(
+    (question) =>
+      question &&
+      typeof question === "object" &&
+      question.multiplayerId &&
+      question.question &&
+      Array.isArray(question.options) &&
+      question.options.length === 4 &&
+      question.answer
+  );
+}
+
+function getValidTop10Challenges() {
+  if (!Array.isArray(DAILY_LIST_CHALLENGES)) return [];
+
+  return DAILY_LIST_CHALLENGES.filter(
+    (challenge) =>
+      challenge &&
+      typeof challenge === "object" &&
+      challenge.id &&
+      Array.isArray(challenge.answers) &&
+      challenge.answers.length >= 10
+  );
+}
+
+function getValidWhoAmIQuestions() {
+  if (!Array.isArray(WHO_AM_I_QUESTIONS)) return [];
+
+  return WHO_AM_I_QUESTIONS.filter(
+    (question) =>
+      question &&
+      typeof question === "object" &&
+      question.id &&
+      question.answer &&
+      Array.isArray(question.clues) &&
+      question.clues.length > 0
+  );
+}
+
 function getLeagueSettings(league = {}) {
   const quizCount = Number.isFinite(Number(league.quiz_count))
     ? Number(league.quiz_count)
@@ -25,10 +70,14 @@ function getLeagueSettings(league = {}) {
   const top10Count = Number.isFinite(Number(league.top10_count))
     ? Number(league.top10_count)
     : 1;
+  const whoamiCount = Number.isFinite(Number(league.whoami_count))
+    ? Number(league.whoami_count)
+    : 0;
 
   return {
     quizCount: Math.max(0, quizCount),
-    top10Count: Math.max(0, Math.min(1, top10Count)),
+    top10Count: Math.max(0, Math.min(2, top10Count)),
+    whoamiCount: Math.max(0, whoamiCount),
   };
 }
 
@@ -50,19 +99,36 @@ export function getLeagueDayNumber(startDate, dayKey = getTodayKey()) {
 }
 
 export function buildLeagueDailyQuestionIds(seedText, count = 5) {
-  const categories = ["general", "premier_league", "world_cup", "career_path"];
-  const questions = categories.flatMap((category) =>
-    getMultiplayerQuestionsByCategory(category)
-  );
+  if (count <= 0) return [];
+
+  const questions = getValidLeagueQuizQuestions();
+  if (questions.length < count) return [];
 
   return shuffleWithSeed(questions, seedText)
     .slice(0, count)
-    .map((question) => question.multiplayerId);
+    .map((question) => question?.multiplayerId)
+    .filter(Boolean);
+}
+
+export function buildLeagueWhoAmIQuestionIds(seedText, count = 0) {
+  if (count <= 0) return [];
+
+  const questions = getValidWhoAmIQuestions();
+  if (questions.length < count) return [];
+
+  return shuffleWithSeed(questions, `${seedText}:whoami`)
+    .slice(0, count)
+    .map((question) => question?.id)
+    .filter(Boolean);
 }
 
 export function getLeagueSettingsSummary(league = {}) {
-  const { quizCount, top10Count } = getLeagueSettings(league);
-  const maxDailyPoints = Number(league.max_daily_points) || quizCount + top10Count * 10;
+  const { quizCount, top10Count, whoamiCount } = getLeagueSettings(league);
+  const calculatedMaxDailyPoints = quizCount + top10Count * 10 + whoamiCount * 10;
+  const storedMaxDailyPoints = Number(league.max_daily_points);
+  const maxDailyPoints = Number.isFinite(storedMaxDailyPoints)
+    ? Math.max(storedMaxDailyPoints, calculatedMaxDailyPoints)
+    : calculatedMaxDailyPoints;
 
   return {
     durationDays:
@@ -72,24 +138,48 @@ export function getLeagueSettingsSummary(league = {}) {
     leagueFormat: league.league_format || "balanced",
     quizCount,
     top10Count,
+    whoamiCount,
     maxDailyPoints,
   };
 }
 
 export function getLeagueQuestionsByIds(ids) {
-  return getMultiplayerQuestionsByIds(ids);
+  if (!Array.isArray(ids)) return [];
+
+  return getMultiplayerQuestionsByIds(ids).filter(Boolean);
 }
 
 export function getLeagueTop10Challenge(seedText) {
-  if (!DAILY_LIST_CHALLENGES.length) return null;
+  const challenges = getValidTop10Challenges();
+  if (!challenges.length) return null;
 
-  const [challenge] = shuffleWithSeed(DAILY_LIST_CHALLENGES, seedText);
-  return challenge || DAILY_LIST_CHALLENGES[0];
+  const [challenge] = shuffleWithSeed(challenges, seedText);
+  return challenge || challenges[0];
 }
 
 export function getLeagueTop10ChallengeById(id, fallbackSeed = getTodayKey()) {
+  const challenges = getValidTop10Challenges();
+
   return (
-    DAILY_LIST_CHALLENGES.find((challenge) => challenge.id === id) ||
+    challenges.find((challenge) => challenge.id === id) ||
     getLeagueTop10Challenge(fallbackSeed)
   );
+}
+
+export function hasLeagueTop10ChallengeId(id) {
+  if (!id) return false;
+
+  return getValidTop10Challenges().some((challenge) => challenge.id === id);
+}
+
+export function getLeagueWhoAmIQuestionsByIds(ids = []) {
+  if (!Array.isArray(ids)) return [];
+
+  const questionsById = new Map(
+    getValidWhoAmIQuestions().map((question) => [question.id, question])
+  );
+
+  return ids
+    .map((id) => questionsById.get(id))
+    .filter(Boolean);
 }

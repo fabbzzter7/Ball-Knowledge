@@ -34,7 +34,9 @@ import {
 import {
   getLeagueQuestionsByIds,
   getLeagueSettingsSummary,
+  getLeagueTop10Challenge,
   getLeagueTop10ChallengeById,
+  getLeagueWhoAmIQuestionsByIds,
 } from "./lib/leagueChallengeUtils";
 import { findOrCreatePublicMatch } from "./lib/matchmakingService";
 import {
@@ -115,30 +117,49 @@ const LEAGUE_FORMATS = {
     label: "Balanced",
     quizCount: 5,
     top10Count: 1,
+    whoamiCount: 0,
     description: "5 quick questions + 1 Top 10",
   },
   quick_quiz: {
     label: "Quick Quiz",
     quizCount: 10,
     top10Count: 0,
+    whoamiCount: 0,
     description: "10 quick questions",
   },
   top10_only: {
     label: "Top 10 Only",
     quizCount: 0,
     top10Count: 1,
+    whoamiCount: 0,
     description: "1 Top 10 list",
+  },
+  mystery_mix: {
+    label: "Mystery Mix",
+    quizCount: 5,
+    top10Count: 1,
+    whoamiCount: 1,
+    description: "5 quick questions + Top 10 + Who Am I",
+  },
+  whoami_only: {
+    label: "Who Am I Only",
+    quizCount: 0,
+    top10Count: 0,
+    whoamiCount: 5,
+    description: "5 mystery players",
   },
   long_mix: {
     label: "Long Mix",
     quizCount: 10,
     top10Count: 1,
+    whoamiCount: 0,
     description: "10 quick questions + 1 Top 10",
   },
   custom: {
     label: "Custom",
     quizCount: 5,
     top10Count: 1,
+    whoamiCount: 0,
     description: "Choose your daily structure",
   },
 };
@@ -151,7 +172,8 @@ const LEAGUE_DURATIONS = [
 ];
 
 const CUSTOM_QUIZ_COUNTS = [0, 5, 10, 15];
-const CUSTOM_TOP10_COUNTS = [0, 1];
+const CUSTOM_TOP10_COUNTS = [0, 1, 2];
+const CUSTOM_WHOAMI_COUNTS = [0, 1, 3, 5];
 
 const CLUB_THEME_MAP = {
   "manchester united": "manchester-united",
@@ -241,9 +263,13 @@ function normalizeAnswer(text) {
 }
 
 function getAcceptedAnswers(correctAnswer) {
-  const normalizedCorrect = normalizeAnswer(correctAnswer);
-  const aliases = ANSWER_ALIASES[normalizedCorrect] || [];
-  const accepted = [correctAnswer, ...aliases];
+  const answerText = getAnswerLabel(correctAnswer);
+  const normalizedCorrect = normalizeAnswer(answerText);
+  const aliases = [
+    ...(ANSWER_ALIASES[normalizedCorrect] || []),
+    ...getAnswerAliases(correctAnswer),
+  ];
+  const accepted = [answerText, ...aliases];
   const words = normalizedCorrect.split(" ");
 
   const canUseLastWord =
@@ -262,6 +288,33 @@ function isCorrectAnswer(input, correctAnswer) {
   const userAnswer = normalizeAnswer(input);
   const acceptedAnswers = getAcceptedAnswers(correctAnswer);
   return acceptedAnswers.includes(userAnswer);
+}
+
+function getAnswerLabel(answer) {
+  if (typeof answer === "string") return answer;
+  return answer?.answer || answer?.name || answer?.label || "";
+}
+
+function getAnswerAliases(answer) {
+  if (!answer || typeof answer === "string") return [];
+  return answer.aliases || answer.acceptedAnswers || [];
+}
+
+function getAnswerValue(answer) {
+  if (!answer || typeof answer === "string") return "";
+  return answer.value ?? answer.count ?? answer.stat ?? "";
+}
+
+function formatAnswerWithValue(answer) {
+  const label = getAnswerLabel(answer);
+  const value = getAnswerValue(answer);
+  return value === "" || value === null || value === undefined
+    ? label
+    : `${label} — ${value}`;
+}
+
+function getAnswerKey(answer, fallback = "") {
+  return `${getAnswerLabel(answer)}-${getAnswerValue(answer) || fallback}`;
 }
 
 function getDailyDateKey() {
@@ -555,29 +608,37 @@ function withShuffledOptions(question) {
   return shuffleQuestionOptions(question);
 }
 
-function getLeagueFormatConfig(format, customQuizCount, customTop10Count) {
+function getLeagueFormatConfig(
+  format,
+  customQuizCount,
+  customTop10Count,
+  customWhoAmICount
+) {
   if (format !== "custom") {
     const config = LEAGUE_FORMATS[format] || LEAGUE_FORMATS.balanced;
     return {
       ...config,
-      maxDailyPoints: config.quizCount + config.top10Count * 10,
+      maxDailyPoints:
+        config.quizCount + config.top10Count * 10 + config.whoamiCount * 10,
     };
   }
 
   const quizCount = Number(customQuizCount);
   const top10Count = Number(customTop10Count);
+  const whoamiCount = Number(customWhoAmICount);
+  const parts = [
+    quizCount > 0 ? `${quizCount} quick questions` : "",
+    top10Count > 0 ? `${top10Count} Top 10` : "",
+    whoamiCount > 0 ? `${whoamiCount} Who Am I` : "",
+  ].filter(Boolean);
 
   return {
     ...LEAGUE_FORMATS.custom,
     quizCount,
     top10Count,
-    maxDailyPoints: quizCount + top10Count * 10,
-    description:
-      quizCount > 0 && top10Count > 0
-        ? `${quizCount} quick questions + ${top10Count} Top 10`
-        : quizCount > 0
-        ? `${quizCount} quick questions`
-        : `${top10Count} Top 10`,
+    whoamiCount,
+    maxDailyPoints: quizCount + top10Count * 10 + whoamiCount * 10,
+    description: parts.join(" + ") || "Choose your daily structure",
   };
 }
 
@@ -753,6 +814,7 @@ export default function FootballQuizMVP() {
   const [leagueFormatInput, setLeagueFormatInput] = useState("balanced");
   const [leagueCustomQuizCount, setLeagueCustomQuizCount] = useState(5);
   const [leagueCustomTop10Count, setLeagueCustomTop10Count] = useState(1);
+  const [leagueCustomWhoAmICount, setLeagueCustomWhoAmICount] = useState(0);
   const [leagueCodeInput, setLeagueCodeInput] = useState("");
   const [myLeagues, setMyLeagues] = useState([]);
   const [leagueDashboard, setLeagueDashboard] = useState(null);
@@ -765,11 +827,21 @@ export default function FootballQuizMVP() {
   const [leagueQuizScore, setLeagueQuizScore] = useState(0);
   const [leagueTimeLeft, setLeagueTimeLeft] = useState(15);
   const [leagueTop10Challenge, setLeagueTop10Challenge] = useState(null);
+  const [leagueTop10Challenges, setLeagueTop10Challenges] = useState([]);
+  const [leagueTop10Index, setLeagueTop10Index] = useState(0);
+  const [leagueTop10TotalScore, setLeagueTop10TotalScore] = useState(0);
   const [leagueTop10Input, setLeagueTop10Input] = useState("");
   const [leagueTop10Found, setLeagueTop10Found] = useState([]);
   const [leagueTop10Lives, setLeagueTop10Lives] = useState(3);
   const [leagueTop10Reveal, setLeagueTop10Reveal] = useState(null);
   const [leagueTop10Scanning, setLeagueTop10Scanning] = useState(false);
+  const [leagueWhoAmIQuestions, setLeagueWhoAmIQuestions] = useState([]);
+  const [leagueWhoAmIIndex, setLeagueWhoAmIIndex] = useState(0);
+  const [leagueWhoAmIClueIndex, setLeagueWhoAmIClueIndex] = useState(0);
+  const [leagueWhoAmIInput, setLeagueWhoAmIInput] = useState("");
+  const [leagueWhoAmIScore, setLeagueWhoAmIScore] = useState(0);
+  const [leagueWhoAmIFeedback, setLeagueWhoAmIFeedback] = useState(null);
+  const [leagueWhoAmIShake, setLeagueWhoAmIShake] = useState(0);
   const [leagueResult, setLeagueResult] = useState(null);
   const [isMockMultiplayer, setIsMockMultiplayer] = useState(false);
   const [mockOpponentScore, setMockOpponentScore] = useState(null);
@@ -944,23 +1016,39 @@ export default function FootballQuizMVP() {
   const activeLeagueSubmission = leagueDashboard?.currentSubmission || null;
   const currentLeagueQuizQuestion = leagueQuizQuestions[leagueQuizIndex];
   const leagueTop10Score = leagueTop10Found.length;
+  const leagueTop10TotalWithCurrent = leagueTop10TotalScore + leagueTop10Score;
+  const currentLeagueWhoAmI = leagueWhoAmIQuestions[leagueWhoAmIIndex];
+  const leagueWhoAmIVisibleClues = currentLeagueWhoAmI
+    ? currentLeagueWhoAmI.clues.slice(0, leagueWhoAmIClueIndex + 1)
+    : [];
+  const leagueWhoAmIPointsAvailable = Math.max(1, 10 - leagueWhoAmIClueIndex);
   const leagueSettings = activeLeague
     ? getLeagueSettingsSummary(activeLeague)
     : getLeagueFormatConfig(
         leagueFormatInput,
         leagueCustomQuizCount,
-        leagueCustomTop10Count
+        leagueCustomTop10Count,
+        leagueCustomWhoAmICount
       );
+  const leagueWhoAmIMaxPoints = leagueSettings.whoamiCount * 10;
   const leagueDayExpired =
     Boolean(activeLeague?.duration_days) &&
     Boolean(activeLeagueDay?.day_number) &&
     activeLeagueDay.day_number > Number(activeLeague.duration_days);
   const leagueDailyStructureText =
-    leagueSettings.quizCount > 0 && leagueSettings.top10Count > 0
-      ? `${leagueSettings.quizCount} quick questions + ${leagueSettings.top10Count} Top 10`
-      : leagueSettings.quizCount > 0
-      ? `${leagueSettings.quizCount} quick questions`
-      : `${leagueSettings.top10Count} Top 10`;
+    [
+      leagueSettings.quizCount > 0
+        ? `${leagueSettings.quizCount} quick questions`
+        : "",
+      leagueSettings.top10Count > 0
+        ? `${leagueSettings.top10Count} Top 10`
+        : "",
+      leagueSettings.whoamiCount > 0
+        ? `${leagueSettings.whoamiCount} Who Am I`
+        : "",
+    ]
+      .filter(Boolean)
+      .join(" + ") || "Daily challenge";
   const leagueDayLabel = activeLeagueDay
     ? activeLeague?.duration_days
       ? `Day ${activeLeagueDay.day_number} / ${activeLeague.duration_days}`
@@ -2220,7 +2308,12 @@ export default function FootballQuizMVP() {
     setLeagueLoading(true);
     setMultiplayerError("");
 
-    if (leagueSettings.quizCount + leagueSettings.top10Count <= 0) {
+    if (
+      leagueSettings.quizCount +
+        leagueSettings.top10Count +
+        leagueSettings.whoamiCount <=
+      0
+    ) {
       setLeagueLoading(false);
       setMultiplayerError("Choose at least one daily challenge type");
       return;
@@ -2234,7 +2327,8 @@ export default function FootballQuizMVP() {
         durationDays: leagueDurationInput,
         quizCount: leagueSettings.quizCount,
         top10Count: leagueSettings.top10Count,
-        maxDailyPoints: leagueSettings.quizCount + leagueSettings.top10Count * 10,
+        whoamiCount: leagueSettings.whoamiCount,
+        maxDailyPoints: leagueSettings.maxDailyPoints,
         leagueFormat: leagueFormatInput,
       },
     });
@@ -2313,52 +2407,169 @@ export default function FootballQuizMVP() {
     setLeagueLoading(true);
     setMultiplayerError("");
 
-    const { leagueDay, error } = await getOrCreateLeagueDay(supabase, activeLeague);
-    const quizQuestions = getLeagueQuestionsByIds(
-      leagueDay?.quiz_question_ids || []
-    ).map(withShuffledOptions);
-    const top10Challenge = getLeagueTop10ChallengeById(
-      leagueDay?.top10_challenge_id,
-      `${activeLeague.id}:${leagueDay?.day_key}`
-    );
-    const settings = getLeagueSettingsSummary(activeLeague);
+    try {
+      const settings = getLeagueSettingsSummary(activeLeague);
+      const { leagueDay, error } = await getOrCreateLeagueDay(
+        supabase,
+        activeLeague
+      );
 
-    setLeagueLoading(false);
+      if (error || !leagueDay) {
+        console.error("Could not prepare league day", {
+          error,
+          leagueId: activeLeague.id,
+          quiz_count: settings.quizCount,
+          top10_count: settings.top10Count,
+          whoami_count: settings.whoamiCount,
+        });
+        setMultiplayerError(
+          error?.message?.includes("whoami")
+            ? "Who Am I league setup needs the latest Supabase columns"
+            : "Today's league challenge is not ready"
+        );
+        return;
+      }
 
-    if (
-      error ||
-      quizQuestions.length !== settings.quizCount ||
-      (settings.top10Count > 0 && !top10Challenge)
-    ) {
-      setMultiplayerError("Today's league challenge is not ready");
-      return;
+      const quizQuestions = getLeagueQuestionsByIds(
+        leagueDay.quiz_question_ids || []
+      ).map(withShuffledOptions);
+      const top10Challenge = getLeagueTop10ChallengeById(
+        leagueDay.top10_challenge_id,
+        `${activeLeague.id}:${leagueDay.day_key}`
+      );
+      const top10Challenges =
+        settings.top10Count > 0
+          ? Array.from({ length: settings.top10Count }, (_, index) =>
+              index === 0
+                ? top10Challenge
+                : getLeagueTop10Challenge(
+                    `${activeLeague.id}:${leagueDay.day_key}:top10:${index}`
+                  )
+            ).filter(Boolean)
+          : [];
+      const leagueWhoAmIItems = getLeagueWhoAmIQuestionsByIds(
+        leagueDay.whoami_question_ids || []
+      );
+
+      if (
+        quizQuestions.length !== settings.quizCount ||
+        leagueWhoAmIItems.length !== settings.whoamiCount ||
+        (settings.top10Count > 0 &&
+          top10Challenges.length !== settings.top10Count)
+      ) {
+        const quizQuestionIds = Array.isArray(leagueDay.quiz_question_ids)
+          ? leagueDay.quiz_question_ids
+          : [];
+        const whoamiQuestionIds = Array.isArray(leagueDay.whoami_question_ids)
+          ? leagueDay.whoami_question_ids
+          : [];
+        const loadedQuizIds = new Set(
+          quizQuestions.map((question) => question.multiplayerId)
+        );
+        const loadedWhoAmIIds = new Set(
+          leagueWhoAmIItems.map((question) => question.id)
+        );
+
+        console.error("Invalid league challenge payload", {
+          leagueId: activeLeague.id,
+          settings,
+          dayKey: leagueDay.day_key,
+          quiz_question_ids: quizQuestionIds,
+          top10_challenge_id: leagueDay.top10_challenge_id,
+          whoami_question_ids: whoamiQuestionIds,
+          quizQuestions: quizQuestions.length,
+          leagueWhoAmIItems: leagueWhoAmIItems.length,
+          top10Challenges: top10Challenges.length,
+          missingQuizIds: quizQuestionIds.filter((id) => !loadedQuizIds.has(id)),
+          missingWhoAmIIds: whoamiQuestionIds.filter(
+            (id) => !loadedWhoAmIIds.has(id)
+          ),
+        });
+        setMultiplayerError("Today's league challenge is not ready");
+        return;
+      }
+
+      setLeagueDashboard((dashboard) => ({
+        ...dashboard,
+        leagueDay,
+      }));
+      setLeagueQuizQuestions(quizQuestions);
+      setLeagueTop10Challenges(top10Challenges);
+      setLeagueTop10Challenge(top10Challenges[0] || null);
+      setLeagueTop10Index(0);
+      setLeagueTop10TotalScore(0);
+      setLeagueWhoAmIQuestions(leagueWhoAmIItems);
+      setLeagueQuizIndex(0);
+      setLeagueQuizSelected(null);
+      setLeagueQuizScore(0);
+      setLeagueTimeLeft(15);
+      setLeagueTop10Found([]);
+      setLeagueTop10Lives(3);
+      setLeagueTop10Reveal(null);
+      setLeagueTop10Scanning(false);
+      setLeagueTop10Input("");
+      setLeagueWhoAmIIndex(0);
+      setLeagueWhoAmIClueIndex(0);
+      setLeagueWhoAmIInput("");
+      setLeagueWhoAmIScore(0);
+      setLeagueWhoAmIFeedback(null);
+      setLeagueWhoAmIShake(0);
+      setLeagueResult(null);
+      setLeagueChallengePhase("intro");
+      setLeagueChallengeOpen(true);
+      setMultiplayerOpen(false);
+    } catch (error) {
+      console.error("League challenge loading failed", {
+        error,
+        leagueId: activeLeague?.id,
+      });
+      setMultiplayerError("Could not start today's league challenge");
+    } finally {
+      setLeagueLoading(false);
     }
-
-    setLeagueDashboard((dashboard) => ({
-      ...dashboard,
-      leagueDay,
-    }));
-    setLeagueQuizQuestions(quizQuestions);
-    setLeagueTop10Challenge(top10Challenge);
-    setLeagueQuizIndex(0);
-    setLeagueQuizSelected(null);
-    setLeagueQuizScore(0);
-    setLeagueTimeLeft(15);
-    setLeagueTop10Found([]);
-    setLeagueTop10Lives(3);
-    setLeagueTop10Reveal(null);
-    setLeagueTop10Scanning(false);
-    setLeagueTop10Input("");
-    setLeagueResult(null);
-    setLeagueChallengePhase("intro");
-    setLeagueChallengeOpen(true);
-    setMultiplayerOpen(false);
   };
 
   const startLeagueQuiz = () => {
     playClickSound();
-    setLeagueChallengePhase(leagueQuizQuestions.length > 0 ? "quiz" : "top10");
+    setLeagueChallengePhase(
+      leagueQuizQuestions.length > 0
+        ? "quiz"
+        : leagueSettings.top10Count > 0
+        ? "top10"
+        : "whoami"
+    );
     setLeagueTimeLeft(15);
+  };
+
+  const advanceAfterLeagueTop10 = (currentListScore = leagueTop10Score) => {
+    const nextTotalTop10Score = leagueTop10TotalScore + currentListScore;
+
+    if (leagueTop10Index < leagueTop10Challenges.length - 1) {
+      const nextIndex = leagueTop10Index + 1;
+      setLeagueTop10TotalScore(nextTotalTop10Score);
+      setLeagueTop10Index(nextIndex);
+      setLeagueTop10Challenge(leagueTop10Challenges[nextIndex]);
+      setLeagueTop10Found([]);
+      setLeagueTop10Lives(3);
+      setLeagueTop10Reveal(null);
+      setLeagueTop10Scanning(false);
+      setLeagueTop10Input("");
+      return;
+    }
+
+    if (leagueSettings.whoamiCount > 0) {
+      setLeagueTop10TotalScore(nextTotalTop10Score);
+      setLeagueTop10Found([]);
+      setLeagueTop10Reveal(null);
+      setLeagueTop10Input("");
+      setLeagueChallengePhase("whoami");
+      return;
+    }
+
+    completeLeagueChallenge({
+      top10Score: nextTotalTop10Score,
+      whoamiScore: leagueWhoAmIScore,
+    });
   };
 
   const chooseLeagueQuizAnswer = (option) => {
@@ -2379,8 +2590,10 @@ export default function FootballQuizMVP() {
       if (leagueQuizIndex >= leagueQuizQuestions.length - 1) {
         if (leagueSettings.top10Count > 0) {
           setLeagueChallengePhase("top10");
+        } else if (leagueSettings.whoamiCount > 0) {
+          setLeagueChallengePhase("whoami");
         } else {
-          completeLeagueChallenge(0);
+          completeLeagueChallenge({ top10Score: 0, whoamiScore: 0 });
         }
       } else {
         setLeagueQuizIndex((index) => index + 1);
@@ -2450,7 +2663,7 @@ export default function FootballQuizMVP() {
 
         if (leagueTop10Found.length + 1 >= leagueTop10Challenge.answers.length) {
           window.setTimeout(
-            () => completeLeagueChallenge(leagueTop10Found.length + 1),
+            () => advanceAfterLeagueTop10(leagueTop10Found.length + 1),
             700
           );
         } else {
@@ -2477,7 +2690,10 @@ export default function FootballQuizMVP() {
         playWrongSound();
 
         if (nextLives <= 0) {
-          window.setTimeout(() => completeLeagueChallenge(leagueTop10Found.length), 850);
+          window.setTimeout(() => {
+            setLeagueTop10Reveal(null);
+            setLeagueChallengePhase("top10-reveal");
+          }, 850);
         } else {
           window.setTimeout(() => setLeagueTop10Reveal(null), 900);
         }
@@ -2494,7 +2710,78 @@ export default function FootballQuizMVP() {
     }, DAILY_SCAN_STEP_MS);
   };
 
-  const completeLeagueChallenge = async (top10Override = leagueTop10Score) => {
+  const moveToNextLeagueWhoAmI = (nextScore = leagueWhoAmIScore) => {
+    window.setTimeout(() => {
+      if (leagueWhoAmIIndex >= leagueWhoAmIQuestions.length - 1) {
+        completeLeagueChallenge({
+          top10Score: leagueTop10TotalWithCurrent,
+          whoamiScore: nextScore,
+        });
+        return;
+      }
+
+      setLeagueWhoAmIIndex((index) => index + 1);
+      setLeagueWhoAmIClueIndex(0);
+      setLeagueWhoAmIInput("");
+      setLeagueWhoAmIFeedback(null);
+    }, 900);
+  };
+
+  const submitLeagueWhoAmIAnswer = () => {
+    if (
+      !currentLeagueWhoAmI ||
+      !leagueWhoAmIInput.trim() ||
+      leagueWhoAmIFeedback?.locked
+    ) {
+      return;
+    }
+
+    const guess = leagueWhoAmIInput.trim();
+    const isCorrect = isCorrectWhoAmIAnswer(guess, currentLeagueWhoAmI);
+
+    if (isCorrect) {
+      const earnedPoints = leagueWhoAmIPointsAvailable;
+      const nextScore = leagueWhoAmIScore + earnedPoints;
+      setLeagueWhoAmIScore(nextScore);
+      setLeagueWhoAmIFeedback({
+        type: "correct",
+        text: `Correct: ${currentLeagueWhoAmI.answer}  +${earnedPoints}`,
+        locked: true,
+      });
+      setLeagueWhoAmIInput("");
+      playCorrectSound();
+      moveToNextLeagueWhoAmI(nextScore);
+      return;
+    }
+
+    if (leagueWhoAmIClueIndex < currentLeagueWhoAmI.clues.length - 1) {
+      setLeagueWhoAmIClueIndex((index) => index + 1);
+      setLeagueWhoAmIFeedback({
+        type: "wrong",
+        text: "New clue unlocked",
+      });
+      setLeagueWhoAmIInput("");
+      setLeagueWhoAmIShake((value) => value + 1);
+      playWrongSound();
+      window.setTimeout(() => setLeagueWhoAmIFeedback(null), 650);
+      return;
+    }
+
+    setLeagueWhoAmIFeedback({
+      type: "wrong",
+      text: `Answer: ${currentLeagueWhoAmI.answer}  0 points`,
+      locked: true,
+    });
+    setLeagueWhoAmIInput("");
+    setLeagueWhoAmIShake((value) => value + 1);
+    playWrongSound();
+    moveToNextLeagueWhoAmI(leagueWhoAmIScore);
+  };
+
+  const completeLeagueChallenge = async ({
+    top10Score = leagueTop10Score,
+    whoamiScore = leagueWhoAmIScore,
+  } = {}) => {
     if (!activeLeague || !activeLeagueDay || leagueResult) return;
 
     playClickSound();
@@ -2509,7 +2796,8 @@ export default function FootballQuizMVP() {
         playerId,
         username,
         quizScore: leagueQuizScore,
-        top10Score: top10Override,
+        top10Score,
+        whoamiScore,
       }
     );
 
@@ -2523,6 +2811,7 @@ export default function FootballQuizMVP() {
     setLeagueResult({
       quizScore: submission.quiz_score,
       top10Score: submission.top10_score,
+      whoamiScore: submission.whoami_score || whoamiScore,
       totalPoints: submission.total_points,
       alreadySubmitted,
     });
@@ -4214,7 +4503,10 @@ export default function FootballQuizMVP() {
                     Quiz: {leagueQuizScore}/{leagueSettings.quizCount}
                   </span>
                 )}
-                <span>Top 10: {leagueTop10Score}/10</span>
+                <span>
+                  Top 10 {leagueTop10Index + 1}/{leagueSettings.top10Count}:{" "}
+                  {leagueTop10Score}/10
+                </span>
                 <span>
                   {Array.from({ length: 3 }).map((_, index) => (
                     <span
@@ -4228,7 +4520,7 @@ export default function FootballQuizMVP() {
                   ))}
                 </span>
                 <strong>
-                  Total: {leagueQuizScore + leagueTop10Score}/
+                  Total: {leagueQuizScore + leagueTop10TotalWithCurrent + leagueWhoAmIScore}/
                   {leagueSettings.maxDailyPoints}
                 </strong>
               </div>
@@ -4257,7 +4549,7 @@ export default function FootballQuizMVP() {
                         : "OUT"}
                     </strong>
                     {leagueTop10Reveal.type === "correct" && (
-                      <em>{leagueTop10Reveal.answer}</em>
+                      <em>{formatAnswerWithValue(leagueTop10Reveal.answer)}</em>
                     )}
                   </motion.div>
                 )}
@@ -4276,13 +4568,13 @@ export default function FootballQuizMVP() {
 
                   return (
                     <div
-                      key={answer}
+                      key={getAnswerKey(answer, index)}
                       className={`${found ? "found" : ""} ${
                         isScanning ? "scanning" : ""
                       } ${isRevealTarget ? "reveal-target" : ""}`}
                     >
                       <span>#{index + 1}</span>
-                      <strong>{found ? answer : "?????"}</strong>
+                      <strong>{found ? formatAnswerWithValue(answer) : "?????"}</strong>
                     </div>
                   );
                 })}
@@ -4316,6 +4608,133 @@ export default function FootballQuizMVP() {
             </div>
           )}
 
+          {leagueChallengePhase === "top10-reveal" && leagueTop10Challenge && (
+            <div className="league-challenge-card league-top10-card league-top10-reveal-card">
+              <div className="league-kicker">Top 10 Reveal</div>
+              <h1>{leagueTop10Challenge.label}</h1>
+              <p>
+                {leagueTop10Score}/10 found. Review the list, then keep climbing.
+              </p>
+
+              <div className="league-top10-reveal-list">
+                {leagueTop10Challenge.answers.map((answer, index) => {
+                  const found = leagueTop10Found.includes(answer);
+
+                  return (
+                    <motion.div
+                      key={getAnswerKey(answer, index)}
+                      className={`league-top10-reveal-row ${
+                        found ? "found" : "missed"
+                      }`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.035 }}
+                    >
+                      <span>#{index + 1}</span>
+                      <strong>{getAnswerLabel(answer)}</strong>
+                      <em>{getAnswerValue(answer) || "-"}</em>
+                      <small>{found ? "Found" : "Missed"}</small>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              <button
+                className="league-reveal-continue-button"
+                onClick={() => advanceAfterLeagueTop10(leagueTop10Found.length)}
+              >
+                {leagueTop10Index < leagueTop10Challenges.length - 1
+                  ? "Next Top 10"
+                  : leagueSettings.whoamiCount > 0
+                  ? "Next Section"
+                  : "See Results"}
+              </button>
+            </div>
+          )}
+
+          {leagueChallengePhase === "whoami" && currentLeagueWhoAmI && (
+            <div className="league-challenge-card league-whoami-card">
+              <div className="league-kicker">Who Am I?</div>
+              <h1>Mystery Player</h1>
+
+              <div className="league-score-strip">
+                {leagueSettings.quizCount > 0 && (
+                  <span>
+                    Quiz: {leagueQuizScore}/{leagueSettings.quizCount}
+                  </span>
+                )}
+                {leagueSettings.top10Count > 0 && (
+                  <span>
+                    Top 10: {leagueTop10TotalWithCurrent}/{leagueSettings.top10Count * 10}
+                  </span>
+                )}
+                <span>
+                  Who Am I: {leagueWhoAmIScore}/{leagueWhoAmIMaxPoints}
+                </span>
+                <strong>
+                  Player {leagueWhoAmIIndex + 1}/{leagueSettings.whoamiCount}
+                </strong>
+              </div>
+
+              <motion.div
+                className={`league-whoami-panel ${leagueWhoAmIShake ? "shake" : ""}`}
+                animate={leagueWhoAmIShake ? { x: [0, -7, 7, -4, 4, 0] } : { x: 0 }}
+                transition={{ duration: 0.28 }}
+              >
+                <div className="whoami-mystery-icon">?</div>
+                <div className="whoami-clue-progress">
+                  <span>Clue {leagueWhoAmIClueIndex + 1} / 10</span>
+                  <strong>Worth {leagueWhoAmIPointsAvailable} points</strong>
+                </div>
+
+                <div className="whoami-clue-list">
+                  {leagueWhoAmIVisibleClues.map((clue, index) => (
+                    <motion.div
+                      key={`${currentLeagueWhoAmI.id}-${index}`}
+                      className={`whoami-clue ${
+                        index === leagueWhoAmIClueIndex ? "latest" : ""
+                      }`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      {clue}
+                    </motion.div>
+                  ))}
+                </div>
+
+                {leagueWhoAmIFeedback && (
+                  <div className={`whoami-feedback ${leagueWhoAmIFeedback.type}`}>
+                    {leagueWhoAmIFeedback.text}
+                  </div>
+                )}
+              </motion.div>
+
+              <div className="daily-input-row league-input-row">
+                <input
+                  value={leagueWhoAmIInput}
+                  onChange={(event) => setLeagueWhoAmIInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") submitLeagueWhoAmIAnswer();
+                  }}
+                  placeholder="Type player name..."
+                  className="daily-list-input"
+                  disabled={Boolean(leagueWhoAmIFeedback?.locked)}
+                  autoFocus
+                />
+                <button
+                  className="daily-submit-button"
+                  onClick={submitLeagueWhoAmIAnswer}
+                  disabled={
+                    !leagueWhoAmIInput.trim() ||
+                    Boolean(leagueWhoAmIFeedback?.locked)
+                  }
+                >
+                  Guess
+                </button>
+              </div>
+            </div>
+          )}
+
           {leagueChallengePhase === "complete" && leagueResult && (
             <div className="league-challenge-card league-complete-card">
               <div className="league-kicker">✅ Day Complete</div>
@@ -4334,7 +4753,17 @@ export default function FootballQuizMVP() {
                 {leagueSettings.top10Count > 0 && (
                   <div>
                     <span>Top 10</span>
-                    <strong>{leagueResult.top10Score}/10</strong>
+                    <strong>
+                      {leagueResult.top10Score}/{leagueSettings.top10Count * 10}
+                    </strong>
+                  </div>
+                )}
+                {leagueSettings.whoamiCount > 0 && (
+                  <div>
+                    <span>Who Am I</span>
+                    <strong>
+                      {leagueResult.whoamiScore}/{leagueWhoAmIMaxPoints}
+                    </strong>
                   </div>
                 )}
               </div>
@@ -4690,6 +5119,15 @@ export default function FootballQuizMVP() {
           <ScreenTransition key={currentHomeViewKey}>
         {profileOpen ? (
           <div className="profile-screen">
+            <button
+              className="profile-top-back-button"
+              onClick={() => {
+                playClickSound();
+                setProfileOpen(false);
+              }}
+            >
+              BACK
+            </button>
             <motion.div
               className={`profile-card level-${playerLevel.color}`}
               initial={{ opacity: 0, scale: 0.9, y: 26 }}
@@ -4832,16 +5270,6 @@ export default function FootballQuizMVP() {
                   onClick={changeUsername}
                 >
                   CHANGE NAME
-                </button>
-
-                <button
-                  className="profile-back-button"
-                  onClick={() => {
-                    playClickSound();
-                    setProfileOpen(false);
-                  }}
-                >
-                  BACK
                 </button>
               </div>
             </motion.div>
@@ -5245,6 +5673,24 @@ export default function FootballQuizMVP() {
                           ))}
                         </div>
                       </div>
+
+                      <div className="league-custom-row">
+                        <span>Who Am I</span>
+                        <div>
+                          {CUSTOM_WHOAMI_COUNTS.map((count) => (
+                            <button
+                              key={count}
+                              type="button"
+                              className={
+                                leagueCustomWhoAmICount === count ? "selected" : ""
+                              }
+                              onClick={() => setLeagueCustomWhoAmICount(count)}
+                            >
+                              {count}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -5261,7 +5707,10 @@ export default function FootballQuizMVP() {
                     onClick={createNewLeague}
                     disabled={
                       leagueLoading ||
-                      leagueSettings.quizCount + leagueSettings.top10Count <= 0
+                      leagueSettings.quizCount +
+                        leagueSettings.top10Count +
+                        leagueSettings.whoamiCount <=
+                        0
                     }
                   >
                     {leagueLoading ? "Creating..." : "Create League"}
@@ -5426,7 +5875,10 @@ export default function FootballQuizMVP() {
                                 ? `Quiz ${submission.quiz_score}/${leagueSettings.quizCount} • `
                                 : ""}
                               {leagueSettings.top10Count > 0
-                                ? `Top 10 ${submission.top10_score}/10 • `
+                                ? `Top 10 ${submission.top10_score}/${leagueSettings.top10Count * 10} • `
+                                : ""}
+                              {leagueSettings.whoamiCount > 0
+                                ? `Who Am I ${submission.whoami_score || 0}/${leagueSettings.whoamiCount * 10} • `
                                 : ""}
                               <b>{submission.total_points} pts</b>
                             </span>
@@ -5853,12 +6305,12 @@ export default function FootballQuizMVP() {
 
               <div className="home-level-box">
                 <div className="home-level-left">
-                  <div className="home-level-emoji">{playerLevel.emoji}</div>
+                    <div className="home-level-emoji">{playerLevel.emoji}</div>
 
                   <div>
                     <div className="profile-level-meta">
-  Level {playerLevel.levelNumber}
-</div>
+                      Level {playerLevel.levelNumber}
+                    </div>
 
                     <div className="home-level-name">{playerLevel.name}</div>
                   </div>
@@ -5890,30 +6342,44 @@ export default function FootballQuizMVP() {
                 setModeMenuOpen(true);
               }}
             >
-              SINGLE PLAYER
+              <span className="main-menu-icon">⚽</span>
+              <span className="main-menu-copy">
+                <strong>SINGLE PLAYER</strong>
+                <small>Train your ball knowledge</small>
+              </span>
             </button>
 
             <button
-              className="multiplayer-main-button"
+              className="multiplayer-main-button home-action-card home-action-multiplayer"
               onClick={openMultiplayer}
             >
-              ⚔️ MULTIPLAYER
+              <span className="main-menu-icon">⚔️</span>
+              <span className="main-menu-copy">
+                <strong>MULTIPLAYER</strong>
+                <small>Battle friends & rivals</small>
+              </span>
             </button>
 
             <button
-              className={`daily-main-button ${dailyPlayed ? "daily-completed" : ""}`}
+              className={`daily-main-button home-action-card home-action-daily ${
+                dailyPlayed ? "daily-completed" : ""
+              }`}
               onClick={() => {
                 playClickSound();
                 startDailyChallenge();
               }}
               disabled={dailyPlayed}
             >
-              {dailyPlayed ? "✅ DAILY COMPLETED" : "🔥 DAILY CHALLENGE"}
+              <span className="main-menu-icon">{dailyPlayed ? "✅" : "🔥"}</span>
+              <span className="main-menu-copy">
+                <strong>{dailyPlayed ? "DAILY DONE" : "DAILY CHALLENGE"}</strong>
+                <small>{dailyPlayed ? "Come back tomorrow" : "Come back every day"}</small>
+              </span>
             </button>
 
             <div className="home-secondary-actions">
               <button
-                className="profile-main-button"
+                className="profile-main-button home-action-card home-action-profile"
                 onClick={() => {
                   playClickSound();
                   setProfileOpen(true);
@@ -5930,17 +6396,24 @@ export default function FootballQuizMVP() {
                   }}
                   size="small"
                 />
-                PROFILE
+                <span className="main-menu-copy">
+                  <strong>PROFILE</strong>
+                  <small>Your football identity</small>
+                </span>
               </button>
 
               <button
-                className="leaderboard-main-button"
+                className="leaderboard-main-button home-action-card home-action-ranking"
                 onClick={() => {
                   playClickSound();
                   setLeaderboardOpen(true);
                 }}
               >
-                🏆 RANKINGS
+                <span className="main-menu-icon">🏆</span>
+                <span className="main-menu-copy">
+                  <strong>RANKINGS</strong>
+                  <small>Climb the leaderboard</small>
+                </span>
               </button>
             </div>
 
@@ -6408,7 +6881,7 @@ export default function FootballQuizMVP() {
               {dailyReveal.type === "correct" &&
                 dailyReveal.displayRank === dailyReveal.rank && (
                 <div className="rank-reveal-player">
-                  {dailyReveal.answer}
+                  {formatAnswerWithValue(dailyReveal.answer)}
                 </div>
               )}
             </motion.div>
@@ -6463,7 +6936,7 @@ export default function FootballQuizMVP() {
 
               return (
                 <motion.div
-                  key={answer}
+                  key={getAnswerKey(answer, index)}
                   className={`pyramid-slot ${isFound ? "found" : ""} ${
                     isScanning ? "scanning" : ""
                   } ${isRevealTarget ? "reveal-target" : ""} ${
@@ -6481,7 +6954,7 @@ export default function FootballQuizMVP() {
                   transition={{ duration: 0.45 }}
                 >
                   <span className="pyramid-rank">#{rank}</span>
-                  <span>{isFound ? answer : "?????"}</span>
+                  <span>{isFound ? formatAnswerWithValue(answer) : "?????"}</span>
                 </motion.div>
               );
             })}
@@ -6571,13 +7044,13 @@ export default function FootballQuizMVP() {
 
                       return (
                         <div
-                          key={answer}
+                          key={getAnswerKey(answer, index)}
                           className={`daily-missing-row ${
                             found ? "found" : "missed"
                           }`}
                         >
                           <span>#{index + 1}</span>
-                          <strong>{answer}</strong>
+                          <strong>{formatAnswerWithValue(answer)}</strong>
                           <em>{found ? "Found" : "Missed"}</em>
                         </div>
                       );
