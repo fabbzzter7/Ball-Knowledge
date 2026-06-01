@@ -3,6 +3,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "england-most-caps",
     label: "Most capped England players",
     question: "Can you name 10 players with the most appearances for England?",
+    answerType: "player",
     answers: [
       { answer: "Peter Shilton", value: "125 caps" },
       { answer: "Wayne Rooney", value: "120 caps" },
@@ -20,6 +21,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "ucl-top-scorers",
     label: "Champions League top scorers",
     question: "Can you name 10 of the highest scorers in Champions League history?",
+    answerType: "player",
     answers: [
       { answer: "Cristiano Ronaldo", value: "140+ goals", aliases: ["Ronaldo", "CR7"] },
       { answer: "Lionel Messi", value: "125+ goals", aliases: ["Messi"] },
@@ -37,6 +39,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "premier-league-top-scorers",
     label: "Premier League top scorers",
     question: "Can you name 10 of the highest scorers in Premier League history?",
+    answerType: "player",
     answers: [
       { answer: "Alan Shearer", value: "260 goals", aliases: ["Shearer"] },
       { answer: "Harry Kane", value: "213 goals", aliases: ["Kane"] },
@@ -54,6 +57,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "world-cup-top-scorers",
     label: "World Cup top scorers",
     question: "Can you name 10 of the highest scorers in FIFA World Cup history?",
+    answerType: "player",
     answers: [
       { answer: "Miroslav Klose", value: "16 goals", aliases: ["Klose"] },
       { answer: "Ronaldo", value: "15 goals", aliases: ["R9", "Ronaldo Nazario"] },
@@ -88,6 +92,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "ballon-dor-winners-modern",
     label: "Modern Ballon d'Or winners",
     question: "Can you name 10 players who have won the Ballon d'Or since 2000?",
+    answerType: "player",
     answers: [
       { answer: "Luis Figo", value: "2000", aliases: ["Figo"] },
       { answer: "Michael Owen", value: "2001", aliases: ["Owen"] },
@@ -105,6 +110,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "real-madrid-top-scorers",
     label: "Real Madrid top scorers",
     question: "Can you name 10 of Real Madrid's all-time top scorers?",
+    answerType: "player",
     answers: [
       { answer: "Cristiano Ronaldo", value: "450 goals", aliases: ["Ronaldo", "CR7"] },
       { answer: "Karim Benzema", value: "354 goals", aliases: ["Benzema"] },
@@ -122,6 +128,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "barcelona-appearances",
     label: "Barcelona appearance makers",
     question: "Can you name 10 players with the most appearances for Barcelona?",
+    answerType: "player",
     answers: [
       { answer: "Lionel Messi", value: "778 apps", aliases: ["Messi"] },
       { answer: "Xavi", value: "767 apps" },
@@ -139,6 +146,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "brazil-top-scorers",
     label: "Brazil top scorers",
     question: "Can you name 10 of Brazil's highest scoring national team players?",
+    answerType: "player",
     answers: [
       { answer: "Neymar", value: "79 goals" },
       { answer: "Pele", value: "77 goals", aliases: ["Pelé"] },
@@ -156,6 +164,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "france-most-caps",
     label: "Most capped France players",
     question: "Can you name 10 players with the most appearances for France?",
+    answerType: "player",
     answers: [
       { answer: "Hugo Lloris", value: "145 caps", aliases: ["Lloris"] },
       { answer: "Lilian Thuram", value: "142 caps", aliases: ["Thuram"] },
@@ -173,6 +182,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "spain-most-caps",
     label: "Most capped Spain players",
     question: "Can you name 10 players with the most appearances for Spain?",
+    answerType: "player",
     answers: [
       { answer: "Sergio Ramos", value: "180 caps", aliases: ["Ramos"] },
       { answer: "Iker Casillas", value: "167 caps", aliases: ["Casillas"] },
@@ -190,6 +200,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "sweden-most-caps",
     label: "Most capped Sweden players",
     question: "Can you name 10 players with the most appearances for Sweden?",
+    answerType: "player",
     answers: [
       { answer: "Anders Svensson", value: "148 caps" },
       { answer: "Thomas Ravelli", value: "143 caps", aliases: ["Ravelli"] },
@@ -206,6 +217,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "xavi-most-teammate-matches",
     label: "Xavi most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Xavi?",
+    answerType: "player",
     answers: [
       { answer: "Carles Puyol", value: "621 matches", aliases: ["Puyol"] },
       { answer: "Andres Iniesta", value: "486 matches", aliases: ["Andrés Iniesta", "Iniesta"] },
@@ -224,6 +236,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "iniesta-most-teammate-matches",
     label: "Iniesta most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Andres Iniesta?",
+    answerType: "player",
     answers: [
       { answer: "Lionel Messi", value: "488 matches", aliases: ["Messi"] },
       { answer: "Xavi", value: "486 matches" },
@@ -242,6 +255,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "zidane-most-teammate-matches",
     label: "Zidane most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Zinedine Zidane?",
+    answerType: "player",
     answers: [
       { answer: "Bixente Lizarazu", value: "213 matches", aliases: ["Lizarazu"] },
       { answer: "Roberto Carlos", value: "203 matches" },
@@ -260,6 +274,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "henry-most-teammate-matches",
     label: "Henry most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Thierry Henry?",
+    answerType: "player",
     answers: [
       { answer: "Patrick Vieira", value: "313 matches", aliases: ["Vieira"] },
       { answer: "Robert Pires", value: "287 matches", aliases: ["Robert Pirès", "Pires"] },
@@ -278,6 +293,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "pirlo-most-teammate-matches",
     label: "Pirlo most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Andrea Pirlo?",
+    answerType: "player",
     answers: [
       { answer: "Leonardo Bonucci", value: "178 matches", aliases: ["Bonucci"] },
       { answer: "Andriy Shevchenko", value: "168 matches", aliases: ["Shevchenko"] },
@@ -296,6 +312,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "beckham-most-teammate-matches",
     label: "Beckham most frequent teammates",
     question: "Can you name 10 players who played the most matches together with David Beckham?",
+    answerType: "player",
     answers: [
       { answer: "Iker Casillas", value: "147 matches", aliases: ["Casillas"] },
       { answer: "Teddy Sheringham", value: "143 matches", aliases: ["Sheringham"] },
@@ -314,6 +331,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "rooney-most-teammate-matches",
     label: "Rooney most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Wayne Rooney?",
+    answerType: "player",
     answers: [
       { answer: "Michael Carrick", value: "366 matches", aliases: ["Carrick"] },
       { answer: "Rio Ferdinand", value: "349 matches", aliases: ["Ferdinand"] },
@@ -492,6 +510,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "ucl-final-goalscorers-modern",
     label: "Modern UCL final goalscorers",
     question: "Can you name 10 players who scored in a Champions League final since 2000?",
+    answerType: "player",
     answers: [
       { answer: "Zinedine Zidane", value: "2002 final", aliases: ["Zidane"] },
       { answer: "Hernan Crespo", value: "2005 final", aliases: ["Hernán Crespo", "Crespo"] },
@@ -510,6 +529,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "world-cup-final-goalscorers-modern",
     label: "Modern World Cup final scorers",
     question: "Can you name 10 players who scored in a men's World Cup final since 1998?",
+    answerType: "player",
     answers: [
       { answer: "Zinedine Zidane", value: "1998 and 2006 finals", aliases: ["Zidane"] },
       { answer: "Emmanuel Petit", value: "1998 final", aliases: ["Petit"] },
@@ -528,6 +548,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "players-with-most-ucl-titles",
     label: "Players with most Champions League titles",
     question: "Can you name 10 players with the most European Cup/Champions League titles?",
+    answerType: "player",
     answers: [
       { answer: "Francisco Gento", value: "6 titles", aliases: ["Gento"] },
       { answer: "Luka Modric", value: "6 titles", aliases: ["Luka Modrić", "Modric"] },
@@ -544,6 +565,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "lampard-most-teammate-matches",
     label: "Lampard most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Frank Lampard?",
+    answerType: "player",
     answers: [
       { answer: "John Terry", value: "581 matches", aliases: ["Terry"] },
       { answer: "Petr Cech", value: "398 matches", aliases: ["Petr Čech", "Cech"] },
@@ -562,6 +584,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "ronaldo-nazario-most-teammate-matches",
     label: "R9 most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Ronaldo Nazario?",
+    answerType: "player",
     answers: [
       { answer: "Roberto Carlos", value: "278 matches" },
       { answer: "Iker Casillas", value: "165 matches", aliases: ["Casillas"] },
@@ -580,6 +603,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "robben-most-teammate-matches",
     label: "Robben most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Arjen Robben?",
+    answerType: "player",
     answers: [
       { answer: "Philipp Lahm", value: "212 matches", aliases: ["Lahm"] },
       { answer: "David Alaba", value: "208 matches", aliases: ["Alaba"] },
@@ -598,6 +622,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "man-united-top-scorers",
     label: "Manchester United top scorers",
     question: "Can you name 10 of Manchester United's all-time top scorers?",
+    answerType: "player",
     answers: [
       { answer: "Wayne Rooney", value: "253 goals", aliases: ["Rooney"] },
       { answer: "Bobby Charlton", value: "249 goals", aliases: ["Charlton"] },
@@ -616,6 +641,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "arsenal-top-scorers",
     label: "Arsenal top scorers",
     question: "Can you name 10 of Arsenal's all-time top scorers?",
+    answerType: "player",
     answers: [
       { answer: "Thierry Henry", value: "228 goals", aliases: ["Henry"] },
       { answer: "Ian Wright", value: "185 goals", aliases: ["Wright"] },
@@ -634,6 +660,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "chelsea-top-scorers",
     label: "Chelsea top scorers",
     question: "Can you name 10 of Chelsea's all-time top scorers?",
+    answerType: "player",
     answers: [
       { answer: "Frank Lampard", value: "211 goals", aliases: ["Lampard"] },
       { answer: "Bobby Tambling", value: "202 goals", aliases: ["Tambling"] },
@@ -652,6 +679,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "liverpool-top-scorers",
     label: "Liverpool top scorers",
     question: "Can you name 10 of Liverpool's all-time top scorers?",
+    answerType: "player",
     answers: [
       { answer: "Ian Rush", value: "346 goals", aliases: ["Rush"] },
       { answer: "Roger Hunt", value: "285 goals", aliases: ["Hunt"] },
@@ -670,6 +698,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "tottenham-top-scorers",
     label: "Tottenham top scorers",
     question: "Can you name 10 of Tottenham Hotspur's all-time top scorers?",
+    answerType: "player",
     answers: [
       { answer: "Harry Kane", value: "280 goals", aliases: ["Kane"] },
       { answer: "Jimmy Greaves", value: "266 goals", aliases: ["Greaves"] },
@@ -688,6 +717,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "bayern-top-scorers",
     label: "Bayern Munich top scorers",
     question: "Can you name 10 of Bayern Munich's all-time top scorers?",
+    answerType: "player",
     answers: [
       { answer: "Gerd Muller", value: "566 goals", aliases: ["Gerd Müller", "Muller"] },
       { answer: "Robert Lewandowski", value: "344 goals", aliases: ["Lewandowski"] },
@@ -706,6 +736,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "juventus-top-scorers",
     label: "Juventus top scorers",
     question: "Can you name 10 of Juventus' all-time top scorers?",
+    answerType: "player",
     answers: [
       { answer: "Alessandro Del Piero", value: "290 goals", aliases: ["Del Piero"] },
       { answer: "Giampiero Boniperti", value: "179 goals", aliases: ["Boniperti"] },
@@ -724,6 +755,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "ac-milan-top-scorers",
     label: "AC Milan top scorers",
     question: "Can you name 10 of AC Milan's all-time top scorers?",
+    answerType: "player",
     answers: [
       { answer: "Gunnar Nordahl", value: "221 goals", aliases: ["Nordahl"] },
       { answer: "Andriy Shevchenko", value: "175 goals", aliases: ["Shevchenko"] },
@@ -742,6 +774,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "inter-top-scorers",
     label: "Inter top scorers",
     question: "Can you name 10 of Inter Milan's all-time top scorers?",
+    answerType: "player",
     answers: [
       { answer: "Giuseppe Meazza", value: "284 goals", aliases: ["Meazza"] },
       { answer: "Alessandro Altobelli", value: "209 goals", aliases: ["Altobelli"] },
@@ -760,6 +793,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "ajax-top-scorers",
     label: "Ajax top scorers",
     question: "Can you name 10 of Ajax's all-time top scorers?",
+    answerType: "player",
     answers: [
       { answer: "Piet van Reenen", value: "273 goals", aliases: ["Van Reenen"] },
       { answer: "Johan Cruyff", value: "194 goals", aliases: ["Cruijff", "Cruyff"] },
@@ -778,6 +812,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "barcelona-top-scorers",
     label: "Barcelona top scorers",
     question: "Can you name 10 of Barcelona's all-time top scorers?",
+    answerType: "player",
     answers: [
       { answer: "Lionel Messi", value: "672 goals", aliases: ["Messi"] },
       { answer: "Cesar Rodriguez", value: "232 goals", aliases: ["César Rodríguez", "Cesar"] },
@@ -796,6 +831,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "atletico-madrid-top-scorers",
     label: "Atletico Madrid top scorers",
     question: "Can you name 10 of Atletico Madrid's all-time top scorers?",
+    answerType: "player",
     answers: [
       { answer: "Antoine Griezmann", value: "180+ goals", aliases: ["Griezmann"] },
       { answer: "Luis Aragones", value: "172 goals", aliases: ["Luis Aragonés", "Aragones"] },
@@ -814,6 +850,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "most-capped-portugal-players",
     label: "Most capped Portugal players",
     question: "Can you name 10 players with the most appearances for Portugal?",
+    answerType: "player",
     answers: [
       { answer: "Cristiano Ronaldo", value: "200+ caps", aliases: ["Ronaldo", "CR7"] },
       { answer: "Joao Moutinho", value: "146 caps", aliases: ["João Moutinho", "Moutinho"] },
@@ -832,6 +869,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "most-capped-italy-players",
     label: "Most capped Italy players",
     question: "Can you name 10 players with the most appearances for Italy?",
+    answerType: "player",
     answers: [
       { answer: "Gianluigi Buffon", value: "176 caps", aliases: ["Buffon", "Gigi Buffon"] },
       { answer: "Fabio Cannavaro", value: "136 caps", aliases: ["Cannavaro"] },
@@ -850,6 +888,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "most-capped-germany-players",
     label: "Most capped Germany players",
     question: "Can you name 10 players with the most appearances for Germany?",
+    answerType: "player",
     answers: [
       { answer: "Lothar Matthaus", value: "150 caps", aliases: ["Lothar Matthäus", "Matthaus"] },
       { answer: "Miroslav Klose", value: "137 caps", aliases: ["Klose"] },
@@ -868,6 +907,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "most-capped-netherlands-players",
     label: "Most capped Netherlands players",
     question: "Can you name 10 players with the most appearances for the Netherlands?",
+    answerType: "player",
     answers: [
       { answer: "Wesley Sneijder", value: "134 caps", aliases: ["Sneijder"] },
       { answer: "Edwin van der Sar", value: "130 caps", aliases: ["Van der Sar"] },
@@ -886,6 +926,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "most-capped-brazil-players",
     label: "Most capped Brazil players",
     question: "Can you name 10 players with the most appearances for Brazil?",
+    answerType: "player",
     answers: [
       { answer: "Cafu", value: "142 caps" },
       { answer: "Neymar", value: "125+ caps" },
@@ -902,6 +943,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "gerrard-most-teammate-matches",
     label: "Gerrard most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Steven Gerrard?",
+    answerType: "player",
     answers: [
       { answer: "Jamie Carragher", value: "450+ matches", aliases: ["Carragher"] },
       { answer: "Sami Hyypia", value: "300+ matches", aliases: ["Hyypia", "Sami Hyypiä"] },
@@ -920,6 +962,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "drogba-most-teammate-matches",
     label: "Drogba most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Didier Drogba?",
+    answerType: "player",
     answers: [
       { answer: "Frank Lampard", value: "300 matches", aliases: ["Lampard"] },
       { answer: "John Terry", value: "290+ matches", aliases: ["Terry"] },
@@ -938,6 +981,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "terry-most-teammate-matches",
     label: "Terry most frequent teammates",
     question: "Can you name 10 players who played the most matches together with John Terry?",
+    answerType: "player",
     answers: [
       { answer: "Frank Lampard", value: "581 matches", aliases: ["Lampard"] },
       { answer: "Petr Cech", value: "400+ matches", aliases: ["Petr Čech", "Cech"] },
@@ -956,6 +1000,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "scholes-most-teammate-matches",
     label: "Scholes most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Paul Scholes?",
+    answerType: "player",
     answers: [
       { answer: "Ryan Giggs", value: "600+ matches", aliases: ["Giggs"] },
       { answer: "Gary Neville", value: "500+ matches", aliases: ["Neville"] },
@@ -974,6 +1019,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "giggs-most-teammate-matches",
     label: "Giggs most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Ryan Giggs?",
+    answerType: "player",
     answers: [
       { answer: "Paul Scholes", value: "600+ matches", aliases: ["Scholes"] },
       { answer: "Gary Neville", value: "500+ matches", aliases: ["Neville"] },
@@ -992,6 +1038,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "lahm-most-teammate-matches",
     label: "Lahm most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Philipp Lahm?",
+    answerType: "player",
     answers: [
       { answer: "Bastian Schweinsteiger", value: "400+ matches", aliases: ["Schweinsteiger"] },
       { answer: "Thomas Muller", value: "350+ matches", aliases: ["Thomas Müller", "Muller"] },
@@ -1010,6 +1057,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "del-piero-most-teammate-matches",
     label: "Del Piero most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Alessandro Del Piero?",
+    answerType: "player",
     answers: [
       { answer: "Gianluigi Buffon", value: "300+ matches", aliases: ["Buffon", "Gigi Buffon"] },
       { answer: "Pavel Nedved", value: "250+ matches", aliases: ["Pavel Nedvěd", "Nedved"] },
@@ -1028,6 +1076,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "totti-most-teammate-matches",
     label: "Totti most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Francesco Totti?",
+    answerType: "player",
     answers: [
       { answer: "Daniele De Rossi", value: "400+ matches", aliases: ["De Rossi"] },
       { answer: "Simone Perrotta", value: "300+ matches", aliases: ["Perrotta"] },
@@ -1046,6 +1095,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "maldini-most-teammate-matches",
     label: "Maldini most frequent teammates",
     question: "Can you name 10 players who played the most matches together with Paolo Maldini?",
+    answerType: "player",
     answers: [
       { answer: "Alessandro Costacurta", value: "600+ matches", aliases: ["Costacurta"] },
       { answer: "Franco Baresi", value: "400+ matches", aliases: ["Baresi"] },
@@ -1064,6 +1114,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "england-top-scorers",
     label: "England top scorers",
     question: "Can you name 10 of England's highest scoring national team players?",
+    answerType: "player",
     answers: [
       { answer: "Harry Kane", value: "60+ goals", aliases: ["Kane"] },
       { answer: "Wayne Rooney", value: "53 goals", aliases: ["Rooney"] },
@@ -1082,6 +1133,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "spain-top-scorers",
     label: "Spain top scorers",
     question: "Can you name 10 of Spain's highest scoring national team players?",
+    answerType: "player",
     answers: [
       { answer: "David Villa", value: "59 goals", aliases: ["Villa"] },
       { answer: "Raul", value: "44 goals", aliases: ["Raúl"] },
@@ -1100,6 +1152,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "italy-top-scorers",
     label: "Italy top scorers",
     question: "Can you name 10 of Italy's highest scoring national team players?",
+    answerType: "player",
     answers: [
       { answer: "Luigi Riva", value: "35 goals", aliases: ["Gigi Riva", "Riva"] },
       { answer: "Giuseppe Meazza", value: "33 goals", aliases: ["Meazza"] },
@@ -1118,6 +1171,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "germany-top-scorers",
     label: "Germany top scorers",
     question: "Can you name 10 of Germany's highest scoring national team players?",
+    answerType: "player",
     answers: [
       { answer: "Miroslav Klose", value: "71 goals", aliases: ["Klose"] },
       { answer: "Gerd Muller", value: "68 goals", aliases: ["Gerd Müller", "Muller"] },
@@ -1136,6 +1190,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "netherlands-top-scorers",
     label: "Netherlands top scorers",
     question: "Can you name 10 of the Netherlands' highest scoring national team players?",
+    answerType: "player",
     answers: [
       { answer: "Robin van Persie", value: "50 goals", aliases: ["Van Persie"] },
       { answer: "Memphis Depay", value: "45+ goals", aliases: ["Depay", "Memphis"] },
@@ -1154,6 +1209,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "argentina-top-scorers",
     label: "Argentina top scorers",
     question: "Can you name 10 of Argentina's highest scoring national team players?",
+    answerType: "player",
     answers: [
       { answer: "Lionel Messi", value: "100+ goals", aliases: ["Messi"] },
       { answer: "Gabriel Batistuta", value: "54 goals", aliases: ["Batistuta"] },
@@ -1172,6 +1228,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "portugal-top-scorers",
     label: "Portugal top scorers",
     question: "Can you name 10 of Portugal's highest scoring national team players?",
+    answerType: "player",
     answers: [
       { answer: "Cristiano Ronaldo", value: "130+ goals", aliases: ["Ronaldo", "CR7"] },
       { answer: "Pauleta", value: "47 goals" },
@@ -1190,6 +1247,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "sweden-top-scorers",
     label: "Sweden top scorers",
     question: "Can you name 10 of Sweden's highest scoring national team players?",
+    answerType: "player",
     answers: [
       { answer: "Zlatan Ibrahimovic", value: "62 goals", aliases: ["Zlatan", "Ibrahimovic"] },
       { answer: "Sven Rydell", value: "49 goals", aliases: ["Rydell"] },
@@ -1260,6 +1318,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "world-cup-golden-ball-winners",
     label: "World Cup Golden Ball winners",
     question: "Can you name 10 players who have won the FIFA World Cup Golden Ball?",
+    answerType: "player",
     targetCount: 10,
     answers: [
       { answer: "Paolo Rossi", value: "1982", aliases: ["Rossi"] },
@@ -1279,6 +1338,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "world-cup-golden-boot-winners-modern",
     label: "Modern World Cup Golden Boot winners",
     question: "Can you name 10 players who have won the FIFA World Cup Golden Boot since 1982?",
+    answerType: "player",
     targetCount: 10,
     answers: [
       { answer: "Paolo Rossi", value: "1982 / 6 goals", aliases: ["Rossi"] },
@@ -1300,6 +1360,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "world-cup-winning-captains-modern",
     label: "Modern World Cup winning captains",
     question: "Can you name 10 captains who lifted the men's FIFA World Cup from 1982 to 2022?",
+    answerType: "player",
     targetCount: 10,
     answers: [
       { answer: "Dino Zoff", value: "Italy / 1982", aliases: ["Zoff"] },
@@ -1320,6 +1381,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "world-cup-final-goalkeepers-modern",
     label: "Modern World Cup final goalkeepers",
     question: "Can you name 10 goalkeepers who started a men's World Cup final since 1994?",
+    answerType: "player",
     targetCount: 10,
     answers: [
       { answer: "Claudio Taffarel", value: "Brazil / 1994 and 1998", aliases: ["Taffarel"] },
@@ -1341,6 +1403,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "ucl-winning-captains-modern",
     label: "Modern Champions League winning captains",
     question: "Can you name 10 captains who lifted the Champions League trophy since 2000?",
+    answerType: "player",
     targetCount: 10,
     answers: [
       { answer: "Stefan Effenberg", value: "Bayern Munich / 2001", aliases: ["Effenberg"] },
@@ -1444,6 +1507,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "euro-final-goalscorers-since-1996",
     label: "Euro final goalscorers",
     question: "Can you name 10 players who scored in a UEFA Euro final since 1996?",
+    answerType: "player",
     targetCount: 10,
     answers: [
       { answer: "Oliver Bierhoff", value: "1996 final", aliases: ["Bierhoff"] },
@@ -1468,6 +1532,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "players-scored-in-ucl-and-world-cup-finals",
     label: "Scored in UCL and World Cup finals",
     question: "Can you name players who have scored in both a Champions League final and a World Cup final?",
+    answerType: "player",
     targetCount: 10,
     answers: [
       { answer: "Zinedine Zidane", value: "UCL 2002 / WC 1998 and 2006", aliases: ["Zidane"] },
@@ -1487,6 +1552,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "euro-winning-captains-modern",
     label: "Modern Euro winning captains",
     question: "Can you name 10 captains who lifted the UEFA European Championship from 1988 to 2024?",
+    answerType: "player",
     targetCount: 10,
     answers: [
       { answer: "Ruud Gullit", value: "Netherlands / 1988", aliases: ["Gullit"] },
@@ -1612,6 +1678,7 @@ export const DAILY_LIST_CHALLENGES = [
     id: "world-cup-hat-trick-scorers-modern",
     label: "Modern World Cup hat-tricks",
     question: "Can you name 10 players who scored a men's World Cup hat-trick from 1982 to 2022?",
+    answerType: "player",
     targetCount: 10,
     answers: [
       { answer: "Paolo Rossi", value: "1982 vs Brazil", aliases: ["Rossi"] },
@@ -1628,4 +1695,3 @@ export const DAILY_LIST_CHALLENGES = [
   },
   
 ];
-

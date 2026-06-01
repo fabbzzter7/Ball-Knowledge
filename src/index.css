@@ -10286,10 +10286,348 @@ button {
     gap: 7px;
   }
 
-  .connections-actions button {
+.connections-actions button {
     padding: 12px 8px;
     border-radius: 20px;
     font-size: 13px;
+  }
+}
+
+/* PLAYER DATABASE PICKER */
+.player-picker {
+  position: relative;
+  width: 100%;
+  text-align: left;
+  z-index: 30;
+}
+
+.player-picker-input {
+  width: 100%;
+  min-height: 58px;
+  border: 3px solid rgba(255,255,255,0.18);
+  border-radius: 22px;
+  padding: 14px 16px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255,255,255,0.18), transparent 36%),
+    rgba(255,255,255,0.1);
+  color: white;
+  outline: none;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 1000;
+  box-shadow:
+    0 7px 0 rgba(0,0,0,0.28),
+    0 13px 24px rgba(0,0,0,0.2),
+    inset 0 2px 0 rgba(255,255,255,0.13);
+  transition: border-color 0.14s ease, box-shadow 0.14s ease, transform 0.14s ease;
+}
+
+.player-picker-input::placeholder {
+  color: rgba(255,255,255,0.52);
+}
+
+.player-picker-input:focus {
+  border-color: rgba(125,249,255,0.6);
+  box-shadow:
+    0 7px 0 rgba(8,47,73,0.72),
+    0 14px 28px rgba(0,0,0,0.24),
+    0 0 28px rgba(125,249,255,0.24),
+    inset 0 2px 0 rgba(255,255,255,0.16);
+}
+
+.player-picker-results {
+  position: absolute;
+  z-index: 1200;
+  left: 0;
+  right: 0;
+  top: calc(100% + 7px);
+  display: grid;
+  gap: 8px;
+  max-height: min(360px, 45vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(125,249,255,0.18), transparent 34%),
+    linear-gradient(145deg, rgba(5,13,31,0.96), rgba(13,31,61,0.94));
+  border: 2px solid rgba(255,255,255,0.14);
+  box-shadow:
+    0 20px 45px rgba(0,0,0,0.36),
+    0 0 28px rgba(125,249,255,0.14),
+    inset 0 2px 0 rgba(255,255,255,0.1);
+}
+
+.player-picker-option {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  align-items: center;
+  border: 2px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  min-height: 54px;
+  padding: 9px 12px;
+  background:
+    radial-gradient(circle at top left, rgba(255,255,255,0.15), transparent 34%),
+    rgba(255,255,255,0.08);
+  color: white;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow:
+    0 5px 0 rgba(0,0,0,0.28),
+    inset 0 2px 0 rgba(255,255,255,0.09);
+  transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
+}
+
+.player-picker-option:active {
+  transform: translateY(3px) scale(0.99);
+  box-shadow:
+    0 2px 0 rgba(0,0,0,0.28),
+    inset 0 2px 0 rgba(255,255,255,0.08);
+}
+
+.player-picker-option.refreshing {
+  filter: saturate(0.96) brightness(0.98);
+}
+
+.player-picker-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 28% 0%, rgba(255,255,255,0.5), transparent 34%),
+    linear-gradient(145deg, #58cc02, #0ea5e9);
+  font-size: 24px;
+  box-shadow:
+    0 6px 12px rgba(0,0,0,0.22),
+    0 0 18px rgba(88,204,2,0.22),
+    inset 0 2px 0 rgba(255,255,255,0.22);
+}
+
+.player-picker-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.player-picker-option-copy,
+.player-picker-selected-copy {
+  min-width: 0;
+  width: 100%;
+  display: grid;
+  gap: 3px;
+}
+
+.player-picker-option-copy strong,
+.player-picker-selected-copy strong {
+  overflow: hidden;
+  color: white;
+  font-size: 15px;
+  font-weight: 1000;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-picker-option-copy small,
+.player-picker-selected-copy span,
+.player-picker-selected-copy small {
+  overflow: hidden;
+  color: rgba(255,255,255,0.62);
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-picker-option-copy em {
+  display: block;
+  overflow: hidden;
+  margin-top: 2px;
+  color: rgba(255,255,255,0.48);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guess-input-row.player .player-picker-option,
+.whoami-answer-row .player-picker-option,
+.daily-input-row .player-picker-option,
+.league-input-row .player-picker-option,
+.career-answer-box .player-picker-option {
+  width: 100%;
+  min-width: 0;
+  min-height: 54px;
+  padding: 9px 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.guess-input-row.player .player-picker-option-copy,
+.whoami-answer-row .player-picker-option-copy,
+.daily-input-row .player-picker-option-copy,
+.league-input-row .player-picker-option-copy,
+.career-answer-box .player-picker-option-copy {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.guess-input-row.player .player-picker-option-copy strong,
+.guess-input-row.player .player-picker-option-copy small,
+.whoami-answer-row .player-picker-option-copy strong,
+.whoami-answer-row .player-picker-option-copy small,
+.daily-input-row .player-picker-option-copy strong,
+.daily-input-row .player-picker-option-copy small,
+.league-input-row .player-picker-option-copy strong,
+.league-input-row .player-picker-option-copy small,
+.career-answer-box .player-picker-option-copy strong,
+.career-answer-box .player-picker-option-copy small {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-picker-selected {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(88,204,2,0.3), transparent 36%),
+    linear-gradient(145deg, rgba(14,165,233,0.26), rgba(88,204,2,0.16));
+  border: 3px solid rgba(255,255,255,0.16);
+  box-shadow:
+    0 8px 0 rgba(0,0,0,0.24),
+    0 14px 26px rgba(0,0,0,0.18),
+    0 0 26px rgba(88,204,2,0.16),
+    inset 0 2px 0 rgba(255,255,255,0.12);
+}
+
+.player-picker-clear {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.14);
+  color: white;
+  cursor: pointer;
+}
+
+.player-picker-empty {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.68);
+  font-size: 13px;
+  font-weight: 1000;
+  text-align: center;
+}
+
+.player-picker-empty.error {
+  background: rgba(255,75,118,0.14);
+  color: rgba(255,226,232,0.92);
+}
+
+.player-picker-subtle-loading {
+  width: fit-content;
+  margin: 2px auto 0;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.58);
+  font-size: 11px;
+  font-weight: 1000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.guess-input-row.player {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.guess-input-row.player .player-picker {
+  min-width: 0;
+  width: 100%;
+}
+
+.guess-input-row.player .daily-submit-button,
+.guess-input-row.player .career-submit-button,
+.guess-input-row.player > button {
+  min-height: 58px;
+  white-space: nowrap;
+}
+
+.career-answer-box.guess-input-row.player {
+  width: min(880px, 92vw);
+  margin: 0 auto;
+}
+
+.career-answer-box.guess-input-row.player .player-picker-input,
+.whoami-answer-row.guess-input-row.player .player-picker-input,
+.league-input-row.guess-input-row.player .player-picker-input {
+  min-height: 64px;
+  border-radius: 24px;
+  background: rgba(255,255,255,0.94);
+  color: #111827;
+  border-color: rgba(255,255,255,0.72);
+}
+
+.career-answer-box.guess-input-row.player .player-picker-input::placeholder,
+.whoami-answer-row.guess-input-row.player .player-picker-input::placeholder,
+.league-input-row.guess-input-row.player .player-picker-input::placeholder {
+  color: rgba(17,24,39,0.48);
+}
+
+.whoami-answer-row.guess-input-row.player,
+.daily-input-row.guess-input-row.player,
+.league-input-row.guess-input-row.player {
+  position: relative;
+  z-index: 60;
+  width: min(760px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 520px) {
+  .player-picker-results {
+    max-height: min(340px, 45vh);
+    top: calc(100% + 6px);
+    padding: 7px;
+  }
+
+  .player-picker-option {
+    min-height: 52px;
+    padding: 8px 10px;
+  }
+
+  .guess-input-row.player {
+    grid-template-columns: 1fr;
+  }
+
+  .guess-input-row.player .daily-submit-button,
+  .guess-input-row.player .career-submit-button,
+  .guess-input-row.player > button {
+    width: 100%;
   }
 }
 

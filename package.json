@@ -6,6 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "convert:players": "node scripts/convertFifaPlayersCsv.js",
+    "seed:legends": "node scripts/upsertLegendPlayers.js",
+    "players:duplicates": "node scripts/findDuplicatePlayers.js",
+    "players:merge:dry": "node scripts/mergeDuplicatePlayers.js --dry-run",
+    "players:merge:apply": "node scripts/mergeDuplicatePlayers.js --apply",
     "lint": "eslint .",
     "preview": "vite preview"
   },

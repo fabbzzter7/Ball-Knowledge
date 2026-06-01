@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, RotateCcw, CheckCircle2, XCircle, Trash2, X } from "lucide-react";
 import { ANSWER_ALIASES, LAST_WORD_BLACKLIST } from "./answerAliases";
 import PlayerAvatar, { getAvatarConfig } from "./components/PlayerAvatar";
+import GuessInput from "./components/GuessInput";
 
 import { QUESTIONS } from "./QUESTIONS";
 import { CAREER_QUESTIONS } from "./CAREER_QUESTIONS";
@@ -290,6 +291,17 @@ function isCorrectAnswer(input, correctAnswer) {
   return acceptedAnswers.includes(userAnswer);
 }
 
+function isCorrectPlayerAnswer(player, correctAnswer) {
+  if (!player) return false;
+
+  const guesses = [player.name, ...(Array.isArray(player.aliases) ? player.aliases : [])];
+  return guesses.some((guess) => isCorrectAnswer(guess, correctAnswer));
+}
+
+function isPlayerAnswerType(challenge) {
+  return challenge?.answerType === "player";
+}
+
 function getAnswerLabel(answer) {
   if (typeof answer === "string") return answer;
   return answer?.answer || answer?.name || answer?.label || "";
@@ -557,6 +569,13 @@ function getWhoAmIAcceptedAnswers(question) {
 
 function isCorrectWhoAmIAnswer(input, question) {
   return getWhoAmIAcceptedAnswers(question).has(normalizeAnswer(input));
+}
+
+function isCorrectWhoAmIPlayerAnswer(player, question) {
+  if (!player) return false;
+
+  const guesses = [player.name, ...(Array.isArray(player.aliases) ? player.aliases : [])];
+  return guesses.some((guess) => isCorrectWhoAmIAnswer(guess, question));
 }
 
 function getSavedDailyResult() {
@@ -831,6 +850,7 @@ export default function FootballQuizMVP() {
   const [leagueTop10Index, setLeagueTop10Index] = useState(0);
   const [leagueTop10TotalScore, setLeagueTop10TotalScore] = useState(0);
   const [leagueTop10Input, setLeagueTop10Input] = useState("");
+  const [leagueTop10SelectedPlayer, setLeagueTop10SelectedPlayer] = useState(null);
   const [leagueTop10Found, setLeagueTop10Found] = useState([]);
   const [leagueTop10Lives, setLeagueTop10Lives] = useState(3);
   const [leagueTop10Reveal, setLeagueTop10Reveal] = useState(null);
@@ -839,6 +859,7 @@ export default function FootballQuizMVP() {
   const [leagueWhoAmIIndex, setLeagueWhoAmIIndex] = useState(0);
   const [leagueWhoAmIClueIndex, setLeagueWhoAmIClueIndex] = useState(0);
   const [leagueWhoAmIInput, setLeagueWhoAmIInput] = useState("");
+  const [leagueWhoAmISelectedPlayer, setLeagueWhoAmISelectedPlayer] = useState(null);
   const [leagueWhoAmIScore, setLeagueWhoAmIScore] = useState(0);
   const [leagueWhoAmIFeedback, setLeagueWhoAmIFeedback] = useState(null);
   const [leagueWhoAmIShake, setLeagueWhoAmIShake] = useState(0);
@@ -881,6 +902,7 @@ export default function FootballQuizMVP() {
 
   const [selected, setSelected] = useState(null);
   const [textAnswer, setTextAnswer] = useState("");
+  const [careerSelectedPlayer, setCareerSelectedPlayer] = useState(null);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [finished, setFinished] = useState(false);
@@ -901,6 +923,7 @@ export default function FootballQuizMVP() {
 
   const [foundAnswers, setFoundAnswers] = useState([]);
   const [dailyInput, setDailyInput] = useState("");
+  const [dailySelectedPlayer, setDailySelectedPlayer] = useState(null);
   const [dailyCoinsEarned, setDailyCoinsEarned] = useState(0);
   const [dailyReveal, setDailyReveal] = useState(null);
   const [dailyCelebratedAnswer, setDailyCelebratedAnswer] = useState(null);
@@ -941,6 +964,7 @@ export default function FootballQuizMVP() {
   const [whoAmIIndex, setWhoAmIIndex] = useState(0);
   const [whoAmIClueIndex, setWhoAmIClueIndex] = useState(0);
   const [whoAmIInput, setWhoAmIInput] = useState("");
+  const [whoAmISelectedPlayer, setWhoAmISelectedPlayer] = useState(null);
   const [whoAmIScore, setWhoAmIScore] = useState(0);
   const [whoAmIStreak, setWhoAmIStreak] = useState(0);
   const [whoAmILives, setWhoAmILives] = useState(3);
@@ -950,6 +974,7 @@ export default function FootballQuizMVP() {
 
   const current = questions[questionIndex];
   const currentWhoAmI = whoAmIQuestions[whoAmIIndex];
+  const isDailyPlayerChallenge = isPlayerAnswerType(todayChallenge);
   const playerLevel = getPlayerLevel(highScore);
   const displayName = profile?.display_name || profile?.username || username;
   const profileAvatarEmoji = profile?.avatar_emoji || avatarEmoji || "⚽";
@@ -1017,6 +1042,7 @@ export default function FootballQuizMVP() {
   const currentLeagueQuizQuestion = leagueQuizQuestions[leagueQuizIndex];
   const leagueTop10Score = leagueTop10Found.length;
   const leagueTop10TotalWithCurrent = leagueTop10TotalScore + leagueTop10Score;
+  const isLeagueTop10PlayerChallenge = isPlayerAnswerType(leagueTop10Challenge);
   const currentLeagueWhoAmI = leagueWhoAmIQuestions[leagueWhoAmIIndex];
   const leagueWhoAmIVisibleClues = currentLeagueWhoAmI
     ? currentLeagueWhoAmI.clues.slice(0, leagueWhoAmIClueIndex + 1)
@@ -1858,6 +1884,7 @@ export default function FootballQuizMVP() {
     setWhoAmIIndex(0);
     setWhoAmIClueIndex(0);
     setWhoAmIInput("");
+    setWhoAmISelectedPlayer(null);
     setWhoAmIScore(0);
     setWhoAmIStreak(0);
     setWhoAmILives(3);
@@ -1891,16 +1918,21 @@ export default function FootballQuizMVP() {
     setWhoAmIIndex((index) => index + 1);
     setWhoAmIClueIndex(0);
     setWhoAmIInput("");
+    setWhoAmISelectedPlayer(null);
     setWhoAmIFeedback(null);
   };
 
-  const submitWhoAmIGuess = () => {
+  const submitWhoAmIGuess = (playerOverride = null) => {
     if (!currentWhoAmI || whoAmIFeedback?.locked || whoAmIGameOver) return;
 
+    const guessedPlayer = playerOverride || whoAmISelectedPlayer;
     const trimmedGuess = whoAmIInput.trim();
-    if (!trimmedGuess) return;
+    if (!trimmedGuess && !guessedPlayer) return;
 
-    if (isCorrectWhoAmIAnswer(trimmedGuess, currentWhoAmI)) {
+    if (
+      isCorrectWhoAmIPlayerAnswer(guessedPlayer, currentWhoAmI) ||
+      isCorrectWhoAmIAnswer(trimmedGuess, currentWhoAmI)
+    ) {
       const points = whoAmIPointsAvailable;
       setWhoAmIScore((value) => value + points);
       setWhoAmIStreak((value) => value + 1);
@@ -1910,6 +1942,7 @@ export default function FootballQuizMVP() {
         locked: true,
       });
       setWhoAmIInput("");
+      setWhoAmISelectedPlayer(null);
       playCorrectSound();
       window.setTimeout(moveToNextWhoAmI, 1150);
       return;
@@ -1917,6 +1950,7 @@ export default function FootballQuizMVP() {
 
     setWhoAmIShake((value) => value + 1);
     setWhoAmIInput("");
+    setWhoAmISelectedPlayer(null);
 
     if (whoAmIClueIndex < currentWhoAmI.clues.length - 1) {
       setWhoAmIClueIndex((index) => index + 1);
@@ -2047,6 +2081,7 @@ export default function FootballQuizMVP() {
     setQuestionIndex(0);
     setSelected(null);
     setTextAnswer("");
+    setCareerSelectedPlayer(null);
     setScore(0);
     setLives(3);
     setStreak(0);
@@ -2508,9 +2543,11 @@ export default function FootballQuizMVP() {
       setLeagueTop10Reveal(null);
       setLeagueTop10Scanning(false);
       setLeagueTop10Input("");
+      setLeagueTop10SelectedPlayer(null);
       setLeagueWhoAmIIndex(0);
       setLeagueWhoAmIClueIndex(0);
       setLeagueWhoAmIInput("");
+      setLeagueWhoAmISelectedPlayer(null);
       setLeagueWhoAmIScore(0);
       setLeagueWhoAmIFeedback(null);
       setLeagueWhoAmIShake(0);
@@ -2554,6 +2591,7 @@ export default function FootballQuizMVP() {
       setLeagueTop10Reveal(null);
       setLeagueTop10Scanning(false);
       setLeagueTop10Input("");
+      setLeagueTop10SelectedPlayer(null);
       return;
     }
 
@@ -2562,6 +2600,7 @@ export default function FootballQuizMVP() {
       setLeagueTop10Found([]);
       setLeagueTop10Reveal(null);
       setLeagueTop10Input("");
+      setLeagueTop10SelectedPlayer(null);
       setLeagueChallengePhase("whoami");
       return;
     }
@@ -2603,9 +2642,12 @@ export default function FootballQuizMVP() {
     }, 750);
   };
 
-  const submitLeagueTop10Answer = () => {
+  const submitLeagueTop10Answer = (playerOverride = null) => {
+    const guessedPlayer = playerOverride || leagueTop10SelectedPlayer;
+    const guessText = guessedPlayer?.name || leagueTop10Input.trim();
+
     if (
-      !leagueTop10Input.trim() ||
+      !guessText ||
       !leagueTop10Challenge ||
       leagueTop10Scanning ||
       leagueTop10Lives <= 0
@@ -2614,7 +2656,9 @@ export default function FootballQuizMVP() {
     }
 
     const matchedAnswer = leagueTop10Challenge.answers.find(
-      (answer) => isCorrectAnswer(leagueTop10Input, answer)
+      (answer) =>
+        isCorrectPlayerAnswer(guessedPlayer, answer) ||
+        isCorrectAnswer(guessText, answer)
     );
     const alreadyFound =
       matchedAnswer && leagueTop10Found.includes(matchedAnswer);
@@ -2629,7 +2673,7 @@ export default function FootballQuizMVP() {
       type: "scan",
       displayRank,
       rank: matchedRank,
-      answer: matchedAnswer || leagueTop10Input.trim(),
+      answer: matchedAnswer || guessText,
     });
 
     const interval = window.setInterval(() => {
@@ -2646,6 +2690,7 @@ export default function FootballQuizMVP() {
             answer: matchedAnswer,
           });
           setLeagueTop10Input("");
+          setLeagueTop10SelectedPlayer(null);
           window.setTimeout(() => setLeagueTop10Reveal(null), 900);
           return;
         }
@@ -2659,6 +2704,7 @@ export default function FootballQuizMVP() {
           answer: matchedAnswer,
         });
         setLeagueTop10Input("");
+        setLeagueTop10SelectedPlayer(null);
         playCorrectSound();
 
         if (leagueTop10Found.length + 1 >= leagueTop10Challenge.answers.length) {
@@ -2684,9 +2730,10 @@ export default function FootballQuizMVP() {
           type: "wrong",
           displayRank: 0,
           rank: 0,
-          answer: leagueTop10Input.trim(),
+          answer: guessText,
         });
         setLeagueTop10Input("");
+        setLeagueTop10SelectedPlayer(null);
         playWrongSound();
 
         if (nextLives <= 0) {
@@ -2705,7 +2752,7 @@ export default function FootballQuizMVP() {
         type: "scan",
         displayRank,
         rank: matchedRank,
-        answer: matchedAnswer || leagueTop10Input.trim(),
+        answer: matchedAnswer || guessText,
       });
     }, DAILY_SCAN_STEP_MS);
   };
@@ -2723,21 +2770,26 @@ export default function FootballQuizMVP() {
       setLeagueWhoAmIIndex((index) => index + 1);
       setLeagueWhoAmIClueIndex(0);
       setLeagueWhoAmIInput("");
+      setLeagueWhoAmISelectedPlayer(null);
       setLeagueWhoAmIFeedback(null);
     }, 900);
   };
 
-  const submitLeagueWhoAmIAnswer = () => {
+  const submitLeagueWhoAmIAnswer = (playerOverride = null) => {
+    const guessedPlayer = playerOverride || leagueWhoAmISelectedPlayer;
+
     if (
       !currentLeagueWhoAmI ||
-      !leagueWhoAmIInput.trim() ||
+      (!leagueWhoAmIInput.trim() && !guessedPlayer) ||
       leagueWhoAmIFeedback?.locked
     ) {
       return;
     }
 
     const guess = leagueWhoAmIInput.trim();
-    const isCorrect = isCorrectWhoAmIAnswer(guess, currentLeagueWhoAmI);
+    const isCorrect =
+      isCorrectWhoAmIPlayerAnswer(guessedPlayer, currentLeagueWhoAmI) ||
+      isCorrectWhoAmIAnswer(guess, currentLeagueWhoAmI);
 
     if (isCorrect) {
       const earnedPoints = leagueWhoAmIPointsAvailable;
@@ -2749,6 +2801,7 @@ export default function FootballQuizMVP() {
         locked: true,
       });
       setLeagueWhoAmIInput("");
+      setLeagueWhoAmISelectedPlayer(null);
       playCorrectSound();
       moveToNextLeagueWhoAmI(nextScore);
       return;
@@ -2761,6 +2814,7 @@ export default function FootballQuizMVP() {
         text: "New clue unlocked",
       });
       setLeagueWhoAmIInput("");
+      setLeagueWhoAmISelectedPlayer(null);
       setLeagueWhoAmIShake((value) => value + 1);
       playWrongSound();
       window.setTimeout(() => setLeagueWhoAmIFeedback(null), 650);
@@ -2773,6 +2827,7 @@ export default function FootballQuizMVP() {
       locked: true,
     });
     setLeagueWhoAmIInput("");
+    setLeagueWhoAmISelectedPlayer(null);
     setLeagueWhoAmIShake((value) => value + 1);
     playWrongSound();
     moveToNextLeagueWhoAmI(leagueWhoAmIScore);
@@ -3491,6 +3546,7 @@ export default function FootballQuizMVP() {
     setGameMode("daily-list");
     setFoundAnswers([]);
     setDailyInput("");
+    setDailySelectedPlayer(null);
     setDailyCoinsEarned(0);
     setDailyReveal(null);
     setDailyCelebratedAnswer(null);
@@ -3498,6 +3554,7 @@ export default function FootballQuizMVP() {
     setQuestionIndex(0);
     setSelected(null);
     setTextAnswer("");
+    setCareerSelectedPlayer(null);
     setScore(0);
     setLives(3);
     setStreak(0);
@@ -3660,13 +3717,16 @@ export default function FootballQuizMVP() {
     }, 700);
   };
 
-  const checkDailyAnswer = () => {
-    if (!dailyInput.trim() || rewardPopup || wrongPopup || isRevealing) return;
+  const checkDailyAnswer = (playerOverride = null) => {
+    const guessedPlayer = playerOverride || dailySelectedPlayer;
+    const guessText = guessedPlayer?.name || dailyInput.trim();
+    if (!guessText || rewardPopup || wrongPopup || isRevealing) return;
 
     setDailyCelebratedAnswer(null);
 
     const matchedAnswer = todayChallenge.answers.find((answer) =>
-      isCorrectAnswer(dailyInput, answer)
+      isCorrectPlayerAnswer(guessedPlayer, answer) ||
+      isCorrectAnswer(guessText, answer)
     );
 
     if (matchedAnswer && !foundAnswers.includes(matchedAnswer)) {
@@ -3674,6 +3734,7 @@ export default function FootballQuizMVP() {
       const rewardPerCorrect = 15;
 
       setDailyInput("");
+      setDailySelectedPlayer(null);
       setIsRevealing(true);
 
       let displayRank = todayChallenge.answers.length;
@@ -3741,6 +3802,7 @@ export default function FootballQuizMVP() {
 
       setLives(newLives);
       setDailyInput("");
+      setDailySelectedPlayer(null);
       setIsRevealing(true);
 
       let displayRank = todayChallenge.answers.length;
@@ -3826,10 +3888,18 @@ export default function FootballQuizMVP() {
   };
 
   const submitTextAnswer = () => {
-    if (!textAnswer.trim() || selected) return;
+    if ((!textAnswer.trim() && !careerSelectedPlayer) || selected) return;
 
-    chooseAnswer(textAnswer);
+    const submittedAnswer =
+      gameMode === "career" &&
+      careerSelectedPlayer &&
+      isCorrectPlayerAnswer(careerSelectedPlayer, current?.answer)
+        ? current.answer
+        : careerSelectedPlayer?.name || textAnswer;
+
+    chooseAnswer(submittedAnswer);
     setTextAnswer("");
+    setCareerSelectedPlayer(null);
   };
 
   const openCoinShop = () => {
@@ -4578,30 +4648,27 @@ export default function FootballQuizMVP() {
                 })}
               </div>
 
-              <div className="daily-input-row league-input-row">
-                <input
-                  value={leagueTop10Input}
-                  onChange={(event) => setLeagueTop10Input(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") submitLeagueTop10Answer();
-                  }}
-                  placeholder="Type player name..."
-                  className="daily-list-input"
-                  disabled={leagueTop10Scanning || leagueTop10Lives <= 0}
-                  autoFocus
-                />
-                <button
-                  className="daily-submit-button"
-                  onClick={submitLeagueTop10Answer}
-                  disabled={
-                    leagueTop10Scanning ||
-                    leagueTop10Lives <= 0 ||
-                    !leagueTop10Input.trim()
-                  }
-                >
-                  {leagueTop10Scanning ? "Scanning..." : "Guess"}
-                </button>
-              </div>
+              <GuessInput
+                answerType={isLeagueTop10PlayerChallenge ? "player" : "text"}
+                value={leagueTop10Input}
+                onTextChange={setLeagueTop10Input}
+                selectedPlayer={leagueTop10SelectedPlayer}
+                onSelectPlayer={setLeagueTop10SelectedPlayer}
+                onSubmit={submitLeagueTop10Answer}
+                autoSubmitOnSelect
+                placeholder={
+                  isLeagueTop10PlayerChallenge
+                    ? "Search and select player..."
+                    : "Type answer..."
+                }
+                disabled={leagueTop10Scanning || leagueTop10Lives <= 0}
+                buttonLabel={leagueTop10Scanning ? "Scanning..." : "Guess"}
+                rowClassName="daily-input-row league-input-row"
+                inputClassName="daily-list-input"
+                buttonClassName="daily-submit-button"
+                maxSuggestions={4}
+                autoFocus
+              />
 
             </div>
           )}
@@ -4707,29 +4774,22 @@ export default function FootballQuizMVP() {
                 )}
               </motion.div>
 
-              <div className="daily-input-row league-input-row">
-                <input
-                  value={leagueWhoAmIInput}
-                  onChange={(event) => setLeagueWhoAmIInput(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") submitLeagueWhoAmIAnswer();
-                  }}
-                  placeholder="Type player name..."
-                  className="daily-list-input"
-                  disabled={Boolean(leagueWhoAmIFeedback?.locked)}
-                  autoFocus
-                />
-                <button
-                  className="daily-submit-button"
-                  onClick={submitLeagueWhoAmIAnswer}
-                  disabled={
-                    !leagueWhoAmIInput.trim() ||
-                    Boolean(leagueWhoAmIFeedback?.locked)
-                  }
-                >
-                  Guess
-                </button>
-              </div>
+              <GuessInput
+                answerType="player"
+                value={leagueWhoAmIInput}
+                onTextChange={setLeagueWhoAmIInput}
+                selectedPlayer={leagueWhoAmISelectedPlayer}
+                onSelectPlayer={setLeagueWhoAmISelectedPlayer}
+                onSubmit={submitLeagueWhoAmIAnswer}
+                placeholder="Search player or type full name..."
+                disabled={Boolean(leagueWhoAmIFeedback?.locked)}
+                buttonLabel="Guess"
+                rowClassName="daily-input-row league-input-row"
+                inputClassName="daily-list-input"
+                buttonClassName="daily-submit-button"
+                maxSuggestions={4}
+                autoFocus
+              />
             </div>
           )}
 
@@ -6619,27 +6679,23 @@ export default function FootballQuizMVP() {
                 <button onClick={startWhoAmIGame}>Play Again</button>
               </motion.div>
             ) : (
-              <div className="whoami-answer-row">
-                <input
-                  value={whoAmIInput}
-                  onChange={(event) => setWhoAmIInput(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") submitWhoAmIGuess();
-                  }}
-                  disabled={Boolean(whoAmIFeedback?.locked)}
-                  placeholder="Type player name..."
-                  autoFocus
-                />
-                <button
-                  onClick={() => {
-                    playClickSound();
-                    submitWhoAmIGuess();
-                  }}
-                  disabled={!whoAmIInput.trim() || Boolean(whoAmIFeedback?.locked)}
-                >
-                  Guess
-                </button>
-              </div>
+              <GuessInput
+                answerType="player"
+                value={whoAmIInput}
+                onTextChange={setWhoAmIInput}
+                selectedPlayer={whoAmISelectedPlayer}
+                onSelectPlayer={setWhoAmISelectedPlayer}
+                onSubmit={() => {
+                  playClickSound();
+                  submitWhoAmIGuess();
+                }}
+                placeholder="Search player or type full name..."
+                disabled={Boolean(whoAmIFeedback?.locked)}
+                buttonLabel="Guess"
+                rowClassName="whoami-answer-row"
+                maxSuggestions={4}
+                autoFocus
+              />
             )}
           </motion.div>
         </ScreenTransition>
@@ -6964,22 +7020,26 @@ export default function FootballQuizMVP() {
             })}
           </div>
 
-          <div className="daily-input-row">
-            <input
-              value={dailyInput}
-              onChange={(e) => setDailyInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") checkDailyAnswer();
-              }}
-              placeholder="Type player name..."
-              className="daily-list-input"
-              autoFocus
-            />
-
-            <button className="daily-submit-button" onClick={checkDailyAnswer}>
-              GUESS
-            </button>
-          </div>
+          <GuessInput
+            answerType={isDailyPlayerChallenge ? "player" : "text"}
+            value={dailyInput}
+            onTextChange={setDailyInput}
+            selectedPlayer={dailySelectedPlayer}
+            onSelectPlayer={setDailySelectedPlayer}
+            onSubmit={checkDailyAnswer}
+            autoSubmitOnSelect
+            placeholder={
+              isDailyPlayerChallenge
+                ? "Search and select player..."
+                : "Type answer..."
+            }
+            buttonLabel="GUESS"
+            rowClassName="daily-input-row"
+            inputClassName="daily-list-input"
+            buttonClassName="daily-submit-button"
+            maxSuggestions={4}
+            autoFocus
+          />
         </div>
       </div>
     );
@@ -7314,35 +7374,27 @@ export default function FootballQuizMVP() {
 
           {gameMode === "career" || gameMode === "world-cup" ? (
             <>
-              <div
-                className={`career-answer-box ${
+              <GuessInput
+                answerType={gameMode === "career" ? "player" : "text"}
+                value={textAnswer}
+                onTextChange={setTextAnswer}
+                selectedPlayer={careerSelectedPlayer}
+                onSelectPlayer={setCareerSelectedPlayer}
+                onSubmit={submitTextAnswer}
+                placeholder={
+                  gameMode === "world-cup"
+                    ? "Type your answer..."
+                    : "Search player or type full name..."
+                }
+                disabled={Boolean(selected)}
+                buttonLabel="Guess"
+                rowClassName={`career-answer-box ${
                   gameMode === "career" ? "career-premium-answer" : ""
                 }`}
-              >
-                <input
-                  type="text"
-                  placeholder={
-                    gameMode === "world-cup"
-                      ? "Type your answer..."
-                      : "Type player name..."
-                  }
-                  className="career-input"
-                  value={textAnswer}
-                  onChange={(e) => setTextAnswer(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      submitTextAnswer();
-                    }
-                  }}
-                />
-                <button
-                  className="career-submit-button"
-                  onClick={submitTextAnswer}
-                  disabled={!textAnswer.trim() || Boolean(selected)}
-                >
-                  Guess
-                </button>
-              </div>
+                inputClassName="career-input"
+                buttonClassName="career-submit-button"
+                maxSuggestions={4}
+              />
 
               {selected && (
                 <div
