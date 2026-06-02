@@ -73,11 +73,16 @@ function getLeagueSettings(league = {}) {
   const whoamiCount = Number.isFinite(Number(league.whoami_count))
     ? Number(league.whoami_count)
     : 0;
+  const findPlayerCount = Number.isFinite(Number(league.find_player_count))
+    ? Number(league.find_player_count)
+    : 0;
 
   return {
     quizCount: Math.max(0, quizCount),
     top10Count: Math.max(0, Math.min(2, top10Count)),
     whoamiCount: Math.max(0, whoamiCount),
+    findPlayerCount: Math.max(0, Math.min(3, findPlayerCount)),
+    findPlayerScoringMode: league.find_player_scoring_mode || "attempts",
   };
 }
 
@@ -123,8 +128,15 @@ export function buildLeagueWhoAmIQuestionIds(seedText, count = 0) {
 }
 
 export function getLeagueSettingsSummary(league = {}) {
-  const { quizCount, top10Count, whoamiCount } = getLeagueSettings(league);
-  const calculatedMaxDailyPoints = quizCount + top10Count * 10 + whoamiCount * 10;
+  const {
+    quizCount,
+    top10Count,
+    whoamiCount,
+    findPlayerCount,
+    findPlayerScoringMode,
+  } = getLeagueSettings(league);
+  const calculatedMaxDailyPoints =
+    quizCount + top10Count * 10 + whoamiCount * 10 + findPlayerCount * 10;
   const storedMaxDailyPoints = Number(league.max_daily_points);
   const maxDailyPoints = Number.isFinite(storedMaxDailyPoints)
     ? Math.max(storedMaxDailyPoints, calculatedMaxDailyPoints)
@@ -139,6 +151,8 @@ export function getLeagueSettingsSummary(league = {}) {
     quizCount,
     top10Count,
     whoamiCount,
+    findPlayerCount,
+    findPlayerScoringMode,
     maxDailyPoints,
   };
 }

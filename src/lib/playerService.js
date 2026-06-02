@@ -121,6 +121,34 @@ export async function fetchPlayers(limit = 30) {
   return (data || []).map(normalizePlayer);
 }
 
+export async function fetchFindPlayerPool(limit = 1200) {
+  if (!isSupabaseConfigured || !supabase) return { players: [], error: null };
+
+  const { data, error } = await supabase
+    .from("players")
+    .select(PLAYER_SELECT)
+    .not("birth_year", "is", null)
+    .order("popularity_score", { ascending: false, nullsFirst: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("Could not fetch Find the Player pool", error);
+    return { players: [], error };
+  }
+
+  const players = (data || [])
+    .map(normalizePlayer)
+    .filter(
+      (player) =>
+        player.id &&
+        player.name &&
+        (player.nationality || player.national_team) &&
+        (player.position_group || player.position)
+    );
+
+  return { players, error: null };
+}
+
 export async function searchPlayers(query, limit = 8) {
   const normalizedQuery = normalizePlayerSearch(query);
   if (!normalizedQuery || normalizedQuery.length < 2) {

@@ -2,14 +2,12 @@ import buttonTapSound from "../assets/button-tap.mp3";
 import coinSound from "../assets/coin.mp3";
 import correctSound from "../assets/correct.mp3";
 import levelUpSound from "../assets/level-up.mp3";
-import wrongSound from "../assets/wrong.wav";
 
 const SOUND_STORAGE_KEY = "ballKnowledgeSoundEnabled";
 
 const SOUND_CONFIG = {
   buttonTap: { src: buttonTapSound, volume: 0.2, minGapMs: 45 },
   correct: { src: correctSound, volume: 0.45, minGapMs: 90 },
-  wrong: { src: wrongSound, volume: 0.45, minGapMs: 120 },
   coin: { src: coinSound, volume: 0.45, minGapMs: 160 },
   levelUp: { src: levelUpSound, volume: 0.55, minGapMs: 400 },
   // TODO sound assets: swap this fallback when src/assets/sounds/streak.mp3 is present.
@@ -77,7 +75,9 @@ export function playSound(name) {
 }
 
 export const playCorrectSound = () => playSound("correct");
-export const playWrongSound = () => playSound("wrong");
+export const playWrongSound = () => {
+  // Wrong-answer sound intentionally disabled; visual feedback still handles misses.
+};
 export const playCoinSound = () => playSound("coin");
 export const playLevelUpSound = () => playSound("levelUp");
 export const playButtonTapSound = () => {

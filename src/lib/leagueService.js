@@ -9,6 +9,8 @@ import {
   getTodayKey,
   hasLeagueTop10ChallengeId,
 } from "./leagueChallengeUtils";
+import { fetchFindPlayerPool } from "./playerService";
+import { pickDailyFindPlayerTargets } from "./playerDistance";
 
 export function generateLeagueCode() {
   return `LG-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -30,7 +32,7 @@ async function createUniqueLeagueCode(supabase) {
 }
 
 function isMissingSettingsColumnError(error) {
-  return /duration_days|quiz_count|top10_count|whoami_count|max_daily_points|league_format|whoami_question_ids|whoami_score/i.test(
+  return /duration_days|quiz_count|top10_count|whoami_count|find_player_count|find_player_scoring_mode|max_daily_points|league_format|whoami_question_ids|find_player_target_ids|whoami_score|find_player_score|find_player_attempts|find_player_time_seconds/i.test(
     error?.message || ""
   );
 }
@@ -45,7 +47,9 @@ export async function createLeague(supabase, { name, playerId, username, setting
   const quizCount = Number(settings.quizCount ?? 5);
   const top10Count = Number(settings.top10Count ?? 1);
   const whoamiCount = Number(settings.whoamiCount ?? 0);
-  const maxDailyPoints = quizCount + top10Count * 10 + whoamiCount * 10;
+  const findPlayerCount = Number(settings.findPlayerCount ?? 0);
+  const maxDailyPoints =
+    quizCount + top10Count * 10 + whoamiCount * 10 + findPlayerCount * 10;
   const baseInsert = {
     league_code: leagueCode,
     name: leagueName,
@@ -62,6 +66,8 @@ export async function createLeague(supabase, { name, playerId, username, setting
       quiz_count: quizCount,
       top10_count: top10Count,
       whoami_count: whoamiCount,
+      find_player_count: findPlayerCount,
+      find_player_scoring_mode: settings.findPlayerScoringMode || "attempts",
       max_daily_points: maxDailyPoints,
       league_format: settings.leagueFormat || "balanced",
     })
@@ -69,11 +75,11 @@ export async function createLeague(supabase, { name, playerId, username, setting
     .single();
 
   if (leagueError && isMissingSettingsColumnError(leagueError)) {
-    if (whoamiCount > 0) {
+    if (whoamiCount > 0 || findPlayerCount > 0) {
       return {
         league: null,
         error: new Error(
-          "Missing league Who Am I columns. Run the league Who Am I SQL."
+          "Missing league challenge columns. Run the latest league SQL."
         ),
       };
     }
@@ -205,12 +211,28 @@ export async function getOrCreateLeagueDay(supabase, league) {
     seed,
     settings.whoamiCount
   );
+  let findPlayerTargetIds = [];
+  if (settings.findPlayerCount > 0) {
+    const { players, error: playerPoolError } = await fetchFindPlayerPool();
+    if (playerPoolError || players.length < settings.findPlayerCount) {
+      return {
+        leagueDay: null,
+        error: new Error("Not enough Find the Player targets available"),
+      };
+    }
+    findPlayerTargetIds = pickDailyFindPlayerTargets(
+      players,
+      `${seed}:find-player`,
+      settings.findPlayerCount
+    ).map((player) => player.id);
+  }
   const top10Challenge =
     settings.top10Count > 0 ? getLeagueTop10Challenge(seed) : null;
 
   if (
     quizQuestionIds.length !== settings.quizCount ||
     whoamiQuestionIds.length !== settings.whoamiCount ||
+    findPlayerTargetIds.length !== settings.findPlayerCount ||
     (settings.top10Count > 0 && !top10Challenge)
   ) {
     return { leagueDay: null, error: new Error("No valid league challenge available") };
@@ -220,8 +242,10 @@ export async function getOrCreateLeagueDay(supabase, league) {
   if (existingDay) {
     const savedQuizIds = toArrayField(existingDay.quiz_question_ids);
     const savedWhoAmIIds = toArrayField(existingDay.whoami_question_ids);
+    const savedFindPlayerIds = toArrayField(existingDay.find_player_target_ids);
     const savedQuizQuestions = getLeagueQuestionsByIds(savedQuizIds);
     const savedWhoAmIQuestions = getLeagueWhoAmIQuestionsByIds(savedWhoAmIIds);
+    const findPlayerIdSet = new Set(findPlayerTargetIds);
     const needsQuizIds =
       settings.quizCount > 0 &&
       (savedQuizIds.length !== settings.quizCount ||
@@ -230,17 +254,22 @@ export async function getOrCreateLeagueDay(supabase, league) {
       settings.whoamiCount > 0 &&
       (savedWhoAmIIds.length !== settings.whoamiCount ||
         savedWhoAmIQuestions.length !== settings.whoamiCount);
+    const needsFindPlayerIds =
+      settings.findPlayerCount > 0 &&
+      (savedFindPlayerIds.length !== settings.findPlayerCount ||
+        savedFindPlayerIds.some((id) => !findPlayerIdSet.has(id)));
     const needsTop10Id =
       settings.top10Count > 0 &&
       !hasLeagueTop10ChallengeId(existingDay.top10_challenge_id);
 
-    if (!needsQuizIds && !needsWhoAmIIds && !needsTop10Id) {
+    if (!needsQuizIds && !needsWhoAmIIds && !needsFindPlayerIds && !needsTop10Id) {
       return { leagueDay: existingDay, error: null };
     }
 
     const updatePayload = {};
     if (needsQuizIds) updatePayload.quiz_question_ids = quizQuestionIds;
     if (needsWhoAmIIds) updatePayload.whoami_question_ids = whoamiQuestionIds;
+    if (needsFindPlayerIds) updatePayload.find_player_target_ids = findPlayerTargetIds;
     if (needsTop10Id) updatePayload.top10_challenge_id = top10Challenge?.id || null;
 
     const { data: updatedDay, error: updateError } = await supabase
@@ -256,7 +285,7 @@ export async function getOrCreateLeagueDay(supabase, league) {
         error:
           isMissingSettingsColumnError(updateError) && needsWhoAmIIds
             ? new Error(
-                "Missing league Who Am I columns. Run the league Who Am I SQL."
+                "Missing league challenge columns. Run the latest league SQL."
               )
             : updateError,
       };
@@ -265,25 +294,33 @@ export async function getOrCreateLeagueDay(supabase, league) {
     return { leagueDay: updatedDay || existingDay, error: null };
   }
 
+  const insertPayload = {
+    league_id: league.id,
+    day_key: dayKey,
+    day_number: dayNumber,
+    quiz_question_ids: quizQuestionIds,
+    top10_challenge_id: top10Challenge?.id || null,
+    whoami_question_ids: whoamiQuestionIds,
+  };
+  if (settings.findPlayerCount > 0) {
+    insertPayload.find_player_target_ids = findPlayerTargetIds;
+  }
+
   const { data: leagueDay, error } = await supabase
     .from("league_days")
-    .insert({
-      league_id: league.id,
-      day_key: dayKey,
-      day_number: dayNumber,
-      quiz_question_ids: quizQuestionIds,
-      top10_challenge_id: top10Challenge?.id || null,
-      whoami_question_ids: whoamiQuestionIds,
-    })
+    .insert(insertPayload)
     .select()
     .single();
 
   if (error) {
-    if (isMissingSettingsColumnError(error) && settings.whoamiCount > 0) {
+    if (
+      isMissingSettingsColumnError(error) &&
+      (settings.whoamiCount > 0 || settings.findPlayerCount > 0)
+    ) {
       return {
         leagueDay: null,
         error: new Error(
-          "Missing league Who Am I columns. Run the league Who Am I SQL."
+          "Missing league challenge columns. Run the latest league SQL."
         ),
       };
     }
@@ -349,9 +386,20 @@ export async function fetchLeagueDashboard(supabase, leagueId, playerId) {
 
 export async function submitLeagueDailyResult(
   supabase,
-  { league, leagueDay, playerId, username, quizScore, top10Score, whoamiScore = 0 }
+  {
+    league,
+    leagueDay,
+    playerId,
+    username,
+    quizScore,
+    top10Score,
+    whoamiScore = 0,
+    findPlayerScore = 0,
+    findPlayerAttempts = null,
+    findPlayerTimeSeconds = null,
+  }
 ) {
-  const totalPoints = quizScore + top10Score + whoamiScore;
+  const totalPoints = quizScore + top10Score + whoamiScore + findPlayerScore;
 
   const { data: existingSubmission, error: existingError } = await supabase
     .from("league_submissions")
@@ -375,6 +423,9 @@ export async function submitLeagueDailyResult(
       quiz_score: quizScore,
       top10_score: top10Score,
       whoami_score: whoamiScore,
+      find_player_score: findPlayerScore,
+      find_player_attempts: findPlayerAttempts,
+      find_player_time_seconds: findPlayerTimeSeconds,
       total_points: totalPoints,
     })
     .select()

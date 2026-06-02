@@ -48,6 +48,20 @@ export function getDefaultProfile({
     multiplayer_losses: 0,
     multiplayer_draws: 0,
     multiplayer_matches: 0,
+    xp_total: 0,
+    level_id: 1,
+    level_up_claimed_ids: [],
+    progression_stats: {
+      best_general_score: highScore,
+      daily_challenges_completed: 0,
+      best_daily_score: 0,
+      whoami_solved: 0,
+      connections_completed: 0,
+      find_player_solved: 0,
+      h2h_matches_completed: 0,
+      h2h_wins: 0,
+      league_days_completed: 0,
+    },
   };
 }
 
@@ -74,8 +88,17 @@ export async function createProfile(supabase, profile) {
     return { profile: data || null, error };
   }
 
-  const { avatar_icon, avatar_style, avatar_color, avatar_bg, ...legacyProfile } =
-    profile;
+  const {
+    avatar_icon,
+    avatar_style,
+    avatar_color,
+    avatar_bg,
+    xp_total,
+    level_id,
+    level_up_claimed_ids,
+    progression_stats,
+    ...legacyProfile
+  } = profile;
 
   const retry = await supabase
     .from("profiles")
@@ -101,8 +124,17 @@ export async function updateProfile(supabase, playerId, updates) {
     return { profile: data || null, error };
   }
 
-  const { avatar_icon, avatar_style, avatar_color, avatar_bg, ...legacyUpdates } =
-    updates;
+  const {
+    avatar_icon,
+    avatar_style,
+    avatar_color,
+    avatar_bg,
+    xp_total,
+    level_id,
+    level_up_claimed_ids,
+    progression_stats,
+    ...legacyUpdates
+  } = updates;
 
   if (Object.keys(legacyUpdates).length === 0) {
     return { profile: null, error };
@@ -141,6 +173,10 @@ function isMissingAvatarColumnError(error) {
     message.includes("avatar_style") ||
     message.includes("avatar_color") ||
     message.includes("avatar_bg") ||
+    message.includes("xp_total") ||
+    message.includes("level_id") ||
+    message.includes("level_up_claimed_ids") ||
+    message.includes("progression_stats") ||
     message.includes("schema cache")
   );
 }
