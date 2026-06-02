@@ -636,6 +636,66 @@
   pointer-events: none;
 }
 
+.quiz-xp-inline-slot {
+  min-height: 54px;
+  display: grid;
+  place-items: center;
+  margin-top: 8px;
+  pointer-events: none;
+}
+
+.quiz-xp-inline-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 13px;
+  border-radius: 18px;
+  color: #fff7d6;
+  background:
+    radial-gradient(circle at top left, rgba(255,255,255,0.24), transparent 42%),
+    linear-gradient(135deg, rgba(15,23,42,0.96), rgba(59,39,12,0.95) 55%, rgba(161,98,7,0.94));
+  border: 2px solid rgba(250,204,21,0.34);
+  box-shadow:
+    0 7px 0 rgba(69,43,9,0.58),
+    0 13px 26px rgba(0,0,0,0.25),
+    0 0 24px rgba(250,204,21,0.26),
+    inset 0 2px 0 rgba(255,255,255,0.18);
+}
+
+.quiz-xp-inline-toast.bonus {
+  border-color: rgba(52,211,153,0.44);
+  box-shadow:
+    0 7px 0 rgba(6,78,59,0.54),
+    0 13px 28px rgba(0,0,0,0.28),
+    0 0 30px rgba(52,211,153,0.28),
+    inset 0 2px 0 rgba(255,255,255,0.2);
+}
+
+.quiz-xp-inline-toast span {
+  width: 31px;
+  height: 31px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #111827;
+  background: linear-gradient(180deg, #fef3c7, #facc15);
+  font-size: 12px;
+  font-weight: 1000;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.45);
+}
+
+.quiz-xp-inline-toast strong {
+  font-size: 18px;
+  font-weight: 1000;
+}
+
+.quiz-xp-inline-toast em {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(255,247,214,0.72);
+}
+
 .xp-reward-toast > span {
   display: grid;
   place-items: center;
@@ -1711,6 +1771,220 @@ button {
 .result-card p {
   font-size: 28px;
   font-weight: 900;
+}
+
+.general-run-xp-summary {
+  width: 100%;
+  margin: 16px 0 4px;
+  padding: 15px;
+  border-radius: 24px;
+  color: #fff7d6;
+  background:
+    radial-gradient(circle at top left, rgba(255,255,255,0.16), transparent 40%),
+    linear-gradient(145deg, rgba(15,23,42,0.94), rgba(69,43,9,0.92));
+  border: 2px solid rgba(250,204,21,0.28);
+  box-shadow:
+    0 8px 0 rgba(15,23,42,0.4),
+    0 18px 32px rgba(0,0,0,0.2),
+    0 0 28px rgba(250,204,21,0.16),
+    inset 0 2px 0 rgba(255,255,255,0.14);
+}
+
+.general-run-highscore,
+.general-run-xp-line,
+.general-run-xp-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.general-run-highscore {
+  margin-bottom: 10px;
+  padding: 11px 12px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(34,197,94,0.22), rgba(250,204,21,0.18));
+  border: 1px solid rgba(250,204,21,0.34);
+}
+
+.general-run-highscore strong,
+.general-run-highscore span {
+  font-weight: 1000;
+}
+
+.general-run-xp-line,
+.general-run-xp-total {
+  padding: 8px 4px;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.general-run-xp-line span {
+  color: rgba(255,247,214,0.72);
+}
+
+.general-run-xp-line strong,
+.general-run-xp-total strong {
+  color: #fef3c7;
+  font-weight: 1000;
+}
+
+.general-run-xp-total {
+  margin-top: 7px;
+  padding: 12px;
+  border-radius: 17px;
+  background: rgba(255,255,255,0.1);
+  color: white;
+}
+
+.objective-progress-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(6,11,28,0.58);
+  backdrop-filter: blur(9px);
+}
+
+.objective-progress-card {
+  width: min(430px, 94vw);
+  border-radius: 30px;
+  padding: 22px;
+  color: #f8fafc;
+  background:
+    radial-gradient(circle at top left, rgba(34,197,94,0.22), transparent 34%),
+    radial-gradient(circle at top right, rgba(250,204,21,0.18), transparent 35%),
+    linear-gradient(155deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96));
+  border: 3px solid rgba(255,255,255,0.16);
+  box-shadow:
+    0 12px 0 rgba(2,6,23,0.72),
+    0 28px 64px rgba(0,0,0,0.42),
+    0 0 42px rgba(34,197,94,0.18),
+    inset 0 3px 0 rgba(255,255,255,0.12);
+}
+
+.objective-progress-kicker {
+  width: fit-content;
+  padding: 7px 11px;
+  border-radius: 999px;
+  color: #bbf7d0;
+  background: rgba(34,197,94,0.15);
+  border: 1px solid rgba(34,197,94,0.24);
+  font-size: 12px;
+  font-weight: 1000;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.objective-progress-card h2 {
+  margin: 12px 0 14px;
+  font-size: 29px;
+  font-weight: 1000;
+  line-height: 1;
+}
+
+.objective-progress-list {
+  display: grid;
+  gap: 12px;
+}
+
+.objective-progress-row {
+  padding: 13px;
+  border-radius: 21px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.08);
+}
+
+.objective-progress-row.complete {
+  border-color: rgba(34,197,94,0.34);
+  box-shadow:
+    0 0 24px rgba(34,197,94,0.13),
+    inset 0 2px 0 rgba(255,255,255,0.1);
+}
+
+.objective-progress-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.objective-progress-row-top strong {
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 1000;
+}
+
+.objective-progress-row-top span {
+  flex: 0 0 auto;
+  color: rgba(248,250,252,0.68);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.objective-progress-bar {
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(2,6,23,0.42);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.32);
+}
+
+.objective-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22c55e, #bef264, #facc15);
+  box-shadow: 0 0 22px rgba(34,197,94,0.36);
+}
+
+.objective-progress-complete {
+  margin-top: 9px;
+  color: #bbf7d0;
+  font-size: 13px;
+  font-weight: 1000;
+}
+
+.objective-progress-all-complete {
+  margin-top: 13px;
+  padding: 11px 12px;
+  border-radius: 18px;
+  color: #fef3c7;
+  background: rgba(250,204,21,0.12);
+  border: 1px solid rgba(250,204,21,0.22);
+  font-size: 13px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.objective-progress-button {
+  width: 100%;
+  margin-top: 16px;
+  border: 0;
+  border-radius: 22px;
+  padding: 14px 18px;
+  color: #0f172a;
+  background: linear-gradient(180deg, #fef08a, #facc15);
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 1000;
+  cursor: pointer;
+  box-shadow:
+    0 8px 0 rgba(161,98,7,0.76),
+    0 18px 28px rgba(0,0,0,0.22),
+    inset 0 2px 0 rgba(255,255,255,0.46);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+
+.objective-progress-button:active {
+  transform: translateY(4px);
+  box-shadow:
+    0 4px 0 rgba(161,98,7,0.76),
+    0 12px 22px rgba(0,0,0,0.2),
+    inset 0 2px 0 rgba(255,255,255,0.38);
 }
 
 .play-again-button,

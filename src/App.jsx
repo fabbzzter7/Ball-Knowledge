@@ -348,6 +348,18 @@ function getAnswerKey(answer, fallback = "") {
   return `${getAnswerLabel(answer)}-${getAnswerValue(answer) || fallback}`;
 }
 
+function getGeneralHighscoreXpBonus(finalScore) {
+  if (finalScore >= 101) return 5000;
+  if (finalScore >= 76) return 3000;
+  if (finalScore >= 51) return 2000;
+  if (finalScore >= 41) return 1500;
+  if (finalScore >= 31) return 1200;
+  if (finalScore >= 21) return 900;
+  if (finalScore >= 11) return 600;
+  if (finalScore >= 1) return 300;
+  return 0;
+}
+
 function getDailyDateKey() {
   const today = new Date();
   const y = today.getFullYear();
@@ -906,6 +918,18 @@ export default function FootballQuizMVP() {
   const [highScore, setHighScore] = useState(() => {
     return Number(localStorage.getItem("footballQuizHighScore")) || 0;
   });
+  const [runStartHighScore, setRunStartHighScore] = useState(() => {
+    return Number(localStorage.getItem("footballQuizHighScore")) || 0;
+  });
+  const [runId, setRunId] = useState(() => Date.now());
+  const [highScoreBonusAwarded, setHighScoreBonusAwarded] = useState(false);
+  const [runStartProgression, setRunStartProgression] = useState(null);
+  const [generalRunXpSummary, setGeneralRunXpSummary] = useState({
+    correct: 0,
+    streak: 0,
+    highscore: 0,
+  });
+  const [objectiveProgressUpdate, setObjectiveProgressUpdate] = useState(null);
 
   const [coins, setCoins] = useState(() => {
     return Number(localStorage.getItem("footballQuizCoins")) || 0;
@@ -1047,6 +1071,10 @@ export default function FootballQuizMVP() {
     (objective) => objective.complete
   ).length;
   const levelObjectiveSummary = `${completedObjectiveCount}/${progressionView.objectives.length} objectives`;
+  const generalRunXpTotal =
+    generalRunXpSummary.correct +
+    generalRunXpSummary.streak +
+    generalRunXpSummary.highscore;
   const currentHomeViewKey = profileOpen
     ? "profile"
     : leaderboardOpen
@@ -1384,6 +1412,7 @@ export default function FootballQuizMVP() {
   useEffect(() => {
     if (!username || !progressionView.canLevelUp) return;
     if (levelUpPopup) return;
+    if (objectiveProgressUpdate) return;
 
     const oldLevel = progressionView.currentLevel;
     const newLevel = progressionView.nextLevel;
@@ -1432,6 +1461,7 @@ export default function FootballQuizMVP() {
     progressionView.currentLevel,
     progressionView.nextLevel,
     levelUpPopup,
+    objectiveProgressUpdate,
     claimedLevelIds,
     coins,
     xpTotal,
@@ -1460,6 +1490,73 @@ export default function FootballQuizMVP() {
 
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [gameMode, gameStarted]);
+
+  useEffect(() => {
+    if (
+      !finished ||
+      !gameStarted ||
+      gameMode !== "general" ||
+      isMockMultiplayer ||
+      highScoreBonusAwarded
+    ) {
+      return;
+    }
+
+    const highscoreBonus =
+      score > runStartHighScore ? getGeneralHighscoreXpBonus(score) : 0;
+    const bonusAwarded =
+      highscoreBonus > 0 &&
+      awardXp({
+        key: `general-highscore-finish:${runId}`,
+        amount: highscoreBonus,
+        label: "New Highscore",
+        placement: "global",
+      });
+
+    if (bonusAwarded) {
+      setGeneralRunXpSummary((summary) => ({
+        ...summary,
+        highscore: summary.highscore + highscoreBonus,
+      }));
+    }
+
+    const afterView = getProgressionView({
+      xpTotal: xpTotal + (bonusAwarded ? highscoreBonus : 0),
+      levelId: careerLevelId,
+      stats: {
+        ...progressionStats,
+        best_general_score: Math.max(
+          score,
+          highScore,
+          Number(progressionStats.best_general_score) || 0
+        ),
+      },
+    });
+
+    const progressUpdate = buildObjectiveProgressUpdate(
+      runStartProgression,
+      afterView
+    );
+    if (progressUpdate) {
+      window.setTimeout(() => setObjectiveProgressUpdate(progressUpdate), 550);
+    }
+
+    setHighScoreBonusAwarded(true);
+  }, [
+    finished,
+    gameStarted,
+    gameMode,
+    isMockMultiplayer,
+    highScoreBonusAwarded,
+    score,
+    runStartHighScore,
+    runId,
+    xpTotal,
+    careerLevelId,
+    progressionStats,
+    highScore,
+    runStartProgression,
+  ]);
 
   const revivePrices = [500, 1000, 5000];
   const reviveCost = revivePrices[revivesUsed] || null;
@@ -1891,16 +1988,16 @@ export default function FootballQuizMVP() {
     syncProgressionToProfile(next);
   };
 
-  const showXpToast = ({ amount, label }) => {
+  const showXpToast = ({ amount, label, placement = "global" }) => {
     if (!amount) return;
     const key = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    setXpToast({ key, amount, label });
+    setXpToast({ key, amount, label, placement });
     window.setTimeout(() => {
       setXpToast((toast) => (toast?.key === key ? null : toast));
     }, 1200);
   };
 
-  const awardXp = ({ key, amount, label }) => {
+  const awardXp = ({ key, amount, label, placement = "global" }) => {
     const event = createXpEvent({ key, amount, label });
     if (!event) return false;
 
@@ -1918,7 +2015,7 @@ export default function FootballQuizMVP() {
       });
       return nextXp;
     });
-    showXpToast(event);
+    showXpToast({ ...event, placement });
     return true;
   };
 
@@ -1937,6 +2034,47 @@ export default function FootballQuizMVP() {
       persistProgressionState(nextProgression);
       return nextStats;
     });
+  };
+
+  const buildObjectiveProgressUpdate = (beforeView, afterView) => {
+    if (!beforeView || !afterView) return null;
+
+    const updates = afterView.objectives
+      .map((afterObjective) => {
+        const beforeObjective = beforeView.objectives.find(
+          (objective) => objective.statKey === afterObjective.statKey
+        );
+
+        if (!beforeObjective) return null;
+
+        const progressed = afterObjective.current > beforeObjective.current;
+        const newlyCompleted =
+          !beforeObjective.complete && afterObjective.complete;
+
+        if (!progressed && !newlyCompleted) return null;
+
+        return {
+          label: afterObjective.label,
+          statKey: afterObjective.statKey,
+          required: afterObjective.required,
+          before: beforeObjective.current,
+          after: afterObjective.current,
+          beforeProgress: beforeObjective.progress,
+          afterProgress: afterObjective.progress,
+          complete: afterObjective.complete,
+          newlyCompleted,
+        };
+      })
+      .filter(Boolean);
+
+    if (updates.length === 0) return null;
+
+    return {
+      key: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      levelName: afterView.currentLevel.name,
+      updates,
+      allComplete: afterView.objectives.every((objective) => objective.complete),
+    };
   };
 
   const awardOneTimeCoins = ({ key, amount, title }) => {
@@ -2497,6 +2635,20 @@ export default function FootballQuizMVP() {
   };
 
   const startGame = (mode, options = {}) => {
+    const nextRunId = Date.now();
+    const startingHighScore = highScore;
+    const startingProgression = getProgressionView({
+      xpTotal,
+      levelId: careerLevelId,
+      stats: {
+        ...progressionStats,
+        best_general_score: Math.max(
+          startingHighScore,
+          Number(progressionStats.best_general_score) || 0
+        ),
+      },
+    });
+
     setShowDailyCompletePopup(false);
     setLeaderboardOpen(false);
     setProfileOpen(false);
@@ -2514,6 +2666,12 @@ export default function FootballQuizMVP() {
     setStreak(0);
     setTimeLeft(HARD_TIME_LIMIT);
     setFinished(false);
+    setRunStartHighScore(startingHighScore);
+    setRunId(nextRunId);
+    setHighScoreBonusAwarded(false);
+    setRunStartProgression(mode === "general" && !options.multiplayer ? startingProgression : null);
+    setGeneralRunXpSummary({ correct: 0, streak: 0, highscore: 0 });
+    setObjectiveProgressUpdate(null);
     setRevivesUsed(0);
     setRewardPopup(null);
     setWrongPopup(null);
@@ -4343,32 +4501,56 @@ export default function FootballQuizMVP() {
       }
 
       if (gameMode === "general" && !isMockMultiplayer) {
-        awardXp({
+        if (awardXp({
           key: `general-correct:${Date.now()}:${questionIndex}:${newScore}`,
           amount: 5,
           label: "Correct answer",
-        });
+          placement: "inline",
+        })) {
+          setGeneralRunXpSummary((summary) => ({
+            ...summary,
+            correct: summary.correct + 5,
+          }));
+        }
 
         if (newStreak === 5) {
-          awardXp({
+          if (awardXp({
             key: `general-streak-5:${Date.now()}:${newScore}`,
             amount: 10,
             label: "Streak Bonus",
-          });
+            placement: "inline",
+          })) {
+            setGeneralRunXpSummary((summary) => ({
+              ...summary,
+              streak: summary.streak + 10,
+            }));
+          }
         }
         if (newStreak === 10) {
-          awardXp({
+          if (awardXp({
             key: `general-streak-10:${Date.now()}:${newScore}`,
             amount: 25,
             label: "Streak Bonus",
-          });
+            placement: "inline",
+          })) {
+            setGeneralRunXpSummary((summary) => ({
+              ...summary,
+              streak: summary.streak + 25,
+            }));
+          }
         }
         if (newStreak === 20) {
-          awardXp({
+          if (awardXp({
             key: `general-streak-20:${Date.now()}:${newScore}`,
             amount: 75,
             label: "Streak Bonus",
-          });
+            placement: "inline",
+          })) {
+            setGeneralRunXpSummary((summary) => ({
+              ...summary,
+              streak: summary.streak + 75,
+            }));
+          }
         }
       }
 
@@ -4705,7 +4887,7 @@ export default function FootballQuizMVP() {
 
   const xpToastOverlay = (
     <AnimatePresence>
-      {xpToast && (
+      {xpToast && xpToast.placement !== "inline" && (
         <motion.div
           className="xp-reward-toast"
           initial={{ opacity: 0, y: 16, scale: 0.9 }}
@@ -4718,6 +4900,86 @@ export default function FootballQuizMVP() {
             <strong>+{xpToast.amount} XP</strong>
             <small>{xpToast.label || "Progress earned"}</small>
           </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
+  const objectiveProgressModal = (
+    <AnimatePresence>
+      {objectiveProgressUpdate && (
+        <motion.div
+          className="objective-progress-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="objective-progress-card"
+            initial={{ opacity: 0, y: 26, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 14, scale: 0.94 }}
+            transition={{ type: "spring", stiffness: 190, damping: 16 }}
+          >
+            <div className="objective-progress-kicker">Objective updated</div>
+            <h2>{objectiveProgressUpdate.levelName}</h2>
+
+            <div className="objective-progress-list">
+              {objectiveProgressUpdate.updates.map((objective) => (
+                <div
+                  className={`objective-progress-row ${
+                    objective.complete ? "complete" : ""
+                  }`}
+                  key={objective.statKey}
+                >
+                  <div className="objective-progress-row-top">
+                    <strong>{objective.label}</strong>
+                    <span>
+                      {objective.before.toLocaleString()} →{" "}
+                      {objective.after.toLocaleString()} /{" "}
+                      {objective.required.toLocaleString()}
+                    </span>
+                  </div>
+
+                  <div className="objective-progress-bar">
+                    <motion.div
+                      className="objective-progress-fill"
+                      initial={{ width: `${objective.beforeProgress}%` }}
+                      animate={{ width: `${objective.afterProgress}%` }}
+                      transition={{ delay: 0.18, duration: 0.62, ease: "easeOut" }}
+                    />
+                  </div>
+
+                  {objective.newlyCompleted && (
+                    <motion.div
+                      className="objective-progress-complete"
+                      initial={{ opacity: 0, y: 8, scale: 0.94 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ delay: 0.45, duration: 0.22 }}
+                    >
+                      ✓ Completed
+                    </motion.div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {objectiveProgressUpdate.allComplete && (
+              <div className="objective-progress-all-complete">
+                All objectives complete. Level up incoming.
+              </div>
+            )}
+
+            <button
+              className="objective-progress-button"
+              onClick={() => {
+                playClickSound();
+                setObjectiveProgressUpdate(null);
+              }}
+            >
+              CONTINUE
+            </button>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
@@ -5815,6 +6077,7 @@ export default function FootballQuizMVP() {
         {levelProgressModal}
         {avatarPickerModal}
         {xpToastOverlay}
+        {objectiveProgressModal}
         <AnimatePresence>
           {showDailyCompletePopup && lastDailyResult && (
             <motion.div
@@ -8200,6 +8463,7 @@ export default function FootballQuizMVP() {
         {coinShopModal}
         {dailyRewardMeterModal}
         {xpToastOverlay}
+        {objectiveProgressModal}
         <div className={`result-card ${isDaily ? "daily-result-card" : ""}`}>
           <Trophy size={70} />
 
@@ -8286,6 +8550,47 @@ export default function FootballQuizMVP() {
             <>
               <p>🔥 Final Score: {score}</p>
               <p>🏆 Best Score: {highScore}</p>
+              {gameMode === "general" && generalRunXpTotal > 0 && (
+                <motion.div
+                  className="general-run-xp-summary"
+                  initial={{ opacity: 0, y: 12, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: 0.12, duration: 0.24 }}
+                >
+                  {score > runStartHighScore && (
+                    <div className="general-run-highscore">
+                      <strong>New Highscore!</strong>
+                      <span>
+                        +{generalRunXpSummary.highscore || getGeneralHighscoreXpBonus(score)} XP
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="general-run-xp-line">
+                    <span>Correct answers</span>
+                    <strong>+{generalRunXpSummary.correct} XP</strong>
+                  </div>
+
+                  {generalRunXpSummary.streak > 0 && (
+                    <div className="general-run-xp-line">
+                      <span>Streak bonuses</span>
+                      <strong>+{generalRunXpSummary.streak} XP</strong>
+                    </div>
+                  )}
+
+                  {generalRunXpSummary.highscore > 0 && (
+                    <div className="general-run-xp-line">
+                      <span>Highscore bonus</span>
+                      <strong>+{generalRunXpSummary.highscore} XP</strong>
+                    </div>
+                  )}
+
+                  <div className="general-run-xp-total">
+                    <span>Total XP this run</span>
+                    <strong>+{generalRunXpTotal} XP</strong>
+                  </div>
+                </motion.div>
+              )}
             </>
           )}
 
@@ -8349,6 +8654,7 @@ export default function FootballQuizMVP() {
       {coinShopModal}
       {dailyRewardMeterModal}
       {xpToastOverlay}
+      {objectiveProgressModal}
       <button
         className="home-button"
         onClick={() => {
@@ -8552,35 +8858,57 @@ export default function FootballQuizMVP() {
               )}
             </>
           ) : (
-            <div
-              className={`answers-grid ${
-                gameMode === "world-cup" ? "world-cup-answer-grid" : ""
-              }`}
-            >
-              {current.options.map((option) => {
-                const isCorrect = option === current.answer;
-                const isChosen = selected === option;
-                const showCorrect = selected && isCorrect;
-                const showWrong = selected && isChosen && !isCorrect;
+            <>
+              <div
+                className={`answers-grid ${
+                  gameMode === "world-cup" ? "world-cup-answer-grid" : ""
+                }`}
+              >
+                {current.options.map((option) => {
+                  const isCorrect = option === current.answer;
+                  const isChosen = selected === option;
+                  const showCorrect = selected && isCorrect;
+                  const showWrong = selected && isChosen && !isCorrect;
 
-                return (
-                  <button
-                    key={option}
-                    onClick={() => {
-                      playClickSound();
-                      chooseAnswer(option);
-                    }}
-                    className={`answer-button ${
-                      showCorrect ? "correct" : showWrong ? "wrong" : ""
-                    }`}
-                  >
-                    <span>{option}</span>
-                    {showCorrect && <CheckCircle2 size={28} />}
-                    {showWrong && <XCircle size={28} />}
-                  </button>
-                );
-              })}
-            </div>
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        playClickSound();
+                        chooseAnswer(option);
+                      }}
+                      className={`answer-button ${
+                        showCorrect ? "correct" : showWrong ? "wrong" : ""
+                      }`}
+                    >
+                      <span>{option}</span>
+                      {showCorrect && <CheckCircle2 size={28} />}
+                      {showWrong && <XCircle size={28} />}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="quiz-xp-inline-slot">
+                <AnimatePresence>
+                  {xpToast && xpToast.placement === "inline" && (
+                    <motion.div
+                      key={xpToast.key}
+                      className={`quiz-xp-inline-toast ${
+                        xpToast.amount > 5 ? "bonus" : ""
+                      }`}
+                      initial={{ opacity: 0, y: 10, scale: 0.92 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                      <span>XP</span>
+                      <strong>+{xpToast.amount}</strong>
+                      <em>{xpToast.label || "Progress"}</em>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </>
           )}
         </motion.div>
       </AnimatePresence>
