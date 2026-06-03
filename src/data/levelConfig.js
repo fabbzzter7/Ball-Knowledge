@@ -18,7 +18,7 @@ export const LEVELS = [
     objectives: [
       { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 5 },
       { type: "xp", label: "XP earned", statKey: "xp_total", required: 1500 },
-      { type: "daily", label: "Daily Challenges completed", statKey: "daily_challenges_completed", required: 1 },
+      { type: "connections", label: "Connections completed", statKey: "connections_completed", required: 1 },
     ],
   },
   {
@@ -27,9 +27,9 @@ export const LEVELS = [
     emoji: "🧣",
     color: "green",
     objectives: [
-      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 20 },
+      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 15 },
       { type: "xp", label: "XP earned", statKey: "xp_total", required: 2500 },
-      { type: "connections", label: "Connections completed", statKey: "connections_completed", required: 1 },
+      { type: "connections", label: "Connections completed", statKey: "connections_completed", required: 2 },
       { type: "whoami", label: "Who Am I solved", statKey: "whoami_solved", required: 1 },
     ],
   },
@@ -39,7 +39,7 @@ export const LEVELS = [
     emoji: "⚽",
     color: "yellow",
     objectives: [
-      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 35 },
+      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 25 },
       { type: "xp", label: "XP earned", statKey: "xp_total", required: 5000 },
       { type: "find_player", label: "Find the Player solved", statKey: "find_player_solved", required: 1 },
       { type: "daily", label: "Daily Challenges completed", statKey: "daily_challenges_completed", required: 3 },
@@ -51,7 +51,7 @@ export const LEVELS = [
     emoji: "🧠",
     color: "yellow",
     objectives: [
-      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 40 },
+      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 35 },
       { type: "xp", label: "XP earned", statKey: "xp_total", required: 9000 },
       { type: "connections", label: "Connections completed", statKey: "connections_completed", required: 3 },
       { type: "whoami", label: "Who Am I solved", statKey: "whoami_solved", required: 5 },
@@ -63,7 +63,7 @@ export const LEVELS = [
     emoji: "👀",
     color: "blue",
     objectives: [
-      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 50 },
+      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 40 },
       { type: "xp", label: "XP earned", statKey: "xp_total", required: 15000 },
       { type: "daily", label: "Daily Challenges completed", statKey: "daily_challenges_completed", required: 7 },
       { type: "find_player", label: "Find the Player solved", statKey: "find_player_solved", required: 5 },
@@ -75,7 +75,7 @@ export const LEVELS = [
     emoji: "📝",
     color: "blue",
     objectives: [
-      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 70 },
+      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 50 },
       { type: "xp", label: "XP earned", statKey: "xp_total", required: 24000 },
       { type: "league", label: "League days completed", statKey: "league_days_completed", required: 3 },
       { type: "h2h", label: "H2H wins", statKey: "h2h_wins", required: 3 },
@@ -87,7 +87,7 @@ export const LEVELS = [
     emoji: "🎙️",
     color: "purple",
     objectives: [
-      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 100 },
+      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 60 },
       { type: "xp", label: "XP earned", statKey: "xp_total", required: 38000 },
       { type: "connections", label: "Connections completed", statKey: "connections_completed", required: 10 },
       { type: "whoami", label: "Who Am I solved", statKey: "whoami_solved", required: 15 },
@@ -99,7 +99,7 @@ export const LEVELS = [
     emoji: "🎯",
     color: "purple",
     objectives: [
-      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 120 },
+      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 70 },
       { type: "xp", label: "XP earned", statKey: "xp_total", required: 56000 },
       { type: "daily", label: "Daily Challenges completed", statKey: "daily_challenges_completed", required: 20 },
       { type: "league", label: "League days completed", statKey: "league_days_completed", required: 8 },
@@ -111,7 +111,7 @@ export const LEVELS = [
     emoji: "📊",
     color: "orange",
     objectives: [
-      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 150 },
+      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 90 },
       { type: "xp", label: "XP earned", statKey: "xp_total", required: 80000 },
       { type: "find_player", label: "Find the Player solved", statKey: "find_player_solved", required: 20 },
       { type: "h2h", label: "H2H wins", statKey: "h2h_wins", required: 10 },
@@ -123,7 +123,7 @@ export const LEVELS = [
     emoji: "🎓",
     color: "orange",
     objectives: [
-      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 175 },
+      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 100 },
       { type: "xp", label: "XP earned", statKey: "xp_total", required: 112000 },
       { type: "connections", label: "Connections completed", statKey: "connections_completed", required: 25 },
       { type: "daily", label: "Daily Challenges completed", statKey: "daily_challenges_completed", required: 35 },
@@ -135,7 +135,7 @@ export const LEVELS = [
     emoji: "👑",
     color: "legend",
     objectives: [
-      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 200 },
+      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 115 },
       { type: "xp", label: "XP earned", statKey: "xp_total", required: 155000 },
       { type: "whoami", label: "Who Am I solved", statKey: "whoami_solved", required: 40 },
       { type: "league", label: "League days completed", statKey: "league_days_completed", required: 20 },
@@ -147,7 +147,7 @@ export const LEVELS = [
     emoji: "💎",
     color: "legend",
     objectives: [
-      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 250 },
+      { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 130 },
       { type: "xp", label: "XP earned", statKey: "xp_total", required: 220000 },
       { type: "h2h", label: "H2H wins", statKey: "h2h_wins", required: 25 },
       { type: "find_player", label: "Find the Player solved", statKey: "find_player_solved", required: 50 },
