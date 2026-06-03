@@ -23,7 +23,11 @@ import {
 } from "./lib/profileService";
 import { fetchFindPlayerPool } from "./lib/playerService";
 import { isPlayerAnswerMatch } from "./lib/playerAnswer";
-import { isPlayerAnswerCorrect } from "./lib/playerAnswerMatcher";
+import {
+  getAnswerCandidates,
+  getExpectedAnswers,
+  isPlayerAnswerCorrect,
+} from "./lib/playerAnswerMatcher";
 import {
   addDaysToDateKey,
   formatDisplayDate,
@@ -41,6 +45,7 @@ import {
 import {
   addStat,
   createXpEvent,
+  getLevelById,
   getInitialProgression,
   getProgressionView,
   maxStat,
@@ -321,6 +326,18 @@ function isCorrectPlayerAnswer(player, correctAnswer) {
 
   const guesses = [player.name, ...(Array.isArray(player.aliases) ? player.aliases : [])];
   return guesses.some((guess) => isCorrectAnswer(guess, correctAnswer));
+}
+
+function isPlayerLike(value) {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      !("nativeEvent" in value) &&
+      (value.name ||
+        value.full_name ||
+        value.search_name ||
+        Array.isArray(value.aliases))
+  );
 }
 
 function isPlayerAnswerType(challenge) {
@@ -905,6 +922,8 @@ export default function FootballQuizMVP() {
   const [levelModalOpen, setLevelModalOpen] = useState(false);
   const [xpToast, setXpToast] = useState(null);
   const [leaderboardRows, setLeaderboardRows] = useState([]);
+  const [levelLeaderboardRows, setLevelLeaderboardRows] = useState([]);
+  const [leaderboardTab, setLeaderboardTab] = useState("general");
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState("");
   const [gameMode, setGameMode] = useState("general");
@@ -1836,6 +1855,7 @@ export default function FootballQuizMVP() {
   const loadGeneralLeaderboard = async () => {
     if (!isSupabaseConfigured || !supabase) {
       setLeaderboardRows([]);
+      setLevelLeaderboardRows([]);
       setLeaderboardError("Online leaderboard is unavailable");
       return;
     }
@@ -1848,6 +1868,13 @@ export default function FootballQuizMVP() {
       .select("*")
       .gt("best_score", 0)
       .order("best_score", { ascending: false })
+      .limit(10);
+    const { data: levelData, error: levelError } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("level_id", { ascending: false, nullsFirst: false })
+      .order("xp_total", { ascending: false, nullsFirst: false })
+      .order("best_score", { ascending: false, nullsFirst: false })
       .limit(10);
 
     setLeaderboardLoading(false);
@@ -1870,6 +1897,30 @@ export default function FootballQuizMVP() {
         isCurrentUser: row.id === playerId,
       }))
     );
+
+    if (levelError) {
+      console.error("Could not load highest levels leaderboard", levelError);
+      setLevelLeaderboardRows([]);
+    } else {
+      setLevelLeaderboardRows(
+        (levelData || []).map((row, index) => {
+          const levelId = Math.max(1, Number(row.level_id) || 1);
+          const level = getLevelById(levelId);
+
+          return {
+            ...row,
+            username: row.display_name || row.username || "Player",
+            levelId,
+            levelName: level.name,
+            levelEmoji: level.emoji,
+            xpTotal: Number(row.xp_total) || 0,
+            rank: index + 1,
+            medal: medals[index] || null,
+            isCurrentUser: row.id === playerId,
+          };
+        })
+      );
+    }
   };
 
   const getSocialProfile = (id, fallbackUsername = "Player") => {
@@ -2347,7 +2398,9 @@ export default function FootballQuizMVP() {
   const submitWhoAmIGuess = (playerOverride = null) => {
     if (!currentWhoAmI || whoAmIFeedback?.locked || whoAmIGameOver) return;
 
-    const guessedPlayer = playerOverride || whoAmISelectedPlayer;
+    const guessedPlayer = isPlayerLike(playerOverride)
+      ? playerOverride
+      : whoAmISelectedPlayer;
     const trimmedGuess = whoAmIInput.trim();
     if (!trimmedGuess && !guessedPlayer) return;
 
@@ -3341,7 +3394,9 @@ export default function FootballQuizMVP() {
   };
 
   const submitLeagueTop10Answer = (playerOverride = null) => {
-    const guessedPlayer = playerOverride || leagueTop10SelectedPlayer;
+    const guessedPlayer = isPlayerLike(playerOverride)
+      ? playerOverride
+      : leagueTop10SelectedPlayer;
     const guessText = guessedPlayer?.name || leagueTop10Input.trim();
 
     if (
@@ -3481,7 +3536,9 @@ export default function FootballQuizMVP() {
   };
 
   const submitLeagueWhoAmIAnswer = (playerOverride = null) => {
-    const guessedPlayer = playerOverride || leagueWhoAmISelectedPlayer;
+    const guessedPlayer = isPlayerLike(playerOverride)
+      ? playerOverride
+      : leagueWhoAmISelectedPlayer;
 
     if (
       !currentLeagueWhoAmI ||
@@ -3492,13 +3549,36 @@ export default function FootballQuizMVP() {
     }
 
     const guess = leagueWhoAmIInput.trim();
+    const candidates = getAnswerCandidates({
+      typedAnswer: guess,
+      selectedPlayer: guessedPlayer,
+    });
+    const expected = getExpectedAnswers(currentLeagueWhoAmI);
     const isCorrect = isPlayerAnswerCorrect({
       typedAnswer: guess,
       selectedPlayer: guessedPlayer,
-      correctAnswer: currentLeagueWhoAmI,
+      question: currentLeagueWhoAmI,
       acceptedAnswers: currentLeagueWhoAmI.acceptedAnswers || [],
       debugContext: `league-whoami:${currentLeagueWhoAmI.id}`,
     });
+
+    console.group("League Who Am I answer check");
+    console.log("raw typed answer", guess);
+    console.log("raw playerOverride", playerOverride);
+    console.log("state selectedPlayer", leagueWhoAmISelectedPlayer);
+    console.log("selectedPlayer used", guessedPlayer);
+    console.log("question/challenge object", currentLeagueWhoAmI);
+    console.log("expected answer fields", {
+      answer: currentLeagueWhoAmI.answer,
+      correctAnswer: currentLeagueWhoAmI.correctAnswer,
+      playerName: currentLeagueWhoAmI.playerName,
+      acceptedAnswers: currentLeagueWhoAmI.acceptedAnswers,
+      aliases: currentLeagueWhoAmI.aliases,
+    });
+    console.log("normalized candidates", candidates);
+    console.log("normalized expected", expected);
+    console.log("isCorrect", isCorrect);
+    console.groupEnd();
 
     if (isCorrect) {
       const earnedPoints = leagueWhoAmIPointsAvailable;
@@ -4660,7 +4740,9 @@ export default function FootballQuizMVP() {
   };
 
   const checkDailyAnswer = (playerOverride = null) => {
-    const guessedPlayer = playerOverride || dailySelectedPlayer;
+    const guessedPlayer = isPlayerLike(playerOverride)
+      ? playerOverride
+      : dailySelectedPlayer;
     const guessText = guessedPlayer?.name || dailyInput.trim();
     if (!guessText || rewardPopup || wrongPopup || isRevealing) return;
 
@@ -6567,17 +6649,34 @@ export default function FootballQuizMVP() {
 
               <h1 className="leaderboard-title">Leaderboard</h1>
               <p className="leaderboard-subtitle">
-                All Time • General Knowledge
+                All Time • Real player profiles
               </p>
 
-              <div className="leaderboard-mode-pill">General Knowledge</div>
+              <div className="leaderboard-tabs leaderboard-tabs-premium">
+                <button
+                  className={leaderboardTab === "general" ? "active" : ""}
+                  onClick={() => setLeaderboardTab("general")}
+                >
+                  General Knowledge
+                </button>
+                <button
+                  className={leaderboardTab === "levels" ? "active" : ""}
+                  onClick={() => setLeaderboardTab("levels")}
+                >
+                  Highest Levels
+                </button>
+              </div>
+
+              <div className="leaderboard-mode-pill">
+                {leaderboardTab === "levels" ? "Highest Levels" : "General Knowledge"}
+              </div>
 
               {leaderboardLoading ? (
                 <div className="leaderboard-empty-state">
                   <strong>Loading scores...</strong>
                   <span>Finding the sharpest ball knowledge.</span>
                 </div>
-              ) : leaderboardRows.length > 0 ? (
+              ) : leaderboardTab === "general" && leaderboardRows.length > 0 ? (
                 <div className="leaderboard-list">
                   {leaderboardRows.map((row) => (
                     <div
@@ -6603,12 +6702,49 @@ export default function FootballQuizMVP() {
                     </div>
                   ))}
                 </div>
+              ) : leaderboardTab === "levels" && levelLeaderboardRows.length > 0 ? (
+                <div className="leaderboard-list">
+                  {levelLeaderboardRows.map((row) => (
+                    <motion.div
+                      key={row.id || row.username}
+                      className={`leaderboard-row level-leaderboard-row rank-${row.rank} ${
+                        row.isCurrentUser ? "current-user" : ""
+                      }`}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: row.rank * 0.035, duration: 0.22 }}
+                    >
+                      <div className="leaderboard-rank">
+                        {row.medal || row.rank}
+                      </div>
+
+                      <PlayerAvatar profile={row} size="small" />
+
+                      <div className="leaderboard-player">
+                        <strong>{row.username}</strong>
+                        <small>
+                          Level {row.levelId} · {row.levelName}
+                        </small>
+                      </div>
+
+                      <div className="leaderboard-score level-score">
+                        <span>{row.levelEmoji}</span>
+                        <strong>{row.xpTotal.toLocaleString()}</strong>
+                        <small>XP</small>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
               ) : (
                 <div className="leaderboard-empty-state">
-                  <strong>No scores yet</strong>
+                  <strong>
+                    {leaderboardTab === "levels" ? "No levels yet" : "No scores yet"}
+                  </strong>
                   <span>
                     {leaderboardError ||
-                      "Play General Knowledge to set the first score"}
+                      (leaderboardTab === "levels"
+                        ? "Earn XP to appear on the levels leaderboard"
+                        : "Play General Knowledge to set the first score")}
                   </span>
                 </div>
               )}

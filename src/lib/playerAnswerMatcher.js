@@ -58,6 +58,10 @@ export function getExpectedAnswerCandidates(answer = {}) {
   ]);
 }
 
+export function getExpectedAnswers(question = {}) {
+  return getExpectedAnswerCandidates(question);
+}
+
 export function getPlayerAnswerCandidates({ typedAnswer = "", selectedPlayer = null } = {}) {
   const playerValues = selectedPlayer
     ? [
@@ -76,6 +80,10 @@ export function getPlayerAnswerCandidates({ typedAnswer = "", selectedPlayer = n
   ]);
 }
 
+export function getAnswerCandidates({ typedAnswer = "", selectedPlayer = null } = {}) {
+  return getPlayerAnswerCandidates({ typedAnswer, selectedPlayer });
+}
+
 function candidatesMatch(guesses, expected) {
   return guesses.some((guess) =>
     expected.some((answer) => {
@@ -92,13 +100,16 @@ export function isPlayerAnswerCorrect({
   typedAnswer = "",
   selectedPlayer = null,
   correctAnswer,
+  question,
   acceptedAnswers = [],
   debugContext = "",
 } = {}) {
+  const answerObject = question || correctAnswer;
+  const accepted = asArray(acceptedAnswers);
   const expected = uniqueNormalized([
-    ...getExpectedAnswerCandidates(correctAnswer),
-    ...acceptedAnswers,
-    ...acceptedAnswers.flatMap(nameParts),
+    ...getExpectedAnswerCandidates(answerObject),
+    ...accepted,
+    ...accepted.flatMap(nameParts),
   ]);
   const guesses = getPlayerAnswerCandidates({ typedAnswer, selectedPlayer });
   const matched = expected.length > 0 && guesses.length > 0 && candidatesMatch(guesses, expected);
@@ -114,4 +125,33 @@ export function isPlayerAnswerCorrect({
   }
 
   return matched;
+}
+
+if (import.meta.env?.DEV) {
+  console.assert(
+    isPlayerAnswerCorrect({
+      typedAnswer: "",
+      selectedPlayer: { name: "Daniele De Rossi", aliases: ["De Rossi"] },
+      question: { answer: "Daniele De Rossi" },
+    }) === true,
+    "Daniele De Rossi should match"
+  );
+
+  console.assert(
+    isPlayerAnswerCorrect({
+      typedAnswer: "",
+      selectedPlayer: { name: "Kelechi Iheanacho", aliases: ["Iheanacho"] },
+      question: { answer: "Iheanacho" },
+    }) === true,
+    "Iheanacho should match"
+  );
+
+  console.assert(
+    isPlayerAnswerCorrect({
+      typedAnswer: "",
+      selectedPlayer: { name: "Borja Valero Iglesias", aliases: ["Borja Valero"] },
+      question: { answer: "Borja Valero" },
+    }) === true,
+    "Borja Valero should match"
+  );
 }

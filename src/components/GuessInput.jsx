@@ -57,7 +57,7 @@ export default function GuessInput({
 
       <button
         className={buttonClassName}
-        onClick={onSubmit}
+        onClick={() => onSubmit?.()}
         disabled={!canSubmit}
         type="button"
       >
