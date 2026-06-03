@@ -23,6 +23,12 @@ import {
 } from "./lib/profileService";
 import { fetchFindPlayerPool } from "./lib/playerService";
 import { isPlayerAnswerMatch } from "./lib/playerAnswer";
+import { isPlayerAnswerCorrect } from "./lib/playerAnswerMatcher";
+import {
+  addDaysToDateKey,
+  formatDisplayDate,
+  getTodayDateKey,
+} from "./lib/dailyDateUtils";
 import {
   buildPlayerDistanceRanking,
   getDistanceBarPercent,
@@ -360,24 +366,47 @@ function getGeneralHighscoreXpBonus(finalScore) {
   return 0;
 }
 
-function getDailyDateKey() {
-  const today = new Date();
-  const y = today.getFullYear();
-  const m = String(today.getMonth() + 1).padStart(2, "0");
-  const d = String(today.getDate()).padStart(2, "0");
+function getSeededIndex(seedText, length) {
+  if (!length) return 0;
 
-  return `${y}-${m}-${d}`;
+  let seed = 0;
+  for (const char of String(seedText)) {
+    seed = (seed * 31 + char.charCodeAt(0)) >>> 0;
+  }
+
+  return seed % length;
+}
+
+function getDailyWhoAmIQuestion(dateKey) {
+  const questions = Array.isArray(WHO_AM_I_QUESTIONS)
+    ? WHO_AM_I_QUESTIONS.filter((question) => question?.id && question?.answer)
+    : [];
+
+  return questions[getSeededIndex(`daily-whoami:${dateKey}`, questions.length)] || null;
+}
+
+function saveDailyModeResult(mode, dateKey, puzzleId, result) {
+  if (!mode || !dateKey || !puzzleId) return;
+
+  const storageKey = `ballKnowledgeDailyModeResult:${mode}:${dateKey}:${puzzleId}`;
+  localStorage.setItem(
+    storageKey,
+    JSON.stringify({
+      mode,
+      date: dateKey,
+      puzzleId,
+      ...result,
+      updatedAt: new Date().toISOString(),
+    })
+  );
+}
+
+function getDailyDateKey() {
+  return getTodayDateKey();
 }
 
 function getYesterdayDateKey() {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  const y = yesterday.getFullYear();
-  const m = String(yesterday.getMonth() + 1).padStart(2, "0");
-  const d = String(yesterday.getDate()).padStart(2, "0");
-
-  return `${y}-${m}-${d}`;
+  return addDaysToDateKey(getTodayDateKey(), -1);
 }
 
 function getTodayChallenge() {
@@ -1009,6 +1038,7 @@ export default function FootballQuizMVP() {
   const [whoAmIFeedback, setWhoAmIFeedback] = useState(null);
   const [whoAmIShake, setWhoAmIShake] = useState(0);
   const [whoAmIGameOver, setWhoAmIGameOver] = useState(false);
+  const [whoAmIDate, setWhoAmIDate] = useState(getDailyDateKey);
   const [findPlayerPool, setFindPlayerPool] = useState([]);
   const [findPlayerTarget, setFindPlayerTarget] = useState(null);
   const [findPlayerSelected, setFindPlayerSelected] = useState(null);
@@ -2269,8 +2299,9 @@ export default function FootballQuizMVP() {
     resetConnectionsGame();
   };
 
-  const resetWhoAmIGame = () => {
-    setWhoAmIQuestions(shuffle(WHO_AM_I_QUESTIONS));
+  const resetWhoAmIGame = (dateKey = whoAmIDate) => {
+    const dailyQuestion = getDailyWhoAmIQuestion(dateKey);
+    setWhoAmIQuestions(dailyQuestion ? [dailyQuestion] : []);
     setWhoAmIIndex(0);
     setWhoAmIClueIndex(0);
     setWhoAmIInput("");
@@ -2283,7 +2314,7 @@ export default function FootballQuizMVP() {
     setWhoAmIGameOver(false);
   };
 
-  const startWhoAmIGame = () => {
+  const startWhoAmIGame = (dateKey = whoAmIDate) => {
     playClickSound();
     setShowDailyCompletePopup(false);
     setLeaderboardOpen(false);
@@ -2295,7 +2326,8 @@ export default function FootballQuizMVP() {
     setGameMode("who-am-i");
     setFinished(false);
     setGameStarted(true);
-    resetWhoAmIGame();
+    setWhoAmIDate(dateKey);
+    resetWhoAmIGame(dateKey);
     window.scrollTo({ top: 0, behavior: "instant" });
   };
 
@@ -2323,25 +2355,34 @@ export default function FootballQuizMVP() {
       const points = whoAmIPointsAvailable;
       const clueNumber = whoAmIClueIndex + 1;
       const earlyBonus = clueNumber <= 3 ? 50 : clueNumber <= 6 ? 25 : 0;
+      const rewardKeyBase = `whoami_daily:${whoAmIDate}:${currentWhoAmI.id}`;
       setWhoAmIScore((value) => value + points);
       setWhoAmIStreak((value) => value + 1);
-      updateProgressionStats((stats) => addStat(stats, "whoami_solved", 1));
-      awardXp({
-        key: `whoami-solved:${currentWhoAmI.id}`,
+      const solvedXpAwarded = awardXp({
+        key: `${rewardKeyBase}:solved`,
         amount: 50,
         label: "Who Am I solved",
       });
+      if (solvedXpAwarded) {
+        updateProgressionStats((stats) => addStat(stats, "whoami_solved", 1));
+      }
       if (earlyBonus > 0) {
         awardXp({
-          key: `whoami-early:${currentWhoAmI.id}`,
+          key: `${rewardKeyBase}:early-${clueNumber}`,
           amount: earlyBonus,
           label: "Early clue bonus",
         });
       }
       awardOneTimeCoins({
-        key: `whoami:${currentWhoAmI.id}`,
+        key: `${rewardKeyBase}:coins`,
         amount: 50,
         title: "Who Am I solved",
+      });
+      saveDailyModeResult("whoami_daily", whoAmIDate, currentWhoAmI.id, {
+        solved: true,
+        gaveUp: false,
+        cluesUsed: clueNumber,
+        xpAwarded: solvedXpAwarded,
       });
       setWhoAmIFeedback({
         type: "correct",
@@ -2374,6 +2415,12 @@ export default function FootballQuizMVP() {
       type: "reveal",
       text: `Answer: ${currentWhoAmI.answer}`,
       locked: true,
+    });
+    saveDailyModeResult("whoami_daily", whoAmIDate, currentWhoAmI.id, {
+      solved: false,
+      gaveUp: false,
+      cluesUsed: currentWhoAmI.clues.length,
+      xpAwarded: false,
     });
     playWrongSound();
 
@@ -2443,9 +2490,7 @@ export default function FootballQuizMVP() {
   };
 
   const shiftFindPlayerDate = (days) => {
-    const date = new Date(`${findPlayerDate}T00:00:00`);
-    date.setDate(date.getDate() + days);
-    const nextKey = date.toISOString().slice(0, 10);
+    const nextKey = addDaysToDateKey(findPlayerDate, days);
     if (nextKey > getDailyDateKey()) return;
     startFindPlayerGame(nextKey);
   };
@@ -2488,30 +2533,40 @@ export default function FootballQuizMVP() {
     setFindPlayerError("");
 
     if (isCorrect) {
+      const rewardKeyBase = `find_player:${findPlayerDate}:${findPlayerTarget.id}`;
       setFindPlayerStatus("won");
-      updateProgressionStats((stats) => addStat(stats, "find_player_solved", 1));
-      awardXp({
-        key: `find-player-solved:${findPlayerDate}`,
+      const solvedXpAwarded = awardXp({
+        key: `${rewardKeyBase}:solved`,
         amount: 100,
         label: "Find the Player solved",
       });
+      if (solvedXpAwarded) {
+        updateProgressionStats((stats) => addStat(stats, "find_player_solved", 1));
+      }
       if (nextGuesses.length < 5) {
         awardXp({
-          key: `find-player-under-5:${findPlayerDate}`,
+          key: `${rewardKeyBase}:under-5`,
           amount: 100,
           label: "Sharp solve bonus",
         });
       } else if (nextGuesses.length < 10) {
         awardXp({
-          key: `find-player-under-10:${findPlayerDate}`,
+          key: `${rewardKeyBase}:under-10`,
           amount: 50,
           label: "Quick solve bonus",
         });
       }
       awardOneTimeCoins({
-        key: `find-player:${findPlayerDate}`,
+        key: `${rewardKeyBase}:coins`,
         amount: 100,
         title: "Find the Player solved",
+      });
+      saveDailyModeResult("find_player", findPlayerDate, findPlayerTarget.id, {
+        solved: true,
+        gaveUp: false,
+        attempts: nextGuesses.length,
+        time_seconds: findPlayerElapsed,
+        xpAwarded: solvedXpAwarded,
       });
       playCorrectSound();
       return;
@@ -2526,6 +2581,13 @@ export default function FootballQuizMVP() {
     setFindPlayerSelected(null);
     setFindPlayerStatus("gave-up");
     setFindPlayerError("");
+    saveDailyModeResult("find_player", findPlayerDate, findPlayerTarget.id, {
+      solved: false,
+      gaveUp: true,
+      attempts: findPlayerGuesses.length,
+      time_seconds: findPlayerElapsed,
+      xpAwarded: false,
+    });
     playWrongSound();
   };
 
@@ -3430,11 +3492,13 @@ export default function FootballQuizMVP() {
     }
 
     const guess = leagueWhoAmIInput.trim();
-    const isCorrect = isCorrectWhoAmIPlayerAnswer(
-      guessedPlayer,
-      currentLeagueWhoAmI,
-      guess
-    );
+    const isCorrect = isPlayerAnswerCorrect({
+      typedAnswer: guess,
+      selectedPlayer: guessedPlayer,
+      correctAnswer: currentLeagueWhoAmI,
+      acceptedAnswers: currentLeagueWhoAmI.acceptedAnswers || [],
+      debugContext: `league-whoami:${currentLeagueWhoAmI.id}`,
+    });
 
     if (isCorrect) {
       const earnedPoints = leagueWhoAmIPointsAvailable;
@@ -7753,7 +7817,7 @@ export default function FootballQuizMVP() {
 
             <button
               className="mode-button mode-card mode-whoami"
-              onClick={startWhoAmIGame}
+              onClick={() => startWhoAmIGame(getDailyDateKey())}
             >
               <span className="mode-card-icon">🕵️</span>
               <span>
@@ -7764,7 +7828,7 @@ export default function FootballQuizMVP() {
 
             <button
               className="mode-button mode-card mode-find-player"
-              onClick={() => startFindPlayerGame(findPlayerDate)}
+              onClick={() => startFindPlayerGame(getDailyDateKey())}
             >
               <span className="mode-card-icon">🎯</span>
               <span>
@@ -7791,6 +7855,9 @@ export default function FootballQuizMVP() {
   }
 
   if (gameMode === "who-am-i" && currentWhoAmI) {
+    const todayKey = getDailyDateKey();
+    const whoAmIDateLabel = formatDisplayDate(whoAmIDate);
+
     return (
       <div
         className="fullscreen-bg"
@@ -7824,12 +7891,31 @@ export default function FootballQuizMVP() {
           >
             <div className="whoami-top">
               <div>
-                <div className="whoami-kicker">Single Player</div>
-                <h1>Who Am I?</h1>
+                <div className="whoami-kicker">Daily Puzzle</div>
+                <h1>Daily Who Am I</h1>
               </div>
               <div className={`whoami-difficulty ${currentWhoAmI.difficulty.toLowerCase()}`}>
                 {currentWhoAmI.difficulty}
               </div>
+            </div>
+
+            <div className="find-player-date-row whoami-date-row">
+              <button onClick={() => startWhoAmIGame(addDaysToDateKey(whoAmIDate, -1))}>
+                Previous Day
+              </button>
+              <strong>{whoAmIDateLabel}</strong>
+              <button
+                onClick={() => startWhoAmIGame(todayKey)}
+                disabled={whoAmIDate >= todayKey}
+              >
+                Today
+              </button>
+              <button
+                onClick={() => startWhoAmIGame(addDaysToDateKey(whoAmIDate, 1))}
+                disabled={whoAmIDate >= todayKey}
+              >
+                Next Day
+              </button>
             </div>
 
             <div className="whoami-hud">
@@ -7893,7 +7979,7 @@ export default function FootballQuizMVP() {
               >
                 <strong>Game Over</strong>
                 <span>Final score: {whoAmIScore}</span>
-                <button onClick={startWhoAmIGame}>Play Again</button>
+                <button onClick={() => startWhoAmIGame(whoAmIDate)}>Play Again</button>
               </motion.div>
             ) : (
               <GuessInput
@@ -7921,10 +8007,7 @@ export default function FootballQuizMVP() {
   }
 
   if (gameMode === "find-player") {
-    const findPlayerDateLabel = new Date(`${findPlayerDate}T00:00:00`).toLocaleDateString(
-      undefined,
-      { month: "long", day: "numeric", year: "numeric" }
-    );
+    const findPlayerDateLabel = formatDisplayDate(findPlayerDate);
     const todayKey = getDailyDateKey();
 
     return (
