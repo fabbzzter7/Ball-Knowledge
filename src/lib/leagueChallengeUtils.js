@@ -147,7 +147,7 @@ export function getLeagueSettingsSummary(league = {}) {
       league.duration_days === null || league.duration_days === undefined
         ? null
         : Number(league.duration_days),
-    leagueFormat: league.league_format || "balanced",
+    leagueFormat: league.league_format || "custom",
     quizCount,
     top10Count,
     whoamiCount,

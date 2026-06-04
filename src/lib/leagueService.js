@@ -69,7 +69,7 @@ export async function createLeague(supabase, { name, playerId, username, setting
       find_player_count: findPlayerCount,
       find_player_scoring_mode: settings.findPlayerScoringMode || "attempts",
       max_daily_points: maxDailyPoints,
-      league_format: settings.leagueFormat || "balanced",
+      league_format: settings.leagueFormat || "custom",
     })
     .select()
     .single();

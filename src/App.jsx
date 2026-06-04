@@ -145,70 +145,43 @@ const MULTIPLAYER_CATEGORIES = [
 ];
 
 const LEAGUE_FORMATS = {
-  balanced: {
-    label: "Balanced",
+  custom: {
+    label: "Custom",
+    icon: "🎛️",
     quizCount: 5,
     top10Count: 1,
     whoamiCount: 0,
     findPlayerCount: 0,
-    description: "5 quick questions + 1 Top 10",
+    description: "Choose everything manually",
   },
-  quick_quiz: {
-    label: "Quick Quiz",
+  classic: {
+    label: "Classic",
+    icon: "⚽",
     quizCount: 10,
     top10Count: 0,
     whoamiCount: 0,
     findPlayerCount: 0,
     description: "10 quick questions",
   },
-  top10_only: {
-    label: "Top 10 Only",
-    quizCount: 0,
-    top10Count: 1,
-    whoamiCount: 0,
-    findPlayerCount: 0,
-    description: "1 Top 10 list",
-  },
-  mystery_mix: {
-    label: "Mystery Mix",
+  daily_mix: {
+    label: "Daily Mix",
+    icon: "🏆",
     quizCount: 5,
     top10Count: 1,
     whoamiCount: 1,
-    findPlayerCount: 0,
-    description: "5 quick questions + Top 10 + Who Am I",
-  },
-  whoami_only: {
-    label: "Who Am I Only",
-    quizCount: 0,
-    top10Count: 0,
-    whoamiCount: 5,
-    findPlayerCount: 0,
-    description: "5 mystery players",
-  },
-  find_player: {
-    label: "Find the Player",
-    quizCount: 0,
-    top10Count: 0,
-    whoamiCount: 0,
     findPlayerCount: 1,
     findPlayerScoringMode: "attempts",
-    description: "1 distance puzzle",
+    description: "5 quiz + Top 10 + mystery + find",
   },
-  long_mix: {
-    label: "Long Mix",
-    quizCount: 10,
-    top10Count: 1,
-    whoamiCount: 0,
-    findPlayerCount: 0,
-    description: "10 quick questions + 1 Top 10",
-  },
-  custom: {
-    label: "Custom",
-    quizCount: 5,
-    top10Count: 1,
-    whoamiCount: 0,
-    findPlayerCount: 0,
-    description: "Choose your daily structure",
+  party_mode: {
+    label: "Party Mode",
+    icon: "⚡",
+    quizCount: 3,
+    top10Count: 2,
+    whoamiCount: 2,
+    findPlayerCount: 1,
+    findPlayerScoringMode: "attempts",
+    description: "More chaotic daily mix",
   },
 };
 
@@ -416,6 +389,19 @@ function saveDailyModeResult(mode, dateKey, puzzleId, result) {
       updatedAt: new Date().toISOString(),
     })
   );
+}
+
+function getDailyModeResult(mode, dateKey, puzzleId) {
+  if (!mode || !dateKey || !puzzleId) return null;
+
+  try {
+    return JSON.parse(
+      localStorage.getItem(`ballKnowledgeDailyModeResult:${mode}:${dateKey}:${puzzleId}`) ||
+        "null"
+    );
+  } catch {
+    return null;
+  }
 }
 
 function getDailyDateKey() {
@@ -664,7 +650,7 @@ function getLeagueFormatConfig(
   findPlayerScoringMode = "attempts"
 ) {
   if (format !== "custom") {
-    const config = LEAGUE_FORMATS[format] || LEAGUE_FORMATS.balanced;
+    const config = LEAGUE_FORMATS[format] || LEAGUE_FORMATS.custom;
     return {
       ...config,
       findPlayerScoringMode: config.findPlayerScoringMode || findPlayerScoringMode,
@@ -869,7 +855,7 @@ export default function FootballQuizMVP() {
   const [multiplayerNotice, setMultiplayerNotice] = useState("");
   const [leagueNameInput, setLeagueNameInput] = useState("");
   const [leagueDurationInput, setLeagueDurationInput] = useState(null);
-  const [leagueFormatInput, setLeagueFormatInput] = useState("balanced");
+  const [leagueFormatInput, setLeagueFormatInput] = useState("custom");
   const [leagueCustomQuizCount, setLeagueCustomQuizCount] = useState(5);
   const [leagueCustomTop10Count, setLeagueCustomTop10Count] = useState(1);
   const [leagueCustomWhoAmICount, setLeagueCustomWhoAmICount] = useState(0);
@@ -882,6 +868,8 @@ export default function FootballQuizMVP() {
   const [leagueLoading, setLeagueLoading] = useState(false);
   const [leagueChallengeOpen, setLeagueChallengeOpen] = useState(false);
   const [leagueChallengePhase, setLeagueChallengePhase] = useState("intro");
+  const [leagueLeaveConfirmOpen, setLeagueLeaveConfirmOpen] = useState(false);
+  const [leagueAttemptSubmitting, setLeagueAttemptSubmitting] = useState(false);
   const [leagueQuizQuestions, setLeagueQuizQuestions] = useState([]);
   const [leagueQuizIndex, setLeagueQuizIndex] = useState(0);
   const [leagueQuizSelected, setLeagueQuizSelected] = useState(null);
@@ -1375,6 +1363,51 @@ export default function FootballQuizMVP() {
     leagueChallengePhase,
     leagueQuizSelected,
     leagueTimeLeft,
+  ]);
+
+  useEffect(() => {
+    if (!isLeagueAttemptLocked()) return;
+
+    saveLeagueAttempt();
+  }, [
+    leagueChallengeOpen,
+    leagueChallengePhase,
+    activeLeague?.id,
+    activeLeagueDay?.id,
+    leagueQuizScore,
+    leagueTop10TotalWithCurrent,
+    leagueWhoAmIScore,
+    leagueFindPlayerScore,
+    leagueFindPlayerAttemptTotal,
+    leagueFindPlayerGuesses.length,
+    leagueFindPlayerElapsed,
+  ]);
+
+  useEffect(() => {
+    if (!isLeagueAttemptLocked()) return undefined;
+
+    const handleBeforeUnload = (event) => {
+      saveLeagueAttempt();
+      event.preventDefault();
+      event.returnValue = "";
+      return "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [
+    leagueChallengeOpen,
+    leagueChallengePhase,
+    activeLeague?.id,
+    activeLeagueDay?.id,
+    leagueQuizScore,
+    leagueTop10TotalWithCurrent,
+    leagueWhoAmIScore,
+    leagueFindPlayerScore,
+    leagueFindPlayerAttemptTotal,
+    leagueFindPlayerGuesses.length,
+    leagueFindPlayerElapsed,
   ]);
 
   useEffect(() => {
@@ -2587,39 +2620,55 @@ export default function FootballQuizMVP() {
 
     if (isCorrect) {
       const rewardKeyBase = `find_player:${findPlayerDate}:${findPlayerTarget.id}`;
+      const previousResult = getDailyModeResult(
+        "find_player",
+        findPlayerDate,
+        findPlayerTarget.id
+      );
+      const solvedBefore = Boolean(previousResult?.solved);
       setFindPlayerStatus("won");
-      const solvedXpAwarded = awardXp({
-        key: `${rewardKeyBase}:solved`,
-        amount: 100,
-        label: "Find the Player solved",
-      });
-      if (solvedXpAwarded) {
-        updateProgressionStats((stats) => addStat(stats, "find_player_solved", 1));
-      }
-      if (nextGuesses.length < 5) {
+
+      if (solvedBefore) {
         awardXp({
-          key: `${rewardKeyBase}:under-5`,
+          key: `${rewardKeyBase}:replay`,
+          amount: 10,
+          label: "Replay solve",
+        });
+      } else {
+        const solvedXpAwarded = awardXp({
+          key: `${rewardKeyBase}:solved`,
           amount: 100,
-          label: "Sharp solve bonus",
+          label: "Find the Player solved",
         });
-      } else if (nextGuesses.length < 10) {
-        awardXp({
-          key: `${rewardKeyBase}:under-10`,
-          amount: 50,
-          label: "Quick solve bonus",
+        if (solvedXpAwarded) {
+          updateProgressionStats((stats) => addStat(stats, "find_player_solved", 1));
+        }
+        if (nextGuesses.length < 5) {
+          awardXp({
+            key: `${rewardKeyBase}:under-5`,
+            amount: 100,
+            label: "Sharp solve bonus",
+          });
+        } else if (nextGuesses.length < 10) {
+          awardXp({
+            key: `${rewardKeyBase}:under-10`,
+            amount: 50,
+            label: "Quick solve bonus",
+          });
+        }
+        awardOneTimeCoins({
+          key: `${rewardKeyBase}:coins`,
+          amount: 100,
+          title: "Find the Player solved",
         });
       }
-      awardOneTimeCoins({
-        key: `${rewardKeyBase}:coins`,
-        amount: 100,
-        title: "Find the Player solved",
-      });
       saveDailyModeResult("find_player", findPlayerDate, findPlayerTarget.id, {
         solved: true,
         gaveUp: false,
         attempts: nextGuesses.length,
         time_seconds: findPlayerElapsed,
-        xpAwarded: solvedXpAwarded,
+        xpAwarded: !solvedBefore,
+        replay: solvedBefore,
       });
       playCorrectSound();
       return;
@@ -2631,11 +2680,16 @@ export default function FootballQuizMVP() {
   const giveUpFindPlayer = () => {
     if (!findPlayerTarget || findPlayerStatus !== "playing") return;
 
+    const previousResult = getDailyModeResult(
+      "find_player",
+      findPlayerDate,
+      findPlayerTarget.id
+    );
     setFindPlayerSelected(null);
     setFindPlayerStatus("gave-up");
     setFindPlayerError("");
     saveDailyModeResult("find_player", findPlayerDate, findPlayerTarget.id, {
-      solved: false,
+      solved: Boolean(previousResult?.solved),
       gaveUp: true,
       attempts: findPlayerGuesses.length,
       time_seconds: findPlayerElapsed,
@@ -3138,6 +3192,94 @@ export default function FootballQuizMVP() {
     setMyLeagues(leagues);
   };
 
+  const customizeLeaguePreset = (format) => {
+    const preset = LEAGUE_FORMATS[format];
+    if (!preset) return;
+
+    setLeagueCustomQuizCount(preset.quizCount);
+    setLeagueCustomTop10Count(preset.top10Count);
+    setLeagueCustomWhoAmICount(preset.whoamiCount);
+    setLeagueCustomFindPlayerCount(preset.findPlayerCount || 0);
+    setLeagueFindPlayerScoringMode(preset.findPlayerScoringMode || "attempts");
+    setLeagueFormatInput("custom");
+  };
+
+  const getLeagueAttemptKey = (leagueDayId = activeLeagueDay?.id) => {
+    if (!leagueDayId) return "";
+    return `ballKnowledgeLeagueAttempt:${playerId}:${leagueDayId}`;
+  };
+
+  const readLeagueAttempt = (leagueDayId) => {
+    const key = getLeagueAttemptKey(leagueDayId);
+    if (!key) return null;
+
+    try {
+      return JSON.parse(localStorage.getItem(key) || "null");
+    } catch {
+      return null;
+    }
+  };
+
+  const clearLeagueAttempt = (leagueDayId = activeLeagueDay?.id) => {
+    const key = getLeagueAttemptKey(leagueDayId);
+    if (key) localStorage.removeItem(key);
+  };
+
+  const buildCurrentLeagueAttempt = () => {
+    if (!activeLeague || !activeLeagueDay) return null;
+
+    return {
+      status: "in_progress",
+      leagueId: activeLeague.id,
+      leagueDayId: activeLeagueDay.id,
+      dayKey: activeLeagueDay.day_key,
+      playerId,
+      username,
+      phase: leagueChallengePhase,
+      quizScore: Number(leagueQuizScore) || 0,
+      top10Score: Number(leagueTop10TotalWithCurrent) || 0,
+      whoamiScore: Number(leagueWhoAmIScore) || 0,
+      findPlayerScore: Number(leagueFindPlayerScore) || 0,
+      findPlayerAttempts:
+        Number(leagueFindPlayerAttemptTotal) +
+        (leagueChallengePhase === "find-player" ? leagueFindPlayerGuesses.length : 0),
+      findPlayerTimeSeconds: Number(leagueFindPlayerElapsed) || 0,
+      updatedAt: new Date().toISOString(),
+    };
+  };
+
+  const saveLeagueAttempt = (attempt = buildCurrentLeagueAttempt()) => {
+    if (!attempt?.leagueDayId || attempt.status !== "in_progress") return;
+
+    localStorage.setItem(
+      getLeagueAttemptKey(attempt.leagueDayId),
+      JSON.stringify(attempt)
+    );
+  };
+
+  const submitStoredLeagueAttempt = async (attempt, league, leagueDay) => {
+    if (!attempt || !league || !leagueDay || !supabase) {
+      return { submission: null, error: new Error("Missing league attempt") };
+    }
+
+    const { submission, error } = await submitLeagueDailyResult(supabase, {
+      league,
+      leagueDay,
+      playerId,
+      username,
+      quizScore: Number(attempt.quizScore) || 0,
+      top10Score: Number(attempt.top10Score) || 0,
+      whoamiScore: Number(attempt.whoamiScore) || 0,
+      findPlayerScore: Number(attempt.findPlayerScore) || 0,
+      findPlayerAttempts: Number(attempt.findPlayerAttempts) || 0,
+      findPlayerTimeSeconds: Number(attempt.findPlayerTimeSeconds) || 0,
+    });
+
+    if (!error && submission) clearLeagueAttempt(leagueDay.id);
+
+    return { submission, error };
+  };
+
   const prepareLeagueChallenge = async () => {
     if (!activeLeague || activeLeagueSubmission) return;
 
@@ -3166,6 +3308,30 @@ export default function FootballQuizMVP() {
             ? "League setup needs the latest Supabase columns"
             : "Today's league challenge is not ready"
         );
+        return;
+      }
+
+      const storedAttempt = readLeagueAttempt(leagueDay.id);
+      if (storedAttempt?.status === "in_progress") {
+        const { submission, error: attemptError } = await submitStoredLeagueAttempt(
+          storedAttempt,
+          activeLeague,
+          leagueDay
+        );
+
+        if (attemptError || !submission) {
+          console.error("Could not lock previous league attempt", {
+            error: attemptError,
+            leagueId: activeLeague.id,
+            leagueDayId: leagueDay.id,
+            storedAttempt,
+          });
+          setMultiplayerError("Your league attempt is locked. Try refreshing the league.");
+          return;
+        }
+
+        setMultiplayerNotice("Your previous attempt was submitted and locked.");
+        await loadLeagueDashboard(activeLeague.id, { silent: true });
         return;
       }
 
@@ -3287,6 +3453,7 @@ export default function FootballQuizMVP() {
       setLeagueResult(null);
       setLeagueChallengePhase("intro");
       setLeagueChallengeOpen(true);
+      setLeagueLeaveConfirmOpen(false);
       setMultiplayerOpen(false);
     } catch (error) {
       console.error("League challenge loading failed", {
@@ -3301,7 +3468,7 @@ export default function FootballQuizMVP() {
 
   const startLeagueQuiz = () => {
     playClickSound();
-    setLeagueChallengePhase(
+    const nextPhase =
       leagueQuizQuestions.length > 0
         ? "quiz"
         : leagueSettings.top10Count > 0
@@ -3310,9 +3477,17 @@ export default function FootballQuizMVP() {
         ? "whoami"
         : leagueSettings.findPlayerCount > 0
         ? "find-player"
-        : "whoami"
-    );
+        : "whoami";
+
+    setLeagueChallengePhase(nextPhase);
     setLeagueTimeLeft(15);
+    const initialAttempt = buildCurrentLeagueAttempt();
+    if (initialAttempt) {
+      saveLeagueAttempt({
+        ...initialAttempt,
+        phase: nextPhase,
+      });
+    }
     if (leagueSettings.findPlayerCount > 0 && !leagueQuizQuestions.length && leagueSettings.top10Count <= 0 && leagueSettings.whoamiCount <= 0) {
       setLeagueFindPlayerStartedAt(Date.now());
     }
@@ -3741,13 +3916,15 @@ export default function FootballQuizMVP() {
   };
 
   const completeLeagueChallenge = async ({
+    quizScore = leagueQuizScore,
     top10Score = leagueTop10Score,
     whoamiScore = leagueWhoAmIScore,
     findPlayerScore = leagueFindPlayerScore,
     findPlayerAttempts = null,
     findPlayerTimeSeconds = null,
+    abandoned = false,
   } = {}) => {
-    if (!activeLeague || !activeLeagueDay || leagueResult) return;
+    if (!activeLeague || !activeLeagueDay || leagueResult) return false;
 
     playClickSound();
     setLeagueLoading(true);
@@ -3760,7 +3937,7 @@ export default function FootballQuizMVP() {
         leagueDay: activeLeagueDay,
         playerId,
         username,
-        quizScore: leagueQuizScore,
+        quizScore,
         top10Score,
         whoamiScore,
         findPlayerScore,
@@ -3773,12 +3950,12 @@ export default function FootballQuizMVP() {
 
     if (error || !submission) {
       setMultiplayerError("Could not save league score");
-      return;
+      return false;
     }
 
     const leagueDayKey =
       activeLeagueDay.day_key || `${activeLeague.id}:${activeLeagueDay.day_number}`;
-    if (!alreadySubmitted) {
+    if (!alreadySubmitted && !abandoned) {
       updateProgressionStats((stats) =>
         addStat(stats, "league_days_completed", 1)
       );
@@ -3789,6 +3966,7 @@ export default function FootballQuizMVP() {
       });
     }
 
+    clearLeagueAttempt(activeLeagueDay.id);
     setLeagueResult({
       quizScore: submission.quiz_score,
       top10Score: submission.top10_score,
@@ -3799,18 +3977,61 @@ export default function FootballQuizMVP() {
         submission.find_player_time_seconds || findPlayerTimeSeconds,
       totalPoints: submission.total_points,
       alreadySubmitted,
+      abandoned,
     });
     setLeagueChallengePhase("complete");
     await loadLeagueDashboard(activeLeague.id, { silent: true });
+    return true;
   };
 
-  const closeLeagueChallenge = async () => {
+  const isLeagueAttemptLocked = () =>
+    leagueChallengeOpen &&
+    activeLeague &&
+    activeLeagueDay &&
+    !activeLeagueSubmission &&
+    leagueChallengePhase !== "intro" &&
+    leagueChallengePhase !== "complete";
+
+  const closeLeagueChallenge = async ({ force = false } = {}) => {
     playClickSound();
+
+    if (!force && isLeagueAttemptLocked()) {
+      saveLeagueAttempt();
+      setLeagueLeaveConfirmOpen(true);
+      return;
+    }
+
     setLeagueChallengeOpen(false);
+    setLeagueLeaveConfirmOpen(false);
     setMultiplayerOpen(true);
     setMultiplayerStep("league-dashboard");
     if (activeLeague?.id) {
       await loadLeagueDashboard(activeLeague.id, { silent: true });
+    }
+  };
+
+  const submitAndCloseLeagueAttempt = async () => {
+    if (!activeLeague || !activeLeagueDay || leagueAttemptSubmitting) return;
+
+    setLeagueAttemptSubmitting(true);
+    saveLeagueAttempt();
+
+    const saved = await completeLeagueChallenge({
+      quizScore: leagueQuizScore,
+      top10Score: leagueTop10TotalWithCurrent,
+      whoamiScore: leagueWhoAmIScore,
+      findPlayerScore: leagueFindPlayerScore,
+      findPlayerAttempts:
+        leagueFindPlayerAttemptTotal +
+        (leagueChallengePhase === "find-player" ? leagueFindPlayerGuesses.length : 0),
+      findPlayerTimeSeconds: leagueFindPlayerElapsed,
+      abandoned: true,
+    });
+
+    setLeagueAttemptSubmitting(false);
+
+    if (saved) {
+      await closeLeagueChallenge({ force: true });
     }
   };
 
@@ -5672,6 +5893,60 @@ export default function FootballQuizMVP() {
           ← League
         </button>
 
+        <AnimatePresence>
+          {leagueLeaveConfirmOpen && (
+            <motion.div
+              className="league-leave-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="league-leave-modal"
+                initial={{ scale: 0.92, y: 18 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.96, y: 10 }}
+              >
+                <div className="league-kicker">League attempt locked</div>
+                <h2>Leave league challenge?</h2>
+                <p>
+                  Your current score will be submitted and today's league challenge
+                  will be locked. You cannot replay it.
+                </p>
+                <div className="league-leave-score">
+                  <span>Current score</span>
+                  <strong>
+                    {leagueQuizScore +
+                      leagueTop10TotalWithCurrent +
+                      leagueWhoAmIScore +
+                      leagueFindPlayerScore}
+                    /{leagueSettings.maxDailyPoints}
+                  </strong>
+                </div>
+                <div className="league-leave-actions">
+                  <button
+                    type="button"
+                    onClick={() => setLeagueLeaveConfirmOpen(false)}
+                    disabled={leagueAttemptSubmitting}
+                  >
+                    Stay
+                  </button>
+                  <button
+                    type="button"
+                    className="danger"
+                    onClick={submitAndCloseLeagueAttempt}
+                    disabled={leagueAttemptSubmitting}
+                  >
+                    {leagueAttemptSubmitting
+                      ? "Submitting..."
+                      : "Submit current result"}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <ScreenTransition className="league-challenge-screen">
           {leagueChallengePhase === "intro" && (
             <div className="league-challenge-card">
@@ -6213,7 +6488,7 @@ export default function FootballQuizMVP() {
   if (!gameStarted) {
     return (
       <div
-        className="fullscreen-bg"
+        className={`fullscreen-bg ${isHomeScreen ? "home-landing-bg" : ""}`}
         style={{
           backgroundImage: `linear-gradient(rgba(255,255,255,0.06), rgba(0,0,0,0.34)), url(${stadiumBg})`,
         }}
@@ -7006,24 +7281,6 @@ export default function FootballQuizMVP() {
                   />
 
                   <div className="league-picker-section">
-                    <strong>Duration</strong>
-                    <div className="league-duration-grid">
-                      {LEAGUE_DURATIONS.map((duration) => (
-                        <button
-                          key={duration.label}
-                          type="button"
-                          className={`league-option-card ${
-                            leagueDurationInput === duration.value ? "selected" : ""
-                          }`}
-                          onClick={() => setLeagueDurationInput(duration.value)}
-                        >
-                          {duration.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="league-picker-section">
                     <strong>Format</strong>
                     <div className="league-format-grid">
                       {Object.entries(LEAGUE_FORMATS).map(([format, config]) => (
@@ -7035,6 +7292,7 @@ export default function FootballQuizMVP() {
                           }`}
                           onClick={() => setLeagueFormatInput(format)}
                         >
+                          <b>{config.icon}</b>
                           <span>{config.label}</span>
                           <small>{config.description}</small>
                         </button>
@@ -7042,80 +7300,110 @@ export default function FootballQuizMVP() {
                     </div>
                   </div>
 
+                  {leagueFormatInput !== "custom" && (
+                    <button
+                      type="button"
+                      className="league-customize-link"
+                      onClick={() => customizeLeaguePreset(leagueFormatInput)}
+                    >
+                      Customize this
+                    </button>
+                  )}
+
                   {leagueFormatInput === "custom" && (
-                    <div className="league-custom-panel">
-                      <div className="league-custom-row">
-                        <span>Quick questions</span>
-                        <div>
-                          {CUSTOM_QUIZ_COUNTS.map((count) => (
+                    <>
+                      <div className="league-picker-section compact">
+                        <strong>Length</strong>
+                        <div className="league-duration-grid">
+                          {LEAGUE_DURATIONS.map((duration) => (
                             <button
-                              key={count}
+                              key={duration.label}
                               type="button"
-                              className={
-                                leagueCustomQuizCount === count ? "selected" : ""
-                              }
-                              onClick={() => setLeagueCustomQuizCount(count)}
+                              className={`league-option-card ${
+                                leagueDurationInput === duration.value ? "selected" : ""
+                              }`}
+                              onClick={() => setLeagueDurationInput(duration.value)}
                             >
-                              {count}
+                              {duration.label}
                             </button>
                           ))}
                         </div>
                       </div>
 
-                      <div className="league-custom-row">
-                        <span>Top 10 lists</span>
-                        <div>
-                          {CUSTOM_TOP10_COUNTS.map((count) => (
-                            <button
-                              key={count}
-                              type="button"
-                              className={
-                                leagueCustomTop10Count === count ? "selected" : ""
-                              }
-                              onClick={() => setLeagueCustomTop10Count(count)}
-                            >
-                              {count}
-                            </button>
-                          ))}
+                      <div className="league-custom-panel">
+                        <div className="league-custom-row">
+                          <span>Quick questions</span>
+                          <div>
+                            {CUSTOM_QUIZ_COUNTS.map((count) => (
+                              <button
+                                key={count}
+                                type="button"
+                                className={
+                                  leagueCustomQuizCount === count ? "selected" : ""
+                                }
+                                onClick={() => setLeagueCustomQuizCount(count)}
+                              >
+                                {count}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="league-custom-row">
-                        <span>Who Am I</span>
-                        <div>
-                          {CUSTOM_WHOAMI_COUNTS.map((count) => (
-                            <button
-                              key={count}
-                              type="button"
-                              className={
-                                leagueCustomWhoAmICount === count ? "selected" : ""
-                              }
-                              onClick={() => setLeagueCustomWhoAmICount(count)}
-                            >
-                              {count}
-                            </button>
-                          ))}
+                        <div className="league-custom-row">
+                          <span>Top 10 lists</span>
+                          <div>
+                            {CUSTOM_TOP10_COUNTS.map((count) => (
+                              <button
+                                key={count}
+                                type="button"
+                                className={
+                                  leagueCustomTop10Count === count ? "selected" : ""
+                                }
+                                onClick={() => setLeagueCustomTop10Count(count)}
+                              >
+                                {count}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="league-custom-row">
-                        <span>Find the Player</span>
-                        <div>
-                          {CUSTOM_FIND_PLAYER_COUNTS.map((count) => (
-                            <button
-                              key={count}
-                              type="button"
-                              className={
-                                leagueCustomFindPlayerCount === count ? "selected" : ""
-                              }
-                              onClick={() => setLeagueCustomFindPlayerCount(count)}
-                            >
-                              {count}
-                            </button>
-                          ))}
+                        <div className="league-custom-row">
+                          <span>Who Am I</span>
+                          <div>
+                            {CUSTOM_WHOAMI_COUNTS.map((count) => (
+                              <button
+                                key={count}
+                                type="button"
+                                className={
+                                  leagueCustomWhoAmICount === count ? "selected" : ""
+                                }
+                                onClick={() => setLeagueCustomWhoAmICount(count)}
+                              >
+                                {count}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="league-custom-row">
+                          <span>Find the Player</span>
+                          <div>
+                            {CUSTOM_FIND_PLAYER_COUNTS.map((count) => (
+                              <button
+                                key={count}
+                                type="button"
+                                className={
+                                  leagueCustomFindPlayerCount === count ? "selected" : ""
+                                }
+                                onClick={() => setLeagueCustomFindPlayerCount(count)}
+                              >
+                                {count}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </>
                   )}
 
                   {leagueSettings.findPlayerCount > 0 && (
@@ -7149,7 +7437,12 @@ export default function FootballQuizMVP() {
                   )}
 
                   <div className="league-preview-card">
-                    <span>Every day: {leagueDailyStructureText}</span>
+                    <span>Your league</span>
+                    <strong>
+                      {leagueSettings.quizCount} quiz · {leagueSettings.top10Count} Top 10 ·{" "}
+                      {leagueSettings.whoamiCount} Who Am I ·{" "}
+                      {leagueSettings.findPlayerCount || 0} Find
+                    </strong>
                     <strong>Max daily score: {leagueSettings.maxDailyPoints}</strong>
                     {leagueSettings.findPlayerCount > 0 && (
                       <small>
@@ -8145,6 +8438,12 @@ export default function FootballQuizMVP() {
   if (gameMode === "find-player") {
     const findPlayerDateLabel = formatDisplayDate(findPlayerDate);
     const todayKey = getDailyDateKey();
+    const findPlayerSavedResult = findPlayerTarget
+      ? getDailyModeResult("find_player", findPlayerDate, findPlayerTarget.id)
+      : null;
+    const findPlayerSolvedBefore = Boolean(findPlayerSavedResult?.solved);
+    const findPlayerGaveUpBefore =
+      Boolean(findPlayerSavedResult?.gaveUp) && !findPlayerSolvedBefore;
 
     return (
       <div
@@ -8235,6 +8534,13 @@ export default function FootballQuizMVP() {
                     </strong>
                     {findPlayerRanking.poolSize > 0 && (
                       <small>{findPlayerRanking.poolSize} players ranked</small>
+                    )}
+                    {findPlayerSolvedBefore ? (
+                      <small>Replay mode · Full XP already claimed · Replay reward +10 XP</small>
+                    ) : findPlayerGaveUpBefore ? (
+                      <small>Try again · Full solve XP still available</small>
+                    ) : (
+                      <small>Solve to earn +100 XP</small>
                     )}
                   </div>
                 </div>
@@ -8926,28 +9232,6 @@ export default function FootballQuizMVP() {
       </AnimatePresence>
 
       <div className="hud-row">
-        <div className="streak-meter">
-          <div className="streak-meter-top">
-            <div className="streak-left">
-              <span className="streak-fire">🔥</span>
-              <span className="streak-title">STREAK {streak}</span>
-            </div>
-
-            <div className="streak-right">
-              {streak >= 50
-                ? "MAXED"
-                : `Next reward: ${getNextStreakTarget(streak)}`}
-            </div>
-          </div>
-
-          <div className="streak-bar-outer">
-            <div
-              className="streak-bar-inner"
-              style={{ width: `${getStreakProgress(streak)}%` }}
-            />
-          </div>
-        </div>
-
         <div className="hud-card">
           <span className="hud-label">SCORE</span>
           <span className="hud-value">🔥 {score}</span>
@@ -8972,6 +9256,34 @@ export default function FootballQuizMVP() {
           </span>
         </div>
       </div>
+
+      {gameMode === "general" && !isMockMultiplayer && (
+        <div className="combo-dock">
+          <div
+            className={`streak-meter ${streak > 0 ? "combo-active" : ""} ${
+              [5, 10, 20].includes(streak) ? "combo-milestone" : ""
+            }`}
+          >
+            <div className="streak-meter-top">
+              <div className="streak-left">
+                <span className="streak-fire">🔥</span>
+                <span className="streak-title">COMBO x{streak}</span>
+              </div>
+
+              <div className="streak-right">
+                {streak >= 20 ? "MAX BONUS" : `Next: x${getNextStreakTarget(streak)}`}
+              </div>
+            </div>
+
+            <div className="streak-bar-outer">
+              <div
+                className="streak-bar-inner"
+                style={{ width: `${getStreakProgress(streak)}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         <motion.div

@@ -2,7 +2,7 @@ import { isSupabaseConfigured, supabase } from "./supabaseClient";
 import { STARTER_PLAYERS } from "../data/starterPlayers";
 
 const PLAYER_SELECT =
-  "id,name,search_name,aliases,nationality,position,position_group,birth_year,active_from,active_to,is_retired,clubs,main_clubs,national_team,image_url,difficulty,popularity_score";
+  "id,name,search_name,aliases,nationality,position,position_group,birth_year,active_from,active_to,is_retired,clubs,main_clubs,national_team,image_url,difficulty,popularity_score,source,source_id";
 
 export function normalizePlayerSearch(text = "") {
   return String(text)
@@ -23,6 +23,97 @@ function normalizePlayer(player = {}) {
     main_clubs: Array.isArray(player.main_clubs) ? player.main_clubs : [],
     popularity_score: Number(player.popularity_score) || 0,
   };
+}
+
+function uniqueByNormalized(values = []) {
+  const seen = new Set();
+
+  return values
+    .filter(Boolean)
+    .map((value) => String(value).trim())
+    .filter(Boolean)
+    .filter((value) => {
+      const key = normalizePlayerSearch(value);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+function getPlayerDedupeKey(player = {}) {
+  const name = normalizePlayerSearch(player.name || player.search_name);
+  if (!name) return player.id || "";
+
+  const birthYear = Number(player.birth_year) || "";
+  return birthYear ? `${name}|${birthYear}` : name;
+}
+
+function getManualSourceScore(player = {}) {
+  return /^manual_(legend|modern|cult|retired|seed)/i.test(player.source || "") ? 1 : 0;
+}
+
+function getDataRichness(player = {}) {
+  return (
+    (Array.isArray(player.main_clubs) ? player.main_clubs.length : 0) * 3 +
+    (Array.isArray(player.clubs) ? player.clubs.length : 0) * 2 +
+    (Array.isArray(player.aliases) ? player.aliases.length : 0) +
+    (player.national_team ? 1 : 0) +
+    (player.position ? 1 : 0)
+  );
+}
+
+function pickBetterPlayer(current, incoming) {
+  if (!current) return incoming;
+
+  const manualDelta = getManualSourceScore(incoming) - getManualSourceScore(current);
+  if (manualDelta !== 0 && getDataRichness(incoming) >= getDataRichness(current)) {
+    return manualDelta > 0 ? incoming : current;
+  }
+
+  const richnessDelta = getDataRichness(incoming) - getDataRichness(current);
+  if (Math.abs(richnessDelta) >= 3) return richnessDelta > 0 ? incoming : current;
+
+  const popularityDelta =
+    (Number(incoming.popularity_score) || 0) -
+    (Number(current.popularity_score) || 0);
+  if (popularityDelta !== 0) return popularityDelta > 0 ? incoming : current;
+
+  return current;
+}
+
+function mergeDuplicatePlayers(players = []) {
+  const byActualPlayer = new Map();
+
+  players.filter(Boolean).forEach((rawPlayer) => {
+    const player = normalizePlayer(rawPlayer);
+    const key = getPlayerDedupeKey(player) || player.id;
+    if (!key) return;
+
+    const existing = byActualPlayer.get(key);
+    const winner = pickBetterPlayer(existing, player);
+    const loser = winner === player ? existing : player;
+
+    byActualPlayer.set(key, {
+      ...winner,
+      aliases: uniqueByNormalized([
+        winner?.name,
+        ...(winner?.aliases || []),
+        loser?.name,
+        ...(loser?.aliases || []),
+      ]),
+      clubs: uniqueByNormalized([...(winner?.clubs || []), ...(loser?.clubs || [])]),
+      main_clubs: uniqueByNormalized([
+        ...(winner?.main_clubs || []),
+        ...(loser?.main_clubs || []),
+      ]),
+      popularity_score: Math.max(
+        Number(winner?.popularity_score) || 0,
+        Number(loser?.popularity_score) || 0
+      ),
+    });
+  });
+
+  return [...byActualPlayer.values()];
 }
 
 function getPlayerSearchFields(player = {}) {
@@ -79,15 +170,8 @@ function scorePlayerMatch(player, query) {
 
 function sortAndLimitPlayers(players, query, limit) {
   const normalizedQuery = normalizePlayerSearch(query);
-  const uniquePlayers = new Map();
 
-  players.filter(Boolean).forEach((player) => {
-    if (player.id && !uniquePlayers.has(player.id)) {
-      uniquePlayers.set(player.id, normalizePlayer(player));
-    }
-  });
-
-  return [...uniquePlayers.values()]
+  return mergeDuplicatePlayers(players)
     .map((player) => ({
       player,
       score: scorePlayerMatch(player, normalizedQuery),
@@ -121,22 +205,32 @@ export async function fetchPlayers(limit = 30) {
   return (data || []).map(normalizePlayer);
 }
 
-export async function fetchFindPlayerPool(limit = 1200) {
+export async function fetchFindPlayerPool() {
   if (!isSupabaseConfigured || !supabase) return { players: [], error: null };
 
-  const { data, error } = await supabase
-    .from("players")
-    .select(PLAYER_SELECT)
-    .not("birth_year", "is", null)
-    .order("popularity_score", { ascending: false, nullsFirst: false })
-    .limit(limit);
+  const batchSize = 1000;
+  const allPlayers = [];
 
-  if (error) {
-    console.error("Could not fetch Find the Player pool", error);
-    return { players: [], error };
+  for (let from = 0; ; from += batchSize) {
+    const to = from + batchSize - 1;
+    const { data, error } = await supabase
+      .from("players")
+      .select(PLAYER_SELECT)
+      .not("birth_year", "is", null)
+      .order("popularity_score", { ascending: false, nullsFirst: false })
+      .range(from, to);
+
+    if (error) {
+      console.error("Could not fetch Find the Player pool", error);
+      return { players: [], error };
+    }
+
+    allPlayers.push(...(data || []));
+
+    if (!data || data.length < batchSize) break;
   }
 
-  const players = (data || [])
+  const players = allPlayers
     .map(normalizePlayer)
     .filter(
       (player) =>
