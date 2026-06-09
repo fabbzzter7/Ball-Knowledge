@@ -21,7 +21,10 @@ async function loadLatestRound(supabase, matchId) {
   return { round: data || null, error };
 }
 
-export async function findOrCreatePublicMatch(supabase, { playerId, username }) {
+export async function findOrCreatePublicMatch(
+  supabase,
+  { playerId, username, categoryId = "general" }
+) {
   const { data: waitingMatches, error: searchError } = await supabase
     .from("matches")
     .select("*")
@@ -78,7 +81,8 @@ export async function findOrCreatePublicMatch(supabase, { playerId, username }) 
     };
   }
 
-  const questionIds = pickMultiplayerQuestionIds("general", 5);
+  const safeCategoryId = categoryId || "general";
+  const questionIds = pickMultiplayerQuestionIds(safeCategoryId, 5);
 
   if (questionIds.length !== 5) {
     return {
@@ -95,8 +99,8 @@ export async function findOrCreatePublicMatch(supabase, { playerId, username }) 
     .from("matches")
     .insert({
       room_code: roomCode,
-      mode: "general",
-      selected_category: "general",
+      mode: safeCategoryId,
+      selected_category: safeCategoryId,
       created_by: username,
       current_turn: username,
       current_turn_id: playerId,
@@ -128,7 +132,7 @@ export async function findOrCreatePublicMatch(supabase, { playerId, username }) 
     .insert({
       match_id: match.id,
       round_number: 1,
-      category: "general",
+      category: safeCategoryId,
       chosen_by: username,
       question_ids: questionIds,
       player1_score: 0,

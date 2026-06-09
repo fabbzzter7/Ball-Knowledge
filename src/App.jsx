@@ -861,6 +861,9 @@ export default function FootballQuizMVP() {
   const [multiplayerError, setMultiplayerError] = useState("");
   const [activeGames, setActiveGames] = useState([]);
   const [activeGamesLoading, setActiveGamesLoading] = useState(false);
+  const [playNowGames, setPlayNowGames] = useState([]);
+  const [playNowGamesLoading, setPlayNowGamesLoading] = useState(false);
+  const [playNowCategory, setPlayNowCategory] = useState("general");
   const [matchDeleteCandidate, setMatchDeleteCandidate] = useState(null);
   const [deletingMatchId, setDeletingMatchId] = useState(null);
   const [multiplayerNotice, setMultiplayerNotice] = useState("");
@@ -1262,6 +1265,11 @@ const isHomeScreen =
       if (match?.player2_id) ids.add(match.player2_id);
     });
 
+    playNowGames.forEach(({ match }) => {
+      if (match?.player1_id) ids.add(match.player1_id);
+      if (match?.player2_id) ids.add(match.player2_id);
+    });
+
     if (activeMatch?.player1_id) ids.add(activeMatch.player1_id);
     if (activeMatch?.player2_id) ids.add(activeMatch.player2_id);
 
@@ -1274,7 +1282,7 @@ const isHomeScreen =
     });
 
     return [...ids].filter(Boolean);
-  }, [activeGames, activeMatch, leagueDashboard, leaderboardRows]);
+  }, [activeGames, playNowGames, activeMatch, leagueDashboard, leaderboardRows]);
 
   useEffect(() => {
     if (!multiplayerRoundOpen || !currentMultiplayerRoundQuestion) return;
@@ -1747,6 +1755,19 @@ const isHomeScreen =
     return "Online profile sync is temporarily unavailable";
   };
 
+  const isNonBlockingProfileError = (error) => {
+    const status = Number(error?.status || error?.code);
+    const message = String(error?.message || "").toLowerCase();
+
+    return (
+      status === 400 ||
+      status === 409 ||
+      error?.code === "23505" ||
+      message.includes("duplicate") ||
+      message.includes("conflict")
+    );
+  };
+
   const hydrateProgressionFromProfile = (onlineProfile) => {
     const hydrated = getInitialProgression({
       profile: onlineProfile,
@@ -1783,9 +1804,11 @@ const isHomeScreen =
     );
 
     if (fetchError) {
-      console.error("Could not fetch profile", fetchError);
-      setProfileStatus("error");
-      setProfileError(getProfileErrorMessage(fetchError));
+      console.warn("Online profile unavailable; using local profile", fetchError);
+      setProfileStatus(isNonBlockingProfileError(fetchError) ? "local" : "error");
+      setProfileError(
+        isNonBlockingProfileError(fetchError) ? "" : getProfileErrorMessage(fetchError)
+      );
       return null;
     }
 
@@ -1816,9 +1839,11 @@ const isHomeScreen =
     );
 
     if (createError) {
-      console.error("Could not create profile", createError);
-      setProfileStatus("error");
-      setProfileError(getProfileErrorMessage(createError));
+      console.warn("Online profile could not be created; using local profile", createError);
+      setProfileStatus(isNonBlockingProfileError(createError) ? "local" : "error");
+      setProfileError(
+        isNonBlockingProfileError(createError) ? "" : getProfileErrorMessage(createError)
+      );
       return null;
     }
 
@@ -1847,9 +1872,11 @@ const isHomeScreen =
     );
 
     if (error) {
-      console.error("Could not update profile", error);
-      setProfileStatus("error");
-      setProfileError(getProfileErrorMessage(error));
+      console.warn("Online profile update unavailable", error);
+      setProfileStatus(isNonBlockingProfileError(error) ? "local" : "error");
+      setProfileError(
+        isNonBlockingProfileError(error) ? "" : getProfileErrorMessage(error)
+      );
       return null;
     }
 
@@ -2982,7 +3009,9 @@ const startConnectionsGame = (difficulty = null) => {
     }
 
     const games = await Promise.all(
-      (matches || []).map(async (match) => {
+      (matches || [])
+      .filter((match) => !match.is_public)
+      .map(async (match) => {
         const { data: rounds } = await supabase
           .from("multiplayer_rounds")
           .select("*")
@@ -3001,10 +3030,100 @@ const startConnectionsGame = (difficulty = null) => {
     if (!silent) setActiveGamesLoading(false);
   };
 
+  const loadPlayNowGames = async ({ silent = false } = {}) => {
+    if (!isSupabaseConfigured || !supabase) {
+      setMultiplayerError("Supabase env vars are missing");
+      return;
+    }
+
+    if (!silent) {
+      setPlayNowGamesLoading(true);
+      setMultiplayerError("");
+    }
+
+    const playerFilters = [`player_id.eq.${playerId}`];
+
+    if (username) {
+      playerFilters.push(`username.eq.${username}`);
+    }
+
+    const { data: players, error: playersError } = await supabase
+      .from("match_players")
+      .select("match_id")
+      .or(playerFilters.join(","));
+
+    if (playersError) {
+      if (!silent) setPlayNowGamesLoading(false);
+      setMultiplayerError("Could not load Play Now games");
+      return;
+    }
+
+    const matchIds = [
+      ...new Set((players || []).map((player) => player.match_id).filter(Boolean)),
+    ];
+
+    if (matchIds.length === 0) {
+      setPlayNowGames([]);
+      if (!silent) setPlayNowGamesLoading(false);
+      return;
+    }
+
+    const { data: matches, error: matchesError } = await supabase
+      .from("matches")
+      .select("*")
+      .in("id", matchIds)
+      .eq("is_public", true)
+      .order("updated_at", { ascending: false, nullsFirst: false });
+
+    if (matchesError) {
+      if (!silent) setPlayNowGamesLoading(false);
+      setMultiplayerError("Could not load Play Now games");
+      return;
+    }
+
+    const games = await Promise.all(
+      (matches || []).map(async (match) => {
+        const { data: rounds } = await supabase
+          .from("multiplayer_rounds")
+          .select("*")
+          .eq("match_id", match.id)
+          .order("round_number", { ascending: false })
+          .limit(1);
+
+        return {
+          match,
+          latestRound: rounds?.[0] || null,
+        };
+      })
+    );
+
+    setPlayNowGames(games);
+    if (!silent) setPlayNowGamesLoading(false);
+  };
+
   const openActiveGames = async () => {
     playClickSound();
     setMultiplayerStep("active-games");
     await fetchActiveGames();
+  };
+
+  const openPlayNowLobby = async () => {
+    playClickSound();
+    setMultiplayerStep("play-now");
+    setMultiplayerError("");
+    setMultiplayerNotice("");
+    setActiveMatch(null);
+    setActiveRound(null);
+    setMatchRounds([]);
+    await loadPlayNowGames();
+  };
+
+  const openCurrentRandomMatches = async () => {
+    playClickSound();
+    setMultiplayerStep("play-now-active-games");
+    setMultiplayerError("");
+    setMultiplayerNotice("");
+    await loadPlayNowGames();
   };
 
   const goBackMultiplayer = () => {
@@ -3016,12 +3135,21 @@ const startConnectionsGame = (difficulty = null) => {
     }
 
     if (
-      ["league-menu", "h2h-menu", "play-now-waiting"].includes(multiplayerStep)
+      ["league-menu", "h2h-menu", "play-now", "play-now-waiting"].includes(
+        multiplayerStep
+      )
     ) {
       setMultiplayerStep("menu");
       setActiveMatch(null);
       setActiveRound(null);
       setMatchRounds([]);
+      setMultiplayerError("");
+      setMultiplayerNotice("");
+      return;
+    }
+
+    if (multiplayerStep === "play-now-active-games") {
+      setMultiplayerStep("play-now");
       setMultiplayerError("");
       setMultiplayerNotice("");
       return;
@@ -3091,6 +3219,51 @@ const startConnectionsGame = (difficulty = null) => {
     } else {
       setMultiplayerStep(match.status === "waiting" ? "created" : "joined");
     }
+  };
+
+  const openPlayNowGame = async (matchId) => {
+    if (!isSupabaseConfigured || !supabase) {
+      setMultiplayerError("Supabase env vars are missing");
+      return;
+    }
+
+    playClickSound();
+    setMultiplayerLoading(true);
+    setMultiplayerError("");
+
+    const { match, rounds, error } = await loadMatchById(matchId);
+
+    setMultiplayerLoading(false);
+
+    if (error || !match) {
+      setMultiplayerError("Could not open Play Now game");
+      return;
+    }
+
+    const latestRound = rounds[0] || null;
+    const playerSlot = getCurrentPlayerSlot(match, playerId, username);
+    const playerAlreadyPlayed = hasPlayerFinishedRound(latestRound, playerSlot);
+
+    setActiveMatch(match);
+    setActiveRound(latestRound);
+    setMatchRounds(rounds);
+    setNextCategoryPickerOpen(false);
+    setMultiplayerRoomCode(match.room_code);
+    setMultiplayerMode(match.mode || latestRound?.category || "general");
+
+    if (
+      latestRound &&
+      !playerAlreadyPlayed &&
+      match.phase === "round_active" &&
+      match.status !== "completed"
+    ) {
+      openMultiplayerRoundFor(match, latestRound);
+      return;
+    }
+
+    setMultiplayerStep(
+      match.phase === "waiting_for_opponent" ? "play-now-waiting" : "joined"
+    );
   };
 
   const loadLeagueDashboard = async (leagueId, { silent = false } = {}) => {
@@ -4051,7 +4224,7 @@ const startConnectionsGame = (difficulty = null) => {
     }
   };
 
-  const startPlayNow = async () => {
+  const startPlayNow = async (categoryId = playNowCategory) => {
     playClickSound();
 
     if (!isSupabaseConfigured || !supabase) {
@@ -4066,6 +4239,7 @@ const startConnectionsGame = (difficulty = null) => {
     const { match, round, created, joined, error } = await findOrCreatePublicMatch(supabase, {
       playerId,
       username,
+      categoryId,
     });
 
     setMultiplayerLoading(false);
@@ -4083,6 +4257,7 @@ const startConnectionsGame = (difficulty = null) => {
     setMultiplayerNotice(
       joined ? "Random opponent found" : "Random challenge started"
     );
+    loadPlayNowGames({ silent: true });
 
     if (round) {
       openMultiplayerRoundFor(match, round);
@@ -4785,6 +4960,9 @@ const startConnectionsGame = (difficulty = null) => {
     setActiveMatch(updatedMatch);
     setMultiplayerRoundOpen(false);
     setMultiplayerOpen(true);
+    if (isPublicPlayNowMatch) {
+      loadPlayNowGames({ silent: true });
+    }
     setMultiplayerStep(
       isPublicPlayNowMatch && !otherPlayerFinished ? "play-now-waiting" : "joined"
     );
@@ -5818,7 +5996,7 @@ const startConnectionsGame = (difficulty = null) => {
       if (cancelled) return;
 
       if (error) {
-        console.error("Could not load player avatars", error);
+        console.warn("Could not load player avatars", error);
         return;
       }
 
@@ -5853,9 +6031,11 @@ const startConnectionsGame = (difficulty = null) => {
       );
 
       if (error) {
-        console.error("Could not sync local stats to profile", error);
-        setProfileStatus("error");
-        setProfileError(getProfileErrorMessage(error));
+        console.warn("Could not sync local stats to profile", error);
+        setProfileStatus(isNonBlockingProfileError(error) ? "local" : "error");
+        setProfileError(
+          isNonBlockingProfileError(error) ? "" : getProfileErrorMessage(error)
+        );
         return;
       }
 
@@ -7232,12 +7412,12 @@ const startConnectionsGame = (difficulty = null) => {
                 <div className="arena-hub-grid">
                   <button
                     className="arena-hub-card play-now"
-                    onClick={startPlayNow}
+                    onClick={openPlayNowLobby}
                     disabled={multiplayerLoading}
                   >
                     <span>⚡</span>
-                    <strong>{multiplayerLoading ? "Finding..." : "Play Now"}</strong>
-                    <small>Find a quick opponent</small>
+                    <strong>Play Now</strong>
+                    <small>Random async matches</small>
                   </button>
 
                   <button
@@ -7257,6 +7437,213 @@ const startConnectionsGame = (difficulty = null) => {
                     <strong>League</strong>
                     <small>Daily points with friends</small>
                   </button>
+                </div>
+              )}
+
+              {multiplayerStep === "play-now" && (
+                <div className="play-now-lobby">
+                  <div className="play-now-lobby-hero">
+                    <div>
+                      <div className="league-kicker">Arena</div>
+                      <h2>Play Now</h2>
+                      <p>
+                        Play a random async match. You play now, your opponent
+                        answers later.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="play-now-choice-grid">
+                    <button
+                      type="button"
+                      className="play-now-choice-card current"
+                      onClick={openCurrentRandomMatches}
+                      disabled={playNowGamesLoading}
+                    >
+                      <span>🎮</span>
+                      <strong>
+                        {playNowGamesLoading
+                          ? "Loading..."
+                          : "Active Random Matches"}
+                      </strong>
+                      <small>Continue matches you already started.</small>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="play-now-choice-card start"
+                      onClick={() => startPlayNow(playNowCategory)}
+                      disabled={multiplayerLoading}
+                    >
+                      <span>⚡</span>
+                      <strong>
+                        {multiplayerLoading
+                          ? "Finding..."
+                          : "Start New Random Match"}
+                      </strong>
+                      <small>Find an opponent and start a new async match.</small>
+                    </button>
+                  </div>
+
+                </div>
+              )}
+
+              {multiplayerStep === "play-now-active-games" && (
+                <div className="active-games-page play-now-active-page">
+                  <div className="active-games-page-header">
+                    <div>
+                      <div className="league-kicker">Arena</div>
+                      <h2>Active Random Matches</h2>
+                      <p>Continue random matches you already started.</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="refresh-play-now-button"
+                      onClick={() => loadPlayNowGames()}
+                      disabled={playNowGamesLoading}
+                    >
+                      {playNowGamesLoading ? "Refreshing..." : "Refresh"}
+                    </button>
+                  </div>
+
+                  <div className="active-games-panel play-now-games-panel standalone">
+                    {playNowGamesLoading ? (
+                      <div className="active-games-empty">
+                        <strong>Loading current matches...</strong>
+                        <span>Checking your saved random matches.</span>
+                      </div>
+                    ) : playNowGames.length === 0 ? (
+                      <div className="active-games-empty">
+                        <strong>No current random matches</strong>
+                        <span>Start a new random match when you are ready.</span>
+                      </div>
+                    ) : (
+                      <div className="active-games-list play-now-games-list">
+                        {playNowGames.map(({ match, latestRound }) => {
+                          const playerSlot = getCurrentPlayerSlot(
+                            match,
+                            playerId,
+                            username
+                          );
+                          const opponentSlot =
+                            playerSlot === "player1" ? "player2" : "player1";
+                          const opponentProfile = getMatchPlayerProfile(
+                            match,
+                            opponentSlot
+                          );
+                          const userFinished = hasPlayerFinishedRound(
+                            latestRound,
+                            playerSlot
+                          );
+                          const opponentFinished =
+                            playerSlot === "player1"
+                              ? Boolean(latestRound?.player2_finished)
+                              : Boolean(latestRound?.player1_finished);
+                          const userScore =
+                            playerSlot === "player2"
+                              ? latestRound?.player2_score ?? 0
+                              : latestRound?.player1_score ?? 0;
+                          const opponentScore =
+                            playerSlot === "player2"
+                              ? latestRound?.player1_score ?? 0
+                              : latestRound?.player2_score ?? 0;
+                          const isCompleted =
+                            match.status === "completed" ||
+                            latestRound?.status === "finished";
+                          const category = latestRound?.category || match.selected_category;
+                          let statusText = "Ready to play";
+                          let detailText = "Opponent is waiting";
+                          let ctaText = "Play now";
+
+                          if (isCompleted) {
+                            const winner = latestRound?.winner;
+                            statusText =
+                              winner === "draw"
+                                ? "Draw"
+                                : winner === username
+                                ? "You won"
+                                : "You lost";
+                            detailText = `${userScore} - ${opponentScore}`;
+                            ctaText = "View Result";
+                          } else if (userFinished && !opponentFinished) {
+                            statusText = "Waiting for opponent";
+                            detailText = "Your score is saved";
+                            ctaText = "Waiting";
+                          } else if (!userFinished) {
+                            statusText =
+                              playerSlot === "player2"
+                                ? "Opponent is waiting"
+                                : "Ready to play";
+                            detailText = getCategoryLabel(category);
+                            ctaText = "Continue";
+                          }
+
+                          return (
+                            <div
+                              className={`active-game-card play-now-game-card ${getCategoryClass(
+                                category
+                              )}`}
+                              key={match.id}
+                            >
+                              <div className="active-game-top">
+                                <div className="active-game-player">
+                                  <PlayerAvatar profile={opponentProfile} size="small" />
+                                  <strong>
+                                    {match.player2_username
+                                      ? getOpponentName(match, playerId, username)
+                                      : "Random opponent"}
+                                  </strong>
+                                </div>
+                                <span>{match.room_code}</span>
+                              </div>
+
+                              {category && (
+                                <div
+                                  className={`active-game-category ${getCategoryClass(
+                                    category
+                                  )}`}
+                                >
+                                  {getCategoryLabel(category)}
+                                </div>
+                              )}
+
+                              <div className="active-game-score">
+                                Your score: {userFinished ? userScore : "-"} · Opponent:{" "}
+                                {opponentFinished || isCompleted ? opponentScore : "-"}
+                              </div>
+
+                              <div
+                                className={`active-game-status ${
+                                  isCompleted
+                                    ? "result"
+                                    : userFinished
+                                    ? "waiting"
+                                    : "your-turn"
+                                }`}
+                              >
+                                {statusText}
+                              </div>
+
+                              <small>{detailText}</small>
+
+                              <div className="active-game-actions">
+                                <button
+                                  className="open-match-button"
+                                  onClick={() => openPlayNowGame(match.id)}
+                                  disabled={
+                                    multiplayerLoading ||
+                                    (!isCompleted && userFinished && !opponentFinished)
+                                  }
+                                >
+                                  {ctaText}
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -7332,10 +7719,12 @@ const startConnectionsGame = (difficulty = null) => {
               )}
 
               {multiplayerStep === "active-games" && (
-                <div className="active-games-panel">
-                  <div className="active-games-header">
+                <div className="active-games-page h2h-active-page">
+                  <div className="active-games-page-header">
                     <div>
-                      <strong>Active Matches</strong>
+                      <div className="league-kicker">Arena</div>
+                      <h2>H2H Active Matches</h2>
+                      <p>Continue friend and invite matches.</p>
                     </div>
 
                     <button onClick={fetchActiveGames} disabled={activeGamesLoading}>
@@ -7343,14 +7732,15 @@ const startConnectionsGame = (difficulty = null) => {
                     </button>
                   </div>
 
-                  {activeGames.length === 0 && !activeGamesLoading ? (
-                    <div className="active-games-empty">
-                      <strong>No active matches yet</strong>
-                      <span>Create a match or join with a room code</span>
-                    </div>
-                  ) : (
-                    <div className="active-games-list">
-                      {activeGames.map(({ match, latestRound }) => {
+                  <div className="active-games-panel standalone">
+                    {activeGames.length === 0 && !activeGamesLoading ? (
+                      <div className="active-games-empty">
+                        <strong>No active matches yet</strong>
+                        <span>Create a match or join with a room code</span>
+                      </div>
+                    ) : (
+                      <div className="active-games-list">
+                        {activeGames.map(({ match, latestRound }) => {
                         const playerSlot = getCurrentPlayerSlot(
                           match,
                           playerId,
@@ -7438,9 +7828,10 @@ const startConnectionsGame = (difficulty = null) => {
                             </div>
                           </div>
                         );
-                      })}
-                    </div>
-                  )}
+                        })}
+                      </div>
+                    )}
+                  </div>
 
                 </div>
               )}
@@ -7673,24 +8064,27 @@ const startConnectionsGame = (difficulty = null) => {
               )}
 
               {multiplayerStep === "my-leagues" && (
-                <div className="active-games-panel league-list-panel">
-                  <div className="active-games-header">
+                <div className="active-games-page league-list-page">
+                  <div className="active-games-page-header">
                     <div>
-                      <strong>My Leagues</strong>
+                      <div className="league-kicker">Arena</div>
+                      <h2>My Leagues</h2>
+                      <p>Open leagues you created or joined.</p>
                     </div>
                     <button onClick={loadMyLeagues} disabled={leagueLoading}>
                       {leagueLoading ? "Loading..." : "Refresh"}
                     </button>
                   </div>
 
-                  {!leagueLoading && myLeagues.length === 0 ? (
-                    <div className="active-games-empty">
-                      <strong>No leagues yet</strong>
-                      <span>Create a league or join with a code</span>
-                    </div>
-                  ) : (
-                    <div className="active-games-list">
-                      {myLeagues.map(({ league, member, memberCount, rank, todayPlayed }) => (
+                  <div className="active-games-panel league-list-panel standalone">
+                    {!leagueLoading && myLeagues.length === 0 ? (
+                      <div className="active-games-empty">
+                        <strong>No leagues yet</strong>
+                        <span>Create a league or join with a code</span>
+                      </div>
+                    ) : (
+                      <div className="active-games-list">
+                        {myLeagues.map(({ league, member, memberCount, rank, todayPlayed }) => (
                         <div className="league-card" key={league.id}>
                           <div className="league-card-top">
                             <strong>{league.name}</strong>
@@ -7708,9 +8102,10 @@ const startConnectionsGame = (difficulty = null) => {
                             Open League
                           </button>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -8941,28 +9336,28 @@ const startConnectionsGame = (difficulty = null) => {
         selectedTile ? "selected selected-strong" : ""
       }`}
       onClick={() => toggleConnectionTile(tile)}
-      whileTap={{ scale: 0.92 }}
+      whileTap={{ scale: 0.98 }}
       animate={
         selectedTile
           ? {
-              scale: 1.08,
-              y: -6,
+              scale: 1.035,
+              y: -3,
               background:
                 "linear-gradient(135deg, #2563eb 0%, #7c3aed 52%, #ec4899 100%)",
               color: "#ffffff",
               borderColor: "rgba(255,255,255,0.98)",
               boxShadow:
-                "0 0 0 4px rgba(96,165,250,0.7), 0 0 42px rgba(124,58,237,0.95), 0 18px 45px rgba(0,0,0,0.55)",
+                "0 0 0 2px rgba(96,165,250,0.65), 0 0 24px rgba(124,58,237,0.7), 0 12px 28px rgba(0,0,0,0.42)",
             }
           : {
               scale: 1,
               y: 0,
             }
       }
-      transition={{ duration: 0.14 }}
+      transition={{ duration: 0.07 }}
       style={{
         position: "relative",
-        borderWidth: selectedTile ? 3 : undefined,
+        borderWidth: selectedTile ? 2 : undefined,
         zIndex: selectedTile ? 5 : 1,
       }}
     >
