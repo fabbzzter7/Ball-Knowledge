@@ -251,4 +251,60 @@
   background: linear-gradient(135deg, rgba(32, 164, 90, 0.95), rgba(18, 110, 61, 0.95));
   color: white;
   box-shadow: 0 12px 28px rgba(24, 146, 82, 0.35);
+}.connections-tile.selected,
+.connection-tile.selected,
+.connections-card.selected,
+.connection-card.selected {
+  color: #ffffff !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.45), transparent 32%),
+    linear-gradient(135deg, #2563eb 0%, #7c3aed 52%, #ec4899 100%) !important;
+  border: 2px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow:
+    0 0 0 3px rgba(96, 165, 250, 0.55),
+    0 0 34px rgba(124, 58, 237, 0.9),
+    0 18px 44px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+  transform: translateY(-5px) scale(1.055) !important;
+  filter: saturate(1.35) brightness(1.12);
+}
+
+.connections-tile.selected span,
+.connection-tile.selected span,
+.connections-card.selected span,
+.connection-card.selected span {
+  color: #ffffff !important;
+}
+
+.connections-tile.selected::after,
+.connection-tile.selected::after,
+.connections-card.selected::after,
+.connection-card.selected::after {
+  content: "✓";
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #4f46e5;
+  font-size: 0.95rem;
+  font-weight: 1000;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.75);
+}
+
+.connections-tile,
+.connection-tile,
+.connections-card,
+.connection-card {
+  position: relative;
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.14s ease,
+    border-color 0.14s ease,
+    background 0.14s ease,
+    filter 0.14s ease;background: linear-gradient(135deg, #f59e0b, #facc15, #fb7185) !important;
 }

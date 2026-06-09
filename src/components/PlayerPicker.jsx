@@ -15,7 +15,7 @@ function getClubPreview(player) {
 
 function getPlayerMeta(player, includeBirthYear = false) {
   return [
-    player?.nationality,
+    getClubPreview(player),
     player?.position,
     includeBirthYear ? player?.birth_year : null,
   ]
@@ -32,8 +32,6 @@ function PlayerSuggestionRow({
   onPointerMove,
   onClick,
 }) {
-  const clubPreview = getClubPreview(player);
-
   return (
     <button
       type="button"
@@ -49,7 +47,6 @@ function PlayerSuggestionRow({
         {showMeta && (
           <small>
             {getPlayerMeta(player, showBirthYear)}
-            {clubPreview ? <em>{clubPreview}</em> : null}
           </small>
         )}
       </span>

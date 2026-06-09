@@ -24,9 +24,9 @@ import {
 import { fetchFindPlayerPool } from "./lib/playerService";
 import { isPlayerAnswerMatch } from "./lib/playerAnswer";
 import {
-  getAnswerCandidates,
-  getExpectedAnswers,
+  findMatchingAnswer,
   isPlayerAnswerCorrect,
+  normalizeAnswerText,
 } from "./lib/playerAnswerMatcher";
 import {
   addDaysToDateKey,
@@ -257,13 +257,7 @@ function shuffleQuestionOptions(question) {
 }
 
 function normalizeAnswer(text) {
-  return String(text)
-    .toLowerCase()
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, " ");
+  return normalizeAnswerText(text);
 }
 
 function getAcceptedAnswers(correctAnswer) {
@@ -295,10 +289,11 @@ function isCorrectAnswer(input, correctAnswer) {
 }
 
 function isCorrectPlayerAnswer(player, correctAnswer) {
-  if (!player) return false;
-
-  const guesses = [player.name, ...(Array.isArray(player.aliases) ? player.aliases : [])];
-  return guesses.some((guess) => isCorrectAnswer(guess, correctAnswer));
+  return isPlayerAnswerCorrect({
+    selectedPlayer: player,
+    correctAnswer,
+    acceptedAnswers: getAcceptedAnswers(correctAnswer),
+  });
 }
 
 function isPlayerLike(value) {
@@ -565,10 +560,14 @@ function buildConnectionsTiles(puzzle) {
   );
 }
 
-function getRandomConnectionsPuzzle() {
-  return CONNECTIONS_PUZZLES[
-    Math.floor(Math.random() * CONNECTIONS_PUZZLES.length)
-  ];
+function getRandomConnectionsPuzzle(difficulty = null) {
+  const puzzles = difficulty
+    ? CONNECTIONS_PUZZLES.filter((puzzle) => puzzle.difficulty === difficulty)
+    : CONNECTIONS_PUZZLES;
+
+  const safePuzzles = puzzles.length > 0 ? puzzles : CONNECTIONS_PUZZLES;
+
+  return safePuzzles[Math.floor(Math.random() * safePuzzles.length)];
 }
 
 function getWhoAmIAcceptedAnswers(question) {
@@ -750,6 +749,10 @@ function hasPlayerFinishedRound(round, playerSlot) {
 function getMatchActionLabel(match, latestRound, playerSlot, isPlayerTurn) {
   if (!match) return "Open match";
 
+  if (match.is_public && match.phase === "waiting_for_opponent") {
+    return "Waiting for random opponent";
+  }
+
   if (match.phase === "waiting_for_opponent" || match.status === "waiting") {
     return "Waiting for opponent to join";
   }
@@ -776,6 +779,10 @@ function getMatchActionLabel(match, latestRound, playerSlot, isPlayerTurn) {
 function getMatchActionKind(match, latestRound, playerSlot, isPlayerTurn) {
   if (!match) return "neutral";
 
+  if (match.is_public && match.phase === "waiting_for_opponent") {
+    return "waiting";
+  }
+
   if (match.phase === "waiting_for_opponent" || match.status === "waiting") {
     return "waiting-join";
   }
@@ -796,6 +803,10 @@ function getMatchActionKind(match, latestRound, playerSlot, isPlayerTurn) {
 }
 
 function getMatchCtaLabel(actionKind, match) {
+  if (match?.is_public && match.phase === "waiting_for_opponent") {
+    return "View Saved Score";
+  }
+
   if (actionKind === "your-turn" && match?.phase === "choose_category") {
     return "Choose Category";
   }
@@ -1026,6 +1037,7 @@ export default function FootballQuizMVP() {
 
   const [levelUpPopup, setLevelUpPopup] = useState(null);
   const [connectionsPuzzle, setConnectionsPuzzle] = useState(null);
+  const [connectionsDifficultyPickerOpen, setConnectionsDifficultyPickerOpen] = useState(false);
   const [connectionsTiles, setConnectionsTiles] = useState([]);
   const [connectionsSelected, setConnectionsSelected] = useState([]);
   const [connectionsSolved, setConnectionsSolved] = useState([]);
@@ -1058,6 +1070,12 @@ export default function FootballQuizMVP() {
 
   const current = questions[questionIndex];
   const currentWhoAmI = whoAmIQuestions[whoAmIIndex];
+  const currentQuestionNumber = questionIndex + 1;
+  const currentRoundQuestionNumber = ((questionIndex % 10) + 1);
+  const currentQuestionProgress =
+    gameMode === "general" && !isMockMultiplayer
+      ? getStreakProgress(streak)
+      : Math.min(100, (currentRoundQuestionNumber / 10) * 100);
   const isDailyPlayerChallenge = isPlayerAnswerType(todayChallenge);
   const progressionView = useMemo(
     () =>
@@ -1112,21 +1130,25 @@ export default function FootballQuizMVP() {
     generalRunXpSummary.correct +
     generalRunXpSummary.streak +
     generalRunXpSummary.highscore;
-  const currentHomeViewKey = profileOpen
-    ? "profile"
-    : leaderboardOpen
-    ? "leaderboard"
-    : multiplayerOpen
-    ? `multiplayer-${multiplayerStep}`
-    : modeMenuOpen
-    ? "mode-menu"
-    : "home";
-  const isHomeScreen =
-    !gameStarted &&
-    !profileOpen &&
-    !leaderboardOpen &&
-    !multiplayerOpen &&
-    !modeMenuOpen;
+  const currentHomeViewKey = connectionsDifficultyPickerOpen
+  ? "connections-difficulty"
+  : profileOpen
+  ? "profile"
+  : leaderboardOpen
+  ? "leaderboard"
+  : multiplayerOpen
+  ? `multiplayer-${multiplayerStep}`
+  : modeMenuOpen
+  ? "mode-menu"
+  : "home";
+
+const isHomeScreen =
+  !gameStarted &&
+  !profileOpen &&
+  !leaderboardOpen &&
+  !multiplayerOpen &&
+  !modeMenuOpen &&
+  !connectionsDifficultyPickerOpen;
   const hasBothMultiplayerPlayers =
     Boolean(activeMatch?.player1_username) && Boolean(activeMatch?.player2_username);
   const isMultiplayerTurn = isCurrentPlayersTurn(activeMatch, playerId, username);
@@ -2355,33 +2377,49 @@ export default function FootballQuizMVP() {
     setLastDailyResult(result);
   };
 
-  const resetConnectionsGame = () => {
-    const puzzle = getRandomConnectionsPuzzle();
+  const resetConnectionsGame = (difficulty = null) => {
+  const puzzle = getRandomConnectionsPuzzle(difficulty);
 
-    setConnectionsPuzzle(puzzle);
-    setConnectionsTiles(buildConnectionsTiles(puzzle));
-    setConnectionsSelected([]);
-    setConnectionsSolved([]);
-    setConnectionsMistakes(0);
-    setConnectionsFeedback(null);
-    setConnectionsShake(0);
-    setConnectionsRewardClaimed(false);
-  };
+  setConnectionsPuzzle(puzzle);
+  setConnectionsTiles(buildConnectionsTiles(puzzle));
+  setConnectionsSelected([]);
+  setConnectionsSolved([]);
+  setConnectionsMistakes(0);
+  setConnectionsFeedback(null);
+  setConnectionsShake(0);
+  setConnectionsRewardClaimed(false);
+};
 
-  const startConnectionsGame = () => {
-    playClickSound();
-    setShowDailyCompletePopup(false);
-    setLeaderboardOpen(false);
-    setProfileOpen(false);
-    setMultiplayerOpen(false);
-    setModeMenuOpen(false);
-    setIsMockMultiplayer(false);
-    setMockOpponentScore(null);
-    setGameMode("connections");
-    setFinished(false);
-    setGameStarted(true);
-    resetConnectionsGame();
-  };
+  const openConnectionsDifficultyPicker = () => {
+  playClickSound();
+  setShowDailyCompletePopup(false);
+  setLeaderboardOpen(false);
+  setProfileOpen(false);
+  setMultiplayerOpen(false);
+  setModeMenuOpen(false);
+  setIsMockMultiplayer(false);
+  setMockOpponentScore(null);
+  setGameMode("connections");
+  setGameStarted(false);
+  setConnectionsDifficultyPickerOpen(true);
+};
+
+const startConnectionsGame = (difficulty = null) => {
+  playClickSound();
+  setShowDailyCompletePopup(false);
+  setLeaderboardOpen(false);
+  setProfileOpen(false);
+  setMultiplayerOpen(false);
+  setModeMenuOpen(false);
+  setConnectionsDifficultyPickerOpen(false);
+  setIsMockMultiplayer(false);
+  setMockOpponentScore(null);
+  setGameMode("connections");
+  setFinished(false);
+  setGameStarted(true);
+  resetConnectionsGame(difficulty);
+  window.scrollTo({ top: 0, behavior: "instant" });
+};
 
   const resetWhoAmIGame = (dateKey = whoAmIDate) => {
     const dailyQuestion = getDailyWhoAmIQuestion(dateKey);
@@ -2416,7 +2454,7 @@ export default function FootballQuizMVP() {
   };
 
   const moveToNextWhoAmI = () => {
-    if (whoAmILives <= 0 || whoAmIIndex >= whoAmIQuestions.length - 1) {
+    if (whoAmIIndex >= whoAmIQuestions.length - 1) {
       setWhoAmIGameOver(true);
       return;
     }
@@ -2494,8 +2532,6 @@ export default function FootballQuizMVP() {
       return;
     }
 
-    const nextLives = Math.max(0, whoAmILives - 1);
-    setWhoAmILives(nextLives);
     setWhoAmIStreak(0);
     setWhoAmIFeedback({
       type: "reveal",
@@ -2511,7 +2547,7 @@ export default function FootballQuizMVP() {
     playWrongSound();
 
     window.setTimeout(() => {
-      if (nextLives <= 0) {
+      if (whoAmIIndex >= whoAmIQuestions.length - 1) {
         setWhoAmIGameOver(true);
       } else {
         moveToNextWhoAmI();
@@ -3050,7 +3086,11 @@ export default function FootballQuizMVP() {
     setNextCategoryPickerOpen(false);
     setMultiplayerRoomCode(match.room_code);
     setMultiplayerMode(match.mode || "general");
-    setMultiplayerStep(match.status === "waiting" ? "created" : "joined");
+    if (match.is_public && match.phase === "waiting_for_opponent") {
+      setMultiplayerStep("play-now-waiting");
+    } else {
+      setMultiplayerStep(match.status === "waiting" ? "created" : "joined");
+    }
   };
 
   const loadLeagueDashboard = async (leagueId, { silent = false } = {}) => {
@@ -3583,11 +3623,11 @@ export default function FootballQuizMVP() {
       return;
     }
 
-    const matchedAnswer = leagueTop10Challenge.answers.find(
-      (answer) =>
-        isCorrectPlayerAnswer(guessedPlayer, answer) ||
-        isCorrectAnswer(guessText, answer)
-    );
+    const matchedAnswer = findMatchingAnswer({
+      typedAnswer: guessText,
+      selectedPlayer: guessedPlayer,
+      answers: leagueTop10Challenge.answers,
+    });
     const alreadyFound =
       matchedAnswer && leagueTop10Found.includes(matchedAnswer);
     const matchedRank = matchedAnswer
@@ -3724,36 +3764,12 @@ export default function FootballQuizMVP() {
     }
 
     const guess = leagueWhoAmIInput.trim();
-    const candidates = getAnswerCandidates({
-      typedAnswer: guess,
-      selectedPlayer: guessedPlayer,
-    });
-    const expected = getExpectedAnswers(currentLeagueWhoAmI);
     const isCorrect = isPlayerAnswerCorrect({
       typedAnswer: guess,
       selectedPlayer: guessedPlayer,
       question: currentLeagueWhoAmI,
       acceptedAnswers: currentLeagueWhoAmI.acceptedAnswers || [],
-      debugContext: `league-whoami:${currentLeagueWhoAmI.id}`,
     });
-
-    console.group("League Who Am I answer check");
-    console.log("raw typed answer", guess);
-    console.log("raw playerOverride", playerOverride);
-    console.log("state selectedPlayer", leagueWhoAmISelectedPlayer);
-    console.log("selectedPlayer used", guessedPlayer);
-    console.log("question/challenge object", currentLeagueWhoAmI);
-    console.log("expected answer fields", {
-      answer: currentLeagueWhoAmI.answer,
-      correctAnswer: currentLeagueWhoAmI.correctAnswer,
-      playerName: currentLeagueWhoAmI.playerName,
-      acceptedAnswers: currentLeagueWhoAmI.acceptedAnswers,
-      aliases: currentLeagueWhoAmI.aliases,
-    });
-    console.log("normalized candidates", candidates);
-    console.log("normalized expected", expected);
-    console.log("isCorrect", isCorrect);
-    console.groupEnd();
 
     if (isCorrect) {
       const earnedPoints = leagueWhoAmIPointsAvailable;
@@ -4047,7 +4063,7 @@ export default function FootballQuizMVP() {
     setMultiplayerError("");
     setMultiplayerNotice("Searching for opponent...");
 
-    const { match, created, error } = await findOrCreatePublicMatch(supabase, {
+    const { match, round, created, joined, error } = await findOrCreatePublicMatch(supabase, {
       playerId,
       username,
     });
@@ -4060,18 +4076,20 @@ export default function FootballQuizMVP() {
     }
 
     setActiveMatch(match);
-    setActiveRound(null);
-    setMatchRounds([]);
+    setActiveRound(round || null);
+    setMatchRounds(round ? [round] : []);
     setMultiplayerRoomCode(match.room_code);
     setMultiplayerMode(match.mode || "general");
+    setMultiplayerNotice(
+      joined ? "Random opponent found" : "Random challenge started"
+    );
 
-    if (created) {
-      setMultiplayerStep("play-now-waiting");
+    if (round) {
+      openMultiplayerRoundFor(match, round);
       return;
     }
 
-    setMultiplayerNotice("Opponent found");
-    setMultiplayerStep("joined");
+    setMultiplayerStep(created ? "play-now-waiting" : "joined");
   };
 
   const requestDeleteMatch = (match) => {
@@ -4197,7 +4215,9 @@ export default function FootballQuizMVP() {
     setMatchRounds(rounds || []);
     setNextCategoryPickerOpen(false);
     setMultiplayerRoomCode(data.room_code);
-    if (data.status === "ready") {
+    if (data.is_public && data.phase === "waiting_for_opponent") {
+      setMultiplayerStep("play-now-waiting");
+    } else if (data.status === "ready") {
       setMultiplayerStep("joined");
     }
   };
@@ -4527,6 +4547,50 @@ export default function FootballQuizMVP() {
     setMultiplayerOpen(false);
   };
 
+  const openMultiplayerRoundFor = (match, round) => {
+    if (!match || !round) {
+      setMultiplayerError("Round questions are not ready");
+      return;
+    }
+
+    const roundQuestions = getMultiplayerQuestionsByIds(round.question_ids || []);
+    if (roundQuestions.length !== 5) {
+      setMultiplayerError("Round questions are not ready");
+      return;
+    }
+
+    const playerSlot = getCurrentPlayerSlot(match, playerId, username);
+    if (hasPlayerFinishedRound(round, playerSlot)) {
+      setActiveMatch(match);
+      setActiveRound(round);
+      setMatchRounds((rounds) => [
+        round,
+        ...rounds.filter((item) => item.id !== round.id),
+      ]);
+      setMultiplayerStep("joined");
+      setMultiplayerNotice("Your score is already saved");
+      return;
+    }
+
+    playClickSound();
+    setActiveMatch(match);
+    setActiveRound(round);
+    setMatchRounds((rounds) => [
+      round,
+      ...rounds.filter((item) => item.id !== round.id),
+    ]);
+    setMultiplayerMode(match.mode || "general");
+    setMultiplayerRoomCode(match.room_code);
+    setMultiplayerRoundIndex(0);
+    setMultiplayerRoundSelected(null);
+    setMultiplayerRoundScore(0);
+    setMultiplayerTimeLeft(MULTIPLAYER_TIME_LIMIT);
+    setMultiplayerRoundDone(false);
+    setIsSubmittingRound(false);
+    setMultiplayerRoundOpen(true);
+    setMultiplayerOpen(false);
+  };
+
   const chooseMultiplayerRoundAnswer = (option) => {
     if (
       multiplayerRoundSelected ||
@@ -4630,17 +4694,27 @@ export default function FootballQuizMVP() {
     let matchPatch = {
       updated_at: new Date().toISOString(),
     };
+    const isPublicPlayNowMatch = Boolean(activeMatch.is_public);
 
     if (otherPlayerFinished) {
       // Next chooser rule: the player who submits second chooses the next
       // category, which keeps async play moving without requiring both players
       // to be online together.
-      matchPatch = {
-        ...matchPatch,
-        phase: "round_finished",
-        current_turn: username,
-        current_turn_id: playerId,
-      };
+      matchPatch = isPublicPlayNowMatch
+        ? {
+            ...matchPatch,
+            status: "completed",
+            phase: "round_finished",
+            matchmaking_status: "completed",
+            current_turn: null,
+            current_turn_id: null,
+          }
+        : {
+            ...matchPatch,
+            phase: "round_finished",
+            current_turn: username,
+            current_turn_id: playerId,
+          };
 
       if (winner === activeMatch.player1_username) {
         matchPatch.player1_wins = (activeMatch.player1_wins || 0) + 1;
@@ -4669,6 +4743,15 @@ export default function FootballQuizMVP() {
           label: "H2H win",
         });
       }
+    } else if (isPublicPlayNowMatch) {
+      matchPatch = {
+        ...matchPatch,
+        status: "waiting_for_opponent",
+        phase: "waiting_for_opponent",
+        matchmaking_status: "waiting_for_opponent",
+        current_turn: null,
+        current_turn_id: null,
+      };
     }
 
     let updatedMatch = activeMatch;
@@ -4702,7 +4785,9 @@ export default function FootballQuizMVP() {
     setActiveMatch(updatedMatch);
     setMultiplayerRoundOpen(false);
     setMultiplayerOpen(true);
-    setMultiplayerStep("joined");
+    setMultiplayerStep(
+      isPublicPlayNowMatch && !otherPlayerFinished ? "play-now-waiting" : "joined"
+    );
   };
 
   const startDailyChallenge = () => {
@@ -4969,10 +5054,11 @@ export default function FootballQuizMVP() {
 
     setDailyCelebratedAnswer(null);
 
-    const matchedAnswer = todayChallenge.answers.find((answer) =>
-      isCorrectPlayerAnswer(guessedPlayer, answer) ||
-      isCorrectAnswer(guessText, answer)
-    );
+    const matchedAnswer = findMatchingAnswer({
+      typedAnswer: guessText,
+      selectedPlayer: guessedPlayer,
+      answers: todayChallenge.answers,
+    });
 
     if (matchedAnswer && !foundAnswers.includes(matchedAnswer)) {
       const rank = todayChallenge.answers.indexOf(matchedAnswer) + 1;
@@ -5366,6 +5452,7 @@ export default function FootballQuizMVP() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          onClick={() => setDailyRewardMeterOpen(false)}
         >
           <motion.div
             className="daily-reward-popup daily-reward-view-card"
@@ -5373,6 +5460,7 @@ export default function FootballQuizMVP() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 18 }}
             transition={{ type: "spring", stiffness: 170, damping: 14 }}
+            onClick={(event) => event.stopPropagation()}
           >
             <div className="daily-reward-top">
               <div className="daily-reward-fire">🔥</div>
@@ -6434,7 +6522,7 @@ export default function FootballQuizMVP() {
             Score {multiplayerRoundScore}/5
           </div>
 
-          <h1 className="question-title">
+          <h1 className="question-title quiz-question-card neonGlassCard">
             {currentMultiplayerRoundQuestion.question}
           </h1>
 
@@ -6442,7 +6530,7 @@ export default function FootballQuizMVP() {
             <div className="multiplayer-timeup-card">Time's up!</div>
           )}
 
-          <div className="answers-grid">
+          <div className="answers-grid neonAnswerGrid">
             {currentMultiplayerRoundQuestion.options.map((option) => {
               const isCorrect = isCorrectAnswer(
                 option,
@@ -6458,7 +6546,7 @@ export default function FootballQuizMVP() {
                   key={option}
                   onClick={() => chooseMultiplayerRoundAnswer(option)}
                   disabled={Boolean(multiplayerRoundSelected) || isSubmittingRound}
-                  className={`answer-button ${
+                  className={`answer-button neonAnswerButton ${
                     showCorrect ? "correct" : showWrong ? "wrong" : ""
                   }`}
                 >
@@ -6481,6 +6569,97 @@ export default function FootballQuizMVP() {
             </div>
           )}
         </div>
+      </div>
+    );
+  }  if (connectionsDifficultyPickerOpen) {
+    const connectionDifficulties = [
+      {
+        label: "Easy",
+        subtitle: "Warm-up groups",
+        emoji: "🟢",
+        className: "easy",
+      },
+      {
+        label: "Medium",
+        subtitle: "Real football knowledge",
+        emoji: "🔵",
+        className: "medium",
+      },
+      {
+        label: "Hard",
+        subtitle: "For ball knowledge people",
+        emoji: "🟣",
+        className: "hard",
+      },
+      {
+        label: "Very Hard",
+        subtitle: "Only for football nerds",
+        emoji: "🔥",
+        className: "very-hard",
+      },
+    ];
+
+    return (
+      <div
+        className="fullscreen-bg"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.05), rgba(0,0,0,0.58)), url(${stadiumBg})`,
+        }}
+      >
+        {coinShopModal}
+        {dailyRewardMeterModal}
+        {coinRewardToastOverlay}
+        {xpToastOverlay}
+
+        <ScreenTransition className="connections-difficulty-screen">
+          <button
+            className="connections-back-button"
+            onClick={() => {
+              playClickSound();
+              setConnectionsDifficultyPickerOpen(false);
+              setModeMenuOpen(true);
+              setGameMode("general");
+              setGameStarted(false);
+            }}
+          >
+            Back
+          </button>
+
+          <div className="connections-difficulty-panel">
+            <div className="connections-difficulty-hero">
+              <div className="connections-kicker">Single Player</div>
+              <h1>Choose Connections Level</h1>
+              <p>Pick the difficulty and solve four hidden football groups.</p>
+            </div>
+
+            <div className="connections-difficulty-grid">
+              {connectionDifficulties.map((difficulty) => (
+                <button
+                  key={difficulty.label}
+                  className={`connections-difficulty-card ${difficulty.className}`}
+                  onClick={() => startConnectionsGame(difficulty.label)}
+                >
+                  <div className="difficulty-card-top">
+                    <span className="difficulty-emoji">{difficulty.emoji}</span>
+                    <span className="difficulty-count">
+                      {
+                        CONNECTIONS_PUZZLES.filter(
+                          (puzzle) => puzzle.difficulty === difficulty.label
+                        ).length
+                      }{" "}
+                      puzzles
+                    </span>
+                  </div>
+
+                  <strong>{difficulty.label}</strong>
+                  <p>{difficulty.subtitle}</p>
+
+                  <span className="difficulty-play">Play now →</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </ScreenTransition>
       </div>
     );
   }
@@ -7653,18 +7832,34 @@ export default function FootballQuizMVP() {
 
               {multiplayerStep === "play-now-waiting" && (
                 <div className="multiplayer-room-card play-now-waiting-card">
-                  <div className="room-status">Finding opponent...</div>
-                  <div className="waiting-pulse">
-                    <span />
-                    <span />
-                    <span />
-                  </div>
+                  <div className="room-status">Waiting for random opponent</div>
+                  <p>Your score is saved. We will match you with a random player.</p>
+                  {activeRound && (
+                    <div className="multiplayer-round-result-card">
+                      <strong>Your saved score</strong>
+                      <span>{getCategoryLabel(activeRound.category)}</span>
+                      <div className="round-score-grid">
+                        <div>
+                          <small>{username}</small>
+                          <b>
+                            {multiplayerPlayerSlot === "player2"
+                              ? activeRound.player2_score ?? 0
+                              : activeRound.player1_score ?? 0}
+                          </b>
+                        </div>
+                        <div>
+                          <small>Opponent</small>
+                          <b>Waiting</b>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <div className="room-code">Public match: {multiplayerRoomCode}</div>
                   <button onClick={refreshMultiplayerMatch} disabled={multiplayerLoading}>
                     {multiplayerLoading ? "Checking..." : "Check Now"}
                   </button>
                   <button className="multiplayer-back-button" onClick={goBackMultiplayer}>
-                    Cancel
+                    Back home
                   </button>
                 </div>
               )}
@@ -8235,7 +8430,7 @@ export default function FootballQuizMVP() {
 
             <button
               className="mode-button mode-card connections-mode-button"
-              onClick={startConnectionsGame}
+              onClick={openConnectionsDifficultyPicker}
             >
               <span className="mode-card-icon">🧩</span>
               <span>
@@ -8300,7 +8495,7 @@ export default function FootballQuizMVP() {
         {xpToastOverlay}
         <ScreenTransition className="whoami-screen">
           <button
-            className="connections-back-button whoami-back-button"
+            className="connections-back-button whoami-back-button premiumBackButton"
             onClick={() => {
               playClickSound();
               setGameStarted(false);
@@ -8349,10 +8544,8 @@ export default function FootballQuizMVP() {
 
             <div className="whoami-hud">
               <span>Score <strong>{whoAmIScore}</strong></span>
-              <span>Streak <strong>{whoAmIStreak}</strong></span>
-              <span>
-                Lives <strong>{Array.from({ length: whoAmILives }).map((_, i) => <b key={i}>❤️</b>)}</strong>
-              </span>
+              <span>Completed <strong>{whoAmIStreak}</strong></span>
+              <span>Rank <strong>-</strong></span>
             </div>
 
             <div className="whoami-mystery">
@@ -8624,7 +8817,6 @@ export default function FootballQuizMVP() {
       </div>
     );
   }
-
   if (gameMode === "connections" && connectionsPuzzle) {
     const revealedGroups = connectionsPuzzle.groups.map((group, index) => ({
       ...group,
@@ -8739,23 +8931,76 @@ export default function FootballQuizMVP() {
                 transition={{ duration: 0.28 }}
               >
                 {connectionsVisibleTiles.map((tile) => {
-                  const selectedTile = connectionsSelected.includes(tile.id);
+  const selectedOrder = connectionsSelected.indexOf(tile.id);
+  const selectedTile = selectedOrder !== -1;
 
-                  return (
-                    <motion.button
-                      key={tile.id}
-                      className={`connections-tile ${
-                        selectedTile ? "selected" : ""
-                      }`}
-                      onClick={() => toggleConnectionTile(tile)}
-                      whileTap={{ scale: 0.94 }}
-                      animate={selectedTile ? { scale: 1.04 } : { scale: 1 }}
-                      transition={{ duration: 0.12 }}
-                    >
-                      {tile.item}
-                    </motion.button>
-                  );
-                })}
+  return (
+    <motion.button
+      key={tile.id}
+      className={`connections-tile ${
+        selectedTile ? "selected selected-strong" : ""
+      }`}
+      onClick={() => toggleConnectionTile(tile)}
+      whileTap={{ scale: 0.92 }}
+      animate={
+        selectedTile
+          ? {
+              scale: 1.08,
+              y: -6,
+              background:
+                "linear-gradient(135deg, #2563eb 0%, #7c3aed 52%, #ec4899 100%)",
+              color: "#ffffff",
+              borderColor: "rgba(255,255,255,0.98)",
+              boxShadow:
+                "0 0 0 4px rgba(96,165,250,0.7), 0 0 42px rgba(124,58,237,0.95), 0 18px 45px rgba(0,0,0,0.55)",
+            }
+          : {
+              scale: 1,
+              y: 0,
+            }
+      }
+      transition={{ duration: 0.14 }}
+      style={{
+        position: "relative",
+        borderWidth: selectedTile ? 3 : undefined,
+        zIndex: selectedTile ? 5 : 1,
+      }}
+    >
+      {selectedTile && (
+        <span
+          style={{
+            position: "absolute",
+            top: 6,
+            right: 7,
+            width: 26,
+            height: 26,
+            borderRadius: 999,
+            display: "grid",
+            placeItems: "center",
+            background: "#ffffff",
+            color: "#4f46e5",
+            fontWeight: 1000,
+            fontSize: 14,
+            boxShadow: "0 0 18px rgba(255,255,255,0.85)",
+          }}
+        >
+          {selectedOrder + 1}
+        </span>
+      )}
+
+      <span
+        style={{
+          position: "relative",
+          zIndex: 2,
+          color: selectedTile ? "#ffffff" : undefined,
+          textShadow: selectedTile ? "0 2px 12px rgba(0,0,0,0.35)" : undefined,
+        }}
+      >
+        {tile.item}
+      </span>
+    </motion.button>
+  );
+})}
               </motion.div>
             )}
 
@@ -8832,7 +9077,7 @@ export default function FootballQuizMVP() {
         {coinShopModal}
         {dailyRewardMeterModal}
         {xpToastOverlay}
-        <button className="home-button" onClick={restart}>
+        <button className="home-button premiumBackButton" onClick={restart}>
           ← Home
         </button>
 
@@ -8888,6 +9133,12 @@ export default function FootballQuizMVP() {
         </AnimatePresence>
 
         <div className="daily-list-wrapper">
+          <div className="daily-date-card">
+            <span>Daily</span>
+            <strong>{formatDisplayDate(getDailyDateKey())}</strong>
+            <span>Challenge</span>
+          </div>
+
           <div className="daily-question-card">
             <h2 className="daily-list-label">🔥 DAILY CHALLENGE</h2>
 
@@ -8898,13 +9149,15 @@ export default function FootballQuizMVP() {
 
           <div className="daily-list-stats">
             <span className="daily-stat-pill daily-stat-score">
-              {foundAnswers.length} / {todayChallenge.answers.length} FOUND
+              Score <strong>{foundAnswers.length}</strong>
             </span>
 
-            <span className={`daily-stat-pill daily-stat-lives ${lives <= 1 ? "low" : ""}`}>
-              {Array.from({ length: lives }).map((_, i) => (
-                <span key={i}>❤️</span>
-              ))}
+            <span className="daily-stat-pill">
+              Completed <strong>{foundAnswers.length}/{todayChallenge.answers.length}</strong>
+            </span>
+
+            <span className="daily-stat-pill">
+              Rank <strong>-</strong>
             </span>
           </div>
 
@@ -9231,31 +9484,54 @@ export default function FootballQuizMVP() {
         )}
       </AnimatePresence>
 
-      <div className="hud-row">
-        <div className="hud-card">
+      <div className="hud-row neon-stats-grid">
+        <div className="hud-card statCard">
           <span className="hud-label">SCORE</span>
           <span className="hud-value">🔥 {score}</span>
         </div>
 
-        <div className="hud-card">
+        <div className="hud-card statCard">
           <span className="hud-label">BEST</span>
           <span className="hud-value">🏆 {highScore}</span>
         </div>
 
-        <button className="hud-card hud-button" onClick={openCoinShop}>
+        <button className="hud-card hud-button statCard" onClick={openCoinShop}>
           <span className="hud-label">COINS</span>
           <span className="hud-value">🪙 {coins}</span>
         </button>
 
-        <div className="hud-card">
-          <span className="hud-label">LIVES</span>
+        <div className="hud-card statCard">
+          <span className="hud-label">
+            {gameMode === "general" && !isMockMultiplayer ? "COMBO" : "LIVES"}
+          </span>
           <span className="hud-value">
-            {Array.from({ length: lives }).map((_, i) => (
-              <span key={i}>❤️</span>
-            ))}
+            {gameMode === "general" && !isMockMultiplayer
+              ? `⚡ x${streak}`
+              : Array.from({ length: lives }).map((_, i) => (
+                  <span key={i}>❤️</span>
+                ))}
           </span>
         </div>
       </div>
+
+      {!(gameMode === "general" && !isMockMultiplayer) && (
+        <div className="quiz-progress-card progressCard">
+          <div className="quiz-progress-top">
+            <strong>QUESTION {currentRoundQuestionNumber}</strong>
+            <span>
+              {isMockMultiplayer
+                ? `Multiplayer • ${getModeLabel(gameMode)}`
+                : getModeLabel(gameMode)}
+            </span>
+          </div>
+          <div className="quiz-progress-track">
+            <div
+              className="quiz-progress-fill"
+              style={{ width: `${currentQuestionProgress}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {gameMode === "general" && !isMockMultiplayer && (
         <div className="combo-dock">
@@ -9293,20 +9569,6 @@ export default function FootballQuizMVP() {
           exit={{ opacity: 0, y: -25 }}
           transition={{ duration: 0.25 }}
         >
-          <div
-            className={`difficulty-pill ${
-              current.difficulty === "Very Hard" ? "very-hard" : ""
-            }`}
-          >
-            {isMockMultiplayer
-              ? `Multiplayer • ${getModeLabel(gameMode)}`
-              : gameMode === "career"
-              ? "Career Path"
-              : gameMode === "world-cup"
-              ? `World Cup • ${current.difficulty}`
-              : current.difficulty}
-          </div>
-
           {isTimedQuestion && (
             <div
               className={`hard-timer ${
@@ -9342,7 +9604,7 @@ export default function FootballQuizMVP() {
             <h1
               className={`question-title quiz-question-card ${
                 gameMode === "world-cup" ? "world-cup-question-card" : ""
-              }`}
+              } neonGlassCard`}
             >
               {current.question}
             </h1>
@@ -9393,7 +9655,7 @@ export default function FootballQuizMVP() {
               <div
                 className={`answers-grid ${
                   gameMode === "world-cup" ? "world-cup-answer-grid" : ""
-                }`}
+                } neonAnswerGrid`}
               >
                 {current.options.map((option) => {
                   const isCorrect = option === current.answer;
@@ -9410,7 +9672,7 @@ export default function FootballQuizMVP() {
                       }}
                       className={`answer-button ${
                         showCorrect ? "correct" : showWrong ? "wrong" : ""
-                      }`}
+                      } neonAnswerButton`}
                     >
                       <span>{option}</span>
                       {showCorrect && <CheckCircle2 size={28} />}

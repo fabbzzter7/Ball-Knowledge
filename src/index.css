@@ -2,6 +2,569 @@
   box-sizing: border-box;
 }
 
+/* ATMOSPHERIC NEON REFINEMENT - final visual layer */
+:root {
+  --app-bg-base: #02080b;
+  --app-bg-deep: #06130f;
+  --app-panel-bg: rgba(5, 18, 22, 0.72);
+  --app-panel-bg-strong: rgba(7, 21, 28, 0.86);
+  --app-panel-border: rgba(105, 255, 185, 0.22);
+  --app-panel-border-cyan: rgba(78, 231, 255, 0.26);
+  --app-text-primary: rgba(250, 255, 252, 0.98);
+  --app-text-secondary: rgba(233, 246, 255, 0.82);
+  --app-text-muted: rgba(216, 232, 245, 0.66);
+  --app-text-accent: #dffcff;
+  --app-glow-green: #39ff9f;
+  --app-glow-cyan: #39d8ff;
+  --app-glow-gold: #ffd84d;
+  --app-glow-pink: #ff4fd8;
+  --app-glow-purple: #a86bff;
+  --app-success: #39ff9f;
+  --app-error: #ff4f64;
+}
+
+body,
+#root {
+  background:
+    radial-gradient(circle at 14% 7%, rgba(57, 255, 159, 0.18), transparent 28%),
+    radial-gradient(circle at 84% 12%, rgba(168, 107, 255, 0.16), transparent 30%),
+    radial-gradient(circle at 78% 74%, rgba(255, 79, 216, 0.12), transparent 32%),
+    radial-gradient(circle at 18% 84%, rgba(57, 216, 255, 0.15), transparent 34%),
+    linear-gradient(180deg, #02080b 0%, #06130f 48%, #010508 100%) !important;
+  color: var(--app-text-primary) !important;
+}
+
+.fullscreen-bg,
+.home-landing-bg,
+.main-menu,
+.multiplayer-screen,
+.profile-screen,
+.leaderboard-screen,
+.name-screen,
+.whoami-screen,
+.daily-list-wrapper,
+.league-challenge-screen,
+.connections-screen {
+  color: var(--app-text-primary) !important;
+}
+
+.fullscreen-bg::before,
+.home-landing-bg::before,
+.multiplayer-screen::before,
+.profile-screen::before,
+.leaderboard-screen::before,
+.name-screen::before,
+.whoami-screen::before,
+.league-challenge-screen::before {
+  content: "" !important;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 8% 18%, rgba(57, 255, 159, 0.20), transparent 32%),
+    radial-gradient(circle at 92% 14%, rgba(57, 216, 255, 0.16), transparent 31%),
+    radial-gradient(circle at 86% 78%, rgba(255, 79, 216, 0.13), transparent 34%),
+    radial-gradient(circle at 20% 88%, rgba(255, 216, 77, 0.11), transparent 30%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.58));
+  mix-blend-mode: screen;
+  opacity: 0.94;
+}
+
+.fullscreen-bg::after,
+.home-landing-bg::after,
+.multiplayer-screen::after,
+.profile-screen::after,
+.leaderboard-screen::after,
+.name-screen::after,
+.whoami-screen::after,
+.league-challenge-screen::after {
+  content: "" !important;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, transparent 0 34%, rgba(255, 255, 255, 0.035) 38%, transparent 43%),
+    linear-gradient(245deg, transparent 0 62%, rgba(57, 216, 255, 0.045) 68%, transparent 76%),
+    radial-gradient(circle at 50% 102%, rgba(57, 255, 159, 0.11), transparent 36%);
+  opacity: 0.72;
+}
+
+.fullscreen-bg > *,
+.home-landing-bg > *,
+.multiplayer-screen > *,
+.profile-screen > *,
+.leaderboard-screen > *,
+.name-screen > *,
+.whoami-screen > *,
+.league-challenge-screen > * {
+  position: relative;
+  z-index: 1;
+}
+
+.main-title,
+.multiplayer-title,
+.name-title,
+.daily-list-title,
+.whoami-top h1,
+.question-title,
+.league-dashboard-hero h2,
+.league-challenge-card h1,
+.league-challenge-card h2,
+.profile-level-name,
+.leaderboard-title,
+.level-progress-hero h2 {
+  color: var(--app-text-primary) !important;
+  text-shadow:
+    0 3px 16px rgba(0, 0, 0, 0.72),
+    0 0 22px rgba(57, 216, 255, 0.22),
+    0 0 44px rgba(57, 255, 159, 0.10) !important;
+}
+
+.multiplayer-subtitle,
+.name-subtitle,
+.daily-list-question,
+.leaderboard-subtitle,
+.profile-title,
+.profile-next-level,
+.home-level-tap-hint,
+.home-next-level,
+.main-menu-copy small,
+.home-action-card small,
+.mode-card small,
+.arena-hub-card small,
+.multiplayer-action-card small,
+.league-card span,
+.league-card small,
+.league-meta-row span,
+.league-section-title,
+.league-result-row span,
+.level-progress-hero p,
+.level-progress-next span,
+.level-road-step span,
+.level-objective-top span {
+  color: var(--app-text-secondary) !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.62) !important;
+}
+
+.home-stat-pill,
+.daily-stat-pill,
+.hud-card,
+.stat-card,
+.profile-stat-card,
+.league-result-grid div,
+.league-card-stats,
+.multiplayer-live-score,
+.room-status,
+.room-code,
+.league-code-pill,
+.league-today-status,
+.leaderboard-mode-pill {
+  color: var(--app-text-secondary) !important;
+}
+
+.home-stat-pill strong,
+.daily-stat-pill strong,
+.hud-value,
+.profile-stat-card strong,
+.league-result-grid strong,
+.league-card-top strong,
+.arena-hub-card strong,
+.multiplayer-action-card strong,
+.multiplayer-action-card span,
+.room-code strong,
+.league-rank,
+.level-progress-next strong,
+.level-road-step strong,
+.level-objective-top strong {
+  color: var(--app-text-primary) !important;
+  text-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.66),
+    0 0 18px rgba(255, 255, 255, 0.08) !important;
+}
+
+.glass-panel,
+.glass-card,
+.section-card,
+.question-card,
+.progress-card,
+.progressCard,
+.home-progress-card,
+.home-action-card,
+.main-menu-button,
+.mode-card,
+.profile-card,
+.profile-stat-card,
+.profile-record-strip,
+.leaderboard-card,
+.leaderboard-row,
+.leaderboard-your-row,
+.name-card,
+.avatar-picker-card,
+.multiplayer-card,
+.multiplayer-room-card,
+.multiplayer-join-card,
+.active-games-panel,
+.match-history-card,
+.league-form-card,
+.league-dashboard,
+.league-card,
+.league-daily-card,
+.league-challenge-card,
+.league-option-card,
+.league-preview-card,
+.daily-result-card,
+.daily-question-card,
+.whoami-card,
+.whoami-clue,
+.connections-card,
+.connections-complete-card,
+.connections-gameover-card {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid rgba(105, 255, 185, 0.24) !important;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(57, 255, 159, 0.18), transparent 36%),
+    radial-gradient(circle at 92% 16%, rgba(57, 216, 255, 0.12), transparent 34%),
+    radial-gradient(circle at 82% 104%, rgba(255, 79, 216, 0.10), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.028) 42%, rgba(0, 0, 0, 0.34)),
+    rgba(4, 16, 20, 0.74) !important;
+  color: var(--app-text-primary) !important;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.46),
+    0 0 34px rgba(57, 255, 159, 0.12),
+    0 0 56px rgba(57, 216, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.17),
+    inset 0 0 32px rgba(57, 255, 159, 0.055) !important;
+  backdrop-filter: blur(18px) saturate(1.22);
+  -webkit-backdrop-filter: blur(18px) saturate(1.22);
+}
+
+.glass-panel::before,
+.glass-card::before,
+.home-progress-card::before,
+.home-action-card::before,
+.main-menu-button::before,
+.mode-card::before,
+.multiplayer-card::before,
+.multiplayer-action-card::before,
+.arena-hub-card::before,
+.league-form-card::before,
+.league-dashboard::before,
+.league-card::before,
+.league-daily-card::before,
+.league-challenge-card::before,
+.profile-card::before,
+.level-progress-card::before {
+  content: "" !important;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(118deg, rgba(255, 255, 255, 0.20), transparent 26%, transparent 64%, rgba(57, 216, 255, 0.08)),
+    radial-gradient(circle at 50% 118%, rgba(57, 255, 159, 0.14), transparent 48%);
+  opacity: 0.62;
+}
+
+.home-action-card:nth-of-type(1),
+.main-menu-button,
+.arena-hub-card.play-now,
+.multiplayer-action-card.play-now,
+.multiplayer-action-card.active-games {
+  border-color: rgba(57, 255, 159, 0.38) !important;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.48),
+    0 0 38px rgba(57, 255, 159, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.home-action-card:nth-of-type(2),
+.arena-hub-card.h2h,
+.multiplayer-action-card.create,
+.multiplayer-action-card.league-create,
+.league-daily-card {
+  border-color: rgba(255, 216, 77, 0.40) !important;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(255, 216, 77, 0.22), transparent 37%),
+    radial-gradient(circle at 88% 98%, rgba(255, 79, 216, 0.11), transparent 40%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.026), rgba(0, 0, 0, 0.36)),
+    rgba(6, 17, 18, 0.76) !important;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.48),
+    0 0 38px rgba(255, 216, 77, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.home-action-card:nth-of-type(3),
+.arena-hub-card.league,
+.multiplayer-action-card.join,
+.multiplayer-action-card.league-join {
+  border-color: rgba(255, 79, 216, 0.36) !important;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(255, 79, 216, 0.18), transparent 37%),
+    radial-gradient(circle at 88% 98%, rgba(57, 216, 255, 0.13), transparent 40%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.026), rgba(0, 0, 0, 0.36)),
+    rgba(6, 15, 24, 0.76) !important;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.48),
+    0 0 38px rgba(255, 79, 216, 0.17),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.home-action-card:nth-of-type(4),
+.multiplayer-action-card.league-list,
+.arena-section-grid .multiplayer-action-card:nth-child(3n) {
+  border-color: rgba(57, 216, 255, 0.38) !important;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(57, 216, 255, 0.19), transparent 37%),
+    radial-gradient(circle at 88% 98%, rgba(57, 255, 159, 0.12), transparent 40%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.026), rgba(0, 0, 0, 0.36)),
+    rgba(3, 14, 22, 0.76) !important;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.48),
+    0 0 38px rgba(57, 216, 255, 0.17),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.multiplayer-badge,
+.league-kicker,
+.difficulty-pill,
+.profile-name-pill,
+.main-username-pill,
+.league-code-pill,
+.league-today-status,
+.room-status,
+.room-code,
+.home-stat-pill,
+.daily-stat-pill,
+.leaderboard-mode-pill {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(57, 255, 159, 0.42) !important;
+  border-radius: 999px !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(57, 255, 159, 0.24), transparent 42%),
+    radial-gradient(circle at 82% 100%, rgba(57, 216, 255, 0.16), transparent 44%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.026), rgba(0, 0, 0, 0.26)),
+    rgba(3, 14, 18, 0.76) !important;
+  color: var(--app-text-primary) !important;
+  box-shadow:
+    0 0 18px rgba(57, 255, 159, 0.22),
+    0 0 38px rgba(57, 216, 255, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.62) !important;
+}
+
+.multiplayer-badge {
+  border-color: rgba(168, 107, 255, 0.52) !important;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(168, 107, 255, 0.35), transparent 42%),
+    radial-gradient(circle at 86% 100%, rgba(255, 79, 216, 0.18), transparent 44%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.30)),
+    rgba(20, 12, 36, 0.78) !important;
+  box-shadow:
+    0 0 22px rgba(168, 107, 255, 0.30),
+    0 0 44px rgba(255, 79, 216, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.20) !important;
+}
+
+.premium-button,
+.premium-button-secondary,
+.premium-back-button,
+.premiumBackButton,
+.home-button,
+.mode-back-button,
+.profile-top-back-button,
+.profile-back-button,
+.leaderboard-back-button,
+.connections-back-button,
+.multiplayer-back-button,
+.multiplayer-round-back,
+.daily-submit-button,
+.career-submit-button,
+.collect-button,
+.play-again-button,
+.revive-button,
+.ad-revive-button,
+.name-save-button,
+.profile-change-name-button,
+.profile-edit-avatar-button,
+.profile-level-button,
+.leaderboard-tabs button,
+.leaderboard-filters button,
+.multiplayer-topbar button,
+.multiplayer-mode-pills button,
+.multiplayer-room-card button,
+.multiplayer-join-card button,
+.active-games-panel button,
+.league-form-card button,
+.league-card button,
+.league-daily-card button,
+.league-challenge-card button,
+.league-custom-row button,
+.category-selected-card button,
+.coin-shop-option button,
+.avatar-picker-grid button,
+.avatar-token,
+.avatar-builder-actions button,
+.connections-actions button,
+.connections-complete-card button,
+.connections-gameover-card button,
+.level-progress-action,
+.level-progress-close {
+  border: 1px solid rgba(57, 255, 159, 0.46) !important;
+  color: var(--app-text-primary) !important;
+  background:
+    radial-gradient(circle at 18% -10%, rgba(57, 255, 159, 0.24), transparent 40%),
+    radial-gradient(circle at 86% 110%, rgba(57, 216, 255, 0.16), transparent 44%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.028), rgba(0, 0, 0, 0.32)),
+    rgba(3, 14, 18, 0.78) !important;
+  box-shadow:
+    0 0 22px rgba(57, 255, 159, 0.19),
+    0 0 42px rgba(57, 216, 255, 0.10),
+    0 14px 28px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.64) !important;
+}
+
+.level-progress-overlay {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(57, 255, 159, 0.18), transparent 32%),
+    radial-gradient(circle at 88% 18%, rgba(168, 107, 255, 0.18), transparent 34%),
+    radial-gradient(circle at 76% 86%, rgba(255, 79, 216, 0.12), transparent 34%),
+    rgba(0, 6, 9, 0.72) !important;
+  backdrop-filter: blur(16px) saturate(1.18) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.18) !important;
+}
+
+.level-progress-card {
+  border: 1px solid rgba(57, 255, 159, 0.28) !important;
+  color: var(--app-text-primary) !important;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(57, 255, 159, 0.20), transparent 36%),
+    radial-gradient(circle at 92% 8%, rgba(57, 216, 255, 0.16), transparent 34%),
+    radial-gradient(circle at 78% 100%, rgba(255, 216, 77, 0.12), transparent 36%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.026), rgba(0, 0, 0, 0.40)),
+    rgba(4, 16, 20, 0.88) !important;
+  box-shadow:
+    0 28px 86px rgba(0, 0, 0, 0.58),
+    0 0 48px rgba(57, 255, 159, 0.16),
+    0 0 72px rgba(57, 216, 255, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  backdrop-filter: blur(20px) saturate(1.22);
+  -webkit-backdrop-filter: blur(20px) saturate(1.22);
+}
+
+.level-progress-icon,
+.level-progress-next,
+.level-road-step,
+.level-objective-item,
+.level-objective-status {
+  border: 1px solid rgba(70, 231, 255, 0.22) !important;
+  color: var(--app-text-primary) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(70, 231, 255, 0.15), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.024)),
+    rgba(3, 14, 18, 0.68) !important;
+  box-shadow:
+    0 0 24px rgba(70, 231, 255, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+}
+
+.level-objective-item.complete {
+  border-color: rgba(57, 255, 159, 0.42) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(57, 255, 159, 0.22), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.025)),
+    rgba(3, 18, 14, 0.72) !important;
+  box-shadow:
+    0 0 28px rgba(57, 255, 159, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+}
+
+.level-progress-label,
+.level-progress-hero p,
+.level-progress-next span,
+.level-road-step span,
+.level-objective-top span {
+  color: var(--app-text-secondary) !important;
+}
+
+.level-progress-track,
+.level-objective-track,
+.home-level-bar-outer,
+.quiz-progress-track,
+.multiplayer-round-progress,
+.daily-reward-road-track {
+  background: rgba(1, 8, 10, 0.72) !important;
+  border: 1px solid rgba(70, 231, 255, 0.16) !important;
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.42),
+    0 0 18px rgba(70, 231, 255, 0.08) !important;
+}
+
+.level-progress-fill,
+.level-objective-fill,
+.home-level-bar-inner,
+.quiz-progress-fill,
+.multiplayer-round-progress > div,
+.daily-reward-road-fill {
+  background: linear-gradient(90deg, var(--app-glow-green), var(--app-glow-cyan), var(--app-glow-gold)) !important;
+  box-shadow:
+    0 0 18px rgba(57, 255, 159, 0.50),
+    0 0 34px rgba(57, 216, 255, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34) !important;
+}
+
+.match-delete-modal,
+.league-leave-modal {
+  border: 1px solid rgba(255, 79, 100, 0.35) !important;
+  color: var(--app-text-primary) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 79, 100, 0.18), transparent 40%),
+    radial-gradient(circle at 88% 100%, rgba(255, 216, 77, 0.10), transparent 42%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.026), rgba(0, 0, 0, 0.34)),
+    rgba(6, 12, 18, 0.90) !important;
+  box-shadow:
+    0 26px 70px rgba(0, 0, 0, 0.54),
+    0 0 42px rgba(255, 79, 100, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+}
+
+.match-delete-modal span,
+.league-leave-modal p,
+.league-leave-score span {
+  color: var(--app-text-secondary) !important;
+}
+
+@media (max-width: 768px) {
+  .fullscreen-bg::before,
+  .home-landing-bg::before,
+  .multiplayer-screen::before,
+  .profile-screen::before,
+  .leaderboard-screen::before,
+  .name-screen::before,
+  .whoami-screen::before,
+  .league-challenge-screen::before {
+    opacity: 0.86;
+  }
+
+  .home-action-card,
+  .arena-hub-card,
+  .multiplayer-action-card,
+  .league-card,
+  .league-daily-card,
+  .level-progress-card {
+    box-shadow:
+      0 18px 48px rgba(0, 0, 0, 0.44),
+      0 0 26px rgba(57, 255, 159, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+  }
+}
+
 /* RELEASE POLISH: QUIZ, DAILY, REWARDS */
 .daily-question-card {
   position: relative;
@@ -3157,76 +3720,7 @@ button {
   text-shadow: 0 5px 0 rgba(0, 0, 0, 0.16);
 }
 
-/* SVARSKNAPPAR */
-.answers-grid {
-  width: min(1080px, 100%);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 26px;
-}.answer-button span {
-  font-size: 22px;
-  font-weight: 1000;
-  letter-spacing: 0.2px;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.35);
-}
-
-.answer-button {
-  .answers-grid .answer-button:nth-child(1) {
-  background: linear-gradient(180deg, #ffe066 0%, #ffd43b 100%);
-  color: #6b4f00;
-  border: 3px solid #f4c842;
-}
-
-.answers-grid .answer-button:nth-child(2) {
-  background: linear-gradient(180deg, #69db7c 0%, #51cf66 100%);
-  color: #14532d;
-  border: 3px solid #37b24d;
-}
-
-.answers-grid .answer-button:nth-child(3) {
-  background: linear-gradient(180deg, #ff8787 0%, #ff6b6b 100%);
-  color: #7a1f1f;
-  border: 3px solid #fa5252;
-}
-
-.answers-grid .answer-button:nth-child(4) {
-  background: linear-gradient(180deg, #74c0fc 0%, #4dabf7 100%);
-  color: #113a5c;
-  border: 3px solid #339af0;
-}
-  border: none;
-  border-radius: 34px;
-  padding: 34px 24px;
-  min-height: 160px;
-  font-size: 28px;
-  font-weight: 1000;
-  cursor: pointer;
-  color: #17304a;
-  background: linear-gradient(180deg, #ffffff 0%, #f4f8ff 100%);
-  box-shadow:
-    0 10px 0 #d8e2f4,
-    0 18px 28px rgba(0, 0, 0, 0.12);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}.answer-button:hover {
-  transform: translateY(-4px) scale(1.01);
-  filter: brightness(1.03);
-}
-
-.answer-button:hover {
-  transform: translateY(-4px);
-}
-
-.answer-button.correct {
-  background: linear-gradient(180deg, #9cff8e 0%, #6fe65d 100%);
-  color: #10380b;
-  box-shadow: 0 10px 0 #4fbc41, 0 18px 28px rgba(0,0,0,0.14);
-}
-
-.answer-button.wrong {
-  background: linear-gradient(180deg, #ff9f9f 0%, #ff6d6d 100%);
-  color: #4f1010;
-  box-shadow: 0 10px 0 #db4c4c, 0 18px 28px rgba(0,0,0,0.14);
-}
+/* Answer button visuals are defined in the final premium design-system layer. */
 
 /* INPUT FÖR CAREER / WORLD CUP */
 .career-input,
@@ -3763,94 +4257,6 @@ button {
   border-radius: 20px;
   background: rgba(255,255,255,0.22);
   pointer-events: none;
-}/* FINAL ANSWER BUTTON OVERRIDE */
-
-.answers-grid {
-  width: min(1050px, 84vw);
-  gap: 22px;
-  margin-bottom: 155px;
-}
-
-.answers-grid .answer-button {
-  min-height: 105px !important;
-  padding: 18px 24px !important;
-
-  border-radius: 28px !important;
-
-  font-size: 24px !important;
-  font-weight: 1000 !important;
-
-  color: #15324f !important;
-
-  box-shadow:
-    0 8px 0 rgba(0,0,0,0.16),
-    0 14px 24px rgba(0,0,0,0.16),
-    inset 0 2px 0 rgba(255,255,255,0.35) !important;
-
-  border: 4px solid rgba(255,255,255,0.42) !important;
-
-  text-shadow: 0 1px 0 rgba(255,255,255,0.35);
-
-  transition:
-    transform 0.16s ease,
-    filter 0.16s ease,
-    box-shadow 0.16s ease !important;
-}
-
-.answers-grid .answer-button span {
-  font-size: 24px !important;
-  font-weight: 1000 !important;
-}
-
-/* 4 DUOLINGO-STYLE COLORS */
-.answers-grid .answer-button:nth-child(1) {
-  background: linear-gradient(180deg, #ffe066 0%, #ffd43b 100%) !important;
-  color: #684800 !important;
-  border-color: #f5c542 !important;
-}
-
-.answers-grid .answer-button:nth-child(2) {
-  background: linear-gradient(180deg, #74e889 0%, #51cf66 100%) !important;
-  color: #114c25 !important;
-  border-color: #37b24d !important;
-}
-
-.answers-grid .answer-button:nth-child(3) {
-  background: linear-gradient(180deg, #ff9b9b 0%, #ff6b6b 100%) !important;
-  color: #6d1616 !important;
-  border-color: #fa5252 !important;
-}
-
-.answers-grid .answer-button:nth-child(4) {
-  background: linear-gradient(180deg, #8ed0ff 0%, #4dabf7 100%) !important;
-  color: #123d5f !important;
-  border-color: #339af0 !important;
-}
-
-.answers-grid .answer-button:hover {
-  transform: translateY(-4px) scale(1.015) !important;
-  filter: brightness(1.04);
-}
-
-.answers-grid .answer-button:active {
-  transform: translateY(3px) scale(0.99) !important;
-  box-shadow:
-    0 4px 0 rgba(0,0,0,0.14),
-    0 8px 16px rgba(0,0,0,0.14),
-    inset 0 2px 0 rgba(255,255,255,0.32) !important;
-}
-
-/* Correct/wrong must override the colored buttons */
-.answers-grid .answer-button.correct {
-  background: linear-gradient(180deg, #78ef8d 0%, #38d96b 100%) !important;
-  color: white !important;
-  border-color: #2f9e44 !important;
-}
-
-.answers-grid .answer-button.wrong {
-  background: linear-gradient(180deg, #ff8b8b 0%, #fa5252 100%) !important;
-  color: white !important;
-  border-color: #e03131 !important;
 }/* PERFECT MOBILE QUIZ LAYOUT */
 @media (max-width: 768px) {
   body {
@@ -12153,5 +12559,4031 @@ button {
 
   .daily-result-score {
     font-size: clamp(54px, 17vw, 78px) !important;
+  }
+}
+
+/* FINAL PREMIUM OVERRIDES */
+.fullscreen-bg,
+.daily-list-bg,
+.whoami-screen {
+  background-color: #020806 !important;
+}
+
+.fullscreen-bg::before,
+.daily-list-bg::before,
+.whoami-screen::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(55, 215, 255, 0.18), transparent 32%),
+    radial-gradient(circle at 15% 25%, rgba(25, 242, 140, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(0, 5, 4, 0.45), rgba(0, 0, 0, 0.86));
+}
+
+.fullscreen-bg > *,
+.daily-list-bg > *,
+.whoami-screen > * {
+  position: relative;
+  z-index: 1;
+}
+
+.quiz-question-card,
+.daily-question-card,
+.career-journey-card,
+.whoami-card,
+.league-challenge-card {
+  border: 1px solid rgba(160, 225, 214, 0.18) !important;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.035)),
+    rgba(7, 20, 18, 0.78) !important;
+  color: #f7fffb !important;
+  box-shadow:
+    0 18px 48px rgba(0,0,0,0.36),
+    0 0 34px rgba(55,215,255,0.10),
+    inset 0 1px 0 rgba(255,255,255,0.14) !important;
+  backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.quiz-question-card h1,
+.daily-list-title,
+.league-challenge-card h1,
+.whoami-top h1 {
+  letter-spacing: 0 !important;
+  text-shadow:
+    0 12px 32px rgba(0,0,0,0.72),
+    0 0 24px rgba(55,215,255,0.18) !important;
+}
+
+.daily-list-label,
+.career-journey-kicker,
+.whoami-kicker,
+.league-quiz-top span,
+.league-quiz-top strong,
+.league-score-strip span,
+.league-score-strip strong,
+.daily-stat-pill {
+  border: 1px solid rgba(245,196,81,0.25) !important;
+  background: rgba(245,196,81,0.10) !important;
+  color: #ffe7a6 !important;
+  box-shadow:
+    0 0 18px rgba(245,196,81,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.12) !important;
+}
+
+.answers-grid {
+  width: min(940px, 92vw) !important;
+  gap: 14px !important;
+  margin-bottom: clamp(28px, 8vh, 90px) !important;
+}
+
+.answers-grid .answer-button,
+.league-answer-grid button {
+  min-height: 78px !important;
+  padding: 15px 18px !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(160,225,214,0.20) !important;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.035)),
+    rgba(7, 23, 22, 0.78) !important;
+  color: #f7fffb !important;
+  font-size: clamp(16px, 2.2vw, 22px) !important;
+  font-weight: 850 !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 12px 28px rgba(0,0,0,0.25),
+    0 0 0 1px rgba(255,255,255,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.12) !important;
+}
+
+.answers-grid .answer-button::before,
+.answers-grid .answer-button::after {
+  display: none !important;
+}
+
+.answers-grid .answer-button:hover,
+.league-answer-grid button:hover,
+.player-picker-option:hover {
+  transform: translateY(-2px) !important;
+  border-color: rgba(55,215,255,0.46) !important;
+  box-shadow:
+    0 16px 32px rgba(0,0,0,0.28),
+    0 0 24px rgba(55,215,255,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.16) !important;
+}
+
+.answers-grid .answer-button.correct,
+.league-answer-grid button.correct,
+.pyramid-slot.found,
+.league-top10-list div.found,
+.league-top10-list div.reveal-target {
+  border-color: rgba(25,242,140,0.58) !important;
+  background:
+    linear-gradient(145deg, rgba(25,242,140,0.30), rgba(9,44,35,0.90)) !important;
+  color: #ecfff6 !important;
+  box-shadow:
+    0 0 0 1px rgba(25,242,140,0.12),
+    0 0 26px rgba(25,242,140,0.28),
+    0 14px 30px rgba(0,0,0,0.26) !important;
+}
+
+.answers-grid .answer-button.wrong,
+.league-answer-grid button.wrong {
+  border-color: rgba(255,77,109,0.62) !important;
+  background:
+    linear-gradient(145deg, rgba(255,77,109,0.34), rgba(58,12,24,0.92)) !important;
+  color: #fff4f6 !important;
+  box-shadow:
+    0 0 26px rgba(255,77,109,0.26),
+    0 14px 30px rgba(0,0,0,0.26) !important;
+}
+
+.daily-list-bg {
+  padding-top: max(14px, env(safe-area-inset-top)) !important;
+}
+
+.daily-list-wrapper {
+  margin-top: 0 !important;
+}
+
+.daily-question-card {
+  padding: 14px 18px !important;
+  margin-bottom: 12px !important;
+  border-radius: 18px !important;
+}
+
+.daily-question-card .daily-list-label {
+  width: fit-content;
+  margin: 0 auto 6px !important;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px !important;
+}
+
+.daily-question-card .daily-list-title {
+  font-size: clamp(30px, 5.3vw, 58px) !important;
+  line-height: 1.02 !important;
+  margin-bottom: 6px !important;
+}
+
+.daily-question-card .daily-list-question {
+  font-size: clamp(15px, 2vw, 21px) !important;
+  line-height: 1.22 !important;
+  margin-bottom: 0 !important;
+}
+
+.pyramid-list,
+.league-top10-list {
+  gap: 6px !important;
+  margin: 8px 0 12px !important;
+}
+
+.pyramid-slot,
+.league-top10-list div,
+.league-top10-reveal-row {
+  min-height: 36px !important;
+  border: 1px solid rgba(160,225,214,0.16) !important;
+  border-radius: 13px !important;
+  background: rgba(7, 23, 22, 0.62) !important;
+  color: rgba(247,255,251,0.92) !important;
+  box-shadow:
+    0 8px 20px rgba(0,0,0,0.20),
+    inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+
+.pyramid-slot.scanning,
+.league-top10-list div.scanning {
+  border-color: rgba(55,215,255,0.55) !important;
+  background: rgba(55,215,255,0.13) !important;
+  color: #dffaff !important;
+  box-shadow:
+    0 0 24px rgba(55,215,255,0.26),
+    inset 0 1px 0 rgba(255,255,255,0.14) !important;
+}
+
+.daily-list-input,
+.career-input,
+.player-picker-input,
+.career-answer-box.guess-input-row.player .player-picker-input,
+.whoami-answer-row.guess-input-row.player .player-picker-input,
+.league-input-row.guess-input-row.player .player-picker-input {
+  min-height: 50px !important;
+  border: 1px solid rgba(160,225,214,0.24) !important;
+  border-radius: 15px !important;
+  background: rgba(3, 13, 12, 0.78) !important;
+  color: #f7fffb !important;
+  box-shadow:
+    0 12px 28px rgba(0,0,0,0.24),
+    inset 0 1px 0 rgba(255,255,255,0.12) !important;
+}
+
+.daily-list-input::placeholder,
+.career-input::placeholder,
+.player-picker-input::placeholder {
+  color: rgba(247,255,251,0.48) !important;
+}
+
+.daily-list-input:focus,
+.career-input:focus,
+.player-picker-input:focus {
+  border-color: rgba(55,215,255,0.62) !important;
+  box-shadow:
+    0 0 0 3px rgba(55,215,255,0.14),
+    0 0 24px rgba(55,215,255,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.12) !important;
+}
+
+.daily-submit-button,
+.career-submit-button,
+.whoami-answer-row button,
+.whoami-gameover button,
+.league-reveal-continue-button,
+.collect-button,
+.play-again-button,
+.revive-button {
+  min-height: 50px;
+  border: 1px solid rgba(245,196,81,0.38) !important;
+  border-radius: 15px !important;
+  background:
+    linear-gradient(145deg, rgba(245,196,81,0.30), rgba(124,87,22,0.80)) !important;
+  color: #fff6d8 !important;
+  font-weight: 850 !important;
+  box-shadow:
+    0 10px 24px rgba(0,0,0,0.24),
+    0 0 20px rgba(245,196,81,0.14),
+    inset 0 1px 0 rgba(255,255,255,0.18) !important;
+}
+
+.player-picker-results {
+  border: 1px solid rgba(160,225,214,0.20) !important;
+  border-radius: 16px !important;
+  background:
+    linear-gradient(145deg, rgba(8,24,24,0.98), rgba(2,8,7,0.96)) !important;
+  box-shadow:
+    0 20px 46px rgba(0,0,0,0.42),
+    0 0 28px rgba(55,215,255,0.14) !important;
+}
+
+.player-picker-option,
+.player-picker-selected {
+  border: 1px solid rgba(160,225,214,0.16) !important;
+  border-radius: 13px !important;
+  background: rgba(255,255,255,0.055) !important;
+  box-shadow:
+    0 8px 18px rgba(0,0,0,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+
+.player-picker-option-copy strong,
+.player-picker-selected-copy strong,
+.player-picker-option-copy small,
+.player-picker-selected-copy span,
+.player-picker-selected-copy small {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  line-height: 1.18 !important;
+}
+
+.player-picker-option-copy small,
+.player-picker-selected-copy span,
+.player-picker-selected-copy small {
+  color: rgba(247,255,251,0.62) !important;
+}
+
+.rank-reveal-overlay {
+  align-items: center !important;
+  justify-content: flex-start !important;
+  padding-top: min(18vh, 130px) !important;
+  background:
+    radial-gradient(circle at 50% 22%, rgba(55,215,255,0.20), transparent 28%),
+    rgba(0,0,0,0.66) !important;
+}
+
+.rank-reveal-overlay::before {
+  min-height: 220px !important;
+  border-radius: 24px !important;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04)),
+    rgba(5,18,17,0.92) !important;
+  box-shadow:
+    0 20px 54px rgba(0,0,0,0.42),
+    0 0 32px rgba(55,215,255,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.16) !important;
+}
+
+.rank-reveal-number,
+.rank-reveal-label {
+  color: #f7fffb !important;
+  text-shadow: 0 0 24px rgba(55,215,255,0.22) !important;
+}
+
+.rank-reveal-player {
+  background: rgba(25,242,140,0.12) !important;
+  color: #dcfff0 !important;
+  border: 1px solid rgba(25,242,140,0.32);
+}
+
+.xp-reward-toast,
+.quiz-xp-inline-toast,
+.coin-reward-toast {
+  transform: translateY(-14px);
+  border: 1px solid rgba(245,196,81,0.34) !important;
+  border-radius: 16px !important;
+  background:
+    linear-gradient(145deg, rgba(245,196,81,0.22), rgba(4,16,15,0.92)) !important;
+  box-shadow:
+    0 18px 36px rgba(0,0,0,0.30),
+    0 0 26px rgba(245,196,81,0.18) !important;
+}
+
+@media (max-width: 768px) {
+  .fullscreen-bg {
+    padding-top: max(10px, env(safe-area-inset-top)) !important;
+  }
+
+  .quiz-question-card,
+  .whoami-card,
+  .league-challenge-card {
+    width: min(390px, 95vw) !important;
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .answers-grid,
+  .league-answer-grid {
+    grid-template-columns: 1fr !important;
+    width: min(390px, 95vw) !important;
+    gap: 9px !important;
+    margin-bottom: 18px !important;
+  }
+
+  .answers-grid .answer-button,
+  .league-answer-grid button {
+    min-height: 58px !important;
+    padding: 11px 13px !important;
+    border-radius: 13px !important;
+    font-size: 16px !important;
+  }
+
+  .daily-list-bg {
+    padding: max(8px, env(safe-area-inset-top)) 8px 42px !important;
+  }
+
+  .daily-question-card {
+    padding: 10px 11px !important;
+  }
+
+  .daily-question-card .daily-list-title {
+    font-size: clamp(24px, 6.4vw, 31px) !important;
+  }
+
+  .daily-question-card .daily-list-question {
+    font-size: 13.5px !important;
+  }
+
+  .pyramid-slot,
+  .league-top10-list div {
+    min-height: 31px !important;
+    padding: 5px 8px !important;
+    font-size: 12.5px !important;
+  }
+
+  .daily-submit-button,
+  .career-submit-button,
+  .whoami-answer-row button {
+    min-height: 44px !important;
+    height: auto !important;
+    font-size: 14px !important;
+  }
+
+  .player-picker-input {
+    min-height: 44px !important;
+    padding: 10px 12px !important;
+    font-size: 15px !important;
+  }
+
+  .player-picker-option {
+    min-height: 48px !important;
+    padding: 8px 10px !important;
+  }
+
+  .player-picker-results {
+    max-height: min(300px, 40vh) !important;
+  }
+
+  .whoami-screen {
+    place-items: start center !important;
+    padding: max(8px, env(safe-area-inset-top)) 8px 36px !important;
+  }
+
+  .whoami-card {
+    gap: 9px !important;
+  }
+
+  .whoami-top h1 {
+    font-size: clamp(31px, 8vw, 42px) !important;
+  }
+
+  .whoami-mystery {
+    padding: 10px !important;
+  }
+
+  .whoami-clues {
+    max-height: 35vh !important;
+    gap: 6px !important;
+  }
+
+  .career-journey-card {
+    width: min(390px, 95vw) !important;
+    padding: 14px !important;
+    margin-bottom: 12px !important;
+  }
+}
+
+/* BILLION-DOLLAR NEON GLASS OVERRIDES */
+.answer-grid,
+.quiz-answer-grid,
+.neon-answer-grid,
+.answers-grid,
+.neonAnswerGrid.answers-grid,
+.world-cup-answer-grid,
+.league-answer-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  width: min(460px, 92vw) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.answer-card,
+.quiz-answer-option,
+.multiplayer-answer-option,
+.neon-answer-button,
+.answer-button,
+.answers-grid .answer-button,
+.neonAnswerButton.answer-button,
+.league-answer-grid button {
+  --answer-accent: #39ff9f;
+  position: relative !important;
+  isolation: isolate;
+  overflow: hidden !important;
+  min-height: 118px !important;
+  border-radius: 22px !important;
+  padding: 18px 14px !important;
+  border: 1.5px solid var(--answer-accent) !important;
+  background:
+    radial-gradient(circle at 18% -6%, color-mix(in srgb, var(--answer-accent) 34%, transparent), transparent 36%),
+    radial-gradient(circle at 86% 108%, color-mix(in srgb, var(--answer-accent) 20%, transparent), transparent 40%),
+    linear-gradient(145deg, rgba(255,255,255,0.105), rgba(255,255,255,0.028) 38%, rgba(0,0,0,0.38)),
+    rgba(3, 14, 18, 0.72) !important;
+  color: rgba(255,255,255,0.97) !important;
+  font-size: clamp(1rem, 4.2vw, 1.25rem) !important;
+  font-weight: 900 !important;
+  line-height: 1.15 !important;
+  text-align: center !important;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.54) !important;
+  box-shadow:
+    0 0 16px color-mix(in srgb, var(--answer-accent) 45%, transparent),
+    0 0 34px color-mix(in srgb, var(--answer-accent) 24%, transparent),
+    0 16px 36px rgba(0,0,0,0.34),
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    inset 0 0 22px color-mix(in srgb, var(--answer-accent) 13%, transparent) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transform: translateZ(0);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease,
+    filter 160ms ease !important;
+}
+
+.answer-card::before,
+.quiz-answer-option::before,
+.multiplayer-answer-option::before,
+.neon-answer-button::before,
+.answer-button::before,
+.answers-grid .answer-button::before,
+.neonAnswerButton.answer-button::before,
+.league-answer-grid button::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  height: auto !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  border-radius: inherit !important;
+  display: block !important;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.62;
+  background:
+    linear-gradient(120deg, rgba(255,255,255,0.30), transparent 27%, transparent 64%, rgba(255,255,255,0.10)),
+    radial-gradient(circle at 50% 122%, color-mix(in srgb, var(--answer-accent) 30%, transparent), transparent 50%) !important;
+}
+
+.answer-card::after,
+.quiz-answer-option::after,
+.multiplayer-answer-option::after,
+.neon-answer-button::after,
+.answer-button::after,
+.answers-grid .answer-button::after,
+.neonAnswerButton.answer-button::after,
+.league-answer-grid button::after {
+  content: "" !important;
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: -1px;
+  height: 2px;
+  display: block !important;
+  background: var(--answer-accent);
+  border-radius: 999px;
+  opacity: 0.95;
+  box-shadow: 0 0 18px var(--answer-accent);
+  pointer-events: none;
+}
+
+.answer-card:hover,
+.quiz-answer-option:hover,
+.multiplayer-answer-option:hover,
+.neon-answer-button:hover,
+.answer-button:hover,
+.answers-grid .answer-button:hover,
+.neonAnswerButton.answer-button:hover,
+.league-answer-grid button:hover {
+  transform: translateY(-2px) scale(1.015) !important;
+  filter: brightness(1.12);
+  box-shadow:
+    0 0 20px color-mix(in srgb, var(--answer-accent) 65%, transparent),
+    0 0 48px color-mix(in srgb, var(--answer-accent) 35%, transparent),
+    0 18px 38px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.28),
+    inset 0 0 28px color-mix(in srgb, var(--answer-accent) 18%, transparent) !important;
+}
+
+.answer-card:active,
+.quiz-answer-option:active,
+.multiplayer-answer-option:active,
+.neon-answer-button:active,
+.answer-button:active,
+.answers-grid .answer-button:active,
+.neonAnswerButton.answer-button:active,
+.league-answer-grid button:active {
+  transform: scale(0.985) !important;
+}
+
+.answer-card:nth-child(1),
+.quiz-answer-option:nth-child(1),
+.multiplayer-answer-option:nth-child(1),
+.neon-answer-button:nth-child(1),
+.answer-button:nth-child(1),
+.answers-grid .answer-button:nth-child(1),
+.league-answer-grid button:nth-child(1) {
+  --answer-accent: #39ff9f;
+}
+
+.answer-card:nth-child(2),
+.quiz-answer-option:nth-child(2),
+.multiplayer-answer-option:nth-child(2),
+.neon-answer-button:nth-child(2),
+.answer-button:nth-child(2),
+.answers-grid .answer-button:nth-child(2),
+.league-answer-grid button:nth-child(2) {
+  --answer-accent: #ffd84d;
+}
+
+.answer-card:nth-child(3),
+.quiz-answer-option:nth-child(3),
+.multiplayer-answer-option:nth-child(3),
+.neon-answer-button:nth-child(3),
+.answer-button:nth-child(3),
+.answers-grid .answer-button:nth-child(3),
+.league-answer-grid button:nth-child(3) {
+  --answer-accent: #ff4fd8;
+}
+
+.answer-card:nth-child(4),
+.quiz-answer-option:nth-child(4),
+.multiplayer-answer-option:nth-child(4),
+.neon-answer-button:nth-child(4),
+.answer-button:nth-child(4),
+.answers-grid .answer-button:nth-child(4),
+.league-answer-grid button:nth-child(4) {
+  --answer-accent: #39d8ff;
+}
+
+.answer-card.correct,
+.quiz-answer-option.correct,
+.multiplayer-answer-option.correct,
+.neon-answer-button.correct,
+.answer-button.correct,
+.answers-grid .answer-button.correct,
+.neonAnswerButton.answer-button.correct,
+.league-answer-grid button.correct {
+  --answer-accent: #39ff9f;
+  border-color: #39ff9f !important;
+  background:
+    radial-gradient(circle at 18% -6%, rgba(57,255,159,0.35), transparent 36%),
+    linear-gradient(145deg, rgba(255,255,255,0.12), rgba(12,50,34,0.36), rgba(0,0,0,0.42)),
+    rgba(3, 14, 18, 0.78) !important;
+  box-shadow:
+    0 0 22px rgba(57,255,159,0.85),
+    0 0 58px rgba(57,255,159,0.38),
+    0 18px 38px rgba(0,0,0,0.36),
+    inset 0 0 28px rgba(57,255,159,0.22) !important;
+}
+
+.answer-card.wrong,
+.quiz-answer-option.wrong,
+.multiplayer-answer-option.wrong,
+.neon-answer-button.wrong,
+.answer-button.wrong,
+.answers-grid .answer-button.wrong,
+.neonAnswerButton.answer-button.wrong,
+.league-answer-grid button.wrong {
+  --answer-accent: #ff4f64;
+  border-color: #ff4f64 !important;
+  background:
+    radial-gradient(circle at 18% -6%, rgba(255,79,100,0.31), transparent 36%),
+    linear-gradient(145deg, rgba(255,255,255,0.10), rgba(66,12,24,0.38), rgba(0,0,0,0.42)),
+    rgba(3, 14, 18, 0.78) !important;
+  box-shadow:
+    0 0 22px rgba(255,79,100,0.75),
+    0 0 52px rgba(255,79,100,0.30),
+    0 18px 38px rgba(0,0,0,0.36),
+    inset 0 0 28px rgba(255,79,100,0.18) !important;
+}
+
+.answer-button span,
+.answers-grid .answer-button span,
+.neonAnswerButton.answer-button span,
+.league-answer-grid button span {
+  position: relative;
+  z-index: 1;
+  color: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+}
+
+.name-screen {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(57,255,159,0.16), transparent 34%),
+    radial-gradient(circle at 84% 18%, rgba(57,216,255,0.12), transparent 28%),
+    #020806 !important;
+}
+
+.name-card,
+.profile-card,
+.avatar-picker-card,
+.leaderboard-card,
+.home-progress-card {
+  border: 1px solid rgba(89,255,164,0.24) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(57,255,159,0.13), transparent 34%),
+    radial-gradient(circle at 90% 20%, rgba(255,79,216,0.10), transparent 34%),
+    linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.03)),
+    rgba(3,14,18,0.78) !important;
+  box-shadow:
+    0 22px 58px rgba(0,0,0,0.44),
+    0 0 36px rgba(57,255,159,0.14),
+    inset 0 1px 0 rgba(255,255,255,0.15) !important;
+  backdrop-filter: blur(18px) saturate(1.24);
+}
+
+.name-ball,
+.player-avatar,
+.profile-avatar-button {
+  box-shadow:
+    0 0 28px rgba(57,255,159,0.36),
+    0 0 58px rgba(57,216,255,0.16),
+    inset 0 1px 0 rgba(255,255,255,0.24) !important;
+}
+
+.name-title,
+.profile-level-name,
+.profile-name-pill,
+.home-level-name {
+  color: #f8fbff !important;
+  text-shadow:
+    0 0 18px rgba(57,255,159,0.18),
+    0 8px 26px rgba(0,0,0,0.54) !important;
+}
+
+.name-subtitle,
+.profile-title,
+.profile-next-level,
+.profile-sync-pill,
+.profile-record-strip span {
+  color: rgba(226,238,255,0.72) !important;
+}
+
+.name-input {
+  border: 1px solid rgba(57,216,255,0.30) !important;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(57,216,255,0.13), transparent 34%),
+    rgba(3,14,18,0.72) !important;
+  color: #f8fbff !important;
+  box-shadow:
+    0 0 24px rgba(57,216,255,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.14) !important;
+}
+
+.name-save-button,
+.profile-edit-avatar-button,
+.profile-level-button,
+.profile-change-name-button,
+.profile-back-button,
+.profile-top-back-button,
+.avatar-builder-actions button,
+.avatar-picker-top button {
+  border: 1px solid rgba(57,255,159,0.54) !important;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(57,255,159,0.24), transparent 34%),
+    linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.03)),
+    rgba(3,14,18,0.76) !important;
+  color: #f5fff9 !important;
+  box-shadow:
+    0 0 24px rgba(57,255,159,0.18),
+    0 14px 28px rgba(0,0,0,0.26),
+    inset 0 1px 0 rgba(255,255,255,0.16) !important;
+}
+
+.profile-stats-grid {
+  gap: 12px !important;
+}
+
+.profile-stat-card,
+.profile-record-strip,
+.profile-sound-toggle,
+.avatar-token,
+.avatar-picker-grid button {
+  border: 1px solid rgba(70,231,255,0.18) !important;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.09), rgba(255,255,255,0.025)),
+    rgba(3,14,18,0.62) !important;
+  color: #f8fbff !important;
+  box-shadow:
+    0 0 20px rgba(70,231,255,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.10) !important;
+}
+
+.profile-stat-card:nth-child(2n),
+.avatar-token.selected,
+.avatar-picker-grid button.selected {
+  border-color: rgba(255,216,77,0.34) !important;
+  box-shadow:
+    0 0 22px rgba(255,216,77,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.12) !important;
+}
+
+.profile-bar-outer,
+.home-level-bar-outer {
+  background: rgba(70,231,255,0.12) !important;
+}
+
+.profile-bar-inner,
+.home-level-bar-inner {
+  background: linear-gradient(90deg, #39ff9f, #39d8ff, #ffd84d) !important;
+  box-shadow: 0 0 22px rgba(57,255,159,0.38) !important;
+}
+
+@media (max-width: 520px) {
+  .answer-grid,
+  .quiz-answer-grid,
+  .neon-answer-grid,
+  .answers-grid,
+  .neonAnswerGrid.answers-grid,
+  .world-cup-answer-grid,
+  .league-answer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  .answer-card,
+  .quiz-answer-option,
+  .multiplayer-answer-option,
+  .neon-answer-button,
+  .answer-button,
+  .answers-grid .answer-button,
+  .neonAnswerButton.answer-button,
+  .league-answer-grid button {
+    min-height: 112px !important;
+    border-radius: 20px !important;
+    padding: 16px 10px !important;
+  }
+}
+
+/* MOCKUP-ALIGNED NEON SYSTEM */
+:root {
+  --neon-bg: #020806;
+  --neon-panel: rgba(4, 12, 18, 0.76);
+  --neon-line: rgba(89, 255, 164, 0.22);
+  --neon-green: #55ff9a;
+  --neon-cyan: #46e7ff;
+  --neon-gold: #ffe14f;
+  --neon-pink: #ff55d6;
+  --neon-purple: #a966ff;
+  --neon-muted: rgba(226, 238, 255, 0.72);
+}
+
+.neonGlassCard,
+.statCard,
+.progressCard,
+.daily-date-card,
+.whoami-card,
+.daily-question-card {
+  border: 1px solid var(--neon-line) !important;
+  background:
+    radial-gradient(circle at 50% 100%, rgba(50, 255, 137, 0.08), transparent 44%),
+    linear-gradient(145deg, rgba(12, 25, 42, 0.82), rgba(2, 9, 12, 0.82)) !important;
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.42),
+    0 0 26px rgba(85, 255, 154, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(18px) saturate(1.22);
+}
+
+.premiumBackButton,
+.home-button.premiumBackButton,
+.whoami-back-button.premiumBackButton {
+  left: max(18px, env(safe-area-inset-left)) !important;
+  top: max(18px, env(safe-area-inset-top)) !important;
+  min-width: 118px !important;
+  min-height: 54px !important;
+  padding: 0 18px !important;
+  border: 1px solid rgba(85,255,154,0.72) !important;
+  border-radius: 16px !important;
+  background: rgba(2, 9, 12, 0.76) !important;
+  color: #f5fff9 !important;
+  font-size: 18px !important;
+  font-weight: 850 !important;
+  box-shadow:
+    0 0 22px rgba(85,255,154,0.22),
+    inset 0 1px 0 rgba(255,255,255,0.12) !important;
+}
+
+.hud-row.neon-stats-grid {
+  width: min(460px, 92vw) !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  margin: 96px auto 12px !important;
+}
+
+.hud-row.neon-stats-grid .hud-card {
+  min-height: 78px !important;
+  padding: 14px 16px !important;
+  border-radius: 15px !important;
+  text-align: left !important;
+}
+
+.hud-row.neon-stats-grid .hud-label,
+.daily-stat-pill,
+.whoami-hud span {
+  color: rgba(226,238,255,0.72) !important;
+  font-size: 12px !important;
+  letter-spacing: 0.8px !important;
+  text-transform: uppercase;
+}
+
+.hud-row.neon-stats-grid .hud-value,
+.daily-stat-pill strong,
+.whoami-hud strong {
+  color: #f8fbff !important;
+  font-size: 25px !important;
+  line-height: 1 !important;
+}
+
+.quiz-progress-card.progressCard {
+  width: min(460px, 92vw);
+  margin: 0 auto 14px;
+  padding: 14px 16px 16px;
+  border-radius: 16px;
+}
+
+.quiz-progress-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  color: #f8fbff;
+}
+
+.quiz-progress-top strong {
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+
+.quiz-progress-top span {
+  color: var(--neon-green);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.quiz-progress-track {
+  height: 9px;
+  margin-top: 12px;
+  border-radius: 999px;
+  background: rgba(70,231,255,0.14);
+  overflow: hidden;
+}
+
+.quiz-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--neon-green), var(--neon-cyan));
+  box-shadow: 0 0 18px rgba(85,255,154,0.48);
+}
+
+.question-title.quiz-question-card.neonGlassCard {
+  width: min(460px, 92vw) !important;
+  min-height: 170px !important;
+  display: grid !important;
+  place-items: center !important;
+  margin: 0 auto 18px !important;
+  padding: 28px 24px !important;
+  border-radius: 22px !important;
+  font-size: clamp(26px, 5vw, 38px) !important;
+  line-height: 1.14 !important;
+}
+
+.neonAnswerGrid.answers-grid {
+  width: min(460px, 92vw) !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  margin: 0 auto 34px !important;
+}
+
+.neonAnswerButton.answer-button {
+  min-height: 132px !important;
+  border-radius: 18px !important;
+  font-size: clamp(18px, 4vw, 24px) !important;
+  font-weight: 900 !important;
+  color: #f8fbff !important;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03)),
+    rgba(2, 10, 14, 0.76) !important;
+  background-size: cover !important;
+}
+
+.neonAnswerButton.answer-button:nth-child(1) {
+  border-color: rgba(85,255,154,0.78) !important;
+  box-shadow: 0 0 28px rgba(85,255,154,0.34), inset 0 1px 0 rgba(255,255,255,0.14) !important;
+}
+
+.neonAnswerButton.answer-button:nth-child(2) {
+  border-color: rgba(255,225,79,0.82) !important;
+  box-shadow: 0 0 28px rgba(255,225,79,0.34), inset 0 1px 0 rgba(255,255,255,0.14) !important;
+}
+
+.neonAnswerButton.answer-button:nth-child(3) {
+  border-color: rgba(255,85,214,0.78) !important;
+  box-shadow: 0 0 28px rgba(255,85,214,0.34), inset 0 1px 0 rgba(255,255,255,0.14) !important;
+}
+
+.neonAnswerButton.answer-button:nth-child(4) {
+  border-color: rgba(70,231,255,0.82) !important;
+  box-shadow: 0 0 28px rgba(70,231,255,0.34), inset 0 1px 0 rgba(255,255,255,0.14) !important;
+}
+
+.neonAnswerButton.answer-button:hover {
+  transform: translateY(-3px) scale(1.01) !important;
+}
+
+.neonAnswerButton.answer-button:active {
+  transform: translateY(1px) scale(0.99) !important;
+}
+
+.neonAnswerButton.answer-button.correct {
+  border-color: var(--neon-green) !important;
+  background: linear-gradient(145deg, rgba(85,255,154,0.30), rgba(4,42,25,0.92)) !important;
+  box-shadow: 0 0 34px rgba(85,255,154,0.56) !important;
+}
+
+.neonAnswerButton.answer-button.wrong {
+  border-color: var(--neon-pink) !important;
+  background: linear-gradient(145deg, rgba(255,85,214,0.26), rgba(44,5,34,0.92)) !important;
+  box-shadow: 0 0 34px rgba(255,85,214,0.46) !important;
+}
+
+.combo-dock,
+.difficulty-pill {
+  display: none !important;
+}
+
+.daily-date-card,
+.find-player-date-row.whoami-date-row {
+  width: min(450px, 92vw);
+  min-height: 70px;
+  margin: 0 auto 14px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  color: #f8fbff;
+}
+
+.daily-date-card span,
+.daily-date-card strong {
+  display: block;
+  text-align: center;
+}
+
+.daily-date-card span {
+  color: var(--neon-green);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.daily-date-card strong,
+.find-player-date-row.whoami-date-row strong {
+  font-size: 20px;
+  white-space: nowrap;
+}
+
+.daily-list-stats,
+.whoami-hud {
+  width: min(450px, 92vw) !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 0 !important;
+  border: 1px solid rgba(70,231,255,0.20) !important;
+  border-radius: 18px !important;
+  overflow: hidden;
+  background: rgba(2, 10, 14, 0.66) !important;
+  box-shadow: 0 0 22px rgba(70,231,255,0.10), inset 0 1px 0 rgba(255,255,255,0.10) !important;
+}
+
+.daily-list-stats .daily-stat-pill,
+.whoami-hud span {
+  min-height: 70px !important;
+  display: grid !important;
+  place-items: center !important;
+  gap: 5px !important;
+  border: 0 !important;
+  border-right: 1px solid rgba(70,231,255,0.12) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.daily-list-stats .daily-stat-pill:last-child,
+.whoami-hud span:last-child {
+  border-right: 0 !important;
+}
+
+.daily-question-card {
+  width: min(450px, 92vw) !important;
+  padding: 22px 18px !important;
+}
+
+.whoami-card {
+  width: min(450px, 92vw) !important;
+}
+
+.whoami-top {
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.whoami-kicker {
+  margin: 0 auto 8px;
+  color: var(--neon-green) !important;
+}
+
+.whoami-top h1 {
+  font-size: clamp(34px, 8vw, 48px) !important;
+  text-transform: uppercase;
+}
+
+.whoami-mystery {
+  border: 1px solid rgba(255,85,214,0.24) !important;
+  background:
+    radial-gradient(circle at 14% 30%, rgba(255,85,214,0.18), transparent 30%),
+    rgba(8, 10, 22, 0.76) !important;
+}
+
+.whoami-silhouette {
+  border: 1px solid rgba(255,85,214,0.62);
+  background: rgba(30, 3, 31, 0.66) !important;
+  color: #ffd7f7 !important;
+  box-shadow: 0 0 26px rgba(255,85,214,0.48), inset 0 1px 0 rgba(255,255,255,0.16) !important;
+}
+
+.whoami-clue {
+  border: 1px solid rgba(70,231,255,0.16) !important;
+  background: rgba(255,255,255,0.055) !important;
+}
+
+.whoami-clue span {
+  background: rgba(85,255,154,0.18) !important;
+  color: var(--neon-green) !important;
+}
+
+@media (max-width: 768px) {
+  .hud-row.neon-stats-grid {
+    margin-top: 92px !important;
+  }
+
+  .neonAnswerGrid.answers-grid,
+  .league-answer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .neonAnswerButton.answer-button {
+    min-height: 126px !important;
+    padding: 12px !important;
+  }
+
+  .question-title.quiz-question-card.neonGlassCard {
+    min-height: 158px !important;
+  }
+
+  .daily-list-wrapper,
+  .whoami-card {
+    margin-top: 86px !important;
+  }
+
+  .daily-list-stats .daily-stat-pill,
+  .whoami-hud span {
+    min-height: 64px !important;
+    font-size: 10px !important;
+  }
+
+  .daily-stat-pill strong,
+  .whoami-hud strong {
+    font-size: 22px !important;
+  }
+}
+
+/* PREMIUM DESIGN SYSTEM V2 - FINAL CASCADE LAYER */
+:root {
+  --app-bg-base: #020806;
+  --app-bg-deep: #030b10;
+  --app-panel-bg: rgba(4, 13, 17, 0.76);
+  --app-panel-bg-strong: rgba(3, 11, 15, 0.88);
+  --app-panel-border: rgba(116, 255, 181, 0.22);
+  --app-panel-border-cyan: rgba(70, 231, 255, 0.22);
+  --app-text-primary: rgba(248, 252, 255, 0.98);
+  --app-text-secondary: rgba(226, 238, 255, 0.78);
+  --app-text-muted: rgba(198, 213, 230, 0.58);
+  --app-glow-green: #39ff9f;
+  --app-glow-cyan: #39d8ff;
+  --app-glow-gold: #ffd84d;
+  --app-glow-pink: #ff4fd8;
+  --app-glow-blue: #4d8dff;
+  --app-success: #39ff9f;
+  --app-error: #ff4f64;
+  --app-radius-lg: 24px;
+  --app-radius-md: 18px;
+  --app-radius-sm: 14px;
+  --app-glass-shadow:
+    0 20px 54px rgba(0, 0, 0, 0.42),
+    0 0 30px rgba(57, 255, 159, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+body {
+  background: var(--app-bg-base) !important;
+  color: var(--app-text-primary) !important;
+}
+
+.app-shell,
+.page-shell,
+.fullscreen-bg,
+.daily-list-bg,
+.whoami-screen,
+.profile-screen,
+.leaderboard-screen,
+.name-screen {
+  color: var(--app-text-primary) !important;
+}
+
+.fullscreen-bg::before,
+.daily-list-bg::before,
+.whoami-screen::before,
+.profile-screen::before,
+.leaderboard-screen::before,
+.name-screen::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(57, 255, 159, 0.16), transparent 30%),
+    radial-gradient(circle at 12% 28%, rgba(57, 216, 255, 0.12), transparent 28%),
+    radial-gradient(circle at 88% 18%, rgba(255, 79, 216, 0.08), transparent 26%),
+    linear-gradient(180deg, rgba(1, 6, 8, 0.36), rgba(0, 0, 0, 0.88));
+}
+
+.fullscreen-bg > *,
+.daily-list-bg > *,
+.whoami-screen > *,
+.profile-screen > *,
+.leaderboard-screen > *,
+.name-screen > * {
+  position: relative;
+  z-index: 1;
+}
+
+.glass-panel,
+.glass-card,
+.section-card,
+.question-card,
+.progress-card,
+.premium-nav-card,
+.premium-mode-card,
+.stat-card,
+.menu-card,
+.quiz-question-card,
+.daily-question-card,
+.career-journey-card,
+.whoami-card,
+.league-challenge-card,
+.league-card,
+.league-form-card,
+.league-option-card,
+.league-daily-card,
+.league-dashboard,
+.multiplayer-card,
+.multiplayer-round-card,
+.multiplayer-action-card,
+.multiplayer-room-card,
+.multiplayer-join-card,
+.category-selected-card,
+.multiplayer-round-result-card,
+.active-games-panel,
+.match-history-card,
+.leaderboard-card,
+.leaderboard-row,
+.leaderboard-your-row,
+.profile-card,
+.profile-stat-card,
+.profile-record-strip,
+.home-progress-card,
+.home-action-card,
+.name-card,
+.avatar-picker-card,
+.avatar-builder-preview,
+.coin-shop-option,
+.daily-result-card,
+.result-card,
+.connections-card,
+.connections-complete-card,
+.connections-gameover-card {
+  border: 1px solid var(--app-panel-border) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(57, 255, 159, 0.12), transparent 36%),
+    radial-gradient(circle at 88% 18%, rgba(57, 216, 255, 0.08), transparent 34%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.028) 42%, rgba(0, 0, 0, 0.30)),
+    var(--app-panel-bg) !important;
+  color: var(--app-text-primary) !important;
+  box-shadow: var(--app-glass-shadow) !important;
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.main-title,
+.name-title,
+.daily-list-title,
+.question-title,
+.profile-level-name,
+.leaderboard-title,
+.whoami-top h1,
+.league-challenge-card h1,
+.league-dashboard-hero h2,
+.multiplayer-card h2,
+.mode-card strong,
+.home-action-card strong,
+.main-menu-copy strong,
+.profile-name-pill,
+.daily-result-score,
+.result-card h2,
+.result-card h3 {
+  color: var(--app-text-primary) !important;
+  text-shadow:
+    0 2px 14px rgba(0, 0, 0, 0.68),
+    0 0 22px rgba(57, 216, 255, 0.14) !important;
+}
+
+.daily-list-question,
+.name-subtitle,
+.leaderboard-subtitle,
+.mode-card small,
+.home-action-card small,
+.main-menu-copy small,
+.profile-next-level,
+.profile-sync-pill,
+.profile-title,
+.profile-record-strip span,
+.league-card span,
+.league-card small,
+.multiplayer-action-card small,
+.multiplayer-room-card p,
+.multiplayer-join-card label,
+.leaderboard-player small,
+.daily-result-subtitle,
+.whoami-mystery span,
+.whoami-clue p,
+.player-picker-option-copy small,
+.player-picker-selected-copy span,
+.player-picker-selected-copy small {
+  color: var(--app-text-secondary) !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.52) !important;
+}
+
+.hud-card,
+.home-stat-pill,
+.daily-stat-pill,
+.whoami-hud span,
+.league-quiz-top span,
+.league-quiz-top strong,
+.league-score-strip span,
+.league-score-strip strong,
+.league-meta-row span,
+.league-section-title,
+.leaderboard-mode-pill,
+.profile-sync-pill,
+.main-username-pill {
+  border: 1px solid rgba(70, 231, 255, 0.20) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.018)),
+    rgba(2, 10, 14, 0.66) !important;
+  color: var(--app-text-secondary) !important;
+  box-shadow:
+    0 0 22px rgba(70, 231, 255, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
+}
+
+.hud-value,
+.home-stat-pill strong,
+.daily-stat-pill strong,
+.whoami-hud strong,
+.profile-stat-card strong,
+.league-row strong,
+.league-result-row strong,
+.leaderboard-score strong,
+.leaderboard-rank {
+  color: var(--app-text-primary) !important;
+}
+
+.premium-button,
+.premium-button-secondary,
+.premium-back-button,
+.premiumBackButton,
+.home-button,
+.mode-back-button,
+.profile-top-back-button,
+.profile-back-button,
+.leaderboard-back-button,
+.connections-back-button,
+.multiplayer-back-button,
+.multiplayer-round-back,
+.daily-submit-button,
+.career-submit-button,
+.collect-button,
+.play-again-button,
+.revive-button,
+.ad-revive-button,
+.name-save-button,
+.profile-change-name-button,
+.profile-edit-avatar-button,
+.profile-level-button,
+.leaderboard-tabs button,
+.leaderboard-filters button,
+.multiplayer-topbar button,
+.multiplayer-mode-pills button,
+.multiplayer-room-card button,
+.multiplayer-join-card button,
+.active-games-panel button,
+.league-form-card button,
+.league-card button,
+.league-daily-card button,
+.league-challenge-card button,
+.league-custom-row button,
+.category-selected-card button,
+.coin-shop-option button,
+.avatar-picker-grid button,
+.avatar-token,
+.avatar-builder-actions button,
+.connections-actions button,
+.connections-complete-card button,
+.connections-gameover-card button,
+.level-up-button {
+  border: 1px solid rgba(57, 255, 159, 0.46) !important;
+  border-radius: var(--app-radius-sm) !important;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(57, 255, 159, 0.20), transparent 36%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.025)),
+    rgba(3, 14, 18, 0.76) !important;
+  color: var(--app-text-primary) !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.58) !important;
+  box-shadow:
+    0 0 22px rgba(57, 255, 159, 0.16),
+    0 12px 26px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  transition:
+    transform 160ms ease,
+    filter 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease !important;
+}
+
+.premium-button:hover,
+.premium-button-secondary:hover,
+.premium-back-button:hover,
+.premiumBackButton:hover,
+.home-button:hover,
+.mode-back-button:hover,
+.profile-top-back-button:hover,
+.profile-back-button:hover,
+.leaderboard-back-button:hover,
+.connections-back-button:hover,
+.multiplayer-back-button:hover,
+.multiplayer-round-back:hover,
+.daily-submit-button:hover,
+.career-submit-button:hover,
+.collect-button:hover,
+.play-again-button:hover,
+.name-save-button:hover,
+.profile-level-button:hover,
+.multiplayer-action-card:hover,
+.home-action-card:hover,
+.mode-card:hover,
+.league-option-card:hover,
+.avatar-picker-grid button:hover {
+  transform: translateY(-2px) scale(1.01) !important;
+  filter: brightness(1.08);
+  border-color: rgba(70, 231, 255, 0.54) !important;
+  box-shadow:
+    0 0 28px rgba(70, 231, 255, 0.20),
+    0 16px 34px rgba(0, 0, 0, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.20) !important;
+}
+
+.premium-button:active,
+.premium-button-secondary:active,
+.premium-back-button:active,
+.premiumBackButton:active,
+.home-button:active,
+.mode-back-button:active,
+.profile-top-back-button:active,
+.profile-back-button:active,
+.leaderboard-back-button:active,
+.connections-back-button:active,
+.multiplayer-back-button:active,
+.daily-submit-button:active,
+.career-submit-button:active,
+.collect-button:active,
+.play-again-button:active,
+.name-save-button:active,
+.profile-level-button:active,
+.multiplayer-action-card:active,
+.home-action-card:active,
+.mode-card:active {
+  transform: scale(0.985) !important;
+}
+
+.premium-input,
+input,
+textarea,
+select,
+.name-input,
+.daily-list-input,
+.career-input,
+.player-picker-input,
+.league-form-card input,
+.multiplayer-join-card input,
+.whoami-answer-row input,
+.career-answer-box.guess-input-row.player .player-picker-input,
+.whoami-answer-row.guess-input-row.player .player-picker-input,
+.league-input-row.guess-input-row.player .player-picker-input {
+  border: 1px solid rgba(70, 231, 255, 0.26) !important;
+  border-radius: var(--app-radius-sm) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(70, 231, 255, 0.12), transparent 36%),
+    rgba(3, 14, 18, 0.74) !important;
+  color: var(--app-text-primary) !important;
+  caret-color: var(--app-glow-green);
+  box-shadow:
+    0 0 22px rgba(70, 231, 255, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.13) !important;
+}
+
+.premium-input::placeholder,
+input::placeholder,
+textarea::placeholder,
+.name-input::placeholder,
+.daily-list-input::placeholder,
+.career-input::placeholder,
+.player-picker-input::placeholder {
+  color: rgba(226, 238, 255, 0.46) !important;
+}
+
+.premium-input:focus,
+input:focus,
+textarea:focus,
+select:focus,
+.name-input:focus,
+.daily-list-input:focus,
+.career-input:focus,
+.player-picker-input:focus {
+  outline: none !important;
+  border-color: rgba(57, 255, 159, 0.58) !important;
+  box-shadow:
+    0 0 0 3px rgba(57, 255, 159, 0.12),
+    0 0 28px rgba(57, 255, 159, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+}
+
+.premium-answer-grid,
+.answer-grid,
+.quiz-answer-grid,
+.neon-answer-grid,
+.answers-grid,
+.neonAnswerGrid.answers-grid,
+.world-cup-answer-grid,
+.league-answer-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  width: min(460px, 92vw) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.premium-answer-card,
+.answer-card,
+.quiz-answer-option,
+.multiplayer-answer-option,
+.neon-answer-button,
+.answer-button,
+.answers-grid .answer-button,
+.neonAnswerButton.answer-button,
+.league-answer-grid button {
+  --answer-accent: var(--app-glow-green);
+  position: relative !important;
+  isolation: isolate;
+  overflow: hidden !important;
+  min-height: 118px !important;
+  border-radius: 22px !important;
+  border: 1.5px solid var(--answer-accent) !important;
+  background:
+    radial-gradient(circle at 18% -6%, color-mix(in srgb, var(--answer-accent) 34%, transparent), transparent 36%),
+    radial-gradient(circle at 86% 108%, color-mix(in srgb, var(--answer-accent) 20%, transparent), transparent 40%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.028) 38%, rgba(0, 0, 0, 0.38)),
+    rgba(3, 14, 18, 0.72) !important;
+  color: var(--app-text-primary) !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.58) !important;
+  box-shadow:
+    0 0 16px color-mix(in srgb, var(--answer-accent) 45%, transparent),
+    0 0 34px color-mix(in srgb, var(--answer-accent) 24%, transparent),
+    0 16px 36px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 0 22px color-mix(in srgb, var(--answer-accent) 13%, transparent) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.premium-answer-card::before,
+.answer-button::before,
+.answers-grid .answer-button::before,
+.neonAnswerButton.answer-button::before,
+.league-answer-grid button::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  border-radius: inherit !important;
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.28), transparent 28%, transparent 64%, rgba(255, 255, 255, 0.10)),
+    radial-gradient(circle at 50% 120%, color-mix(in srgb, var(--answer-accent) 28%, transparent), transparent 48%) !important;
+  opacity: 0.55;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.premium-answer-card::after,
+.answer-button::after,
+.answers-grid .answer-button::after,
+.neonAnswerButton.answer-button::after,
+.league-answer-grid button::after {
+  content: "" !important;
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: -1px;
+  height: 2px;
+  display: block !important;
+  background: var(--answer-accent);
+  box-shadow: 0 0 18px var(--answer-accent);
+  opacity: 0.92;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.answer-button:nth-child(1),
+.answers-grid .answer-button:nth-child(1),
+.league-answer-grid button:nth-child(1) {
+  --answer-accent: var(--app-glow-green);
+}
+
+.answer-button:nth-child(2),
+.answers-grid .answer-button:nth-child(2),
+.league-answer-grid button:nth-child(2) {
+  --answer-accent: var(--app-glow-gold);
+}
+
+.answer-button:nth-child(3),
+.answers-grid .answer-button:nth-child(3),
+.league-answer-grid button:nth-child(3) {
+  --answer-accent: var(--app-glow-pink);
+}
+
+.answer-button:nth-child(4),
+.answers-grid .answer-button:nth-child(4),
+.league-answer-grid button:nth-child(4) {
+  --answer-accent: var(--app-glow-cyan);
+}
+
+.answer-button.correct,
+.answers-grid .answer-button.correct,
+.neonAnswerButton.answer-button.correct,
+.league-answer-grid button.correct {
+  --answer-accent: var(--app-success);
+  border-color: var(--app-success) !important;
+  background:
+    radial-gradient(circle at 18% -6%, rgba(57, 255, 159, 0.35), transparent 36%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(12, 50, 34, 0.36), rgba(0, 0, 0, 0.42)),
+    rgba(3, 14, 18, 0.80) !important;
+  box-shadow:
+    0 0 22px rgba(57, 255, 159, 0.85),
+    0 0 58px rgba(57, 255, 159, 0.38),
+    inset 0 0 28px rgba(57, 255, 159, 0.22) !important;
+}
+
+.answer-button.wrong,
+.answers-grid .answer-button.wrong,
+.neonAnswerButton.answer-button.wrong,
+.league-answer-grid button.wrong {
+  --answer-accent: var(--app-error);
+  border-color: var(--app-error) !important;
+  background:
+    radial-gradient(circle at 18% -6%, rgba(255, 79, 100, 0.31), transparent 36%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.10), rgba(66, 12, 24, 0.38), rgba(0, 0, 0, 0.42)),
+    rgba(3, 14, 18, 0.80) !important;
+  box-shadow:
+    0 0 22px rgba(255, 79, 100, 0.75),
+    0 0 52px rgba(255, 79, 100, 0.30),
+    inset 0 0 28px rgba(255, 79, 100, 0.18) !important;
+}
+
+.answer-button span,
+.answers-grid .answer-button span,
+.neonAnswerButton.answer-button span {
+  color: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+}
+
+.home-action-card,
+.main-menu-button,
+.multiplayer-main-button,
+.daily-main-button,
+.mode-card,
+.multiplayer-action-card,
+.league-option-card,
+.multiplayer-category-grid button {
+  border-color: rgba(70, 231, 255, 0.22) !important;
+}
+
+.home-action-card:nth-of-type(2n),
+.mode-card:nth-child(2n),
+.multiplayer-action-card:nth-child(2n),
+.league-option-card:nth-child(2n) {
+  border-color: rgba(255, 216, 77, 0.24) !important;
+  box-shadow:
+    0 20px 54px rgba(0, 0, 0, 0.42),
+    0 0 30px rgba(255, 216, 77, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+}
+
+.home-action-card:nth-of-type(3n),
+.mode-card:nth-child(3n),
+.multiplayer-action-card:nth-child(3n),
+.league-option-card:nth-child(3n) {
+  border-color: rgba(255, 79, 216, 0.22) !important;
+  box-shadow:
+    0 20px 54px rgba(0, 0, 0, 0.42),
+    0 0 30px rgba(255, 79, 216, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+}
+
+.profile-bar-inner,
+.home-level-bar-inner,
+.quiz-progress-fill,
+.daily-reward-road-fill,
+.streak-bar-inner {
+  background: linear-gradient(90deg, var(--app-glow-green), var(--app-glow-cyan), var(--app-glow-gold)) !important;
+  box-shadow: 0 0 22px rgba(57, 255, 159, 0.34) !important;
+}
+
+.player-picker-results,
+.player-picker-option,
+.player-picker-selected,
+.daily-missing-answers,
+.daily-missing-row,
+.league-top10-list div,
+.pyramid-slot,
+.whoami-clue,
+.connections-tile,
+.connections-group-card {
+  color: var(--app-text-primary) !important;
+}
+
+.wrong-answer,
+.wrong-title,
+.career-feedback.wrong {
+  color: #ffe5ea !important;
+}
+
+.career-feedback.correct,
+.whoami-feedback.correct,
+.daily-rank-revealed {
+  color: #eafff4 !important;
+}
+
+.hard-timer,
+.hard-timer.danger,
+.hard-timer.very-hard {
+  border: 1px solid rgba(255, 216, 77, 0.46) !important;
+  color: var(--app-text-primary) !important;
+  background:
+    radial-gradient(circle at 22% -10%, rgba(255, 216, 77, 0.34), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 216, 77, 0.08), rgba(0, 0, 0, 0.38)),
+    rgba(3, 14, 18, 0.74) !important;
+  box-shadow:
+    0 0 20px rgba(255, 216, 77, 0.34),
+    0 0 46px rgba(255, 216, 77, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.20) !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.58) !important;
+}
+
+@media (max-width: 768px) {
+  .premium-answer-grid,
+  .answers-grid,
+  .neonAnswerGrid.answers-grid,
+  .league-answer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  .answer-button,
+  .answers-grid .answer-button,
+  .neonAnswerButton.answer-button,
+  .league-answer-grid button {
+    min-height: 112px !important;
+    border-radius: 20px !important;
+    padding: 14px 10px !important;
+  }
+
+  .glass-panel,
+  .glass-card,
+  .quiz-question-card,
+  .daily-question-card,
+  .whoami-card,
+  .profile-card,
+  .multiplayer-card,
+  .league-challenge-card,
+  .leaderboard-card,
+  .name-card {
+    border-radius: var(--app-radius-md) !important;
+  }
+}
+
+/* FINAL ATMOSPHERE OVERRIDE - must stay at end of file */
+body,
+#root {
+  background:
+    radial-gradient(circle at 10% 8%, rgba(57, 255, 159, 0.20), transparent 30%),
+    radial-gradient(circle at 88% 16%, rgba(57, 216, 255, 0.17), transparent 32%),
+    radial-gradient(circle at 84% 82%, rgba(255, 79, 216, 0.14), transparent 35%),
+    radial-gradient(circle at 14% 86%, rgba(255, 216, 77, 0.12), transparent 32%),
+    linear-gradient(180deg, #02080b 0%, #06130f 50%, #010508 100%) !important;
+  color: var(--app-text-primary) !important;
+}
+
+.fullscreen-bg::before,
+.home-landing-bg::before,
+.multiplayer-screen::before,
+.profile-screen::before,
+.leaderboard-screen::before,
+.name-screen::before,
+.whoami-screen::before,
+.league-challenge-screen::before {
+  content: "" !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  background:
+    radial-gradient(circle at 8% 18%, rgba(57, 255, 159, 0.21), transparent 33%),
+    radial-gradient(circle at 92% 15%, rgba(57, 216, 255, 0.17), transparent 32%),
+    radial-gradient(circle at 84% 78%, rgba(255, 79, 216, 0.14), transparent 35%),
+    radial-gradient(circle at 20% 88%, rgba(255, 216, 77, 0.12), transparent 31%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.56)) !important;
+  mix-blend-mode: screen;
+  opacity: 0.95;
+}
+
+.fullscreen-bg::after,
+.home-landing-bg::after,
+.multiplayer-screen::after,
+.profile-screen::after,
+.leaderboard-screen::after,
+.name-screen::after,
+.whoami-screen::after,
+.league-challenge-screen::after {
+  content: "" !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  background:
+    linear-gradient(112deg, transparent 0 34%, rgba(255, 255, 255, 0.035) 39%, transparent 45%),
+    linear-gradient(246deg, transparent 0 61%, rgba(57, 216, 255, 0.05) 68%, transparent 77%),
+    radial-gradient(circle at 50% 105%, rgba(57, 255, 159, 0.12), transparent 38%) !important;
+  opacity: 0.72;
+}
+
+.fullscreen-bg > *,
+.home-landing-bg > *,
+.multiplayer-screen > *,
+.profile-screen > *,
+.leaderboard-screen > *,
+.name-screen > *,
+.whoami-screen > *,
+.league-challenge-screen > * {
+  position: relative;
+  z-index: 1;
+}
+
+.main-title,
+.multiplayer-title,
+.name-title,
+.daily-list-title,
+.whoami-top h1,
+.question-title,
+.league-dashboard-hero h2,
+.league-challenge-card h1,
+.league-challenge-card h2,
+.profile-level-name,
+.leaderboard-title,
+.level-progress-hero h2,
+.level-objective-top strong {
+  color: var(--app-text-primary) !important;
+  text-shadow:
+    0 3px 16px rgba(0, 0, 0, 0.74),
+    0 0 22px rgba(57, 216, 255, 0.24),
+    0 0 44px rgba(57, 255, 159, 0.10) !important;
+}
+
+.multiplayer-subtitle,
+.name-subtitle,
+.daily-list-question,
+.leaderboard-subtitle,
+.profile-title,
+.profile-next-level,
+.home-level-tap-hint,
+.home-next-level,
+.main-menu-copy small,
+.home-action-card small,
+.mode-card small,
+.arena-hub-card small,
+.multiplayer-action-card small,
+.league-card span,
+.league-card small,
+.league-meta-row span,
+.league-section-title,
+.league-result-row span,
+.level-progress-hero p,
+.level-progress-next span,
+.level-road-step span,
+.level-objective-top span,
+.match-delete-modal span,
+.league-leave-modal p {
+  color: var(--app-text-secondary) !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.62) !important;
+}
+
+.home-stat-pill strong,
+.daily-stat-pill strong,
+.hud-value,
+.profile-stat-card strong,
+.league-result-grid strong,
+.league-card-top strong,
+.arena-hub-card strong,
+.multiplayer-action-card strong,
+.multiplayer-action-card span,
+.room-code strong,
+.league-rank,
+.level-progress-next strong,
+.level-road-step strong {
+  color: var(--app-text-primary) !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.66), 0 0 18px rgba(255, 255, 255, 0.08) !important;
+}
+
+.home-progress-card,
+.home-action-card,
+.main-menu-button,
+.mode-card,
+.profile-card,
+.profile-stat-card,
+.leaderboard-card,
+.leaderboard-row,
+.leaderboard-your-row,
+.name-card,
+.avatar-picker-card,
+.multiplayer-card,
+.multiplayer-room-card,
+.multiplayer-join-card,
+.active-games-panel,
+.match-history-card,
+.league-form-card,
+.league-dashboard,
+.league-card,
+.league-daily-card,
+.league-challenge-card,
+.league-option-card,
+.league-preview-card,
+.daily-result-card,
+.daily-question-card,
+.whoami-card,
+.whoami-clue,
+.connections-card,
+.connections-complete-card,
+.connections-gameover-card {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid rgba(105, 255, 185, 0.24) !important;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(57, 255, 159, 0.18), transparent 36%),
+    radial-gradient(circle at 92% 16%, rgba(57, 216, 255, 0.12), transparent 34%),
+    radial-gradient(circle at 82% 104%, rgba(255, 79, 216, 0.10), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.028) 42%, rgba(0, 0, 0, 0.34)),
+    rgba(4, 16, 20, 0.74) !important;
+  color: var(--app-text-primary) !important;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.46),
+    0 0 34px rgba(57, 255, 159, 0.12),
+    0 0 56px rgba(57, 216, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.17),
+    inset 0 0 32px rgba(57, 255, 159, 0.055) !important;
+  backdrop-filter: blur(18px) saturate(1.22);
+  -webkit-backdrop-filter: blur(18px) saturate(1.22);
+}
+
+.home-action-card::before,
+.main-menu-button::before,
+.mode-card::before,
+.multiplayer-card::before,
+.multiplayer-action-card::before,
+.arena-hub-card::before,
+.league-form-card::before,
+.league-dashboard::before,
+.league-card::before,
+.league-daily-card::before,
+.league-challenge-card::before,
+.profile-card::before,
+.level-progress-card::before {
+  content: "" !important;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(118deg, rgba(255, 255, 255, 0.20), transparent 26%, transparent 64%, rgba(57, 216, 255, 0.08)),
+    radial-gradient(circle at 50% 118%, rgba(57, 255, 159, 0.14), transparent 48%) !important;
+  opacity: 0.62;
+}
+
+.main-menu-button,
+.arena-hub-card.play-now,
+.multiplayer-action-card.play-now,
+.multiplayer-action-card.active-games {
+  border-color: rgba(57, 255, 159, 0.38) !important;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.48),
+    0 0 38px rgba(57, 255, 159, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.arena-hub-card.h2h,
+.multiplayer-action-card.create,
+.multiplayer-action-card.league-create,
+.league-daily-card {
+  border-color: rgba(255, 216, 77, 0.40) !important;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(255, 216, 77, 0.22), transparent 37%),
+    radial-gradient(circle at 88% 98%, rgba(255, 79, 216, 0.11), transparent 40%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.026), rgba(0, 0, 0, 0.36)),
+    rgba(6, 17, 18, 0.76) !important;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.48),
+    0 0 38px rgba(255, 216, 77, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.arena-hub-card.league,
+.multiplayer-action-card.join,
+.multiplayer-action-card.league-join {
+  border-color: rgba(255, 79, 216, 0.36) !important;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(255, 79, 216, 0.18), transparent 37%),
+    radial-gradient(circle at 88% 98%, rgba(57, 216, 255, 0.13), transparent 40%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.026), rgba(0, 0, 0, 0.36)),
+    rgba(6, 15, 24, 0.76) !important;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.48),
+    0 0 38px rgba(255, 79, 216, 0.17),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.multiplayer-action-card.league-list,
+.arena-section-grid .multiplayer-action-card:nth-child(3n) {
+  border-color: rgba(57, 216, 255, 0.38) !important;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(57, 216, 255, 0.19), transparent 37%),
+    radial-gradient(circle at 88% 98%, rgba(57, 255, 159, 0.12), transparent 40%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.026), rgba(0, 0, 0, 0.36)),
+    rgba(3, 14, 22, 0.76) !important;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.48),
+    0 0 38px rgba(57, 216, 255, 0.17),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.multiplayer-badge,
+.league-kicker,
+.difficulty-pill,
+.profile-name-pill,
+.main-username-pill,
+.league-code-pill,
+.league-today-status,
+.room-status,
+.room-code,
+.home-stat-pill,
+.daily-stat-pill,
+.leaderboard-mode-pill {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(57, 255, 159, 0.42) !important;
+  border-radius: 999px !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(57, 255, 159, 0.24), transparent 42%),
+    radial-gradient(circle at 82% 100%, rgba(57, 216, 255, 0.16), transparent 44%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.026), rgba(0, 0, 0, 0.26)),
+    rgba(3, 14, 18, 0.76) !important;
+  color: var(--app-text-primary) !important;
+  box-shadow:
+    0 0 18px rgba(57, 255, 159, 0.22),
+    0 0 38px rgba(57, 216, 255, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.62) !important;
+}
+
+.multiplayer-badge {
+  border-color: rgba(168, 107, 255, 0.52) !important;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(168, 107, 255, 0.35), transparent 42%),
+    radial-gradient(circle at 86% 100%, rgba(255, 79, 216, 0.18), transparent 44%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.30)),
+    rgba(20, 12, 36, 0.78) !important;
+  box-shadow:
+    0 0 22px rgba(168, 107, 255, 0.30),
+    0 0 44px rgba(255, 79, 216, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.20) !important;
+}
+
+.premium-button,
+.premium-button-secondary,
+.premium-back-button,
+.premiumBackButton,
+.home-button,
+.mode-back-button,
+.profile-top-back-button,
+.profile-back-button,
+.leaderboard-back-button,
+.connections-back-button,
+.multiplayer-back-button,
+.multiplayer-round-back,
+.daily-submit-button,
+.career-submit-button,
+.collect-button,
+.play-again-button,
+.revive-button,
+.ad-revive-button,
+.name-save-button,
+.profile-change-name-button,
+.profile-edit-avatar-button,
+.profile-level-button,
+.leaderboard-tabs button,
+.leaderboard-filters button,
+.multiplayer-topbar button,
+.multiplayer-mode-pills button,
+.multiplayer-room-card button,
+.multiplayer-join-card button,
+.active-games-panel button,
+.league-form-card button,
+.league-card button,
+.league-daily-card button,
+.league-challenge-card button,
+.league-custom-row button,
+.category-selected-card button,
+.coin-shop-option button,
+.avatar-picker-grid button,
+.avatar-token,
+.avatar-builder-actions button,
+.connections-actions button,
+.connections-complete-card button,
+.connections-gameover-card button,
+.level-progress-action,
+.level-progress-close {
+  border: 1px solid rgba(57, 255, 159, 0.46) !important;
+  color: var(--app-text-primary) !important;
+  background:
+    radial-gradient(circle at 18% -10%, rgba(57, 255, 159, 0.24), transparent 40%),
+    radial-gradient(circle at 86% 110%, rgba(57, 216, 255, 0.16), transparent 44%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.028), rgba(0, 0, 0, 0.32)),
+    rgba(3, 14, 18, 0.78) !important;
+  box-shadow:
+    0 0 22px rgba(57, 255, 159, 0.19),
+    0 0 42px rgba(57, 216, 255, 0.10),
+    0 14px 28px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.64) !important;
+}
+
+.level-progress-overlay {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(57, 255, 159, 0.18), transparent 32%),
+    radial-gradient(circle at 88% 18%, rgba(168, 107, 255, 0.18), transparent 34%),
+    radial-gradient(circle at 76% 86%, rgba(255, 79, 216, 0.12), transparent 34%),
+    rgba(0, 6, 9, 0.72) !important;
+  backdrop-filter: blur(16px) saturate(1.18) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.18) !important;
+}
+
+.level-progress-card {
+  border: 1px solid rgba(57, 255, 159, 0.28) !important;
+  color: var(--app-text-primary) !important;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(57, 255, 159, 0.20), transparent 36%),
+    radial-gradient(circle at 92% 8%, rgba(57, 216, 255, 0.16), transparent 34%),
+    radial-gradient(circle at 78% 100%, rgba(255, 216, 77, 0.12), transparent 36%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.026), rgba(0, 0, 0, 0.40)),
+    rgba(4, 16, 20, 0.88) !important;
+  box-shadow:
+    0 28px 86px rgba(0, 0, 0, 0.58),
+    0 0 48px rgba(57, 255, 159, 0.16),
+    0 0 72px rgba(57, 216, 255, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  backdrop-filter: blur(20px) saturate(1.22);
+  -webkit-backdrop-filter: blur(20px) saturate(1.22);
+}
+
+.level-progress-icon,
+.level-progress-next,
+.level-road-step,
+.level-objective-item,
+.level-objective-status {
+  border: 1px solid rgba(70, 231, 255, 0.22) !important;
+  color: var(--app-text-primary) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(70, 231, 255, 0.15), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.024)),
+    rgba(3, 14, 18, 0.68) !important;
+  box-shadow:
+    0 0 24px rgba(70, 231, 255, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+}
+
+.level-objective-item.complete {
+  border-color: rgba(57, 255, 159, 0.42) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(57, 255, 159, 0.22), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.025)),
+    rgba(3, 18, 14, 0.72) !important;
+  box-shadow:
+    0 0 28px rgba(57, 255, 159, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+}
+
+.level-progress-track,
+.level-objective-track,
+.home-level-bar-outer,
+.quiz-progress-track,
+.multiplayer-round-progress,
+.daily-reward-road-track {
+  background: rgba(1, 8, 10, 0.72) !important;
+  border: 1px solid rgba(70, 231, 255, 0.16) !important;
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.42),
+    0 0 18px rgba(70, 231, 255, 0.08) !important;
+}
+
+.level-progress-fill,
+.level-objective-fill,
+.home-level-bar-inner,
+.quiz-progress-fill,
+.multiplayer-round-progress > div,
+.daily-reward-road-fill {
+  background: linear-gradient(90deg, var(--app-glow-green), var(--app-glow-cyan), var(--app-glow-gold)) !important;
+  box-shadow:
+    0 0 18px rgba(57, 255, 159, 0.50),
+    0 0 34px rgba(57, 216, 255, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34) !important;
+}
+
+.match-delete-modal,
+.league-leave-modal {
+  border: 1px solid rgba(255, 79, 100, 0.35) !important;
+  color: var(--app-text-primary) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 79, 100, 0.18), transparent 40%),
+    radial-gradient(circle at 88% 100%, rgba(255, 216, 77, 0.10), transparent 42%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.026), rgba(0, 0, 0, 0.34)),
+    rgba(6, 12, 18, 0.90) !important;
+  box-shadow:
+    0 26px 70px rgba(0, 0, 0, 0.54),
+    0 0 42px rgba(255, 79, 100, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+}/* EMERGENCY FIX — readable stat/card text everywhere */
+
+.stat-card,
+.glass-stat,
+.profile-stat,
+.home-stat,
+.progress-stat,
+.menu-card,
+.mode-card,
+.premium-card,
+.arena-card,
+.multiplayer-card {
+  color: rgba(255, 255, 255, 0.96) !important;
+}
+
+.stat-card *,
+.glass-stat *,
+.profile-stat *,
+.home-stat *,
+.progress-stat *,
+.menu-card *,
+.mode-card *,
+.premium-card *,
+.arena-card *,
+.multiplayer-card * {
+  color: inherit;
+}
+
+/* Labels like COINS / DAILY STREAK / BEST SCORE / LEVEL etc */
+.stat-card small,
+.stat-card span,
+.stat-card label,
+.glass-stat small,
+.glass-stat span,
+.glass-stat label,
+.profile-stat small,
+.profile-stat span,
+.profile-stat label,
+.home-stat small,
+.home-stat span,
+.home-stat label,
+.progress-stat small,
+.progress-stat span,
+.progress-stat label,
+[class*="stat"] small,
+[class*="stat"] label,
+[class*="stat"] .label,
+[class*="label"],
+[class*="Label"] {
+  color: rgba(235, 245, 255, 0.78) !important;
+  text-shadow: 0 0 10px rgba(80, 255, 190, 0.22) !important;
+}
+
+/* Big numbers like 55 coins, 1 streak etc */
+.stat-card strong,
+.stat-card b,
+.stat-card .value,
+.stat-card .number,
+.glass-stat strong,
+.glass-stat b,
+.glass-stat .value,
+.glass-stat .number,
+.profile-stat strong,
+.profile-stat b,
+.profile-stat .value,
+.profile-stat .number,
+.home-stat strong,
+.home-stat b,
+.home-stat .value,
+.home-stat .number,
+.progress-stat strong,
+.progress-stat b,
+.progress-stat .value,
+.progress-stat .number,
+[class*="stat"] strong,
+[class*="stat"] b,
+[class*="stat"] .value,
+[class*="stat"] .number,
+[class*="Value"],
+[class*="Number"] {
+  color: rgba(255, 255, 255, 0.98) !important;
+  text-shadow:
+    0 0 8px rgba(255, 255, 255, 0.25),
+    0 0 18px rgba(57, 255, 159, 0.20) !important;
+}
+
+/* Specifically kill dark blue unreadable text */
+[style*="color: #0"],
+[style*="color:#0"],
+[style*="color: rgb(0"],
+[style*="color:rgb(0"] {
+  color: rgba(245, 250, 255, 0.92) !important;
+}
+
+/* Make menu subtitles readable */
+.menu-card p,
+.mode-card p,
+.premium-card p,
+.arena-card p,
+.multiplayer-card p,
+[class*="menu"] p,
+[class*="mode"] p,
+[class*="card"] p {
+  color: rgba(235, 245, 255, 0.74) !important;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* Make card titles readable */
+.menu-card h1,
+.menu-card h2,
+.menu-card h3,
+.mode-card h1,
+.mode-card h2,
+.mode-card h3,
+.premium-card h1,
+.premium-card h2,
+.premium-card h3,
+.arena-card h1,
+.arena-card h2,
+.arena-card h3,
+.multiplayer-card h1,
+.multiplayer-card h2,
+.multiplayer-card h3,
+[class*="card"] h1,
+[class*="card"] h2,
+[class*="card"] h3 {
+  color: rgba(255, 255, 255, 0.98) !important;
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.65),
+    0 0 18px rgba(80, 255, 190, 0.16) !important;
+}
+
+/* GLOSSY NEON INTENSITY PASS - keep this last */
+:root {
+  --gloss-green: rgba(57, 255, 159, 0.34);
+  --gloss-cyan: rgba(57, 216, 255, 0.32);
+  --gloss-gold: rgba(255, 216, 77, 0.30);
+  --gloss-pink: rgba(255, 79, 216, 0.30);
+  --gloss-purple: rgba(168, 107, 255, 0.32);
+  --glass-dark: rgba(3, 13, 18, 0.66);
+  --glass-deep: rgba(2, 8, 12, 0.52);
+}
+
+body,
+#root {
+  background:
+    radial-gradient(circle at 9% 8%, rgba(57, 255, 159, 0.28), transparent 31%),
+    radial-gradient(circle at 89% 14%, rgba(57, 216, 255, 0.24), transparent 32%),
+    radial-gradient(circle at 82% 80%, rgba(255, 79, 216, 0.22), transparent 35%),
+    radial-gradient(circle at 14% 88%, rgba(255, 216, 77, 0.18), transparent 34%),
+    linear-gradient(180deg, #02080b 0%, #06130f 48%, #010508 100%) !important;
+}
+
+.fullscreen-bg::before,
+.home-landing-bg::before,
+.multiplayer-screen::before,
+.profile-screen::before,
+.leaderboard-screen::before,
+.name-screen::before,
+.whoami-screen::before,
+.league-challenge-screen::before {
+  background:
+    radial-gradient(circle at 8% 18%, rgba(57, 255, 159, 0.30), transparent 34%),
+    radial-gradient(circle at 92% 13%, rgba(57, 216, 255, 0.25), transparent 32%),
+    radial-gradient(circle at 84% 78%, rgba(255, 79, 216, 0.22), transparent 35%),
+    radial-gradient(circle at 20% 88%, rgba(255, 216, 77, 0.18), transparent 31%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.48)) !important;
+  opacity: 1 !important;
+}
+
+.fullscreen-bg::after,
+.home-landing-bg::after,
+.multiplayer-screen::after,
+.profile-screen::after,
+.leaderboard-screen::after,
+.name-screen::after,
+.whoami-screen::after,
+.league-challenge-screen::after {
+  background:
+    linear-gradient(112deg, transparent 0 32%, rgba(255, 255, 255, 0.055) 39%, transparent 47%),
+    linear-gradient(246deg, transparent 0 58%, rgba(57, 216, 255, 0.075) 68%, transparent 78%),
+    radial-gradient(circle at 50% 105%, rgba(57, 255, 159, 0.18), transparent 38%) !important;
+  opacity: 0.86 !important;
+}
+
+.home-progress-card,
+.home-action-card,
+.main-menu-button,
+.mode-card,
+.profile-card,
+.profile-stat-card,
+.leaderboard-card,
+.leaderboard-row,
+.leaderboard-your-row,
+.name-card,
+.avatar-picker-card,
+.multiplayer-card,
+.multiplayer-room-card,
+.multiplayer-join-card,
+.active-games-panel,
+.match-history-card,
+.league-form-card,
+.league-dashboard,
+.league-card,
+.league-daily-card,
+.league-challenge-card,
+.league-option-card,
+.league-preview-card,
+.daily-result-card,
+.daily-question-card,
+.whoami-card,
+.whoami-clue,
+.connections-card,
+.connections-complete-card,
+.connections-gameover-card,
+.category-selected-card {
+  --card-a: var(--gloss-green);
+  --card-b: var(--gloss-cyan);
+  --card-c: var(--gloss-pink);
+  --card-edge: rgba(87, 255, 190, 0.42);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-color: var(--card-edge) !important;
+  background:
+    radial-gradient(circle at 16% -8%, color-mix(in srgb, var(--card-a) 92%, transparent), transparent 39%),
+    radial-gradient(circle at 94% 10%, color-mix(in srgb, var(--card-b) 76%, transparent), transparent 37%),
+    radial-gradient(circle at 82% 118%, color-mix(in srgb, var(--card-c) 62%, transparent), transparent 43%),
+    linear-gradient(122deg, rgba(255, 255, 255, 0.16), transparent 28%, transparent 62%, rgba(255, 255, 255, 0.075)),
+    linear-gradient(150deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.028) 38%, rgba(0, 0, 0, 0.30)),
+    var(--glass-dark) !important;
+  box-shadow:
+    0 24px 72px rgba(0, 0, 0, 0.46),
+    0 0 28px color-mix(in srgb, var(--card-a) 52%, transparent),
+    0 0 52px color-mix(in srgb, var(--card-b) 34%, transparent),
+    0 0 76px color-mix(in srgb, var(--card-c) 22%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 0 34px color-mix(in srgb, var(--card-a) 18%, transparent) !important;
+  backdrop-filter: blur(18px) saturate(1.36);
+  -webkit-backdrop-filter: blur(18px) saturate(1.36);
+}
+
+.home-progress-card::before,
+.home-action-card::before,
+.main-menu-button::before,
+.mode-card::before,
+.profile-card::before,
+.leaderboard-card::before,
+.multiplayer-card::before,
+.multiplayer-action-card::before,
+.arena-hub-card::before,
+.league-form-card::before,
+.league-dashboard::before,
+.league-card::before,
+.league-daily-card::before,
+.league-challenge-card::before,
+.league-option-card::before,
+.daily-question-card::before,
+.whoami-card::before,
+.connections-card::before,
+.category-selected-card::before {
+  content: "" !important;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(118deg, rgba(255, 255, 255, 0.30), transparent 22%, transparent 58%, rgba(255, 255, 255, 0.12)),
+    radial-gradient(circle at 50% 118%, color-mix(in srgb, var(--card-b) 45%, transparent), transparent 50%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), transparent 34%) !important;
+  opacity: 0.76;
+}
+
+.home-progress-card::after,
+.home-action-card::after,
+.main-menu-button::after,
+.mode-card::after,
+.multiplayer-action-card::after,
+.arena-hub-card::after,
+.league-card::after,
+.league-daily-card::after,
+.league-option-card::after {
+  content: "" !important;
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card-b) 90%, white 10%);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--card-b) 78%, transparent);
+  opacity: 0.84;
+  pointer-events: none;
+}
+
+.main-menu-button,
+.mode-general {
+  --card-a: rgba(57, 255, 159, 0.42);
+  --card-b: rgba(57, 216, 255, 0.38);
+  --card-c: rgba(255, 216, 77, 0.18);
+  --card-edge: rgba(57, 255, 159, 0.58);
+}
+
+.home-action-multiplayer,
+.mode-whoami,
+.arena-hub-card,
+.multiplayer-badge {
+  --card-a: rgba(168, 107, 255, 0.42);
+  --card-b: rgba(255, 79, 216, 0.34);
+  --card-c: rgba(57, 216, 255, 0.24);
+  --card-edge: rgba(190, 128, 255, 0.56);
+}
+
+.daily-main-button,
+.home-action-daily,
+.mode-find-player {
+  --card-a: rgba(57, 216, 255, 0.38);
+  --card-b: rgba(255, 79, 216, 0.34);
+  --card-c: rgba(57, 255, 159, 0.22);
+  --card-edge: rgba(57, 216, 255, 0.56);
+}
+
+.home-action-profile,
+.mode-career {
+  --card-a: rgba(57, 255, 159, 0.38);
+  --card-b: rgba(45, 212, 191, 0.34);
+  --card-c: rgba(57, 216, 255, 0.22);
+  --card-edge: rgba(57, 255, 190, 0.54);
+}
+
+.home-action-ranking,
+.mode-world-cup,
+.league-daily-card,
+.league-option-card.selected {
+  --card-a: rgba(255, 216, 77, 0.44);
+  --card-b: rgba(57, 255, 159, 0.24);
+  --card-c: rgba(255, 79, 216, 0.20);
+  --card-edge: rgba(255, 216, 77, 0.58);
+}
+
+.connections-mode-button,
+.connections-card,
+.connections-complete-card,
+.connections-gameover-card {
+  --card-a: rgba(163, 255, 77, 0.38);
+  --card-b: rgba(57, 255, 159, 0.36);
+  --card-c: rgba(57, 216, 255, 0.20);
+  --card-edge: rgba(163, 255, 77, 0.52);
+}
+
+.arena-hub-card.play-now,
+.multiplayer-action-card.play-now,
+.multiplayer-action-card.active-games {
+  --card-a: rgba(57, 216, 255, 0.44);
+  --card-b: rgba(57, 255, 159, 0.38);
+  --card-c: rgba(255, 216, 77, 0.18);
+  --card-edge: rgba(57, 216, 255, 0.60);
+}
+
+.arena-hub-card.h2h,
+.multiplayer-action-card.create {
+  --card-a: rgba(255, 79, 124, 0.34);
+  --card-b: rgba(255, 216, 77, 0.34);
+  --card-c: rgba(168, 107, 255, 0.22);
+  --card-edge: rgba(255, 124, 79, 0.54);
+}
+
+.arena-hub-card.league,
+.multiplayer-action-card.league-create,
+.multiplayer-action-card.league-list,
+.league-form-card,
+.league-dashboard,
+.league-card {
+  --card-a: rgba(255, 216, 77, 0.40);
+  --card-b: rgba(57, 255, 159, 0.30);
+  --card-c: rgba(57, 216, 255, 0.24);
+  --card-edge: rgba(255, 216, 77, 0.56);
+}
+
+.multiplayer-action-card.join,
+.multiplayer-action-card.league-join {
+  --card-a: rgba(168, 107, 255, 0.42);
+  --card-b: rgba(255, 216, 77, 0.28);
+  --card-c: rgba(255, 79, 216, 0.22);
+  --card-edge: rgba(168, 107, 255, 0.58);
+}
+
+.multiplayer-action-card,
+.arena-hub-card {
+  color: var(--app-text-primary) !important;
+  border-color: var(--card-edge) !important;
+  background:
+    radial-gradient(circle at 15% -8%, color-mix(in srgb, var(--card-a) 100%, transparent), transparent 40%),
+    radial-gradient(circle at 94% 16%, color-mix(in srgb, var(--card-b) 86%, transparent), transparent 38%),
+    radial-gradient(circle at 78% 118%, color-mix(in srgb, var(--card-c) 70%, transparent), transparent 45%),
+    linear-gradient(120deg, rgba(255, 255, 255, 0.17), transparent 26%, transparent 64%, rgba(255, 255, 255, 0.08)),
+    rgba(3, 13, 18, 0.64) !important;
+  box-shadow:
+    0 22px 62px rgba(0, 0, 0, 0.44),
+    0 0 32px color-mix(in srgb, var(--card-a) 58%, transparent),
+    0 0 62px color-mix(in srgb, var(--card-b) 36%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+}
+
+.premium-button,
+.premium-button-secondary,
+.premium-back-button,
+.premiumBackButton,
+.home-button,
+.mode-back-button,
+.profile-top-back-button,
+.profile-back-button,
+.leaderboard-back-button,
+.connections-back-button,
+.multiplayer-back-button,
+.multiplayer-round-back,
+.daily-submit-button,
+.career-submit-button,
+.collect-button,
+.play-again-button,
+.revive-button,
+.ad-revive-button,
+.name-save-button,
+.profile-change-name-button,
+.profile-edit-avatar-button,
+.profile-level-button,
+.leaderboard-tabs button,
+.leaderboard-filters button,
+.multiplayer-topbar button,
+.multiplayer-mode-pills button,
+.multiplayer-room-card button,
+.multiplayer-join-card button,
+.active-games-panel button,
+.league-form-card button,
+.league-card button,
+.league-daily-card button,
+.league-challenge-card button,
+.league-custom-row button,
+.category-selected-card button,
+.coin-shop-option button,
+.avatar-picker-grid button,
+.avatar-token,
+.avatar-builder-actions button,
+.connections-actions button,
+.connections-complete-card button,
+.connections-gameover-card button,
+.level-progress-action,
+.level-progress-close {
+  background:
+    radial-gradient(circle at 18% -10%, rgba(57, 255, 159, 0.34), transparent 40%),
+    radial-gradient(circle at 88% 112%, rgba(57, 216, 255, 0.25), transparent 44%),
+    linear-gradient(118deg, rgba(255, 255, 255, 0.18), transparent 30%, rgba(255, 255, 255, 0.06)),
+    rgba(3, 14, 18, 0.70) !important;
+  border-color: rgba(57, 255, 159, 0.56) !important;
+  color: rgba(255, 255, 255, 0.98) !important;
+  box-shadow:
+    0 0 26px rgba(57, 255, 159, 0.28),
+    0 0 48px rgba(57, 216, 255, 0.16),
+    0 14px 28px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 0 24px rgba(57, 255, 159, 0.10) !important;
+}
+
+.multiplayer-mode-pills button.active,
+.league-option-card.selected,
+.league-custom-row button.selected {
+  background:
+    radial-gradient(circle at 18% -10%, rgba(255, 216, 77, 0.44), transparent 40%),
+    radial-gradient(circle at 88% 110%, rgba(57, 255, 159, 0.25), transparent 44%),
+    linear-gradient(118deg, rgba(255, 255, 255, 0.20), transparent 30%, rgba(255, 255, 255, 0.08)),
+    rgba(24, 18, 5, 0.68) !important;
+  border-color: rgba(255, 216, 77, 0.62) !important;
+  color: rgba(255, 255, 255, 0.98) !important;
+  box-shadow:
+    0 0 28px rgba(255, 216, 77, 0.32),
+    0 0 52px rgba(57, 255, 159, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+.main-menu-copy strong,
+.mode-card strong,
+.arena-hub-card strong,
+.multiplayer-action-card strong,
+.league-card-top strong,
+.league-dashboard h2,
+.league-form-card h2,
+.profile-level-name,
+.question-title {
+  color: rgba(255, 255, 255, 0.99) !important;
+  text-shadow:
+    0 3px 12px rgba(0, 0, 0, 0.70),
+    0 0 18px rgba(255, 255, 255, 0.16),
+    0 0 34px color-mix(in srgb, var(--card-b, rgba(57, 216, 255, 0.5)) 58%, transparent) !important;
+}
+
+.main-menu-copy small,
+.mode-card small,
+.arena-hub-card small,
+.multiplayer-action-card small,
+.league-card small,
+.league-card span,
+.multiplayer-subtitle {
+  color: rgba(237, 248, 255, 0.86) !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.68) !important;
+}
+
+@media (max-width: 768px) {
+  .home-action-card,
+  .main-menu-button,
+  .mode-card,
+  .multiplayer-action-card,
+  .arena-hub-card,
+  .league-card,
+  .league-daily-card,
+  .league-option-card {
+    box-shadow:
+      0 18px 48px rgba(0, 0, 0, 0.44),
+      0 0 30px color-mix(in srgb, var(--card-a) 46%, transparent),
+      0 0 52px color-mix(in srgb, var(--card-b) 28%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+  }
+}
+
+/* MAX NEON BOOST - global intensity scale, keep this as the final CSS layer */
+:root {
+  --neon-boost-green: rgba(57, 255, 159, 0.52);
+  --neon-boost-cyan: rgba(57, 216, 255, 0.50);
+  --neon-boost-gold: rgba(255, 216, 77, 0.46);
+  --neon-boost-pink: rgba(255, 79, 216, 0.46);
+  --neon-boost-purple: rgba(168, 107, 255, 0.48);
+  --neon-glass-base: rgba(3, 12, 18, 0.58);
+  --neon-glass-deep: rgba(1, 7, 11, 0.46);
+  --neon-text-strong: rgba(255, 255, 255, 0.99);
+  --neon-text-soft: rgba(241, 249, 255, 0.88);
+}
+
+body,
+#root {
+  background:
+    radial-gradient(circle at 8% 8%, rgba(57, 255, 159, 0.38), transparent 31%),
+    radial-gradient(circle at 90% 12%, rgba(57, 216, 255, 0.34), transparent 33%),
+    radial-gradient(circle at 84% 82%, rgba(255, 79, 216, 0.30), transparent 36%),
+    radial-gradient(circle at 12% 88%, rgba(255, 216, 77, 0.25), transparent 34%),
+    radial-gradient(circle at 50% 105%, rgba(168, 107, 255, 0.20), transparent 44%),
+    linear-gradient(180deg, #02080b 0%, #06130f 48%, #010508 100%) !important;
+}
+
+.fullscreen-bg::before,
+.home-landing-bg::before,
+.multiplayer-screen::before,
+.profile-screen::before,
+.leaderboard-screen::before,
+.name-screen::before,
+.whoami-screen::before,
+.league-challenge-screen::before {
+  background:
+    radial-gradient(circle at 8% 17%, rgba(57, 255, 159, 0.39), transparent 34%),
+    radial-gradient(circle at 92% 13%, rgba(57, 216, 255, 0.34), transparent 33%),
+    radial-gradient(circle at 83% 77%, rgba(255, 79, 216, 0.31), transparent 36%),
+    radial-gradient(circle at 18% 88%, rgba(255, 216, 77, 0.25), transparent 32%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.36)) !important;
+  opacity: 1 !important;
+}
+
+.fullscreen-bg::after,
+.home-landing-bg::after,
+.multiplayer-screen::after,
+.profile-screen::after,
+.leaderboard-screen::after,
+.name-screen::after,
+.whoami-screen::after,
+.league-challenge-screen::after {
+  background:
+    linear-gradient(112deg, transparent 0 29%, rgba(255, 255, 255, 0.085) 39%, transparent 49%),
+    linear-gradient(246deg, transparent 0 55%, rgba(57, 216, 255, 0.12) 68%, transparent 80%),
+    radial-gradient(circle at 50% 108%, rgba(57, 255, 159, 0.26), transparent 40%) !important;
+  opacity: 0.98 !important;
+}
+
+.home-progress-card,
+.home-action-card,
+.main-menu-button,
+.mode-card,
+.profile-card,
+.profile-stat-card,
+.profile-record-strip,
+.leaderboard-card,
+.leaderboard-row,
+.leaderboard-your-row,
+.name-card,
+.avatar-picker-card,
+.avatar-builder-preview,
+.coin-shop-option,
+.multiplayer-card,
+.multiplayer-room-card,
+.multiplayer-join-card,
+.multiplayer-action-card,
+.arena-hub-card,
+.active-games-panel,
+.match-history-card,
+.league-form-card,
+.league-dashboard,
+.league-card,
+.league-daily-card,
+.league-challenge-card,
+.league-option-card,
+.league-preview-card,
+.daily-result-card,
+.daily-question-card,
+.daily-stat-pill,
+.hud-card,
+.stat-card,
+.progressCard,
+.progress-card,
+.whoami-card,
+.whoami-clue,
+.connections-card,
+.connections-complete-card,
+.connections-gameover-card,
+.category-selected-card,
+.player-picker-results,
+.player-picker-option,
+.player-picker-selected,
+.level-progress-card,
+.level-progress-next,
+.level-road-step,
+.level-objective-item {
+  --card-a: var(--card-a, var(--neon-boost-green));
+  --card-b: var(--card-b, var(--neon-boost-cyan));
+  --card-c: var(--card-c, var(--neon-boost-pink));
+  --card-edge: var(--card-edge, rgba(90, 255, 195, 0.68));
+  border-color: var(--card-edge) !important;
+  background:
+    radial-gradient(circle at 14% -10%, color-mix(in srgb, var(--card-a) 100%, transparent), transparent 42%),
+    radial-gradient(circle at 96% 8%, color-mix(in srgb, var(--card-b) 96%, transparent), transparent 40%),
+    radial-gradient(circle at 80% 118%, color-mix(in srgb, var(--card-c) 84%, transparent), transparent 46%),
+    linear-gradient(118deg, rgba(255, 255, 255, 0.24), transparent 24%, transparent 58%, rgba(255, 255, 255, 0.12)),
+    linear-gradient(152deg, rgba(255, 255, 255, 0.145), rgba(255, 255, 255, 0.036) 39%, rgba(0, 0, 0, 0.24)),
+    var(--neon-glass-base) !important;
+  box-shadow:
+    0 24px 74px rgba(0, 0, 0, 0.42),
+    0 0 36px color-mix(in srgb, var(--card-a) 72%, transparent),
+    0 0 68px color-mix(in srgb, var(--card-b) 48%, transparent),
+    0 0 96px color-mix(in srgb, var(--card-c) 34%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    inset 0 0 38px color-mix(in srgb, var(--card-a) 26%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--card-b) 28%, transparent) !important;
+  color: var(--neon-text-strong) !important;
+  backdrop-filter: blur(18px) saturate(1.55) brightness(1.05);
+  -webkit-backdrop-filter: blur(18px) saturate(1.55) brightness(1.05);
+}
+
+.home-progress-card::before,
+.home-action-card::before,
+.main-menu-button::before,
+.mode-card::before,
+.profile-card::before,
+.leaderboard-card::before,
+.multiplayer-card::before,
+.multiplayer-action-card::before,
+.arena-hub-card::before,
+.league-form-card::before,
+.league-dashboard::before,
+.league-card::before,
+.league-daily-card::before,
+.league-challenge-card::before,
+.league-option-card::before,
+.daily-question-card::before,
+.whoami-card::before,
+.connections-card::before,
+.category-selected-card::before,
+.level-progress-card::before {
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.38), transparent 20%, transparent 56%, rgba(255, 255, 255, 0.17)),
+    radial-gradient(circle at 50% 118%, color-mix(in srgb, var(--card-b) 64%, transparent), transparent 52%),
+    radial-gradient(circle at 50% -18%, rgba(255, 255, 255, 0.14), transparent 46%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 36%) !important;
+  opacity: 0.92 !important;
+}
+
+.home-progress-card::after,
+.home-action-card::after,
+.main-menu-button::after,
+.mode-card::after,
+.multiplayer-action-card::after,
+.arena-hub-card::after,
+.league-card::after,
+.league-daily-card::after,
+.league-option-card::after,
+.category-selected-card::after {
+  height: 3px !important;
+  left: 10% !important;
+  right: 10% !important;
+  background: color-mix(in srgb, var(--card-b) 88%, white 12%) !important;
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--card-b) 92%, transparent),
+    0 0 34px color-mix(in srgb, var(--card-a) 62%, transparent) !important;
+  opacity: 1 !important;
+}
+
+.main-menu-button,
+.mode-general {
+  --card-a: rgba(57, 255, 159, 0.62);
+  --card-b: rgba(57, 216, 255, 0.56);
+  --card-c: rgba(255, 216, 77, 0.30);
+  --card-edge: rgba(57, 255, 159, 0.78);
+}
+
+.home-action-multiplayer,
+.mode-whoami,
+.arena-hub-card,
+.multiplayer-badge {
+  --card-a: rgba(168, 107, 255, 0.62);
+  --card-b: rgba(255, 79, 216, 0.54);
+  --card-c: rgba(57, 216, 255, 0.38);
+  --card-edge: rgba(190, 128, 255, 0.76);
+}
+
+.daily-main-button,
+.home-action-daily,
+.mode-find-player {
+  --card-a: rgba(57, 216, 255, 0.58);
+  --card-b: rgba(255, 79, 216, 0.52);
+  --card-c: rgba(57, 255, 159, 0.36);
+  --card-edge: rgba(57, 216, 255, 0.76);
+}
+
+.home-action-profile,
+.mode-career {
+  --card-a: rgba(57, 255, 159, 0.56);
+  --card-b: rgba(45, 212, 191, 0.54);
+  --card-c: rgba(57, 216, 255, 0.36);
+  --card-edge: rgba(57, 255, 190, 0.74);
+}
+
+.home-action-ranking,
+.mode-world-cup,
+.league-daily-card,
+.league-option-card.selected,
+.league-custom-row button.selected {
+  --card-a: rgba(255, 216, 77, 0.66);
+  --card-b: rgba(57, 255, 159, 0.40);
+  --card-c: rgba(255, 79, 216, 0.32);
+  --card-edge: rgba(255, 216, 77, 0.78);
+}
+
+.connections-mode-button,
+.connections-card,
+.connections-complete-card,
+.connections-gameover-card {
+  --card-a: rgba(163, 255, 77, 0.56);
+  --card-b: rgba(57, 255, 159, 0.56);
+  --card-c: rgba(57, 216, 255, 0.34);
+  --card-edge: rgba(163, 255, 77, 0.72);
+}
+
+.arena-hub-card.play-now,
+.multiplayer-action-card.play-now,
+.multiplayer-action-card.active-games {
+  --card-a: rgba(57, 216, 255, 0.68);
+  --card-b: rgba(57, 255, 159, 0.58);
+  --card-c: rgba(255, 216, 77, 0.32);
+  --card-edge: rgba(57, 216, 255, 0.82);
+}
+
+.arena-hub-card.h2h,
+.multiplayer-action-card.create {
+  --card-a: rgba(255, 79, 124, 0.52);
+  --card-b: rgba(255, 216, 77, 0.54);
+  --card-c: rgba(168, 107, 255, 0.36);
+  --card-edge: rgba(255, 124, 79, 0.74);
+}
+
+.arena-hub-card.league,
+.multiplayer-action-card.league-create,
+.multiplayer-action-card.league-list,
+.league-form-card,
+.league-dashboard,
+.league-card {
+  --card-a: rgba(255, 216, 77, 0.62);
+  --card-b: rgba(57, 255, 159, 0.48);
+  --card-c: rgba(57, 216, 255, 0.42);
+  --card-edge: rgba(255, 216, 77, 0.78);
+}
+
+.multiplayer-action-card.join,
+.multiplayer-action-card.league-join {
+  --card-a: rgba(168, 107, 255, 0.62);
+  --card-b: rgba(255, 216, 77, 0.46);
+  --card-c: rgba(255, 79, 216, 0.38);
+  --card-edge: rgba(168, 107, 255, 0.78);
+}
+
+.premium-button,
+.premium-button-secondary,
+.premium-back-button,
+.premiumBackButton,
+.home-button,
+.mode-back-button,
+.profile-top-back-button,
+.profile-back-button,
+.leaderboard-back-button,
+.connections-back-button,
+.multiplayer-back-button,
+.multiplayer-round-back,
+.daily-submit-button,
+.career-submit-button,
+.collect-button,
+.play-again-button,
+.revive-button,
+.ad-revive-button,
+.name-save-button,
+.profile-change-name-button,
+.profile-edit-avatar-button,
+.profile-level-button,
+.leaderboard-tabs button,
+.leaderboard-filters button,
+.multiplayer-topbar button,
+.multiplayer-mode-pills button,
+.multiplayer-room-card button,
+.multiplayer-join-card button,
+.active-games-panel button,
+.league-form-card button,
+.league-card button,
+.league-daily-card button,
+.league-challenge-card button,
+.league-custom-row button,
+.category-selected-card button,
+.coin-shop-option button,
+.avatar-picker-grid button,
+.avatar-token,
+.avatar-builder-actions button,
+.connections-actions button,
+.connections-complete-card button,
+.connections-gameover-card button,
+.level-progress-action,
+.level-progress-close,
+button:not(.answer-button):not(.neonAnswerButton) {
+  --button-a: var(--card-a, var(--neon-boost-green));
+  --button-b: var(--card-b, var(--neon-boost-cyan));
+  border-color: color-mix(in srgb, var(--button-a) 86%, white 6%) !important;
+  background:
+    radial-gradient(circle at 18% -12%, color-mix(in srgb, var(--button-a) 92%, transparent), transparent 42%),
+    radial-gradient(circle at 88% 116%, color-mix(in srgb, var(--button-b) 74%, transparent), transparent 45%),
+    linear-gradient(116deg, rgba(255, 255, 255, 0.26), transparent 29%, rgba(255, 255, 255, 0.10)),
+    rgba(3, 14, 18, 0.62) !important;
+  color: var(--neon-text-strong) !important;
+  box-shadow:
+    0 0 30px color-mix(in srgb, var(--button-a) 58%, transparent),
+    0 0 58px color-mix(in srgb, var(--button-b) 36%, transparent),
+    0 14px 30px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    inset 0 0 26px color-mix(in srgb, var(--button-a) 18%, transparent) !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.70), 0 0 16px rgba(255, 255, 255, 0.13) !important;
+}
+
+.premium-answer-card,
+.answer-card,
+.quiz-answer-option,
+.multiplayer-answer-option,
+.neon-answer-button,
+.answer-button,
+.answers-grid .answer-button,
+.neonAnswerButton.answer-button,
+.league-answer-grid button {
+  background:
+    radial-gradient(circle at 18% -8%, color-mix(in srgb, var(--answer-accent) 58%, transparent), transparent 40%),
+    radial-gradient(circle at 88% 112%, color-mix(in srgb, var(--answer-accent) 32%, transparent), transparent 44%),
+    linear-gradient(120deg, rgba(255, 255, 255, 0.26), transparent 26%, transparent 62%, rgba(255, 255, 255, 0.12)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.034) 38%, rgba(0, 0, 0, 0.26)),
+    rgba(3, 14, 18, 0.64) !important;
+  box-shadow:
+    0 0 22px color-mix(in srgb, var(--answer-accent) 74%, transparent),
+    0 0 48px color-mix(in srgb, var(--answer-accent) 48%, transparent),
+    0 18px 42px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    inset 0 0 28px color-mix(in srgb, var(--answer-accent) 22%, transparent) !important;
+}
+
+.main-menu-copy strong,
+.mode-card strong,
+.arena-hub-card strong,
+.multiplayer-action-card strong,
+.league-card-top strong,
+.league-dashboard h2,
+.league-form-card h2,
+.profile-level-name,
+.question-title,
+.stat-card strong,
+.hud-value,
+[class*="stat"] strong,
+[class*="Value"],
+[class*="Number"] {
+  color: var(--neon-text-strong) !important;
+  text-shadow:
+    0 3px 12px rgba(0, 0, 0, 0.72),
+    0 0 18px rgba(255, 255, 255, 0.22),
+    0 0 38px color-mix(in srgb, var(--card-b, rgba(57, 216, 255, 0.7)) 72%, transparent) !important;
+}
+
+.main-menu-copy small,
+.mode-card small,
+.arena-hub-card small,
+.multiplayer-action-card small,
+.league-card small,
+.league-card span,
+.multiplayer-subtitle,
+[class*="stat"] small,
+[class*="stat"] label,
+[class*="label"],
+[class*="Label"] {
+  color: var(--neon-text-soft) !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.72), 0 0 14px rgba(57, 216, 255, 0.13) !important;
+}
+
+.home-action-card:hover,
+.main-menu-button:hover,
+.mode-card:hover,
+.multiplayer-action-card:hover,
+.arena-hub-card:hover,
+.league-option-card:hover,
+button:hover {
+  filter: brightness(1.16) saturate(1.20) !important;
+  box-shadow:
+    0 26px 74px rgba(0, 0, 0, 0.42),
+    0 0 44px color-mix(in srgb, var(--card-a, var(--neon-boost-green)) 80%, transparent),
+    0 0 82px color-mix(in srgb, var(--card-b, var(--neon-boost-cyan)) 54%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34) !important;
+}
+
+@media (max-width: 768px) {
+  .home-action-card,
+  .main-menu-button,
+  .mode-card,
+  .multiplayer-action-card,
+  .arena-hub-card,
+  .league-card,
+  .league-daily-card,
+  .league-option-card,
+  .profile-card,
+  .leaderboard-card,
+  .multiplayer-card {
+    box-shadow:
+      0 18px 52px rgba(0, 0, 0, 0.42),
+      0 0 34px color-mix(in srgb, var(--card-a) 64%, transparent),
+      0 0 62px color-mix(in srgb, var(--card-b) 42%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+  }
+}
+
+/* FINAL SURFACE-COLOR CORRECTION - dark background, color inside cards */
+:root {
+  --surface-green: rgba(57, 255, 159, 0.62);
+  --surface-cyan: rgba(57, 216, 255, 0.60);
+  --surface-gold: rgba(255, 216, 77, 0.58);
+  --surface-pink: rgba(255, 79, 216, 0.58);
+  --surface-purple: rgba(168, 107, 255, 0.60);
+  --surface-blue: rgba(63, 143, 255, 0.56);
+  --surface-red: rgba(255, 79, 112, 0.52);
+  --surface-lime: rgba(163, 255, 77, 0.56);
+  --surface-glass: rgba(2, 10, 15, 0.66);
+  --surface-glass-deep: rgba(1, 6, 10, 0.76);
+  --surface-text: rgba(255, 255, 255, 0.98);
+  --surface-text-soft: rgba(236, 247, 255, 0.84);
+}
+
+body,
+#root {
+  background:
+    radial-gradient(circle at 12% 4%, rgba(57, 255, 159, 0.13), transparent 28%),
+    radial-gradient(circle at 88% 10%, rgba(57, 216, 255, 0.11), transparent 30%),
+    radial-gradient(circle at 82% 82%, rgba(255, 79, 216, 0.08), transparent 34%),
+    linear-gradient(180deg, #02070a 0%, #06110d 48%, #010407 100%) !important;
+}
+
+.fullscreen-bg::before,
+.home-landing-bg::before,
+.multiplayer-screen::before,
+.profile-screen::before,
+.leaderboard-screen::before,
+.name-screen::before,
+.whoami-screen::before,
+.league-challenge-screen::before {
+  background:
+    radial-gradient(circle at 10% 18%, rgba(57, 255, 159, 0.12), transparent 32%),
+    radial-gradient(circle at 90% 16%, rgba(57, 216, 255, 0.10), transparent 30%),
+    radial-gradient(circle at 84% 80%, rgba(255, 79, 216, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.64)) !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+}
+
+.fullscreen-bg::after,
+.home-landing-bg::after,
+.multiplayer-screen::after,
+.profile-screen::after,
+.leaderboard-screen::after,
+.name-screen::after,
+.whoami-screen::after,
+.league-challenge-screen::after {
+  background:
+    linear-gradient(112deg, transparent 0 34%, rgba(255, 255, 255, 0.026) 41%, transparent 48%),
+    radial-gradient(circle at 50% 105%, rgba(57, 255, 159, 0.055), transparent 42%) !important;
+  opacity: 0.58 !important;
+}
+
+.premium-glass-card,
+.premium-action-card,
+.premium-menu-card,
+.premium-answer-card,
+.glass-panel,
+.glass-card,
+.home-progress-card,
+.home-action-card,
+.main-menu-button,
+.mode-card,
+.profile-card,
+.profile-stat-card,
+.profile-record-strip,
+.leaderboard-card,
+.leaderboard-row,
+.leaderboard-your-row,
+.name-card,
+.avatar-picker-card,
+.avatar-builder-preview,
+.coin-shop-option,
+.multiplayer-card,
+.multiplayer-room-card,
+.multiplayer-join-card,
+.multiplayer-action-card,
+.arena-hub-card,
+.active-games-panel,
+.match-history-card,
+.league-form-card,
+.league-dashboard,
+.league-card,
+.league-daily-card,
+.league-challenge-card,
+.league-option-card,
+.league-preview-card,
+.daily-result-card,
+.daily-question-card,
+.daily-stat-pill,
+.hud-card,
+.stat-card,
+.progressCard,
+.progress-card,
+.whoami-card,
+.whoami-clue,
+.connections-card,
+.connections-complete-card,
+.connections-gameover-card,
+.category-selected-card,
+.player-picker-results,
+.player-picker-option,
+.player-picker-selected,
+.level-progress-card,
+.level-progress-next,
+.level-road-step,
+.level-objective-item {
+  --accent-1: var(--surface-green);
+  --accent-2: var(--surface-cyan);
+  --accent-3: var(--surface-pink);
+  --accent-border: rgba(80, 245, 185, 0.70);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: var(--surface-text) !important;
+  border-color: var(--accent-border) !important;
+  background:
+    radial-gradient(circle at 18% -8%, color-mix(in srgb, var(--accent-1) 78%, transparent), transparent 38%),
+    radial-gradient(circle at 88% 6%, color-mix(in srgb, var(--accent-2) 62%, transparent), transparent 36%),
+    radial-gradient(circle at 78% 116%, color-mix(in srgb, var(--accent-3) 48%, transparent), transparent 44%),
+    linear-gradient(118deg, rgba(255, 255, 255, 0.24), transparent 22%, transparent 58%, rgba(255, 255, 255, 0.11)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 46%),
+    linear-gradient(150deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.022) 38%, rgba(0, 0, 0, 0.30)),
+    var(--surface-glass) !important;
+  box-shadow:
+    0 18px 46px rgba(0, 0, 0, 0.42),
+    0 0 18px color-mix(in srgb, var(--accent-1) 64%, transparent),
+    0 0 36px color-mix(in srgb, var(--accent-2) 40%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    inset 0 0 32px color-mix(in srgb, var(--accent-1) 28%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--accent-2) 34%, transparent) !important;
+  backdrop-filter: blur(18px) saturate(1.45);
+  -webkit-backdrop-filter: blur(18px) saturate(1.45);
+}
+
+.premium-glass-card::before,
+.premium-action-card::before,
+.premium-menu-card::before,
+.home-progress-card::before,
+.home-action-card::before,
+.main-menu-button::before,
+.mode-card::before,
+.profile-card::before,
+.leaderboard-card::before,
+.multiplayer-card::before,
+.multiplayer-action-card::before,
+.arena-hub-card::before,
+.league-form-card::before,
+.league-dashboard::before,
+.league-card::before,
+.league-daily-card::before,
+.league-challenge-card::before,
+.league-option-card::before,
+.daily-question-card::before,
+.whoami-card::before,
+.connections-card::before,
+.category-selected-card::before,
+.level-progress-card::before {
+  content: "" !important;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(122deg, rgba(255, 255, 255, 0.34), transparent 20%, transparent 58%, rgba(255, 255, 255, 0.14)),
+    radial-gradient(circle at 50% 120%, color-mix(in srgb, var(--accent-2) 48%, transparent), transparent 52%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.11), transparent 38%) !important;
+  opacity: 0.88 !important;
+}
+
+.premium-glass-card::after,
+.premium-action-card::after,
+.premium-menu-card::after,
+.home-progress-card::after,
+.home-action-card::after,
+.main-menu-button::after,
+.mode-card::after,
+.multiplayer-action-card::after,
+.arena-hub-card::after,
+.league-card::after,
+.league-daily-card::after,
+.league-option-card::after,
+.category-selected-card::after {
+  content: "" !important;
+  position: absolute;
+  left: 11%;
+  right: 11%;
+  bottom: 0;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-2) 86%, white 14%) !important;
+  box-shadow:
+    0 0 16px color-mix(in srgb, var(--accent-2) 88%, transparent),
+    0 0 30px color-mix(in srgb, var(--accent-1) 55%, transparent) !important;
+  opacity: 0.96;
+  pointer-events: none;
+}
+
+.accent-green,
+.main-menu-button,
+.mode-general,
+.arena-hub-card.play-now,
+.multiplayer-action-card.play-now,
+.multiplayer-action-card.active-games {
+  --accent-1: var(--surface-green);
+  --accent-2: var(--surface-cyan);
+  --accent-3: rgba(255, 216, 77, 0.32);
+  --accent-border: rgba(57, 255, 159, 0.78);
+}
+
+.accent-purple,
+.home-action-multiplayer,
+.mode-whoami,
+.arena-hub-card {
+  --accent-1: var(--surface-purple);
+  --accent-2: var(--surface-pink);
+  --accent-3: var(--surface-cyan);
+  --accent-border: rgba(180, 118, 255, 0.78);
+}
+
+.accent-blue,
+.accent-cyan,
+.daily-main-button,
+.home-action-daily,
+.mode-career,
+.mode-find-player,
+.multiplayer-action-card.league-list {
+  --accent-1: var(--surface-cyan);
+  --accent-2: var(--surface-blue);
+  --accent-3: var(--surface-pink);
+  --accent-border: rgba(57, 216, 255, 0.78);
+}
+
+.accent-gold,
+.home-action-ranking,
+.mode-world-cup,
+.arena-hub-card.league,
+.multiplayer-action-card.league-create,
+.league-form-card,
+.league-dashboard,
+.league-card,
+.league-daily-card,
+.league-option-card.selected,
+.league-custom-row button.selected {
+  --accent-1: var(--surface-gold);
+  --accent-2: var(--surface-cyan);
+  --accent-3: var(--surface-green);
+  --accent-border: rgba(255, 216, 77, 0.78);
+}
+
+.accent-pink,
+.arena-hub-card.h2h,
+.multiplayer-action-card.create {
+  --accent-1: var(--surface-red);
+  --accent-2: var(--surface-pink);
+  --accent-3: var(--surface-gold);
+  --accent-border: rgba(255, 96, 132, 0.76);
+}
+
+.home-action-profile,
+.connections-mode-button,
+.connections-card,
+.connections-complete-card,
+.connections-gameover-card {
+  --accent-1: var(--surface-lime);
+  --accent-2: var(--surface-green);
+  --accent-3: var(--surface-cyan);
+  --accent-border: rgba(147, 255, 92, 0.74);
+}
+
+.multiplayer-action-card.join,
+.multiplayer-action-card.league-join {
+  --accent-1: var(--surface-purple);
+  --accent-2: var(--surface-gold);
+  --accent-3: var(--surface-pink);
+  --accent-border: rgba(168, 107, 255, 0.78);
+}
+
+.premium-button,
+.premium-button-secondary,
+.premium-back-button,
+.premiumBackButton,
+.home-button,
+.mode-back-button,
+.profile-top-back-button,
+.profile-back-button,
+.leaderboard-back-button,
+.connections-back-button,
+.multiplayer-back-button,
+.multiplayer-round-back,
+.daily-submit-button,
+.career-submit-button,
+.collect-button,
+.play-again-button,
+.revive-button,
+.ad-revive-button,
+.name-save-button,
+.profile-change-name-button,
+.profile-edit-avatar-button,
+.profile-level-button,
+.leaderboard-tabs button,
+.leaderboard-filters button,
+.multiplayer-topbar button,
+.multiplayer-mode-pills button,
+.multiplayer-room-card button,
+.multiplayer-join-card button,
+.active-games-panel button,
+.league-form-card button,
+.league-card button,
+.league-daily-card button,
+.league-challenge-card button,
+.league-custom-row button,
+.category-selected-card button,
+.coin-shop-option button,
+.avatar-picker-grid button,
+.avatar-token,
+.avatar-builder-actions button,
+.connections-actions button,
+.connections-complete-card button,
+.connections-gameover-card button,
+.level-progress-action,
+.level-progress-close,
+button:not(.answer-button):not(.neonAnswerButton) {
+  color: var(--surface-text) !important;
+  border-color: color-mix(in srgb, var(--accent-border, rgba(57, 255, 159, 0.72)) 90%, white 8%) !important;
+  background:
+    radial-gradient(circle at 20% -14%, color-mix(in srgb, var(--accent-1, var(--surface-green)) 72%, transparent), transparent 42%),
+    radial-gradient(circle at 88% 114%, color-mix(in srgb, var(--accent-2, var(--surface-cyan)) 56%, transparent), transparent 46%),
+    linear-gradient(118deg, rgba(255, 255, 255, 0.25), transparent 29%, rgba(255, 255, 255, 0.10)),
+    rgba(3, 14, 18, 0.64) !important;
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--accent-1, var(--surface-green)) 58%, transparent),
+    0 0 34px color-mix(in srgb, var(--accent-2, var(--surface-cyan)) 36%, transparent),
+    0 12px 26px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 0 24px color-mix(in srgb, var(--accent-1, var(--surface-green)) 22%, transparent) !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.70) !important;
+}
+
+.premium-answer-card,
+.answer-card,
+.quiz-answer-option,
+.multiplayer-answer-option,
+.neon-answer-button,
+.answer-button,
+.answers-grid .answer-button,
+.neonAnswerButton.answer-button,
+.league-answer-grid button {
+  background:
+    radial-gradient(circle at 18% -8%, color-mix(in srgb, var(--answer-accent) 54%, transparent), transparent 39%),
+    radial-gradient(circle at 88% 112%, color-mix(in srgb, var(--answer-accent) 30%, transparent), transparent 45%),
+    linear-gradient(120deg, rgba(255, 255, 255, 0.26), transparent 26%, transparent 62%, rgba(255, 255, 255, 0.12)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.034) 38%, rgba(0, 0, 0, 0.28)),
+    rgba(3, 14, 18, 0.66) !important;
+  box-shadow:
+    0 0 20px color-mix(in srgb, var(--answer-accent) 68%, transparent),
+    0 0 42px color-mix(in srgb, var(--answer-accent) 42%, transparent),
+    0 18px 42px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    inset 0 0 28px color-mix(in srgb, var(--answer-accent) 24%, transparent) !important;
+}
+
+.main-menu-copy strong,
+.mode-card strong,
+.arena-hub-card strong,
+.multiplayer-action-card strong,
+.league-card-top strong,
+.league-dashboard h2,
+.league-form-card h2,
+.profile-level-name,
+.question-title,
+.stat-card strong,
+.hud-value,
+[class*="stat"] strong,
+[class*="Value"],
+[class*="Number"] {
+  color: var(--surface-text) !important;
+  text-shadow:
+    0 3px 12px rgba(0, 0, 0, 0.72),
+    0 0 16px rgba(255, 255, 255, 0.20),
+    0 0 30px color-mix(in srgb, var(--accent-2, rgba(57, 216, 255, 0.7)) 62%, transparent) !important;
+}
+
+.main-menu-copy small,
+.mode-card small,
+.arena-hub-card small,
+.multiplayer-action-card small,
+.league-card small,
+.league-card span,
+.multiplayer-subtitle,
+[class*="stat"] small,
+[class*="stat"] label,
+[class*="label"],
+[class*="Label"] {
+  color: var(--surface-text-soft) !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.72) !important;
+}
+
+/* MULTIPLAYER + LEADERBOARD MOBILE SCROLL BUGFIX */
+.leaderboard-screen,
+.multiplayer-screen {
+  min-height: 100svh !important;
+  height: auto !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(128px + env(safe-area-inset-bottom)) !important;
+}
+
+.leaderboard-card,
+.multiplayer-card,
+.active-games-panel {
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.leaderboard-list,
+.active-games-list {
+  max-height: none !important;
+  overflow: visible !important;
+  padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important;
+}
+
+@media (max-width: 768px) {
+  .leaderboard-screen,
+  .multiplayer-screen {
+    padding: calc(78px + env(safe-area-inset-top)) 12px calc(136px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .leaderboard-card,
+  .multiplayer-card,
+  .active-games-panel {
+    width: min(720px, calc(100vw - 24px)) !important;
+    margin: 0 auto !important;
+  }
+}
+
+/* BUGFIX PASS - quiz streak modal centering and profile mobile scroll */
+.daily-reward-view-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483000 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: max(16px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom)) !important;
+  overflow-y: auto !important;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 216, 77, 0.12), transparent 32%),
+    rgba(0, 4, 7, 0.74) !important;
+  backdrop-filter: blur(16px) saturate(1.15) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.15) !important;
+}
+
+.daily-reward-view-overlay .daily-reward-popup,
+.daily-reward-popup.daily-reward-view-card {
+  position: relative !important;
+  inset: auto !important;
+  transform: none;
+  z-index: 2147483001 !important;
+  width: min(720px, calc(100vw - 28px)) !important;
+  max-height: min(760px, calc(100svh - 32px)) !important;
+  overflow-y: auto !important;
+  margin: auto !important;
+  padding: clamp(22px, 5vw, 34px) !important;
+  border-radius: 32px !important;
+  border: 1px solid rgba(255, 216, 77, 0.64) !important;
+  color: rgba(255, 255, 255, 0.98) !important;
+  background:
+    radial-gradient(circle at 18% -8%, rgba(255, 216, 77, 0.52), transparent 40%),
+    radial-gradient(circle at 88% 6%, rgba(57, 255, 159, 0.24), transparent 36%),
+    radial-gradient(circle at 78% 112%, rgba(255, 128, 32, 0.34), transparent 44%),
+    linear-gradient(122deg, rgba(255, 255, 255, 0.24), transparent 24%, transparent 62%, rgba(255, 255, 255, 0.10)),
+    rgba(5, 12, 12, 0.84) !important;
+  box-shadow:
+    0 28px 86px rgba(0, 0, 0, 0.60),
+    0 0 36px rgba(255, 216, 77, 0.34),
+    0 0 70px rgba(255, 128, 32, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 0 36px rgba(255, 216, 77, 0.16) !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.daily-reward-view-overlay .daily-reward-title,
+.daily-reward-view-overlay .daily-reward-subtitle,
+.daily-reward-view-overlay .daily-reward-earned span,
+.daily-reward-view-overlay .daily-reward-earned strong,
+.daily-reward-view-overlay .daily-reward-next,
+.daily-reward-view-overlay .daily-reward-day-label,
+.daily-reward-view-overlay .daily-reward-day-coins {
+  color: rgba(255, 255, 255, 0.96) !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.72) !important;
+}
+
+.daily-reward-view-overlay .daily-reward-title {
+  letter-spacing: -0.5px !important;
+}
+
+.daily-reward-view-overlay .daily-reward-fire,
+.daily-reward-view-overlay .daily-reward-earned strong,
+.daily-reward-view-overlay .daily-reward-day,
+.daily-reward-view-overlay .daily-reward-ball {
+  border: 1px solid rgba(255, 216, 77, 0.34) !important;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 216, 77, 0.32), transparent 42%),
+    radial-gradient(circle at 80% 100%, rgba(57, 255, 159, 0.14), transparent 42%),
+    rgba(4, 14, 16, 0.62) !important;
+  box-shadow:
+    0 0 22px rgba(255, 216, 77, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+
+.daily-reward-view-overlay .daily-reward-day.current {
+  border-color: rgba(255, 216, 77, 0.74) !important;
+  box-shadow:
+    0 0 28px rgba(255, 216, 77, 0.36),
+    0 0 52px rgba(255, 128, 32, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+}
+
+.daily-reward-view-overlay .daily-reward-claim {
+  border: 1px solid rgba(255, 216, 77, 0.68) !important;
+  background:
+    radial-gradient(circle at 20% -12%, rgba(255, 216, 77, 0.52), transparent 42%),
+    radial-gradient(circle at 88% 112%, rgba(57, 255, 159, 0.24), transparent 44%),
+    rgba(12, 18, 10, 0.72) !important;
+  color: rgba(255, 255, 255, 0.98) !important;
+  box-shadow:
+    0 0 26px rgba(255, 216, 77, 0.34),
+    0 14px 30px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+}
+
+.profile-screen {
+  min-height: 100svh !important;
+  height: auto !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  padding: calc(78px + env(safe-area-inset-top)) 12px calc(128px + env(safe-area-inset-bottom)) !important;
+}
+
+.profile-card {
+  width: min(720px, calc(100vw - 24px)) !important;
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+  margin: 0 auto !important;
+}
+
+@media (max-width: 768px) {
+  .daily-reward-view-overlay .daily-reward-popup,
+  .daily-reward-popup.daily-reward-view-card {
+    border-radius: 26px !important;
+    padding: 20px 12px 18px !important;
+  }
+
+  .daily-reward-view-overlay .daily-reward-title {
+    font-size: clamp(30px, 9vw, 42px) !important;
+  }
+
+  .daily-reward-view-overlay .daily-reward-subtitle,
+  .daily-reward-view-overlay .daily-reward-next {
+    font-size: 14px !important;
+  }
+
+  .daily-reward-view-overlay .daily-reward-road {
+    gap: 6px !important;
+    margin: 20px 0 14px !important;
+  }
+
+  .daily-reward-view-overlay .daily-reward-day {
+    padding: 9px 4px 10px !important;
+    border-radius: 16px !important;
+  }
+
+  .daily-reward-view-overlay .daily-reward-ball {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 22px !important;
+  }
+
+  .profile-card {
+    padding: 20px 14px 24px !important;
+    border-radius: 26px !important;
+  }
+
+  .profile-hero-row {
+    align-items: center !important;
+  }
+}.connections-difficulty-screen {
+  min-height: 100vh;
+  width: 100%;
+  padding: 24px 16px 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+}
+
+.connections-difficulty-panel {
+  width: min(940px, 100%);
+  padding: 22px;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.22), transparent 34%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.22), transparent 34%),
+    linear-gradient(145deg, rgba(8, 13, 28, 0.88), rgba(3, 7, 18, 0.74));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 26px 80px rgba(0, 0, 0, 0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(18px);
+}
+
+.connections-difficulty-hero {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.connections-difficulty-hero h1 {
+  margin: 8px 0;
+  font-size: clamp(2rem, 7vw, 4rem);
+  color: #fff;
+  letter-spacing: -0.06em;
+  text-shadow: 0 0 28px rgba(255, 255, 255, 0.2);
+}
+
+.connections-difficulty-hero p {
+  margin: 0 auto;
+  max-width: 560px;
+  color: rgba(255, 255, 255, 0.74);
+  font-weight: 700;
+}
+
+.connections-difficulty-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.connections-difficulty-card {
+  position: relative;
+  min-height: 190px;
+  padding: 18px;
+  border: 0;
+  border-radius: 26px;
+  color: #fff;
+  text-align: left;
+  overflow: hidden;
+  cursor: pointer;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.22), transparent 35%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.045));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(16px);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.connections-difficulty-card::before {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  background: radial-gradient(circle, var(--difficulty-glow), transparent 55%);
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+.connections-difficulty-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(255,255,255,0.18), transparent 28%, transparent 72%, rgba(255,255,255,0.08));
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.connections-difficulty-card:hover {
+  transform: translateY(-4px) scale(1.015);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.45),
+    0 0 38px var(--difficulty-glow);
+}
+
+.connections-difficulty-card.easy {
+  --difficulty-glow: rgba(34, 197, 94, 0.75);
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.38), transparent 42%),
+    linear-gradient(145deg, rgba(5, 46, 22, 0.9), rgba(6, 95, 70, 0.58));
+}
+
+.connections-difficulty-card.medium {
+  --difficulty-glow: rgba(56, 189, 248, 0.75);
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.38), transparent 42%),
+    linear-gradient(145deg, rgba(8, 47, 73, 0.9), rgba(14, 116, 144, 0.58));
+}
+
+.connections-difficulty-card.hard {
+  --difficulty-glow: rgba(168, 85, 247, 0.78);
+  background:
+    radial-gradient(circle at top left, rgba(168, 85, 247, 0.42), transparent 42%),
+    linear-gradient(145deg, rgba(59, 7, 100, 0.9), rgba(88, 28, 135, 0.62));
+}
+
+.connections-difficulty-card.very-hard {
+  --difficulty-glow: rgba(251, 146, 60, 0.8);
+  background:
+    radial-gradient(circle at top left, rgba(251, 146, 60, 0.42), transparent 42%),
+    linear-gradient(145deg, rgba(127, 29, 29, 0.9), rgba(180, 83, 9, 0.62));
+}
+
+.difficulty-card-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 34px;
+}
+
+.difficulty-emoji {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 1.35rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.difficulty-count {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.22);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.connections-difficulty-card strong {
+  position: relative;
+  z-index: 1;
+  display: block;
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+  margin-bottom: 6px;
+}
+
+.connections-difficulty-card p {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.difficulty-play {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  margin-top: 18px;
+  font-weight: 950;
+  color: #fff;
+}
+
+@media (max-width: 820px) {
+  .connections-difficulty-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .connections-difficulty-screen {
+    align-items: flex-start;
+    padding: 18px 12px 28px;
+  }
+
+  .connections-difficulty-panel {
+    padding: 16px;
+    border-radius: 24px;
+  }
+
+  .connections-difficulty-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .connections-difficulty-card {
+    min-height: 150px;
   }
 }
