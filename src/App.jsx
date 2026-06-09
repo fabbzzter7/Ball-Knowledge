@@ -18,6 +18,7 @@ import {
   fetchProfile,
   getDefaultProfile,
   getOrCreatePlayerId,
+  mergeLocalProgressIntoProfile,
   syncLocalStatsToProfile,
   updateProfile,
 } from "./lib/profileService";
@@ -72,6 +73,13 @@ import {
 } from "./lib/leagueChallengeUtils";
 import { findOrCreatePublicMatch } from "./lib/matchmakingService";
 import {
+  getCurrentSession,
+  normalizeUsername,
+  signInWithEmail,
+  signOut,
+  signUpWithEmailUsername,
+} from "./lib/authService";
+import {
   isSoundEnabled,
   playButtonTapSound,
   playCoinSound,
@@ -100,6 +108,15 @@ const AVATAR_ICON_OPTIONS = [
   "👑",
   "🧤",
   "⚡",
+  "🎯",
+  "🥶",
+  "💎",
+  "🛡️",
+  "🚀",
+  "🥅",
+  "👟",
+  "🎮",
+  "🏟️",
   "🦁",
   "🦊",
   "🐺",
@@ -112,6 +129,9 @@ const AVATAR_STYLE_OPTIONS = [
   { value: "legend", label: "Legend" },
   { value: "goalkeeper", label: "Keeper" },
   { value: "striker", label: "Striker" },
+  { value: "ultra", label: "Ultra" },
+  { value: "champion", label: "Champion" },
+  { value: "academy", label: "Academy" },
   { value: "mystery", label: "Mystery" },
 ];
 const AVATAR_COLOR_OPTIONS = [
@@ -123,6 +143,8 @@ const AVATAR_COLOR_OPTIONS = [
   { value: "gold", label: "Gold" },
   { value: "pink", label: "Pink" },
   { value: "ice", label: "Ice" },
+  { value: "teal", label: "Teal" },
+  { value: "violet", label: "Violet" },
 ];
 const AVATAR_BG_OPTIONS = [
   { value: "dark", label: "Dark" },
@@ -131,6 +153,30 @@ const AVATAR_BG_OPTIONS = [
   { value: "pitch", label: "Pitch" },
   { value: "trophy", label: "Trophy" },
   { value: "night", label: "Night" },
+  { value: "derby", label: "Derby" },
+  { value: "galaxy", label: "Galaxy" },
+];
+const FAVORITE_NATION_OPTIONS = [
+  { country: "Argentina", flag: "🇦🇷" },
+  { country: "Brazil", flag: "🇧🇷" },
+  { country: "England", flag: "🏴" },
+  { country: "France", flag: "🇫🇷" },
+  { country: "Germany", flag: "🇩🇪" },
+  { country: "Spain", flag: "🇪🇸" },
+  { country: "Portugal", flag: "🇵🇹" },
+  { country: "Netherlands", flag: "🇳🇱" },
+  { country: "Italy", flag: "🇮🇹" },
+  { country: "Sweden", flag: "🇸🇪" },
+  { country: "Denmark", flag: "🇩🇰" },
+  { country: "Norway", flag: "🇳🇴" },
+  { country: "USA", flag: "🇺🇸" },
+  { country: "Mexico", flag: "🇲🇽" },
+  { country: "Japan", flag: "🇯🇵" },
+  { country: "South Korea", flag: "🇰🇷" },
+  { country: "Morocco", flag: "🇲🇦" },
+  { country: "Croatia", flag: "🇭🇷" },
+  { country: "Belgium", flag: "🇧🇪" },
+  { country: "Uruguay", flag: "🇺🇾" },
 ];
 const MULTIPLAYER_CATEGORIES = [
   { id: "general", label: "General Knowledge", mode: "general", available: true },
@@ -929,12 +975,28 @@ export default function FootballQuizMVP() {
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState("");
   const [gameMode, setGameMode] = useState("general");
+  const [authSession, setAuthSession] = useState(null);
+  const [authUser, setAuthUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
+  const [authMode, setAuthMode] = useState("signup");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authUsername, setAuthUsername] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authNotice, setAuthNotice] = useState("");
+  const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [guestMode, setGuestMode] = useState(
+    () => localStorage.getItem("ballKnowledgeGuestMode") === "true"
+  );
+  const [authPrompt, setAuthPrompt] = useState(null);
 
   const [username, setUsername] = useState(() => {
     return localStorage.getItem("ballKnowledgeUsername") || "";
   });
 
-  const [playerId] = useState(getOrCreatePlayerId);
+  const [guestPlayerId] = useState(getOrCreatePlayerId);
+  const playerId = authUser?.id || guestPlayerId;
+  const isGuest = !authUser;
   const [profile, setProfile] = useState(null);
   const [profileStatus, setProfileStatus] = useState("local");
   const [profileError, setProfileError] = useState("");
@@ -945,6 +1007,12 @@ export default function FootballQuizMVP() {
   const [soundOn, setSoundOn] = useState(isSoundEnabled);
   const [avatarEmoji, setAvatarEmoji] = useState(() => {
     return localStorage.getItem("ballKnowledgeAvatarEmoji") || "⚽";
+  });
+  const [favoriteCountry, setFavoriteCountry] = useState(() => {
+    return localStorage.getItem("ballKnowledgeFavoriteCountry") || "Argentina";
+  });
+  const [favoriteFlag, setFavoriteFlag] = useState(() => {
+    return localStorage.getItem("ballKnowledgeFavoriteFlag") || "🇦🇷";
   });
 
   const [nameInput, setNameInput] = useState(() => {
@@ -1113,6 +1181,8 @@ export default function FootballQuizMVP() {
   const profileAvatarEmoji = profile?.avatar_emoji || avatarEmoji || "⚽";
   const profileAvatar = getAvatarConfig({
     avatar_emoji: profileAvatarEmoji,
+    favorite_country: profile?.favorite_country || favoriteCountry,
+    favorite_flag: profile?.favorite_flag || favoriteFlag,
     ...profile,
   });
   const avatarBuilderPreview = getAvatarConfig(avatarDraft || profileAvatar);
@@ -1730,6 +1800,300 @@ const isHomeScreen =
     playButtonTapSound();
   };
 
+  const showAuthPrompt = (message = "Create an account to save progress and compete.") => {
+    playClickSound();
+    setAuthPrompt(message);
+    setAuthMode("signup");
+    setAuthError("");
+    setAuthNotice("");
+  };
+
+  const requireAccount = (message) => {
+    if (!isGuest) return true;
+
+    showAuthPrompt(message);
+    return false;
+  };
+
+  const continueAsGuest = () => {
+    playClickSound();
+    const storedGuestName = localStorage.getItem("ballKnowledgeUsername");
+    const guestName =
+      username ||
+      storedGuestName ||
+      `Guest-${String(guestPlayerId).replace(/[^a-zA-Z0-9]/g, "").slice(0, 5)}`;
+
+    localStorage.setItem("ballKnowledgeGuestMode", "true");
+    localStorage.setItem("ballKnowledgeUsername", guestName);
+    setGuestMode(true);
+    setUsername(guestName);
+    setNameInput(guestName);
+    setAuthPrompt(null);
+    setAuthError("");
+    setAuthNotice("");
+  };
+
+  const resetAuthFormFeedback = () => {
+    setAuthError("");
+    setAuthNotice("");
+  };
+
+  const prepareAuthenticatedIdentity = (user, fallbackUsername = "") => {
+    const metadata = user?.user_metadata || {};
+    const loadingName =
+      fallbackUsername || metadata.username || metadata.display_name || "Loading profile...";
+
+    setGuestMode(false);
+    localStorage.removeItem("ballKnowledgeGuestMode");
+    setProfile(null);
+    setProfileStatus("syncing");
+    setProfileError("");
+    setUsername(loadingName);
+    setNameInput(loadingName === "Loading profile..." ? "" : loadingName);
+    setAuthPrompt(null);
+  };
+
+  const applyProfileToLocalState = (onlineProfile) => {
+    if (!onlineProfile) return;
+
+    const profileUsername =
+      onlineProfile.display_name || onlineProfile.username || username;
+
+    setProfile(onlineProfile);
+    setUsername(profileUsername);
+    setNameInput(profileUsername);
+    localStorage.setItem("ballKnowledgeUsername", profileUsername);
+    setAvatarEmoji(
+      onlineProfile.avatar_icon || onlineProfile.avatar_emoji || avatarEmoji || "⚽"
+    );
+    localStorage.setItem(
+      "ballKnowledgeAvatarEmoji",
+      onlineProfile.avatar_icon || onlineProfile.avatar_emoji || avatarEmoji || "⚽"
+    );
+    setFavoriteCountry(onlineProfile.favorite_country || favoriteCountry || "Argentina");
+    setFavoriteFlag(onlineProfile.favorite_flag || favoriteFlag || "🇦🇷");
+    localStorage.setItem(
+      "ballKnowledgeFavoriteCountry",
+      onlineProfile.favorite_country || favoriteCountry || "Argentina"
+    );
+    localStorage.setItem(
+      "ballKnowledgeFavoriteFlag",
+      onlineProfile.favorite_flag || favoriteFlag || "🇦🇷"
+    );
+    setHighScore((score) => Math.max(score, Number(onlineProfile.best_score) || 0));
+    setCoins((value) => Math.max(value, Number(onlineProfile.coins) || 0));
+    setDailyStreak((value) =>
+      Math.max(value, Number(onlineProfile.daily_streak) || 0)
+    );
+    hydrateProgressionFromProfile(onlineProfile);
+    setProfileStatus("ready");
+    setProfileError("");
+  };
+
+  const applyAuthFallbackIdentity = (user, fallbackUsername = "") => {
+    const metadata = user?.user_metadata || {};
+    const fallback =
+      fallbackUsername ||
+      metadata.username ||
+      metadata.display_name ||
+      user?.email?.split("@")[0] ||
+      "Player";
+
+    setUsername(fallback);
+    setNameInput(fallback);
+    localStorage.setItem("ballKnowledgeUsername", fallback);
+  };
+
+  const ensureProfileForAuthUser = async (user, fallbackUsername = "") => {
+    if (!user || !isSupabaseConfigured || !supabase) return null;
+
+    const metadata = user.user_metadata || {};
+    const preferredUsername =
+      fallbackUsername ||
+      metadata.username ||
+      metadata.display_name ||
+      user.email?.split("@")[0] ||
+      "ball.knowledge";
+
+    const { profile: existingProfile, error: fetchError } = await fetchProfile(
+      supabase,
+      user.id
+    );
+
+    if (fetchError) {
+      console.warn("Could not load auth profile", fetchError);
+      applyAuthFallbackIdentity(user, preferredUsername);
+      setProfileStatus("local");
+      setProfileError("");
+      return null;
+    }
+
+    if (existingProfile) {
+      const mergedUpdates = mergeLocalProgressIntoProfile(existingProfile, {
+        highScore,
+        coins,
+        dailyStreak,
+        xpTotal,
+        levelId: careerLevelId,
+      progressionStats,
+      avatarEmoji,
+      favoriteCountry,
+      favoriteFlag,
+    });
+      const { profile: mergedProfile, error: mergeError } = await updateProfile(
+        supabase,
+        user.id,
+        mergedUpdates
+      );
+      const safeProfile = mergeError ? existingProfile : mergedProfile || existingProfile;
+
+      applyProfileToLocalState(safeProfile);
+      return safeProfile;
+    }
+
+    const defaultProfile = getDefaultProfile({
+      playerId: user.id,
+      username: preferredUsername,
+      avatarEmoji,
+      favoriteCountry,
+      favoriteFlag,
+      highScore,
+      coins,
+      dailyStreak,
+    });
+
+    const { profile: createdProfile, error: createError } = await createProfile(
+      supabase,
+      {
+        ...defaultProfile,
+        username_normalized: normalizeUsername(preferredUsername),
+        xp_total: xpTotal,
+        level_id: careerLevelId,
+        progression_stats: progressionStats,
+        favorite_country: favoriteCountry,
+        favorite_flag: favoriteFlag,
+      }
+    );
+
+    if (createError) {
+      console.warn("Could not create auth profile", createError);
+      applyAuthFallbackIdentity(user, preferredUsername);
+      setProfileStatus(isNonBlockingProfileError(createError) ? "local" : "error");
+      setProfileError(
+        isNonBlockingProfileError(createError) ? "" : getProfileErrorMessage(createError)
+      );
+      return null;
+    }
+
+    applyProfileToLocalState(createdProfile);
+    return createdProfile;
+  };
+
+  const submitAuthForm = async (event) => {
+    event?.preventDefault();
+
+    if (!isSupabaseConfigured || !supabase) {
+      setAuthError("Online accounts are unavailable right now");
+      return;
+    }
+
+    setAuthSubmitting(true);
+    setAuthError("");
+    setAuthNotice("");
+
+    const result =
+      authMode === "signup"
+        ? await signUpWithEmailUsername(supabase, {
+            email: authEmail,
+            password: authPassword,
+            username: authUsername,
+          })
+        : await signInWithEmail(supabase, {
+            email: authEmail,
+            password: authPassword,
+          });
+
+    if (result.error) {
+      setAuthSubmitting(false);
+      const message = String(result.error.message || "").toLowerCase();
+      setAuthError(
+        message.includes("duplicate") ||
+          message.includes("conflict") ||
+          message.includes("already")
+          ? "That username or email is already taken"
+          : result.error.message || "Could not authenticate"
+      );
+      return;
+    }
+
+    if (result.session?.user || result.user) {
+      const nextUser = result.session?.user || result.user;
+      const preferredUsername = result.username || authUsername;
+
+      setAuthSession(result.session || null);
+      setAuthUser(nextUser);
+      prepareAuthenticatedIdentity(nextUser, preferredUsername);
+      await ensureProfileForAuthUser(nextUser, preferredUsername);
+      setAuthNotice(authMode === "signup" ? "Account created" : "Welcome back");
+    } else {
+      setAuthNotice("Check your email to confirm your account, then log in.");
+    }
+
+    setAuthSubmitting(false);
+  };
+
+  const logout = async () => {
+    playClickSound();
+    await signOut(supabase);
+    setAuthSession(null);
+    setAuthUser(null);
+    setProfile(null);
+    setProfileStatus("local");
+    setProfileError("");
+    setGuestMode(false);
+    localStorage.removeItem("ballKnowledgeGuestMode");
+    localStorage.removeItem("ballKnowledgeUsername");
+    setUsername("");
+    setNameInput("");
+    setAuthMode("login");
+    setAuthEmail("");
+    setAuthPassword("");
+    setAuthUsername("");
+    setAuthError("");
+    setAuthNotice("");
+    setAuthPrompt(null);
+    setProfileOpen(false);
+    setMultiplayerOpen(false);
+    setLeaderboardOpen(false);
+    setModeMenuOpen(false);
+    setGameStarted(false);
+  };
+
+  const switchAccount = () => {
+    playClickSound();
+    setAuthSession(null);
+    setAuthUser(null);
+    setProfile(null);
+    setProfileStatus("local");
+    setProfileError("");
+    setGuestMode(false);
+    localStorage.removeItem("ballKnowledgeGuestMode");
+    setUsername("");
+    setNameInput("");
+    setAuthMode("login");
+    setAuthEmail("");
+    setAuthPassword("");
+    setAuthUsername("");
+    setAuthError("");
+    setAuthNotice("");
+    setAuthPrompt(null);
+    setProfileOpen(false);
+    setMultiplayerOpen(false);
+    setLeaderboardOpen(false);
+    setModeMenuOpen(false);
+    setGameStarted(false);
+  };
+
   const toggleSound = () => {
     const nextValue = !soundOn;
 
@@ -1828,6 +2192,8 @@ const isHomeScreen =
       playerId,
       username: nextUsername,
       avatarEmoji,
+      favoriteCountry,
+      favoriteFlag,
       highScore,
       coins,
       dailyStreak,
@@ -1859,7 +2225,9 @@ const isHomeScreen =
   };
 
   const updateOnlineProfile = async (updates, successStatus = "ready") => {
-    if (!isSupabaseConfigured || !supabase || !username) return null;
+    if (!isSupabaseConfigured || !supabase || !username) {
+      return null;
+    }
 
     const baseProfile = profile || (await ensureOnlineProfile(username));
 
@@ -1914,10 +2282,16 @@ const isHomeScreen =
       avatar_style: nextAvatar.style,
       avatar_color: nextAvatar.color,
       avatar_bg: nextAvatar.bg,
+      favorite_country: nextAvatar.country,
+      favorite_flag: nextAvatar.flag,
     };
 
     setAvatarEmoji(nextAvatar.icon);
+    setFavoriteCountry(nextAvatar.country);
+    setFavoriteFlag(nextAvatar.flag);
     localStorage.setItem("ballKnowledgeAvatarEmoji", nextAvatar.icon);
+    localStorage.setItem("ballKnowledgeFavoriteCountry", nextAvatar.country);
+    localStorage.setItem("ballKnowledgeFavoriteFlag", nextAvatar.flag);
     setProfile((currentProfile) => ({
       ...(currentProfile || {}),
       ...updates,
@@ -1925,7 +2299,7 @@ const isHomeScreen =
 
     const updatedProfile = await updateOnlineProfile(updates);
 
-    if (!updatedProfile && isSupabaseConfigured && supabase) {
+    if (!updatedProfile && !isGuest && isSupabaseConfigured && supabase) {
       setAvatarNotice("Avatar saved locally. Run the avatar SQL for online sync.");
       return;
     }
@@ -1944,6 +2318,10 @@ const isHomeScreen =
 
     setLeaderboardLoading(true);
     setLeaderboardError("");
+
+    if (username && username !== "Loading profile...") {
+      await ensureOnlineProfile(username);
+    }
 
     const { data, error } = await supabase
       .from("profiles")
@@ -2017,6 +2395,8 @@ const isHomeScreen =
         avatar_style: profileAvatar.style,
         avatar_color: profileAvatar.color,
         avatar_bg: profileAvatar.bg,
+        favorite_country: profile?.favorite_country || favoriteCountry,
+        favorite_flag: profile?.favorite_flag || favoriteFlag,
       };
     }
 
@@ -2030,6 +2410,8 @@ const isHomeScreen =
         avatar_style: "classic",
         avatar_color: "green",
         avatar_bg: "dark",
+        favorite_country: "Argentina",
+        favorite_flag: "🇦🇷",
       }
     );
   };
@@ -2118,7 +2500,7 @@ const isHomeScreen =
   };
 
   const syncProgressionToProfile = async (nextProgression = {}) => {
-    if (!isSupabaseConfigured || !supabase || !playerId) return;
+    if (!isSupabaseConfigured || !supabase || !playerId || !username) return;
 
     const updates = {
       xp_total: nextProgression.xpTotal ?? xpTotal,
@@ -2298,13 +2680,16 @@ const isHomeScreen =
           supabase,
           playerId,
           {
-            username: finalName,
+        username: finalName,
+            username_normalized: normalizeUsername(finalName),
             display_name: finalName,
             avatar_emoji: profileAvatar.icon || avatarEmoji,
             avatar_icon: profileAvatar.icon || avatarEmoji,
             avatar_style: profileAvatar.style,
             avatar_color: profileAvatar.color,
             avatar_bg: profileAvatar.bg,
+            favorite_country: profile?.favorite_country || favoriteCountry,
+            favorite_flag: profile?.favorite_flag || favoriteFlag,
             best_score: highScore,
             coins,
             daily_streak: dailyStreak,
@@ -2328,6 +2713,8 @@ const isHomeScreen =
           avatar_style: profileAvatar.style,
           avatar_color: profileAvatar.color,
           avatar_bg: profileAvatar.bg,
+          favorite_country: profile?.favorite_country || favoriteCountry,
+          favorite_flag: profile?.favorite_flag || favoriteFlag,
         }));
         setProfileStatus("ready");
         setProfileError("");
@@ -5857,91 +6244,121 @@ const startConnectionsGame = (difficulty = null) => {
               </button>
             </div>
 
-            <div className="avatar-builder-preview">
-              <PlayerAvatar
-                profile={{
-                  avatar_icon: avatarBuilderPreview.icon,
-                  avatar_style: avatarBuilderPreview.style,
-                  avatar_color: avatarBuilderPreview.color,
-                  avatar_bg: avatarBuilderPreview.bg,
-                }}
-                size="large"
-              />
-              <div>
-                <strong>{displayName || "Player"}</strong>
-                <span>
-                  {avatarBuilderPreview.style} • {avatarBuilderPreview.color}
-                </span>
+            <div className="avatar-builder-scroll">
+              <div className="avatar-builder-preview">
+                <PlayerAvatar
+                  profile={{
+                    avatar_icon: avatarBuilderPreview.icon,
+                    avatar_style: avatarBuilderPreview.style,
+                    avatar_color: avatarBuilderPreview.color,
+                    avatar_bg: avatarBuilderPreview.bg,
+                    favorite_country: avatarBuilderPreview.country,
+                    favorite_flag: avatarBuilderPreview.flag,
+                  }}
+                  size="large"
+                />
+                <div>
+                  <strong>{displayName || "Player"}</strong>
+                  <span>
+                    {avatarBuilderPreview.flag} {avatarBuilderPreview.country} •{" "}
+                    {avatarBuilderPreview.style} • {avatarBuilderPreview.color}
+                  </span>
+                </div>
               </div>
-            </div>
 
-            <div className="avatar-builder-section">
-              <strong>Icon</strong>
-              <div className="avatar-picker-grid">
-                {AVATAR_ICON_OPTIONS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    className={emoji === avatarBuilderPreview.icon ? "selected" : ""}
-                    onClick={() => updateAvatarDraft({ icon: emoji })}
-                  >
-                    {emoji}
-                  </button>
-                ))}
+              <div className="avatar-builder-section">
+                <strong>Icon</strong>
+                <div className="avatar-picker-grid">
+                  {AVATAR_ICON_OPTIONS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      className={emoji === avatarBuilderPreview.icon ? "selected" : ""}
+                      onClick={() => updateAvatarDraft({ icon: emoji })}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="avatar-builder-section">
-              <strong>Color</strong>
-              <div className="avatar-token-grid color-grid">
-                {AVATAR_COLOR_OPTIONS.map((color) => (
-                  <button
-                    key={color.value}
-                    className={`avatar-token avatar-color-${color.value} ${
-                      color.value === avatarBuilderPreview.color ? "selected" : ""
-                    }`}
-                    onClick={() => updateAvatarDraft({ color: color.value })}
-                  >
-                    {color.label}
-                  </button>
-                ))}
+              <div className="avatar-builder-section">
+                <strong>Favorite Nation</strong>
+                <div className="avatar-flag-grid">
+                  {FAVORITE_NATION_OPTIONS.map((nation) => (
+                    <button
+                      key={nation.country}
+                      className={`avatar-flag-option ${
+                        nation.country === avatarBuilderPreview.country ? "selected" : ""
+                      }`}
+                      onClick={() =>
+                        updateAvatarDraft({
+                          country: nation.country,
+                          flag: nation.flag,
+                          favorite_country: nation.country,
+                          favorite_flag: nation.flag,
+                        })
+                      }
+                    >
+                      <span>{nation.flag}</span>
+                      <small>{nation.country}</small>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="avatar-builder-section">
-              <strong>Background</strong>
-              <div className="avatar-token-grid">
-                {AVATAR_BG_OPTIONS.map((bg) => (
-                  <button
-                    key={bg.value}
-                    className={`avatar-token ${
-                      bg.value === avatarBuilderPreview.bg ? "selected" : ""
-                    }`}
-                    onClick={() => updateAvatarDraft({ bg: bg.value })}
-                  >
-                    {bg.label}
-                  </button>
-                ))}
+              <div className="avatar-builder-section">
+                <strong>Color</strong>
+                <div className="avatar-token-grid color-grid">
+                  {AVATAR_COLOR_OPTIONS.map((color) => (
+                    <button
+                      key={color.value}
+                      className={`avatar-token avatar-color-${color.value} ${
+                        color.value === avatarBuilderPreview.color ? "selected" : ""
+                      }`}
+                      onClick={() => updateAvatarDraft({ color: color.value })}
+                    >
+                      {color.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="avatar-builder-section">
-              <strong>Style</strong>
-              <div className="avatar-token-grid">
-                {AVATAR_STYLE_OPTIONS.map((style) => (
-                  <button
-                    key={style.value}
-                    className={`avatar-token ${
-                      style.value === avatarBuilderPreview.style ? "selected" : ""
-                    }`}
-                    onClick={() => updateAvatarDraft({ style: style.value })}
-                  >
-                    {style.label}
-                  </button>
-                ))}
+              <div className="avatar-builder-section">
+                <strong>Background</strong>
+                <div className="avatar-token-grid">
+                  {AVATAR_BG_OPTIONS.map((bg) => (
+                    <button
+                      key={bg.value}
+                      className={`avatar-token ${
+                        bg.value === avatarBuilderPreview.bg ? "selected" : ""
+                      }`}
+                      onClick={() => updateAvatarDraft({ bg: bg.value })}
+                    >
+                      {bg.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {avatarNotice && <div className="avatar-builder-notice">{avatarNotice}</div>}
+              <div className="avatar-builder-section">
+                <strong>Style</strong>
+                <div className="avatar-token-grid">
+                  {AVATAR_STYLE_OPTIONS.map((style) => (
+                    <button
+                      key={style.value}
+                      className={`avatar-token ${
+                        style.value === avatarBuilderPreview.style ? "selected" : ""
+                      }`}
+                      onClick={() => updateAvatarDraft({ style: style.value })}
+                    >
+                      {style.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {avatarNotice && <div className="avatar-builder-notice">{avatarNotice}</div>}
+            </div>
 
             <div className="avatar-builder-actions">
               <button
@@ -5969,10 +6386,52 @@ const startConnectionsGame = (difficulty = null) => {
   );
 
   useEffect(() => {
-    if (!username) return;
+    if (!isSupabaseConfigured || !supabase?.auth) {
+      setAuthLoading(false);
+      return;
+    }
+
+    let mounted = true;
+
+    getCurrentSession(supabase).then(async ({ session, user }) => {
+      if (!mounted) return;
+
+      setAuthSession(session);
+      setAuthUser(user);
+
+      if (user) {
+        prepareAuthenticatedIdentity(user);
+        await ensureProfileForAuthUser(user);
+      }
+
+      if (mounted) setAuthLoading(false);
+    });
+
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user || null;
+
+      setAuthSession(session || null);
+      setAuthUser(user);
+
+      if (user) {
+        prepareAuthenticatedIdentity(user);
+        window.setTimeout(() => {
+          ensureProfileForAuthUser(user);
+        }, 0);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      data?.subscription?.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!username || username === "Loading profile..." || (!authUser && !guestMode)) return;
 
     ensureOnlineProfile(username);
-  }, [username, playerId]);
+  }, [username, playerId, authUser, guestMode]);
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase || socialProfileIds.length === 0) {
@@ -6019,7 +6478,14 @@ const startConnectionsGame = (difficulty = null) => {
   }, [socialProfileIds, profileLookup, playerId]);
 
   useEffect(() => {
-    if (!username || profileStatus !== "ready" || !isSupabaseConfigured || !supabase) {
+    if (
+      !username ||
+      username === "Loading profile..." ||
+      (!authUser && !guestMode) ||
+      profileStatus !== "ready" ||
+      !isSupabaseConfigured ||
+      !supabase
+    ) {
       return;
     }
 
@@ -6048,13 +6514,22 @@ const startConnectionsGame = (difficulty = null) => {
     }, 700);
 
     return () => window.clearTimeout(syncTimer);
-  }, [username, profileStatus, playerId, highScore, coins, dailyStreak]);
+  }, [username, profileStatus, playerId, highScore, coins, dailyStreak, authUser, guestMode]);
 
   useEffect(() => {
-    if (!profileOpen || !username || !isSupabaseConfigured || !supabase) return;
+    if (
+      !profileOpen ||
+      !username ||
+      username === "Loading profile..." ||
+      (!authUser && !guestMode) ||
+      !isSupabaseConfigured ||
+      !supabase
+    ) {
+      return;
+    }
 
     fetchActiveGames({ silent: true });
-  }, [profileOpen, username, playerId]);
+  }, [profileOpen, username, playerId, authUser, guestMode]);
 
   useEffect(() => {
     if (!leaderboardOpen) return;
@@ -6104,6 +6579,151 @@ const startConnectionsGame = (difficulty = null) => {
       restart();
     }
   };
+
+  const authCard = (
+    <motion.div
+      className="auth-card"
+      initial={{ opacity: 0, scale: 0.9, y: 24 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.94, y: 16 }}
+      transition={{ type: "spring", stiffness: 160, damping: 16 }}
+    >
+      <div className="auth-orb">⚽</div>
+      <div className="auth-kicker">Ball Knowledge Club</div>
+      <h1>Create your club identity</h1>
+      <p>
+        Lock your username, save progress, and compete without impersonation.
+      </p>
+
+      <div className="auth-tabs">
+        <button
+          type="button"
+          className={authMode === "signup" ? "active" : ""}
+          onClick={() => {
+            setAuthMode("signup");
+            resetAuthFormFeedback();
+          }}
+        >
+          Sign Up
+        </button>
+        <button
+          type="button"
+          className={authMode === "login" ? "active" : ""}
+          onClick={() => {
+            setAuthMode("login");
+            resetAuthFormFeedback();
+          }}
+        >
+          Login
+        </button>
+      </div>
+
+      <form className="auth-form" onSubmit={submitAuthForm}>
+        {authMode === "signup" && (
+          <label>
+            Username
+            <input
+              value={authUsername}
+              onChange={(event) => setAuthUsername(event.target.value)}
+              placeholder="fabian"
+              autoComplete="username"
+              maxLength={18}
+            />
+          </label>
+        )}
+
+        <label>
+          Email
+          <input
+            value={authEmail}
+            onChange={(event) => setAuthEmail(event.target.value)}
+            placeholder="you@example.com"
+            type="email"
+            autoComplete="email"
+          />
+        </label>
+
+        <label>
+          Password
+          <input
+            value={authPassword}
+            onChange={(event) => setAuthPassword(event.target.value)}
+            placeholder="••••••••"
+            type="password"
+            autoComplete={authMode === "signup" ? "new-password" : "current-password"}
+            minLength={6}
+          />
+        </label>
+
+        {authError && <div className="auth-message error">{authError}</div>}
+        {authNotice && <div className="auth-message notice">{authNotice}</div>}
+
+        <button className="auth-submit" type="submit" disabled={authSubmitting}>
+          {authSubmitting
+            ? "Working..."
+            : authMode === "signup"
+            ? "Create Account"
+            : "Login"}
+        </button>
+      </form>
+
+      <button className="auth-guest-button" type="button" onClick={continueAsGuest}>
+        Continue as Guest
+      </button>
+    </motion.div>
+  );
+
+  const authPromptModal = (
+    <AnimatePresence>
+      {authPrompt && (
+        <motion.div
+          className="auth-prompt-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <button
+            className="auth-prompt-close"
+            type="button"
+            onClick={() => setAuthPrompt(null)}
+            aria-label="Close auth prompt"
+          >
+            <X size={18} />
+          </button>
+          <div className="auth-prompt-copy">
+            <strong>{authPrompt}</strong>
+          </div>
+          {authCard}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
+  if (authLoading) {
+    return (
+      <div
+        className="fullscreen-bg auth-screen"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.06), rgba(0,0,0,0.52)), url(${stadiumBg})`,
+        }}
+      >
+        <div className="auth-loading-card">Loading club identity...</div>
+      </div>
+    );
+  }
+
+  if (!authUser && !guestMode) {
+    return (
+      <div
+        className="fullscreen-bg auth-screen"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.06), rgba(0,0,0,0.52)), url(${stadiumBg})`,
+        }}
+      >
+        {authCard}
+      </div>
+    );
+  }
 
   if (!username) {
     return (
@@ -6856,6 +7476,7 @@ const startConnectionsGame = (difficulty = null) => {
         {dailyRewardMeterModal}
         {levelProgressModal}
         {avatarPickerModal}
+        {authPromptModal}
         {xpToastOverlay}
         {objectiveProgressModal}
         <AnimatePresence>
@@ -7139,17 +7760,24 @@ const startConnectionsGame = (difficulty = null) => {
 
                 <div className="profile-name-wrap">
                   <div className="profile-title">Your Profile</div>
-                  <div className="profile-name-pill">👤 {displayName}</div>
+                  <div className="profile-name-pill">
+                    <span>{profileAvatar.flag}</span> {displayName}
+                  </div>
                   <button className="profile-edit-avatar-button" onClick={openAvatarBuilder}>
                     Edit Avatar
                   </button>
                   <div className={`profile-sync-pill ${profileStatus}`}>
-                    {profileStatus === "ready"
+                    {isGuest
+                      ? "Guest profile"
+                      : profileStatus === "ready"
                       ? "Online profile saved"
                       : profileStatus === "syncing"
                       ? "Syncing profile..."
                       : profileError || "Local profile"}
                   </div>
+                  {!isGuest && authUser?.email && (
+                    <div className="profile-account-email">{authUser.email}</div>
+                  )}
                 </div>
               </div>
 
@@ -7251,12 +7879,26 @@ const startConnectionsGame = (difficulty = null) => {
               </button>
 
               <div className="profile-actions">
-                <button
-                  className="profile-change-name-button"
-                  onClick={changeUsername}
-                >
-                  CHANGE NAME
-                </button>
+                {isGuest ? (
+                  <>
+                    <button
+                      className="profile-change-name-button"
+                      onClick={changeUsername}
+                    >
+                      CHANGE GUEST NAME
+                    </button>
+                    <button
+                      className="profile-auth-button"
+                      onClick={switchAccount}
+                    >
+                      SWITCH ACCOUNT
+                    </button>
+                  </>
+                ) : (
+                  <button className="profile-logout-button" onClick={logout}>
+                    LOG OUT
+                  </button>
+                )}
               </div>
             </motion.div>
           </div>
@@ -8229,6 +8871,31 @@ const startConnectionsGame = (difficulty = null) => {
                 <div className="multiplayer-room-card play-now-waiting-card">
                   <div className="room-status">Waiting for random opponent</div>
                   <p>Your score is saved. We will match you with a random player.</p>
+                  <div className="multiplayer-player-list">
+                    <span>
+                      <PlayerAvatar
+                        profile={getMatchPlayerProfile(
+                          activeMatch,
+                          multiplayerPlayerSlot || "player1"
+                        )}
+                        size="small"
+                      />
+                      {username}
+                    </span>
+                    <span className="waiting-opponent-profile">
+                      <PlayerAvatar
+                        profile={{
+                          avatar_icon: "⏳",
+                          avatar_style: "mystery",
+                          avatar_color: "purple",
+                          avatar_bg: "night",
+                        }}
+                        size="small"
+                        hideFlag
+                      />
+                      Waiting opponent
+                    </span>
+                  </div>
                   {activeRound && (
                     <div className="multiplayer-round-result-card">
                       <strong>Your saved score</strong>
@@ -9330,31 +9997,12 @@ const startConnectionsGame = (difficulty = null) => {
   const selectedTile = selectedOrder !== -1;
 
   return (
-    <motion.button
+    <button
       key={tile.id}
       className={`connections-tile ${
         selectedTile ? "selected selected-strong" : ""
       }`}
       onClick={() => toggleConnectionTile(tile)}
-      whileTap={{ scale: 0.98 }}
-      animate={
-        selectedTile
-          ? {
-              scale: 1.035,
-              y: -3,
-              background:
-                "linear-gradient(135deg, #2563eb 0%, #7c3aed 52%, #ec4899 100%)",
-              color: "#ffffff",
-              borderColor: "rgba(255,255,255,0.98)",
-              boxShadow:
-                "0 0 0 2px rgba(96,165,250,0.65), 0 0 24px rgba(124,58,237,0.7), 0 12px 28px rgba(0,0,0,0.42)",
-            }
-          : {
-              scale: 1,
-              y: 0,
-            }
-      }
-      transition={{ duration: 0.07 }}
       style={{
         position: "relative",
         borderWidth: selectedTile ? 2 : undefined,
@@ -9393,7 +10041,7 @@ const startConnectionsGame = (difficulty = null) => {
       >
         {tile.item}
       </span>
-    </motion.button>
+    </button>
   );
 })}
               </motion.div>

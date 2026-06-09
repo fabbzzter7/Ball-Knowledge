@@ -4,6 +4,8 @@ const DEFAULT_AVATAR = {
   avatar_style: "classic",
   avatar_color: "green",
   avatar_bg: "dark",
+  favorite_country: "Argentina",
+  favorite_flag: "🇦🇷",
 };
 
 export function getAvatarConfig(profile = {}) {
@@ -16,6 +18,16 @@ export function getAvatarConfig(profile = {}) {
     style: profile.avatar_style || profile.style || DEFAULT_AVATAR.avatar_style,
     color: profile.avatar_color || profile.color || DEFAULT_AVATAR.avatar_color,
     bg: profile.avatar_bg || profile.bg || DEFAULT_AVATAR.avatar_bg,
+    country:
+      profile.favorite_country ||
+      profile.country ||
+      profile.nation ||
+      DEFAULT_AVATAR.favorite_country,
+    flag:
+      profile.favorite_flag ||
+      profile.flag ||
+      profile.nation_flag ||
+      DEFAULT_AVATAR.favorite_flag,
   };
 }
 
@@ -26,6 +38,7 @@ export default function PlayerAvatar({
   button = false,
   onClick,
   label = "Player avatar",
+  hideFlag = false,
 }) {
   const avatar = getAvatarConfig(profile);
   const Component = button ? "button" : "div";
@@ -50,6 +63,11 @@ export default function PlayerAvatar({
       <span className="player-avatar-shine" />
       <span className="player-avatar-accent" />
       <span className="player-avatar-icon">{avatar.icon}</span>
+      {!hideFlag && avatar.flag && (
+        <span className="player-avatar-flag" aria-label={avatar.country}>
+          {avatar.flag}
+        </span>
+      )}
     </Component>
   );
 }

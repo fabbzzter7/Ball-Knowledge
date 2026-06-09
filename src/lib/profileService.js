@@ -2,6 +2,8 @@ const DEFAULT_AVATAR_EMOJI = "⚽";
 const DEFAULT_AVATAR_STYLE = "classic";
 const DEFAULT_AVATAR_COLOR = "green";
 const DEFAULT_AVATAR_BG = "dark";
+const DEFAULT_FAVORITE_COUNTRY = "Argentina";
+const DEFAULT_FAVORITE_FLAG = "🇦🇷";
 
 function createLocalPlayerId() {
   if (window.crypto?.randomUUID) {
@@ -26,6 +28,8 @@ export function getDefaultProfile({
   playerId,
   username,
   avatarEmoji = DEFAULT_AVATAR_EMOJI,
+  favoriteCountry = DEFAULT_FAVORITE_COUNTRY,
+  favoriteFlag = DEFAULT_FAVORITE_FLAG,
   highScore = 0,
   coins = 0,
   dailyStreak = 0,
@@ -35,12 +39,15 @@ export function getDefaultProfile({
   return {
     id: playerId,
     username: safeUsername,
+    username_normalized: safeUsername.trim().toLowerCase(),
     display_name: safeUsername,
     avatar_emoji: avatarEmoji || DEFAULT_AVATAR_EMOJI,
     avatar_icon: avatarEmoji || DEFAULT_AVATAR_EMOJI,
     avatar_style: DEFAULT_AVATAR_STYLE,
     avatar_color: DEFAULT_AVATAR_COLOR,
     avatar_bg: DEFAULT_AVATAR_BG,
+    favorite_country: favoriteCountry || DEFAULT_FAVORITE_COUNTRY,
+    favorite_flag: favoriteFlag || DEFAULT_FAVORITE_FLAG,
     best_score: highScore,
     coins,
     daily_streak: dailyStreak,
@@ -62,6 +69,33 @@ export function getDefaultProfile({
       h2h_wins: 0,
       league_days_completed: 0,
     },
+  };
+}
+
+export function mergeLocalProgressIntoProfile(profile = {}, local = {}) {
+  const nextStats = {
+    ...(profile.progression_stats || {}),
+    ...(local.progressionStats || {}),
+  };
+
+  return {
+    best_score: Math.max(Number(profile.best_score) || 0, Number(local.highScore) || 0),
+    coins: Math.max(Number(profile.coins) || 0, Number(local.coins) || 0),
+    daily_streak: Math.max(
+      Number(profile.daily_streak) || 0,
+      Number(local.dailyStreak) || 0
+    ),
+    xp_total: Math.max(Number(profile.xp_total) || 0, Number(local.xpTotal) || 0),
+    level_id: Math.max(Number(profile.level_id) || 1, Number(local.levelId) || 1),
+    progression_stats: nextStats,
+    avatar_emoji: local.avatarEmoji || profile.avatar_emoji || "⚽",
+    avatar_icon: local.avatarEmoji || profile.avatar_icon || "⚽",
+    avatar_style: profile.avatar_style || "classic",
+    avatar_color: profile.avatar_color || "green",
+    avatar_bg: profile.avatar_bg || "dark",
+    favorite_country:
+      local.favoriteCountry || profile.favorite_country || DEFAULT_FAVORITE_COUNTRY,
+    favorite_flag: local.favoriteFlag || profile.favorite_flag || DEFAULT_FAVORITE_FLAG,
   };
 }
 
@@ -93,10 +127,13 @@ export async function createProfile(supabase, profile) {
     avatar_style,
     avatar_color,
     avatar_bg,
+    favorite_country,
+    favorite_flag,
     xp_total,
     level_id,
     level_up_claimed_ids,
     progression_stats,
+    username_normalized,
     ...legacyProfile
   } = profile;
 
@@ -129,10 +166,13 @@ export async function updateProfile(supabase, playerId, updates) {
     avatar_style,
     avatar_color,
     avatar_bg,
+    favorite_country,
+    favorite_flag,
     xp_total,
     level_id,
     level_up_claimed_ids,
     progression_stats,
+    username_normalized,
     ...legacyUpdates
   } = updates;
 
@@ -173,10 +213,13 @@ function isMissingAvatarColumnError(error) {
     message.includes("avatar_style") ||
     message.includes("avatar_color") ||
     message.includes("avatar_bg") ||
+    message.includes("favorite_country") ||
+    message.includes("favorite_flag") ||
     message.includes("xp_total") ||
     message.includes("level_id") ||
     message.includes("level_up_claimed_ids") ||
     message.includes("progression_stats") ||
+    message.includes("username_normalized") ||
     message.includes("schema cache")
   );
 }
