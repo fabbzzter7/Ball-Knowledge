@@ -23,7 +23,7 @@ import {
   syncLocalStatsToProfile,
   updateProfile,
 } from "./lib/profileService";
-import { fetchFindPlayerPool } from "./lib/playerService";
+import { fetchFindPlayerPool, searchPlayers } from "./lib/playerService";
 import { isPlayerAnswerMatch } from "./lib/playerAnswer";
 import {
   findMatchingAnswer,
@@ -277,6 +277,9 @@ const DAILY_STREAK_REWARDS = [
   { dayInRoad: 6, reward: 45 },
   { dayInRoad: 7, reward: 100 },
 ];
+const DAILY_STREAK_RESET_HOURS = 30;
+const DAILY_STREAK_RESET_MS = DAILY_STREAK_RESET_HOURS * 60 * 60 * 1000;
+const DAILY_STREAK_ACTIVITY_KEY = "footballQuizLastDailyActivityAt";
 
 function shuffle(array) {
   const newArray = [...array];
@@ -508,6 +511,12 @@ function getNextStreakRewardInfo(streak, todayCompleted = false) {
     day: nextDay,
     reward: getStreakReward(nextDay),
   };
+}
+
+function isDailyStreakExpired(lastActivityAt, now = Date.now()) {
+  const timestamp = Number(lastActivityAt);
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return false;
+  return now - timestamp > DAILY_STREAK_RESET_MS;
 }
 
 function getNextStreakTarget(streak) {
@@ -1025,6 +1034,40 @@ export default function FootballQuizMVP() {
   const [questions, setQuestions] = useState(() =>
     buildGameQuestions("general")
   );
+
+  useEffect(() => {
+    if (!import.meta.env?.DEV) return undefined;
+
+    let cancelled = false;
+
+    async function checkCareerSearchCoverage() {
+      const missing = [];
+      const uniqueAnswers = [...new Set(CAREER_QUESTIONS.map((question) => question.answer))];
+
+      for (const answer of uniqueAnswers) {
+        const { players } = await searchPlayers(answer, 8);
+        const found = players.some((player) =>
+          isPlayerAnswerCorrect({
+            selectedPlayer: player,
+            correctAnswer: answer,
+          })
+        );
+
+        if (!found) missing.push(answer);
+      }
+
+      if (!cancelled && missing.length) {
+        console.warn("Career Path answers missing from player search index", missing);
+      }
+    }
+
+    checkCareerSearchCoverage();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const [questionIndex, setQuestionIndex] = useState(0);
 
   const [selected, setSelected] = useState(null);
@@ -1104,6 +1147,9 @@ export default function FootballQuizMVP() {
 
   const [lastDailyPlayedDate, setLastDailyPlayedDate] = useState(() => {
     return localStorage.getItem("footballQuizLastDailyPlayedDate") || "";
+  });
+  const [lastDailyActivityAt, setLastDailyActivityAt] = useState(() => {
+    return Number(localStorage.getItem(DAILY_STREAK_ACTIVITY_KEY)) || 0;
   });
 
   const [streakRewardEarned, setStreakRewardEarned] = useState(0);
@@ -1709,6 +1755,14 @@ const isHomeScreen =
   }, [postGameStep, gameStarted, gameMode]);
 
   useEffect(() => {
+    if (!gameStarted) return;
+    if (!["general", "world-cup", "career"].includes(gameMode)) return;
+    if (current) return;
+
+    exitToHomeSafely("invalid-state");
+  }, [gameStarted, gameMode, current]);
+
+  useEffect(() => {
     if (
       !finished ||
       !gameStarted ||
@@ -1967,9 +2021,20 @@ const isHomeScreen =
     );
     setHighScore((score) => Math.max(score, Number(onlineProfile.best_score) || 0));
     setCoins((value) => Math.max(value, Number(onlineProfile.coins) || 0));
-    setDailyStreak((value) =>
-      Math.max(value, Number(onlineProfile.daily_streak) || 0)
+    const onlineStreak = Number(onlineProfile.daily_streak) || 0;
+    const onlineActivityAt = Number(
+      onlineProfile.progression_stats?.lastDailyActivityAt || 0
     );
+    const storedActivityAt =
+      onlineActivityAt || Number(localStorage.getItem(DAILY_STREAK_ACTIVITY_KEY)) || 0;
+    const expired = isDailyStreakExpired(storedActivityAt);
+    const hydratedStreak = expired ? 0 : onlineStreak;
+
+    setDailyStreak((value) => (expired ? 0 : Math.max(value, hydratedStreak)));
+    if (storedActivityAt) {
+      setLastDailyActivityAt(storedActivityAt);
+      localStorage.setItem(DAILY_STREAK_ACTIVITY_KEY, String(storedActivityAt));
+    }
     hydrateProgressionFromProfile(onlineProfile);
     setProfileStatus("ready");
     setProfileError("");
@@ -2918,24 +2983,57 @@ const isHomeScreen =
   const awardDailyStreakBonus = () => {
     const today = getDailyDateKey();
     const yesterday = getYesterdayDateKey();
-    const previousStreak = dailyStreak;
+    const now = Date.now();
+    const expired = isDailyStreakExpired(lastDailyActivityAt, now);
+    const baseStreak = expired ? 0 : dailyStreak;
+    const baseLastDailyPlayedDate = expired ? "" : lastDailyPlayedDate;
+    const previousStreak = baseStreak;
 
     let newStreak = 1;
 
-    if (lastDailyPlayedDate === yesterday) {
-      newStreak = dailyStreak + 1;
-    } else if (lastDailyPlayedDate === today) {
-      newStreak = dailyStreak;
+    if (baseLastDailyPlayedDate === yesterday) {
+      newStreak = baseStreak + 1;
+    } else if (baseLastDailyPlayedDate === today) {
+      newStreak = baseStreak;
     }
 
     const reward = getStreakReward(newStreak);
 
     setDailyStreak(newStreak);
     setLastDailyPlayedDate(today);
+    setLastDailyActivityAt(now);
     setStreakRewardEarned(reward);
 
     localStorage.setItem("footballQuizDailyStreak", String(newStreak));
     localStorage.setItem("footballQuizLastDailyPlayedDate", today);
+    localStorage.setItem(DAILY_STREAK_ACTIVITY_KEY, String(now));
+
+    if (effectiveAuthUser && isSupabaseConfigured && supabase) {
+      const nextProgressionStats = {
+        ...(profile?.progression_stats || {}),
+        ...(progressionStats || {}),
+        lastDailyActivityAt: now,
+        lastDailyPlayedDate: today,
+      };
+
+      updateProfile(supabase, effectiveAuthUser.id, {
+        daily_streak: newStreak,
+        progression_stats: nextProgressionStats,
+      }).then(({ profile: updatedProfile, error }) => {
+        if (error) {
+          console.warn("Could not save daily streak timestamp", error);
+          return;
+        }
+
+        if (updatedProfile) {
+          setProfile((currentProfile) => ({
+            ...(currentProfile || {}),
+            daily_streak: updatedProfile.daily_streak,
+            progression_stats: updatedProfile.progression_stats,
+          }));
+        }
+      });
+    }
 
     if (reward > 0) {
       const currentCoins =
@@ -5705,6 +5803,9 @@ const startConnectionsGame = (difficulty = null) => {
     setTimeLeft(HARD_TIME_LIMIT);
     setFinished(false);
     setRevivesUsed(0);
+    setPostGameStep("summary");
+    setObjectiveProgressUpdate(null);
+    setLevelUpPopup(null);
 
     setRewardPopup(null);
     setWrongPopup(null);
@@ -5725,6 +5826,43 @@ const startConnectionsGame = (difficulty = null) => {
     setWhoAmIFeedback(null);
     setWhoAmIShake(0);
     setWhoAmIGameOver(false);
+  };
+
+  const exitToHomeSafely = (reason = "manual") => {
+    setGameStarted(false);
+    setModeMenuOpen(false);
+    setProfileOpen(false);
+    setLeaderboardOpen(false);
+    setMultiplayerOpen(false);
+    setConnectionsDifficultyPickerOpen(false);
+    setCoinsMenuOpen(false);
+    setGameMode("general");
+    setFinished(false);
+    setPostGameStep("summary");
+    setObjectiveProgressUpdate(null);
+    setRewardPopup(null);
+    setWrongPopup(null);
+    setLevelUpPopup(null);
+    setSelected(null);
+    setTextAnswer("");
+    setCareerSelectedPlayer(null);
+    setQuestionIndex(0);
+    setScore(0);
+    setLives(3);
+    setStreak(0);
+    setTimeLeft(HARD_TIME_LIMIT);
+    setRevivesUsed(0);
+    setIsMockMultiplayer(false);
+    setMockOpponentScore(null);
+
+    if (reason === "invalid-state") {
+      console.error("Recovered invalid game state by returning home", {
+        gameStarted,
+        gameMode,
+        finished,
+        postGameStep,
+      });
+    }
   };
 
   const nextQuestion = () => {
@@ -6895,6 +7033,28 @@ const startConnectionsGame = (difficulty = null) => {
   );
 
   useEffect(() => {
+    if (!lastDailyActivityAt || !isDailyStreakExpired(lastDailyActivityAt)) return;
+
+    setDailyStreak(0);
+    setLastDailyPlayedDate("");
+    localStorage.setItem("footballQuizDailyStreak", "0");
+    localStorage.removeItem("footballQuizLastDailyPlayedDate");
+    if (effectiveAuthUser && isSupabaseConfigured && supabase) {
+      updateProfile(supabase, effectiveAuthUser.id, {
+        daily_streak: 0,
+        progression_stats: {
+          ...(profile?.progression_stats || {}),
+          ...(progressionStats || {}),
+          lastDailyActivityAt,
+          streakResetAt: Date.now(),
+        },
+      }).then(({ error }) => {
+        if (error) console.warn("Could not reset expired daily streak online", error);
+      });
+    }
+  }, [lastDailyActivityAt, effectiveAuthUserId]);
+
+  useEffect(() => {
     if (!isSupabaseConfigured || !supabase?.auth) {
       setAuthLoading(false);
       return;
@@ -7090,33 +7250,24 @@ const startConnectionsGame = (difficulty = null) => {
       postGameStep === "summary"
     ) {
       playClickSound();
+      setRewardPopup(null);
+      setWrongPopup(null);
+      setLevelUpPopup(null);
       setPostGameStep("xp");
-      setGameStarted(false);
-      setFinished(false);
-      setProfileOpen(false);
-      setLeaderboardOpen(false);
-      setMultiplayerOpen(false);
-      setModeMenuOpen(false);
+    } else if (
+      ["general", "world-cup", "career"].includes(gameMode) &&
+      !isMockMultiplayer &&
+      postGameStep === "xp"
+    ) {
+      exitToHomeSafely("post-game-collect");
     } else {
-      restart();
+      exitToHomeSafely("result-button");
     }
   };
 
   const closePostGameProgress = () => {
     playClickSound();
-    setPostGameStep("done");
-    setObjectiveProgressUpdate(null);
-    setSelected(null);
-    setTextAnswer("");
-    setRewardPopup(null);
-    setWrongPopup(null);
-    setQuestionIndex(0);
-    setScore(0);
-    setLives(3);
-    setStreak(0);
-    setTimeLeft(HARD_TIME_LIMIT);
-    setRevivesUsed(0);
-    window.setTimeout(() => setPostGameStep("summary"), 0);
+    exitToHomeSafely("post-game-collect");
   };
 
   const closeConnectionsReward = ({ playAgain = false } = {}) => {
@@ -10998,7 +11149,7 @@ const startConnectionsGame = (difficulty = null) => {
                     <strong>+{generalRunXpTotal} XP</strong>
                   </div>
 
-                  {objectiveProgressUpdate && (
+                  {Array.isArray(objectiveProgressUpdate?.updates) && (
                     <div className="objective-progress-list inline">
                       {objectiveProgressUpdate.updates.map((objective) => (
                         <div
@@ -11057,7 +11208,10 @@ const startConnectionsGame = (difficulty = null) => {
                 <RotateCcw size={24} /> Play Again
               </button>
 
-              <button className="play-again-button" onClick={restart}>
+              <button
+                className="play-again-button"
+                onClick={() => exitToHomeSafely("mock-result-home")}
+              >
                 Back to Home
               </button>
             </>

@@ -292,6 +292,45 @@ export default function PlayerPicker({
     normalizedQuery.length >= 2 &&
     (results.length > 0 || showSlowLoading || hasSearched || searchError);
 
+  const dropdownContent = shouldShowDropdown ? (
+    <div
+      className="player-picker-results"
+      style={{ "--player-picker-max": maxSuggestions }}
+      onPointerDownCapture={handleDropdownPointerDown}
+      onPointerUpCapture={handleDropdownPointerUp}
+      onPointerCancelCapture={handleDropdownPointerUp}
+    >
+      {showSlowLoading && results.length === 0 && (
+        <div className="player-picker-empty">Searching...</div>
+      )}
+
+      {visibleResults.map((player) => (
+        <PlayerSuggestionRow
+          key={player.id}
+          player={player}
+          showMeta={showMeta}
+          showBirthYear={duplicateVisibleNames.get(normalizePlayerSearch(player.name)) > 1}
+          loading={loading}
+          onPointerDown={handleOptionPointerDown}
+          onPointerMove={handleOptionPointerMove}
+          onClick={() => handleOptionClick(player)}
+        />
+      ))}
+
+      {loading && results.length > 0 && (
+        <div className="player-picker-subtle-loading">Updating...</div>
+      )}
+
+      {!loading && searchError && results.length === 0 && (
+        <div className="player-picker-empty error">{searchError}</div>
+      )}
+
+      {!loading && !searchError && hasSearched && results.length === 0 && (
+        <div className="player-picker-empty">No players found</div>
+      )}
+    </div>
+  ) : null;
+
   return (
     <div className={`player-picker ${compact ? "compact" : ""}`}>
       {selectedPlayer ? (
@@ -339,44 +378,9 @@ export default function PlayerPicker({
             onBlur={handleInputBlur}
           />
 
-          {shouldShowDropdown && (
-            <div
-              className="player-picker-results"
-              style={{ "--player-picker-max": maxSuggestions }}
-              onPointerDownCapture={handleDropdownPointerDown}
-              onPointerUpCapture={handleDropdownPointerUp}
-              onPointerCancelCapture={handleDropdownPointerUp}
-            >
-              {showSlowLoading && results.length === 0 && (
-                <div className="player-picker-empty">Searching...</div>
-              )}
-
-              {visibleResults.map((player) => (
-                <PlayerSuggestionRow
-                  key={player.id}
-                  player={player}
-                  showMeta={showMeta}
-                  showBirthYear={duplicateVisibleNames.get(normalizePlayerSearch(player.name)) > 1}
-                  loading={loading}
-                  onPointerDown={handleOptionPointerDown}
-                  onPointerMove={handleOptionPointerMove}
-                  onClick={() => handleOptionClick(player)}
-                />
-              ))}
-
-              {loading && results.length > 0 && (
-                <div className="player-picker-subtle-loading">Updating...</div>
-              )}
-
-              {!loading && searchError && results.length === 0 && (
-                <div className="player-picker-empty error">{searchError}</div>
-              )}
-
-              {!loading && !searchError && hasSearched && results.length === 0 && (
-                <div className="player-picker-empty">No player found</div>
-              )}
-            </div>
-          )}
+          {dropdownContent && typeof document !== "undefined"
+            ? dropdownContent
+            : null}
         </>
       )}
     </div>
