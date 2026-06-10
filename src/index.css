@@ -2,6 +2,44 @@
   box-sizing: border-box;
 }
 
+/* FINAL LAUNCH: unmistakable create-league selected state */
+.league-form-card .league-option-card.selected,
+.league-form-card .league-custom-row button.selected {
+  position: relative;
+  z-index: 1;
+  border-color: rgba(57, 255, 159, 0.92) !important;
+  color: #ffffff !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(57, 255, 159, 0.42), transparent 42%),
+    radial-gradient(circle at 82% 100%, rgba(57, 216, 255, 0.28), transparent 44%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(3, 18, 18, 0.86)) !important;
+  box-shadow:
+    0 0 0 2px rgba(57, 255, 159, 0.38),
+    0 0 22px rgba(57, 255, 159, 0.34),
+    inset 0 0 18px rgba(57, 255, 159, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  transform: scale(1.055);
+}
+
+.league-form-card .league-option-card.selected::after,
+.league-form-card .league-custom-row button.selected::after {
+  content: "✓";
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  background: linear-gradient(135deg, #b7ffd7, #39ff9f);
+  color: #03120b;
+  font-size: 0.82rem;
+  font-weight: 1000;
+  box-shadow: 0 0 16px rgba(57, 255, 159, 0.52);
+}
+
 /* ATMOSPHERIC NEON REFINEMENT - final visual layer */
 :root {
   --app-bg-base: #02080b;
@@ -563,6 +601,249 @@ body,
       0 0 26px rgba(57, 255, 159, 0.12),
       inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
   }
+}
+
+/* FINAL LAUNCH: reward/progression overlays behave like real app modals */
+.reward-overlay,
+.objective-progress-overlay,
+.level-progress-overlay,
+.level-up-overlay,
+.daily-reward-view-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 10000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding:
+    max(18px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(18px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left)) !important;
+  background:
+    radial-gradient(circle at 16% 8%, rgba(57, 255, 159, 0.18), transparent 32%),
+    radial-gradient(circle at 86% 18%, rgba(168, 107, 255, 0.18), transparent 34%),
+    rgba(0, 5, 8, 0.78) !important;
+  backdrop-filter: blur(10px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(1.08) !important;
+}
+
+.reward-overlay {
+  flex-direction: column !important;
+  gap: 18px !important;
+  color: #fff !important;
+  text-align: center !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.reward-overlay::before {
+  content: "";
+  position: absolute;
+  inset: auto;
+  width: min(430px, calc(100vw - 32px));
+  height: min(430px, calc(100dvh - 48px));
+  max-height: 520px;
+  border-radius: 34px;
+  border: 1px solid rgba(255, 216, 77, 0.38) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 216, 77, 0.32), transparent 42%),
+    radial-gradient(circle at 82% 100%, rgba(57, 255, 159, 0.18), transparent 44%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(3, 18, 18, 0.9)) !important;
+  box-shadow:
+    0 28px 86px rgba(0, 0, 0, 0.62),
+    0 0 48px rgba(255, 216, 77, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  pointer-events: none;
+}
+
+.reward-title,
+.reward-coins,
+.collect-button {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.reward-title {
+  font-size: clamp(2.3rem, 12vw, 4.8rem) !important;
+  letter-spacing: -0.04em !important;
+  line-height: 0.95 !important;
+}
+
+.reward-coins {
+  margin-top: 0 !important;
+  padding: 14px 24px !important;
+  font-size: clamp(1.8rem, 8vw, 3.4rem) !important;
+  border-radius: 999px !important;
+}
+
+.post-game-progress-card {
+  width: min(460px, calc(100vw - 32px)) !important;
+}
+
+.post-game-progress-card .general-run-xp-summary {
+  width: 100%;
+}
+
+.quiz-progress-xp-label,
+.reward-summary-grid,
+.reward-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.quiz-progress-xp-label {
+  margin-top: 9px;
+  color: rgba(233, 246, 255, 0.76);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.reward-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  margin: 14px 0;
+}
+
+.reward-summary-grid > div {
+  padding: 13px 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(70, 231, 255, 0.22);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(70, 231, 255, 0.16), transparent 42%),
+    rgba(3, 14, 18, 0.64);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13);
+}
+
+.reward-summary-grid span,
+.reward-summary-grid strong {
+  display: block;
+}
+
+.reward-summary-grid span {
+  color: rgba(233, 246, 255, 0.72);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.reward-summary-grid strong {
+  margin-top: 4px;
+  color: #fff;
+  font-size: 1.55rem;
+  font-weight: 1000;
+}
+
+.reward-modal-actions {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.reward-modal-actions .level-progress-action {
+  flex: 1;
+}
+
+.reward-modal-actions .level-progress-action.secondary {
+  border-color: rgba(255, 216, 77, 0.42) !important;
+  background:
+    radial-gradient(circle at 18% -10%, rgba(255, 216, 77, 0.22), transparent 40%),
+    rgba(23, 18, 6, 0.78) !important;
+}
+
+.connections-reward-card {
+  width: min(450px, calc(100vw - 32px)) !important;
+}
+
+@media (max-width: 520px) {
+  .quiz-progress-xp-label,
+  .reward-modal-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .quiz-progress-xp-label {
+    gap: 3px;
+  }
+}
+
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .reward-overlay,
+  .objective-progress-overlay,
+  .level-progress-overlay,
+  .level-up-overlay,
+  .daily-reward-view-overlay {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+/* FINAL LAUNCH BUGFIX: avatar editor readability */
+.avatar-picker-card {
+  color: var(--app-text-primary, #f8fbff) !important;
+}
+
+.avatar-builder-section {
+  border: 1px solid rgba(70, 231, 255, 0.18) !important;
+  background:
+    radial-gradient(circle at 14% 0%, rgba(70, 231, 255, 0.12), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.026)),
+    rgba(5, 18, 24, 0.76) !important;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.11) !important;
+}
+
+.avatar-builder-section > strong,
+.avatar-picker-top strong,
+.avatar-builder-preview strong {
+  color: #ffffff !important;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+}
+
+.avatar-picker-grid button,
+.avatar-token,
+.avatar-flag-option {
+  color: #f8fbff !important;
+  border-color: rgba(70, 231, 255, 0.38) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(70, 231, 255, 0.20), transparent 40%),
+    radial-gradient(circle at 86% 100%, rgba(57, 255, 159, 0.11), transparent 42%),
+    rgba(8, 25, 32, 0.88) !important;
+  box-shadow:
+    0 0 14px rgba(70, 231, 255, 0.14),
+    0 8px 16px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+
+.avatar-picker-grid button {
+  font-size: 1.55rem !important;
+}
+
+.avatar-flag-option small,
+.avatar-token {
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.avatar-picker-grid button.selected,
+.avatar-token.selected,
+.avatar-flag-option.selected {
+  border-color: rgba(57, 255, 159, 0.96) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(57, 255, 159, 0.42), transparent 42%),
+    radial-gradient(circle at 82% 100%, rgba(57, 216, 255, 0.28), transparent 42%),
+    rgba(5, 30, 22, 0.94) !important;
+  transform: scale(1.055) !important;
+  box-shadow:
+    0 0 0 2px rgba(57, 255, 159, 0.38),
+    0 0 22px rgba(57, 255, 159, 0.38),
+    inset 0 0 18px rgba(57, 255, 159, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
 }
 
 /* RELEASE POLISH: QUIZ, DAILY, REWARDS */
@@ -17032,6 +17313,7 @@ button,
 .avatar-picker-grid button,
 .avatar-token,
 .avatar-flag-option {
+  position: relative;
   border: 1px solid rgba(70, 231, 255, 0.22) !important;
   background:
     radial-gradient(circle at 20% 0%, rgba(70,231,255,0.14), transparent 40%),
@@ -17040,6 +17322,12 @@ button,
   box-shadow:
     0 0 12px rgba(70, 231, 255, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  transform: translateZ(0);
+  transition:
+    transform 80ms ease,
+    border-color 80ms ease,
+    box-shadow 80ms ease,
+    background 80ms ease !important;
 }
 
 .avatar-picker-grid button.selected,
@@ -17048,11 +17336,96 @@ button,
   border-color: rgba(57, 255, 159, 0.68) !important;
   background:
     radial-gradient(circle at 18% 0%, rgba(57,255,159,0.32), transparent 42%),
+    radial-gradient(circle at 82% 100%, rgba(57,216,255,0.2), transparent 40%),
     rgba(4, 24, 16, 0.84) !important;
   box-shadow:
     0 0 18px rgba(57, 255, 159, 0.28),
+    0 0 0 1px rgba(255, 255, 255, 0.16),
     inset 0 0 16px rgba(57, 255, 159, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+  transform: scale(1.045);
+}
+
+.avatar-picker-grid button.selected::after,
+.avatar-token.selected::after,
+.avatar-flag-option.selected::after {
+  content: "✓";
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  color: #04120c;
+  background: linear-gradient(135deg, #9cffc9, #39ff9f);
+  font-size: 0.8rem;
+  font-weight: 1000;
+  box-shadow:
+    0 0 14px rgba(57, 255, 159, 0.48),
+    0 4px 10px rgba(0, 0, 0, 0.32);
+}
+
+.avatar-picker-grid button:active,
+.avatar-token:active,
+.avatar-flag-option:active {
+  transform: scale(0.98);
+}
+
+.league-option-card,
+.league-custom-row button {
+  position: relative;
+  transition:
+    transform 80ms ease,
+    border-color 80ms ease,
+    box-shadow 80ms ease,
+    background 80ms ease !important;
+}
+
+.league-option-card.selected,
+.league-custom-row button.selected {
+  border-color: rgba(57, 255, 159, 0.78) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(57,255,159,0.34), transparent 42%),
+    radial-gradient(circle at 82% 100%, rgba(57,216,255,0.22), transparent 42%),
+    rgba(4, 24, 16, 0.86) !important;
+  color: #f8fbff !important;
+  transform: scale(1.045);
+  box-shadow:
+    0 0 18px rgba(57, 255, 159, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.16),
+    inset 0 0 16px rgba(57, 255, 159, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+}
+
+.league-option-card.selected::after,
+.league-custom-row button.selected::after {
+  content: "✓";
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  color: #04120c;
+  background: linear-gradient(135deg, #9cffc9, #39ff9f);
+  font-size: 0.78rem;
+  font-weight: 1000;
+  box-shadow:
+    0 0 14px rgba(57, 255, 159, 0.5),
+    0 4px 10px rgba(0, 0, 0, 0.32);
+}
+
+.league-option-card:active,
+.league-custom-row button:active {
+  transform: scale(0.985);
 }
 
 .avatar-flag-grid {

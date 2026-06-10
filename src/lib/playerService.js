@@ -248,8 +248,14 @@ export async function searchPlayers(query, limit = 8) {
   if (!normalizedQuery || normalizedQuery.length < 2) {
     return { players: [], error: null };
   }
+  const localMatches = sortAndLimitPlayers(
+    STARTER_PLAYERS.map(normalizePlayer),
+    normalizedQuery,
+    limit
+  );
+
   if (!isSupabaseConfigured || !supabase) {
-    return { players: [], error: null };
+    return { players: localMatches, error: null };
   }
 
   try {
@@ -264,16 +270,21 @@ export async function searchPlayers(query, limit = 8) {
 
     if (directError) {
       console.error("Could not search players", directError);
-      return { players: [], error: directError };
+      return { players: localMatches, error: directError };
     }
 
+    const mergedMatches = mergeDuplicatePlayers([
+      ...(directMatches || []),
+      ...localMatches,
+    ]);
+
     return {
-      players: sortAndLimitPlayers(directMatches || [], normalizedQuery, limit),
+      players: sortAndLimitPlayers(mergedMatches, normalizedQuery, limit),
       error: null,
     };
   } catch (error) {
     console.error("Player search failed", error);
-    return { players: [], error };
+    return { players: localMatches, error };
   }
 }
 

@@ -4,6 +4,8 @@ const DEFAULT_AVATAR_COLOR = "green";
 const DEFAULT_AVATAR_BG = "dark";
 const DEFAULT_FAVORITE_COUNTRY = "Argentina";
 const DEFAULT_FAVORITE_FLAG = "🇦🇷";
+export const PROFILE_SELECT =
+  "id,username,display_name,avatar_emoji,best_score,coins,daily_streak,multiplayer_wins,multiplayer_losses,multiplayer_draws,multiplayer_matches,created_at,updated_at,xp_total,level_id,level_up_claimed_ids,progression_stats,username_normalized,favorite_country,favorite_flag,avatar_icon,avatar_style,avatar_color,avatar_bg";
 
 function createLocalPlayerId() {
   if (window.crypto?.randomUUID) {
@@ -88,14 +90,14 @@ export function mergeLocalProgressIntoProfile(profile = {}, local = {}) {
     xp_total: Math.max(Number(profile.xp_total) || 0, Number(local.xpTotal) || 0),
     level_id: Math.max(Number(profile.level_id) || 1, Number(local.levelId) || 1),
     progression_stats: nextStats,
-    avatar_emoji: local.avatarEmoji || profile.avatar_emoji || "⚽",
-    avatar_icon: local.avatarEmoji || profile.avatar_icon || "⚽",
+    avatar_emoji: profile.avatar_emoji || profile.avatar_icon || "⚽",
+    avatar_icon: profile.avatar_icon || profile.avatar_emoji || "⚽",
     avatar_style: profile.avatar_style || "classic",
     avatar_color: profile.avatar_color || "green",
     avatar_bg: profile.avatar_bg || "dark",
     favorite_country:
-      local.favoriteCountry || profile.favorite_country || DEFAULT_FAVORITE_COUNTRY,
-    favorite_flag: local.favoriteFlag || profile.favorite_flag || DEFAULT_FAVORITE_FLAG,
+      profile.favorite_country || local.favoriteCountry || DEFAULT_FAVORITE_COUNTRY,
+    favorite_flag: profile.favorite_flag || local.favoriteFlag || DEFAULT_FAVORITE_FLAG,
   };
 }
 
@@ -104,7 +106,7 @@ export async function fetchProfile(supabase, playerId) {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("*")
+    .select(PROFILE_SELECT)
     .eq("id", playerId)
     .maybeSingle();
 
@@ -112,69 +114,39 @@ export async function fetchProfile(supabase, playerId) {
 }
 
 export async function createProfile(supabase, profile) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .insert(profile)
-    .select()
-    .single();
+  const { error } = await supabase.from("profiles").insert(profile);
 
   if (!error || !isMissingAvatarColumnError(error)) {
-    return { profile: data || null, error };
+    if (error) return { profile: null, error };
+    return fetchProfile(supabase, profile.id);
   }
 
-  const {
-    avatar_icon,
-    avatar_style,
-    avatar_color,
-    avatar_bg,
-    favorite_country,
-    favorite_flag,
-    xp_total,
-    level_id,
-    level_up_claimed_ids,
-    progression_stats,
-    username_normalized,
-    ...legacyProfile
-  } = profile;
+  const legacyProfile = stripUnsupportedProfileColumns(profile, error);
 
-  const retry = await supabase
-    .from("profiles")
-    .insert(legacyProfile)
-    .select()
-    .single();
+  const retry = await supabase.from("profiles").insert(legacyProfile);
 
-  return { profile: retry.data || null, error: retry.error };
+  if (retry.error) return { profile: null, error: retry.error };
+  return fetchProfile(supabase, profile.id);
 }
 
 export async function updateProfile(supabase, playerId, updates) {
+  const payload = {
+    ...updates,
+    updated_at: new Date().toISOString(),
+  };
   const { data, error } = await supabase
     .from("profiles")
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString(),
-    })
+    .update(payload)
     .eq("id", playerId)
-    .select()
-    .single();
+    .select(PROFILE_SELECT)
+    .maybeSingle();
 
   if (!error || !isMissingAvatarColumnError(error)) {
-    return { profile: data || null, error };
+    if (error) return { profile: null, error };
+    return { profile: data || { id: playerId, ...updates }, error: null };
   }
 
-  const {
-    avatar_icon,
-    avatar_style,
-    avatar_color,
-    avatar_bg,
-    favorite_country,
-    favorite_flag,
-    xp_total,
-    level_id,
-    level_up_claimed_ids,
-    progression_stats,
-    username_normalized,
-    ...legacyUpdates
-  } = updates;
+  const legacyUpdates = stripUnsupportedProfileColumns(payload, error);
 
   if (Object.keys(legacyUpdates).length === 0) {
     return { profile: null, error };
@@ -182,15 +154,13 @@ export async function updateProfile(supabase, playerId, updates) {
 
   const retry = await supabase
     .from("profiles")
-    .update({
-      ...legacyUpdates,
-      updated_at: new Date().toISOString(),
-    })
+    .update(legacyUpdates)
     .eq("id", playerId)
-    .select()
-    .single();
+    .select(PROFILE_SELECT)
+    .maybeSingle();
 
-  return { profile: retry.data || null, error: retry.error };
+  if (retry.error) return { profile: null, error: retry.error };
+  return { profile: retry.data || { id: playerId, ...legacyUpdates }, error: null };
 }
 
 export async function syncLocalStatsToProfile(
@@ -222,4 +192,44 @@ function isMissingAvatarColumnError(error) {
     message.includes("username_normalized") ||
     message.includes("schema cache")
   );
+}
+
+const OPTIONAL_PROFILE_COLUMNS = [
+  "avatar_icon",
+  "avatar_style",
+  "avatar_color",
+  "avatar_bg",
+  "favorite_country",
+  "favorite_flag",
+  "xp_total",
+  "level_id",
+  "level_up_claimed_ids",
+  "progression_stats",
+  "username_normalized",
+];
+
+function getUnsupportedProfileColumns(error) {
+  const message = String(error?.message || "").toLowerCase();
+  const matchedColumns = OPTIONAL_PROFILE_COLUMNS.filter((column) =>
+    message.includes(column.toLowerCase())
+  );
+
+  if (matchedColumns.length > 0) return matchedColumns;
+
+  if (message.includes("schema cache")) {
+    return OPTIONAL_PROFILE_COLUMNS;
+  }
+
+  return [];
+}
+
+function stripUnsupportedProfileColumns(payload, error) {
+  const unsupportedColumns = getUnsupportedProfileColumns(error);
+  const nextPayload = { ...payload };
+
+  unsupportedColumns.forEach((column) => {
+    delete nextPayload[column];
+  });
+
+  return nextPayload;
 }

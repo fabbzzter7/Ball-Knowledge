@@ -19,6 +19,7 @@ import {
   getDefaultProfile,
   getOrCreatePlayerId,
   mergeLocalProgressIntoProfile,
+  PROFILE_SELECT,
   syncLocalStatsToProfile,
   updateProfile,
 } from "./lib/profileService";
@@ -995,8 +996,10 @@ export default function FootballQuizMVP() {
   });
 
   const [guestPlayerId] = useState(getOrCreatePlayerId);
-  const playerId = authUser?.id || guestPlayerId;
-  const isGuest = !authUser;
+  const effectiveAuthUser = authUser || authSession?.user || null;
+  const effectiveAuthUserId = effectiveAuthUser?.id || null;
+  const playerId = effectiveAuthUser?.id || guestPlayerId;
+  const isGuest = !effectiveAuthUser;
   const [profile, setProfile] = useState(null);
   const [profileStatus, setProfileStatus] = useState("local");
   const [profileError, setProfileError] = useState("");
@@ -1048,6 +1051,7 @@ export default function FootballQuizMVP() {
     highscore: 0,
   });
   const [objectiveProgressUpdate, setObjectiveProgressUpdate] = useState(null);
+  const [postGameStep, setPostGameStep] = useState("summary");
 
   const [coins, setCoins] = useState(() => {
     return Number(localStorage.getItem("footballQuizCoins")) || 0;
@@ -1117,6 +1121,7 @@ export default function FootballQuizMVP() {
   const [connectionsShake, setConnectionsShake] = useState(0);
   const [connectionsRewardClaimed, setConnectionsRewardClaimed] =
     useState(false);
+  const [connectionsRewardModal, setConnectionsRewardModal] = useState(null);
   const [whoAmIQuestions, setWhoAmIQuestions] = useState([]);
   const [whoAmIIndex, setWhoAmIIndex] = useState(0);
   const [whoAmIClueIndex, setWhoAmIClueIndex] = useState(0);
@@ -1178,12 +1183,16 @@ export default function FootballQuizMVP() {
     ),
   };
   const displayName = profile?.display_name || profile?.username || username;
-  const profileAvatarEmoji = profile?.avatar_emoji || avatarEmoji || "⚽";
+  const profileAvatarEmoji = profile?.avatar_icon || profile?.avatar_emoji || avatarEmoji || "⚽";
   const profileAvatar = getAvatarConfig({
-    avatar_emoji: profileAvatarEmoji,
+    ...(profile || {}),
+    avatar_icon: profile?.avatar_icon || profileAvatarEmoji,
+    avatar_emoji: profile?.avatar_emoji || profileAvatarEmoji,
+    avatar_style: profile?.avatar_style || "classic",
+    avatar_color: profile?.avatar_color || "green",
+    avatar_bg: profile?.avatar_bg || "dark",
     favorite_country: profile?.favorite_country || favoriteCountry,
     favorite_flag: profile?.favorite_flag || favoriteFlag,
-    ...profile,
   });
   const avatarBuilderPreview = getAvatarConfig(avatarDraft || profileAvatar);
   const profileStats = {
@@ -1195,6 +1204,12 @@ export default function FootballQuizMVP() {
   const xpObjective = progressionView.objectives.find(
     (objective) => objective.statKey === "xp_total"
   );
+  const xpProgressPercent = xpObjective?.required
+    ? Math.min(100, (Math.max(0, Number(xpTotal) || 0) / xpObjective.required) * 100)
+    : progressionView.objectiveProgress;
+  const xpProgressLabel = xpObjective?.required
+    ? `${Math.min(Number(xpTotal) || 0, xpObjective.required).toLocaleString()} / ${xpObjective.required.toLocaleString()} XP`
+    : `${(Number(xpTotal) || 0).toLocaleString()} XP`;
   const completedObjectiveCount = progressionView.objectives.filter(
     (objective) => objective.complete
   ).length;
@@ -1595,6 +1610,8 @@ const isHomeScreen =
     if (!username || !progressionView.canLevelUp) return;
     if (levelUpPopup) return;
     if (objectiveProgressUpdate) return;
+    if (postGameStep === "xp") return;
+    if (finished && gameMode === "general" && !isMockMultiplayer) return;
 
     const oldLevel = progressionView.currentLevel;
     const newLevel = progressionView.nextLevel;
@@ -1644,6 +1661,10 @@ const isHomeScreen =
     progressionView.nextLevel,
     levelUpPopup,
     objectiveProgressUpdate,
+    postGameStep,
+    finished,
+    gameMode,
+    isMockMultiplayer,
     claimedLevelIds,
     coins,
     xpTotal,
@@ -1672,6 +1693,20 @@ const isHomeScreen =
 
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [gameMode, gameStarted]);
+
+  useEffect(() => {
+    if (postGameStep !== "xp") return;
+    if (gameStarted) return;
+    if (["general", "world-cup", "career"].includes(gameMode)) return;
+
+    console.error("Invalid post-game progression state; recovering to home", {
+      gameMode,
+      postGameStep,
+    });
+    setPostGameStep("summary");
+    setFinished(false);
+    setGameStarted(false);
+  }, [postGameStep, gameStarted, gameMode]);
 
   useEffect(() => {
     if (
@@ -1740,6 +1775,55 @@ const isHomeScreen =
     runStartProgression,
   ]);
 
+  useEffect(() => {
+    if (
+      !finished ||
+      !gameStarted ||
+      gameMode !== "general" ||
+      isMockMultiplayer ||
+      isGuest
+    ) {
+      return;
+    }
+
+    const onlineBestScore = Number(profile?.best_score) || 0;
+    const nextBestScore = Math.max(score, highScore, onlineBestScore);
+
+    if (nextBestScore <= onlineBestScore) return;
+
+    updateOnlineProfile(
+      {
+        best_score: nextBestScore,
+        coins,
+        daily_streak: dailyStreak,
+        xp_total: xpTotal,
+        level_id: careerLevelId,
+        progression_stats: {
+          ...progressionStats,
+          best_general_score: Math.max(
+            Number(progressionStats.best_general_score) || 0,
+            nextBestScore
+          ),
+        },
+      },
+      "ready"
+    );
+  }, [
+    finished,
+    gameStarted,
+    gameMode,
+    isMockMultiplayer,
+    isGuest,
+    score,
+    highScore,
+    profile?.best_score,
+    coins,
+    dailyStreak,
+    xpTotal,
+    careerLevelId,
+    progressionStats,
+  ]);
+
   const revivePrices = [500, 1000, 5000];
   const reviveCost = revivePrices[revivesUsed] || null;
 
@@ -1773,7 +1857,7 @@ const isHomeScreen =
 
   useEffect(() => {
     const timerActive =
-      isTimedQuestion && !selected && !rewardPopup && !wrongPopup;
+      isTimedQuestion && !selected && !rewardPopup && !wrongPopup && !objectiveProgressUpdate;
 
     if (!timerActive) return;
 
@@ -1793,6 +1877,7 @@ const isHomeScreen =
     selected,
     rewardPopup,
     wrongPopup,
+    objectiveProgressUpdate,
     current?.answer,
   ]);
 
@@ -2132,6 +2217,34 @@ const isHomeScreen =
     );
   };
 
+  const getLeagueErrorMessage = (error, fallback = "Could not create league") => {
+    const message = String(error?.message || "").toLowerCase();
+    const code = String(error?.code || "");
+    const status = Number(error?.status);
+
+    if (
+      status === 401 ||
+      status === 403 ||
+      code === "42501" ||
+      message.includes("row-level security") ||
+      message.includes("permission denied") ||
+      message.includes("violates row-level security")
+    ) {
+      return effectiveAuthUser
+        ? `League save was blocked by Supabase policy: ${error?.message || "permission denied"}`
+        : "Create an account to save and manage leagues.";
+    }
+
+    if (message.includes("league challenge columns") || message.includes("latest league sql")) {
+      return "League database needs the latest SQL migration.";
+    }
+
+    if (message.includes("not found")) return "League not found";
+    if (message.includes("duplicate")) return "That league already exists";
+
+    return error?.message || fallback;
+  };
+
   const hydrateProgressionFromProfile = (onlineProfile) => {
     const hydrated = getInitialProgression({
       profile: onlineProfile,
@@ -2184,6 +2297,16 @@ const isHomeScreen =
         "ballKnowledgeAvatarEmoji",
         existingProfile.avatar_icon || existingProfile.avatar_emoji || "⚽"
       );
+      setFavoriteCountry(existingProfile.favorite_country || favoriteCountry || "Argentina");
+      setFavoriteFlag(existingProfile.favorite_flag || favoriteFlag || "🇦🇷");
+      localStorage.setItem(
+        "ballKnowledgeFavoriteCountry",
+        existingProfile.favorite_country || favoriteCountry || "Argentina"
+      );
+      localStorage.setItem(
+        "ballKnowledgeFavoriteFlag",
+        existingProfile.favorite_flag || favoriteFlag || "🇦🇷"
+      );
       setProfileStatus("ready");
       return existingProfile;
     }
@@ -2220,6 +2343,16 @@ const isHomeScreen =
       "ballKnowledgeAvatarEmoji",
       createdProfile.avatar_icon || createdProfile.avatar_emoji || "⚽"
     );
+    setFavoriteCountry(createdProfile.favorite_country || favoriteCountry || "Argentina");
+    setFavoriteFlag(createdProfile.favorite_flag || favoriteFlag || "🇦🇷");
+    localStorage.setItem(
+      "ballKnowledgeFavoriteCountry",
+      createdProfile.favorite_country || favoriteCountry || "Argentina"
+    );
+    localStorage.setItem(
+      "ballKnowledgeFavoriteFlag",
+      createdProfile.favorite_flag || favoriteFlag || "🇦🇷"
+    );
     setProfileStatus("ready");
     return createdProfile;
   };
@@ -2248,10 +2381,11 @@ const isHomeScreen =
       return null;
     }
 
-    setProfile({
+    setProfile((currentProfile) => ({
+      ...(currentProfile || {}),
       ...(updatedProfile || {}),
       ...updates,
-    });
+    }));
     setProfileStatus(successStatus);
     setProfileError("");
     return updatedProfile;
@@ -2276,6 +2410,8 @@ const isHomeScreen =
   const saveAvatarBuilder = async () => {
     playClickSound();
     const nextAvatar = getAvatarConfig(avatarDraft || profileAvatar);
+    const previousProfile = profile;
+    const previousAvatar = profileAvatar;
     const updates = {
       avatar_emoji: nextAvatar.icon,
       avatar_icon: nextAvatar.icon,
@@ -2300,7 +2436,14 @@ const isHomeScreen =
     const updatedProfile = await updateOnlineProfile(updates);
 
     if (!updatedProfile && !isGuest && isSupabaseConfigured && supabase) {
-      setAvatarNotice("Avatar saved locally. Run the avatar SQL for online sync.");
+      setProfile(previousProfile);
+      setAvatarEmoji(previousAvatar.icon);
+      setFavoriteCountry(previousAvatar.country);
+      setFavoriteFlag(previousAvatar.flag);
+      localStorage.setItem("ballKnowledgeAvatarEmoji", previousAvatar.icon);
+      localStorage.setItem("ballKnowledgeFavoriteCountry", previousAvatar.country);
+      localStorage.setItem("ballKnowledgeFavoriteFlag", previousAvatar.flag);
+      setAvatarNotice("Could not save avatar online. Try again.");
       return;
     }
 
@@ -2321,21 +2464,46 @@ const isHomeScreen =
 
     if (username && username !== "Loading profile...") {
       await ensureOnlineProfile(username);
+
+      if (Number(highScore) > 0) {
+        const savedLeaderboardProfile = await updateOnlineProfile(
+          {
+            best_score: highScore,
+            coins,
+            daily_streak: dailyStreak,
+            xp_total: xpTotal,
+            level_id: careerLevelId,
+            progression_stats: {
+              ...progressionStats,
+              best_general_score: Math.max(
+                Number(progressionStats.best_general_score) || 0,
+                Number(highScore) || 0
+              ),
+            },
+          },
+          "ready"
+        );
+
+        if (!savedLeaderboardProfile && !isGuest) {
+          console.error("Could not save leaderboard score to Supabase profile", {
+            playerId,
+            highScore,
+            hasAuthUser: Boolean(effectiveAuthUser),
+          });
+        }
+      }
     }
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("*")
+      .select(PROFILE_SELECT)
       .gt("best_score", 0)
       .order("best_score", { ascending: false })
-      .limit(10);
+      .limit(100);
     const { data: levelData, error: levelError } = await supabase
       .from("profiles")
-      .select("*")
-      .order("level_id", { ascending: false, nullsFirst: false })
-      .order("xp_total", { ascending: false, nullsFirst: false })
-      .order("best_score", { ascending: false, nullsFirst: false })
-      .limit(10);
+      .select(PROFILE_SELECT)
+      .limit(100);
 
     setLeaderboardLoading(false);
 
@@ -2348,14 +2516,18 @@ const isHomeScreen =
 
     const medals = ["🥇", "🥈", "🥉"];
     setLeaderboardRows(
-      (data || []).map((row, index) => ({
-        ...row,
-        username: row.display_name || row.username || "Player",
-        score: row.best_score || 0,
-        rank: index + 1,
-        medal: medals[index] || null,
-        isCurrentUser: row.id === playerId,
-      }))
+      (data || [])
+        .filter((row) => (Number(row.best_score) || 0) > 0)
+        .sort((a, b) => (Number(b.best_score) || 0) - (Number(a.best_score) || 0))
+        .slice(0, 10)
+        .map((row, index) => ({
+          ...row,
+          username: row.display_name || row.username || "Player",
+          score: row.best_score || 0,
+          rank: index + 1,
+          medal: medals[index] || null,
+          isCurrentUser: row.id === playerId,
+        }))
     );
 
     if (levelError) {
@@ -2363,7 +2535,16 @@ const isHomeScreen =
       setLevelLeaderboardRows([]);
     } else {
       setLevelLeaderboardRows(
-        (levelData || []).map((row, index) => {
+        (levelData || [])
+          .sort((a, b) => {
+            const levelDiff = (Number(b.level_id) || 1) - (Number(a.level_id) || 1);
+            if (levelDiff !== 0) return levelDiff;
+            const xpDiff = (Number(b.xp_total) || 0) - (Number(a.xp_total) || 0);
+            if (xpDiff !== 0) return xpDiff;
+            return (Number(b.best_score) || 0) - (Number(a.best_score) || 0);
+          })
+          .slice(0, 10)
+          .map((row, index) => {
           const levelId = Math.max(1, Number(row.level_id) || 1);
           const level = getLevelById(levelId);
 
@@ -2802,6 +2983,7 @@ const isHomeScreen =
   setConnectionsFeedback(null);
   setConnectionsShake(0);
   setConnectionsRewardClaimed(false);
+  setConnectionsRewardModal(null);
 };
 
   const openConnectionsDifficultyPicker = () => {
@@ -3149,7 +3331,7 @@ const startConnectionsGame = (difficulty = null) => {
   };
 
   const toggleConnectionTile = (tile) => {
-    if (connectionsGameComplete || connectionsGameOver) return;
+    if (connectionsRewardModal || connectionsGameComplete || connectionsGameOver) return;
 
     playClickSound();
     setConnectionsFeedback(null);
@@ -3166,7 +3348,7 @@ const startConnectionsGame = (difficulty = null) => {
   };
 
   const shuffleConnectionsTiles = () => {
-    if (connectionsGameComplete || connectionsGameOver) return;
+    if (connectionsRewardModal || connectionsGameComplete || connectionsGameOver) return;
 
     playClickSound();
     setConnectionsTiles((tiles) => shuffle(tiles));
@@ -3177,7 +3359,8 @@ const startConnectionsGame = (difficulty = null) => {
       !connectionsPuzzle ||
       connectionsSelected.length !== 4 ||
       connectionsGameComplete ||
-      connectionsGameOver
+      connectionsGameOver ||
+      connectionsRewardModal
     ) {
       return;
     }
@@ -3233,22 +3416,33 @@ const startConnectionsGame = (difficulty = null) => {
     if (connectionsRewardClaimed) return;
 
     updateProgressionStats((stats) => addStat(stats, "connections_completed", 1));
-    awardXp({
+    let xpEarned = 0;
+    const completeXpAwarded = awardXp({
       key: `connections-complete:${connectionsPuzzle?.id || "session"}`,
       amount: 100,
       label: "Connections complete",
     });
+    if (completeXpAwarded) xpEarned += 100;
     if (connectionsMistakes === 0) {
-      awardXp({
+      const perfectXpAwarded = awardXp({
         key: `connections-perfect:${connectionsPuzzle?.id || "session"}`,
         amount: 50,
         label: "Perfect Connections",
       });
+      if (perfectXpAwarded) xpEarned += 50;
     }
     awardOneTimeCoins({
       key: `connections:${connectionsPuzzle?.id || "session"}`,
       amount: 75,
       title: "Connections complete",
+    });
+    setConnectionsRewardModal({
+      title: "Puzzle Complete",
+      mode: "Connections",
+      groupsSolved: connectionsSolved.length,
+      coins: 75,
+      xp: xpEarned,
+      perfect: connectionsMistakes === 0,
     });
     setConnectionsRewardClaimed(true);
   };
@@ -3291,6 +3485,7 @@ const startConnectionsGame = (difficulty = null) => {
     setRunStartProgression(mode === "general" && !options.multiplayer ? startingProgression : null);
     setGeneralRunXpSummary({ correct: 0, streak: 0, highscore: 0 });
     setObjectiveProgressUpdate(null);
+    setPostGameStep("summary");
     setRevivesUsed(0);
     setRewardPopup(null);
     setWrongPopup(null);
@@ -3673,7 +3868,8 @@ const startConnectionsGame = (difficulty = null) => {
     if (!silent) setLeagueLoading(false);
 
     if (error || !dashboard) {
-      setMultiplayerError("Could not load league");
+      console.error("Could not load league", error);
+      setMultiplayerError(getLeagueErrorMessage(error, "Could not load league"));
       return;
     }
 
@@ -3694,8 +3890,24 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
+    const leaguePlayerId = effectiveAuthUser?.id || playerId;
+    const leagueUsername =
+      username && username !== "Loading profile..."
+        ? username
+        : profile?.display_name ||
+          profile?.username ||
+          effectiveAuthUser?.user_metadata?.username ||
+          effectiveAuthUser?.email?.split("@")[0] ||
+          "Player";
+
+    if (!leaguePlayerId || !leagueUsername) {
+      setMultiplayerError("Still loading your profile. Try again in a moment.");
+      return;
+    }
+
     setLeagueLoading(true);
     setMultiplayerError("");
+    setMultiplayerNotice("");
 
     if (
       leagueSettings.quizCount +
@@ -3709,10 +3921,12 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
+    await ensureOnlineProfile(leagueUsername);
+
     const { league, error } = await createLeague(supabase, {
       name: leagueNameInput,
-      playerId,
-      username,
+      playerId: leaguePlayerId,
+      username: leagueUsername,
       settings: {
         durationDays: leagueDurationInput,
         quizCount: leagueSettings.quizCount,
@@ -3728,13 +3942,36 @@ const startConnectionsGame = (difficulty = null) => {
     setLeagueLoading(false);
 
     if (error || !league) {
-      setMultiplayerError("Could not create league");
+      console.error("Could not create league", {
+        error,
+        playerId: leaguePlayerId,
+        isGuest,
+        hasAuthUser: Boolean(effectiveAuthUser),
+      });
+      setMultiplayerError(getLeagueErrorMessage(error, "Could not create league"));
       return;
     }
 
     setLeagueNameInput("");
     setMultiplayerNotice("League created");
-    await openLeagueDashboard(league.id);
+    setMyLeagues((currentLeagues) => [
+      {
+        league,
+        member: {
+          league_id: league.id,
+          player_id: leaguePlayerId,
+          username: leagueUsername,
+          total_points: 0,
+          days_played: 0,
+        },
+        memberCount: 1,
+        rank: 1,
+        todayPlayed: false,
+      },
+      ...currentLeagues.filter((row) => row.league?.id !== league.id),
+    ]);
+    setMultiplayerStep("league-dashboard");
+    await loadLeagueDashboard(league.id);
   };
 
   const joinExistingLeague = async () => {
@@ -3747,19 +3984,43 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
+    const leaguePlayerId = effectiveAuthUser?.id || playerId;
+    const leagueUsername =
+      username && username !== "Loading profile..."
+        ? username
+        : profile?.display_name ||
+          profile?.username ||
+          effectiveAuthUser?.user_metadata?.username ||
+          effectiveAuthUser?.email?.split("@")[0] ||
+          "Player";
+
+    if (!leaguePlayerId || !leagueUsername) {
+      setMultiplayerError("Still loading your profile. Try again in a moment.");
+      return;
+    }
+
     setLeagueLoading(true);
     setMultiplayerError("");
+    setMultiplayerNotice("");
+
+    await ensureOnlineProfile(leagueUsername);
 
     const { league, alreadyJoined, error } = await joinLeague(supabase, {
       code: leagueCodeInput,
-      playerId,
-      username,
+      playerId: leaguePlayerId,
+      username: leagueUsername,
     });
 
     setLeagueLoading(false);
 
     if (error || !league) {
-      setMultiplayerError(error?.message === "League not found" ? "League not found" : "Could not join league");
+      console.error("Could not join league", {
+        error,
+        playerId: leaguePlayerId,
+        isGuest,
+        hasAuthUser: Boolean(effectiveAuthUser),
+      });
+      setMultiplayerError(getLeagueErrorMessage(error, "Could not join league"));
       return;
     }
 
@@ -3776,16 +4037,35 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
+    const leaguePlayerId = effectiveAuthUser?.id || playerId;
+    const leagueUsername =
+      username && username !== "Loading profile..."
+        ? username
+        : profile?.display_name ||
+          profile?.username ||
+          effectiveAuthUser?.user_metadata?.username ||
+          effectiveAuthUser?.email?.split("@")[0] ||
+          "Player";
+
     setLeagueLoading(true);
     setMultiplayerError("");
+    setMultiplayerNotice("");
     setMultiplayerStep("my-leagues");
 
-    const { leagues, error } = await fetchMyLeagues(supabase, playerId);
+    await ensureOnlineProfile(leagueUsername);
+
+    const { leagues, error } = await fetchMyLeagues(supabase, leaguePlayerId);
 
     setLeagueLoading(false);
 
     if (error) {
-      setMultiplayerError("Could not load leagues");
+      console.error("Could not load leagues", {
+        error,
+        playerId: leaguePlayerId,
+        isGuest,
+        hasAuthUser: Boolean(effectiveAuthUser),
+      });
+      setMultiplayerError(getLeagueErrorMessage(error, "Could not load leagues"));
       return;
     }
 
@@ -5382,6 +5662,7 @@ const startConnectionsGame = (difficulty = null) => {
     setTimeLeft(HARD_TIME_LIMIT);
     setFinished(false);
     setRevivesUsed(0);
+    setPostGameStep("summary");
     setRewardPopup(null);
     setWrongPopup(null);
     setStreakRewardEarned(0);
@@ -5493,7 +5774,7 @@ const startConnectionsGame = (difficulty = null) => {
   };
 
   const chooseAnswer = (option) => {
-    if (selected || rewardPopup || wrongPopup) return;
+    if (selected || rewardPopup || wrongPopup || objectiveProgressUpdate) return;
 
     setSelected(option);
 
@@ -5510,6 +5791,23 @@ const startConnectionsGame = (difficulty = null) => {
       if (gameMode === "general" && !isMockMultiplayer && newScore > highScore) {
         setHighScore(newScore);
         localStorage.setItem("footballQuizHighScore", String(newScore));
+        updateOnlineProfile(
+          {
+            best_score: newScore,
+            coins,
+            daily_streak: dailyStreak,
+            xp_total: xpTotal,
+            level_id: careerLevelId,
+            progression_stats: {
+              ...progressionStats,
+              best_general_score: Math.max(
+                Number(progressionStats.best_general_score) || 0,
+                newScore
+              ),
+            },
+          },
+          "ready"
+        );
         updateProgressionStats((stats) =>
           maxStat(stats, "best_general_score", newScore)
         );
@@ -5566,6 +5864,20 @@ const startConnectionsGame = (difficulty = null) => {
               streak: summary.streak + 75,
             }));
           }
+        }
+      }
+
+      if ((gameMode === "world-cup" || gameMode === "career") && !isMockMultiplayer) {
+        if (awardXp({
+          key: `${gameMode}-correct:${Date.now()}:${questionIndex}:${newScore}`,
+          amount: 5,
+          label: "Correct answer",
+          placement: "inline",
+        })) {
+          setGeneralRunXpSummary((summary) => ({
+            ...summary,
+            correct: summary.correct + 5,
+          }));
         }
       }
 
@@ -5785,6 +6097,7 @@ const startConnectionsGame = (difficulty = null) => {
     setLives(1);
     setRevivesUsed((r) => r + 1);
     setFinished(false);
+    setPostGameStep("summary");
     setSelected(null);
   };
 
@@ -6211,6 +6524,202 @@ const startConnectionsGame = (difficulty = null) => {
     </AnimatePresence>
   );
 
+  const postGameProgressModal = (
+    <AnimatePresence>
+      {postGameStep === "xp" &&
+        !gameStarted &&
+        ["general", "world-cup", "career"].includes(gameMode) && (
+        <motion.div
+          className="level-progress-overlay post-game-progress-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className={`level-progress-card post-game-progress-card level-${playerLevel.color}`}
+            initial={{ opacity: 0, scale: 0.9, y: 28 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, y: 18 }}
+            transition={{ duration: 0.22 }}
+          >
+            <div className="objective-progress-kicker">Run Progress</div>
+            <div className="level-progress-hero">
+              <div className="level-progress-icon">{playerLevel.emoji}</div>
+              <div>
+                <div className="level-progress-label">
+                  {getModeLabel(gameMode)} • Level {playerLevel.levelNumber}
+                </div>
+                <h2>{playerLevel.name}</h2>
+                <p>+{generalRunXpTotal} XP this run</p>
+              </div>
+            </div>
+
+            <div className="level-progress-track">
+              <div
+                className="level-progress-fill"
+                style={{ width: `${xpProgressPercent}%` }}
+              />
+            </div>
+            <div className="level-progress-next">
+              <strong>{xpProgressLabel}</strong>
+              <span>
+                {playerLevel.next
+                  ? `Next: ${playerLevel.next.emoji} ${playerLevel.next.name}`
+                  : "Legend status reached"}
+              </span>
+            </div>
+
+            <div className="general-run-xp-summary post-game">
+              {score > runStartHighScore && (
+                <div className="general-run-highscore">
+                  <strong>New Highscore!</strong>
+                  <span>
+                    +{generalRunXpSummary.highscore || getGeneralHighscoreXpBonus(score)} XP
+                  </span>
+                </div>
+              )}
+
+              <div className="general-run-xp-line">
+                <span>Correct answers</span>
+                <strong>+{generalRunXpSummary.correct} XP</strong>
+              </div>
+
+              {generalRunXpSummary.streak > 0 && (
+                <div className="general-run-xp-line">
+                  <span>Combo bonuses</span>
+                  <strong>+{generalRunXpSummary.streak} XP</strong>
+                </div>
+              )}
+
+              {generalRunXpSummary.highscore > 0 && (
+                <div className="general-run-xp-line">
+                  <span>Highscore bonus</span>
+                  <strong>+{generalRunXpSummary.highscore} XP</strong>
+                </div>
+              )}
+
+              <div className="general-run-xp-total">
+                <span>Total XP</span>
+                <strong>+{generalRunXpTotal} XP</strong>
+              </div>
+            </div>
+
+            {Array.isArray(objectiveProgressUpdate?.updates) && (
+              <div className="objective-progress-list inline">
+                {objectiveProgressUpdate.updates.map((objective) => (
+                  <div
+                    className={`objective-progress-row ${
+                      objective.complete ? "complete" : ""
+                    }`}
+                    key={objective.statKey}
+                  >
+                    <div className="objective-progress-row-top">
+                      <strong>{objective.label}</strong>
+                      <span>
+                        {objective.before.toLocaleString()} →{" "}
+                        {objective.after.toLocaleString()} /{" "}
+                        {objective.required.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="objective-progress-bar">
+                      <motion.div
+                        className="objective-progress-fill"
+                        initial={{ width: `${objective.beforeProgress}%` }}
+                        animate={{ width: `${objective.afterProgress}%` }}
+                        transition={{ duration: 0.55, ease: "easeOut" }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button className="level-progress-action" onClick={closePostGameProgress}>
+              COLLECT & CONTINUE
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
+  const connectionsRewardOverlay = (
+    <AnimatePresence>
+      {connectionsRewardModal && (
+        <motion.div
+          className="level-progress-overlay connections-reward-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className={`level-progress-card connections-reward-card level-${playerLevel.color}`}
+            initial={{ opacity: 0, scale: 0.9, y: 28 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, y: 18 }}
+            transition={{ duration: 0.22 }}
+          >
+            <div className="objective-progress-kicker">Victory</div>
+            <div className="level-progress-hero">
+              <div className="level-progress-icon">🧩</div>
+              <div>
+                <div className="level-progress-label">
+                  {connectionsRewardModal.mode}
+                </div>
+                <h2>{connectionsRewardModal.title}</h2>
+                <p>
+                  {connectionsRewardModal.groupsSolved}/4 groups solved
+                  {connectionsRewardModal.perfect ? " • Perfect run" : ""}
+                </p>
+              </div>
+            </div>
+
+            <div className="reward-summary-grid">
+              <div>
+                <span>Coins</span>
+                <strong>+{connectionsRewardModal.coins}</strong>
+              </div>
+              <div>
+                <span>XP</span>
+                <strong>+{connectionsRewardModal.xp}</strong>
+              </div>
+            </div>
+
+            <div className="level-progress-track">
+              <div
+                className="level-progress-fill"
+                style={{ width: `${xpProgressPercent}%` }}
+              />
+            </div>
+            <div className="level-progress-next">
+              <strong>{xpProgressLabel}</strong>
+              <span>
+                {playerLevel.next
+                  ? `Next: ${playerLevel.next.emoji} ${playerLevel.next.name}`
+                  : "Legend status reached"}
+              </span>
+            </div>
+
+            <div className="reward-modal-actions">
+              <button
+                className="level-progress-action secondary"
+                onClick={() => closeConnectionsReward()}
+              >
+                COLLECT
+              </button>
+              <button
+                className="level-progress-action"
+                onClick={() => closeConnectionsReward({ playAgain: true })}
+              >
+                PLAY AGAIN
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
   const avatarPickerModal = (
     <AnimatePresence>
       {avatarPickerOpen && (
@@ -6428,10 +6937,10 @@ const startConnectionsGame = (difficulty = null) => {
   }, []);
 
   useEffect(() => {
-    if (!username || username === "Loading profile..." || (!authUser && !guestMode)) return;
+    if (!username || username === "Loading profile..." || (!effectiveAuthUser && !guestMode)) return;
 
     ensureOnlineProfile(username);
-  }, [username, playerId, authUser, guestMode]);
+  }, [username, playerId, effectiveAuthUserId, guestMode]);
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase || socialProfileIds.length === 0) {
@@ -6449,7 +6958,7 @@ const startConnectionsGame = (difficulty = null) => {
     const loadSocialProfiles = async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select(PROFILE_SELECT)
         .in("id", missingIds);
 
       if (cancelled) return;
@@ -6481,7 +6990,7 @@ const startConnectionsGame = (difficulty = null) => {
     if (
       !username ||
       username === "Loading profile..." ||
-      (!authUser && !guestMode) ||
+      (!effectiveAuthUser && !guestMode) ||
       profileStatus !== "ready" ||
       !isSupabaseConfigured ||
       !supabase
@@ -6514,14 +7023,14 @@ const startConnectionsGame = (difficulty = null) => {
     }, 700);
 
     return () => window.clearTimeout(syncTimer);
-  }, [username, profileStatus, playerId, highScore, coins, dailyStreak, authUser, guestMode]);
+  }, [username, profileStatus, playerId, highScore, coins, dailyStreak, effectiveAuthUserId, guestMode]);
 
   useEffect(() => {
     if (
       !profileOpen ||
       !username ||
       username === "Loading profile..." ||
-      (!authUser && !guestMode) ||
+      (!effectiveAuthUser && !guestMode) ||
       !isSupabaseConfigured ||
       !supabase
     ) {
@@ -6529,7 +7038,7 @@ const startConnectionsGame = (difficulty = null) => {
     }
 
     fetchActiveGames({ silent: true });
-  }, [profileOpen, username, playerId, authUser, guestMode]);
+  }, [profileOpen, username, playerId, effectiveAuthUserId, guestMode]);
 
   useEffect(() => {
     if (!leaderboardOpen) return;
@@ -6575,9 +7084,53 @@ const startConnectionsGame = (difficulty = null) => {
     if (isDaily) {
       restart();
       setShowDailyCompletePopup(true);
+    } else if (
+      ["general", "world-cup", "career"].includes(gameMode) &&
+      !isMockMultiplayer &&
+      postGameStep === "summary"
+    ) {
+      playClickSound();
+      setPostGameStep("xp");
+      setGameStarted(false);
+      setFinished(false);
+      setProfileOpen(false);
+      setLeaderboardOpen(false);
+      setMultiplayerOpen(false);
+      setModeMenuOpen(false);
     } else {
       restart();
     }
+  };
+
+  const closePostGameProgress = () => {
+    playClickSound();
+    setPostGameStep("done");
+    setObjectiveProgressUpdate(null);
+    setSelected(null);
+    setTextAnswer("");
+    setRewardPopup(null);
+    setWrongPopup(null);
+    setQuestionIndex(0);
+    setScore(0);
+    setLives(3);
+    setStreak(0);
+    setTimeLeft(HARD_TIME_LIMIT);
+    setRevivesUsed(0);
+    window.setTimeout(() => setPostGameStep("summary"), 0);
+  };
+
+  const closeConnectionsReward = ({ playAgain = false } = {}) => {
+    playClickSound();
+    setConnectionsRewardModal(null);
+
+    if (playAgain) {
+      startConnectionsGame(connectionsPuzzle?.difficulty || null);
+      return;
+    }
+
+    setGameStarted(false);
+    setConnectionsDifficultyPickerOpen(true);
+    setModeMenuOpen(false);
   };
 
   const authCard = (
@@ -6712,7 +7265,7 @@ const startConnectionsGame = (difficulty = null) => {
     );
   }
 
-  if (!authUser && !guestMode) {
+  if (!effectiveAuthUser && !guestMode) {
     return (
       <div
         className="fullscreen-bg auth-screen"
@@ -7475,20 +8028,27 @@ const startConnectionsGame = (difficulty = null) => {
         {coinShopModal}
         {dailyRewardMeterModal}
         {levelProgressModal}
+        {postGameProgressModal}
         {avatarPickerModal}
         {authPromptModal}
-        {xpToastOverlay}
-        {objectiveProgressModal}
+        {postGameStep !== "xp" && xpToastOverlay}
+        {postGameStep !== "xp" && objectiveProgressModal}
         <AnimatePresence>
           {showDailyCompletePopup && lastDailyResult && (
             <motion.div
-              className="daily-reward-popup"
-              initial={{ opacity: 0, scale: 0.82, y: 35 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: -20 }}
-              transition={{ duration: 0.35 }}
+              className="daily-reward-view-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
             >
-              <div className="daily-reward-top">
+              <motion.div
+                className="daily-reward-popup"
+                initial={{ opacity: 0, scale: 0.82, y: 35 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                transition={{ duration: 0.35 }}
+              >
+                <div className="daily-reward-top">
                 <div className="daily-reward-fire">🔥</div>
 
                 <div>
@@ -7592,9 +8152,11 @@ const startConnectionsGame = (difficulty = null) => {
               >
                 CLAIM
               </button>
+              </motion.div>
             </motion.div>
           )}
-        </AnimatePresence><AnimatePresence>
+        </AnimatePresence>
+        <AnimatePresence>
   {levelUpPopup && isHomeScreen && (
     <motion.div
       className="level-up-overlay"
@@ -7775,8 +8337,8 @@ const startConnectionsGame = (difficulty = null) => {
                       ? "Syncing profile..."
                       : profileError || "Local profile"}
                   </div>
-                  {!isGuest && authUser?.email && (
-                    <div className="profile-account-email">{authUser.email}</div>
+                  {!isGuest && effectiveAuthUser?.email && (
+                    <div className="profile-account-email">{effectiveAuthUser.email}</div>
                   )}
                 </div>
               </div>
@@ -8014,13 +8576,13 @@ const startConnectionsGame = (difficulty = null) => {
               ) : (
                 <div className="leaderboard-empty-state">
                   <strong>
-                    {leaderboardTab === "levels" ? "No levels yet" : "No scores yet"}
+                    {leaderboardTab === "levels" ? "No levels yet" : "No rankings yet"}
                   </strong>
                   <span>
                     {leaderboardError ||
                       (leaderboardTab === "levels"
                         ? "Earn XP to appear on the levels leaderboard"
-                        : "Play General Knowledge to set the first score")}
+                        : "No rankings yet. Play a game to enter the leaderboard.")}
                   </span>
                 </div>
               )}
@@ -9897,7 +10459,8 @@ const startConnectionsGame = (difficulty = null) => {
         {coinShopModal}
         {dailyRewardMeterModal}
         {coinRewardToastOverlay}
-        {xpToastOverlay}
+        {!connectionsRewardModal && xpToastOverlay}
+        {connectionsRewardOverlay}
         <ScreenTransition className="connections-screen">
           <button
             className="connections-back-button"
@@ -10044,19 +10607,6 @@ const startConnectionsGame = (difficulty = null) => {
     </button>
   );
 })}
-              </motion.div>
-            )}
-
-            {connectionsGameComplete && (
-              <motion.div
-                className="connections-complete-card"
-                initial={{ opacity: 0, scale: 0.86, y: 22 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ type: "spring", stiffness: 180, damping: 14 }}
-              >
-                <strong>Puzzle Complete</strong>
-                <span>+75 coins</span>
-                <button onClick={startConnectionsGame}>Play Another</button>
               </motion.div>
             )}
 
@@ -10273,6 +10823,8 @@ const startConnectionsGame = (difficulty = null) => {
     const opponentScore =
       mockOpponentScore ?? createMockOpponentScore(score);
     const multiplayerWon = score >= opponentScore;
+    const isGeneralPostGame = gameMode === "general" && !isMockMultiplayer;
+    const showingGeneralXp = isGeneralPostGame && postGameStep === "xp";
 
     return (
       <div
@@ -10283,13 +10835,15 @@ const startConnectionsGame = (difficulty = null) => {
       >
         {coinShopModal}
         {dailyRewardMeterModal}
-        {xpToastOverlay}
-        {objectiveProgressModal}
+        {!isGeneralPostGame && xpToastOverlay}
+        {!isGeneralPostGame && objectiveProgressModal}
         <div className={`result-card ${isDaily ? "daily-result-card" : ""}`}>
           <Trophy size={70} />
 
           <h2>
-            {dailyCompleted
+            {showingGeneralXp
+              ? "XP & Level Progress"
+              : dailyCompleted
               ? "Daily Complete"
               : isDaily
               ? "Daily Failed"
@@ -10369,15 +10923,48 @@ const startConnectionsGame = (difficulty = null) => {
             </div>
           ) : (
             <>
-              <p>🔥 Final Score: {score}</p>
-              <p>🏆 Best Score: {highScore}</p>
-              {gameMode === "general" && generalRunXpTotal > 0 && (
+              {!showingGeneralXp ? (
+                <>
+                  <p>🔥 Final Score: {score}</p>
+                  <p>🏆 Best Score: {highScore}</p>
+                  {score > runStartHighScore && (
+                    <div className="general-run-highscore compact">
+                      <strong>New Highscore!</strong>
+                      <span>{score} is your new best</span>
+                    </div>
+                  )}
+                  {gameMode === "general" && (
+                    <div className="general-run-xp-total compact">
+                      <span>XP earned this run</span>
+                      <strong>+{generalRunXpTotal} XP</strong>
+                    </div>
+                  )}
+                </>
+              ) : (
                 <motion.div
                   className="general-run-xp-summary"
                   initial={{ opacity: 0, y: 12, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ delay: 0.12, duration: 0.24 }}
                 >
+                  <div className="level-progress-hero inline">
+                    <div className="level-progress-icon">{playerLevel.emoji}</div>
+                    <div>
+                      <div className="level-progress-label">
+                        Level {playerLevel.levelNumber}
+                      </div>
+                      <h3>{playerLevel.name}</h3>
+                      <p>{xpTotal.toLocaleString()} XP total</p>
+                    </div>
+                  </div>
+
+                  <div className="level-progress-track">
+                    <div
+                      className="level-progress-fill"
+                      style={{ width: `${progressionView.objectiveProgress}%` }}
+                    />
+                  </div>
+
                   {score > runStartHighScore && (
                     <div className="general-run-highscore">
                       <strong>New Highscore!</strong>
@@ -10410,22 +10997,50 @@ const startConnectionsGame = (difficulty = null) => {
                     <span>Total XP this run</span>
                     <strong>+{generalRunXpTotal} XP</strong>
                   </div>
+
+                  {objectiveProgressUpdate && (
+                    <div className="objective-progress-list inline">
+                      {objectiveProgressUpdate.updates.map((objective) => (
+                        <div
+                          className={`objective-progress-row ${
+                            objective.complete ? "complete" : ""
+                          }`}
+                          key={objective.statKey}
+                        >
+                          <div className="objective-progress-row-top">
+                            <strong>{objective.label}</strong>
+                            <span>
+                              {objective.after.toLocaleString()} /{" "}
+                              {objective.required.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="objective-progress-bar">
+                            <div
+                              className="objective-progress-fill"
+                              style={{ width: `${objective.afterProgress}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </motion.div>
               )}
             </>
           )}
 
-          {!isDaily && !isMockMultiplayer && reviveCost && coins >= reviveCost && (
+          {!showingGeneralXp && !isDaily && !isMockMultiplayer && reviveCost && coins >= reviveCost && (
             <button className="play-again-button" onClick={revive}>
               ❤️ Buy extra life — {reviveCost} coins
             </button>
           )}
 
-          {!isDaily && !isMockMultiplayer && revivesUsed >= 3 && (
+          {!showingGeneralXp && !isDaily && !isMockMultiplayer && revivesUsed >= 3 && (
             <div className="revive-note">Max revives used</div>
           )}
 
-          {!isDaily &&
+          {!showingGeneralXp &&
+            !isDaily &&
             !isMockMultiplayer &&
             reviveCost &&
             coins < reviveCost &&
@@ -10453,6 +11068,10 @@ const startConnectionsGame = (difficulty = null) => {
             >
               {isDaily ? (
                 "COLLECT & HOME"
+              ) : showingGeneralXp ? (
+                "COLLECT & HOME"
+              ) : isGeneralPostGame ? (
+                "CONTINUE"
               ) : (
                 <>
                   Back to Home
@@ -10557,21 +11176,27 @@ const startConnectionsGame = (difficulty = null) => {
         </div>
       </div>
 
-      {!(gameMode === "general" && !isMockMultiplayer) && (
+      {!isMockMultiplayer && ["general", "world-cup", "career"].includes(gameMode) && (
         <div className="quiz-progress-card progressCard">
           <div className="quiz-progress-top">
-            <strong>QUESTION {currentRoundQuestionNumber}</strong>
+            <strong>LEVEL {playerLevel.levelNumber} XP</strong>
             <span>
-              {isMockMultiplayer
-                ? `Multiplayer • ${getModeLabel(gameMode)}`
-                : getModeLabel(gameMode)}
+              {getModeLabel(gameMode)} • Question {currentRoundQuestionNumber}
             </span>
           </div>
           <div className="quiz-progress-track">
             <div
               className="quiz-progress-fill"
-              style={{ width: `${currentQuestionProgress}%` }}
+              style={{ width: `${xpProgressPercent}%` }}
             />
+          </div>
+          <div className="quiz-progress-xp-label">
+            <span>{xpProgressLabel}</span>
+            <span>
+              {playerLevel.next
+                ? `Next: ${playerLevel.next.emoji} ${playerLevel.next.name}`
+                : "Max level"}
+            </span>
           </div>
         </div>
       )}

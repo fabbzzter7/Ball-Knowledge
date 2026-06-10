@@ -98,15 +98,32 @@ export async function createLeague(supabase, { name, playerId, username, setting
     return { league: null, error: leagueError || new Error("League not created") };
   }
 
-  const { error: memberError } = await supabase.from("league_members").insert({
+  const memberPayload = {
     league_id: league.id,
     player_id: playerId,
     username,
     total_points: 0,
     days_played: 0,
-  });
+  };
+
+  let { error: memberError } = await supabase
+    .from("league_members")
+    .insert(memberPayload);
+
+  if (memberError?.code === "23505") {
+    const retry = await supabase
+      .from("league_members")
+      .update({
+        username,
+      })
+      .eq("league_id", league.id)
+      .eq("player_id", playerId);
+
+    memberError = retry.error;
+  }
 
   if (memberError) {
+    memberError.message = `League was created, but creator membership could not be saved: ${memberError.message}`;
     return { league, error: memberError };
   }
 
@@ -134,11 +151,15 @@ export async function joinLeague(supabase, { code, playerId, username }) {
   if (existingError) return { league, alreadyJoined: false, error: existingError };
   if (existingMember) return { league, alreadyJoined: true, error: null };
 
-  const { error: memberError } = await supabase.from("league_members").insert({
+  let { error: memberError } = await supabase.from("league_members").insert({
     league_id: league.id,
     player_id: playerId,
     username,
   });
+
+  if (memberError?.code === "23505") {
+    memberError = null;
+  }
 
   return { league, alreadyJoined: false, error: memberError || null };
 }
