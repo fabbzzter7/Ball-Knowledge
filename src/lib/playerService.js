@@ -1,5 +1,6 @@
 import { isSupabaseConfigured, supabase } from "./supabaseClient";
 import { STARTER_PLAYERS } from "../data/starterPlayers";
+import { LEGEND_PLAYERS } from "../data/legendsPlayers";
 
 const PLAYER_SELECT =
   "id,name,full_name,search_name,aliases,nationality,position,position_group,birth_year,active_from,active_to,is_retired,clubs,main_clubs,national_team,image_url,difficulty,popularity_score,source,source_id";
@@ -27,6 +28,80 @@ function normalizePlayer(player = {}) {
     main_clubs: Array.isArray(player.main_clubs) ? player.main_clubs : [],
     popularity_score: Number(player.popularity_score) || 0,
   };
+}
+
+function parseCsvRow(row = "") {
+  const cells = [];
+  let current = "";
+  let quoted = false;
+
+  for (let index = 0; index < row.length; index += 1) {
+    const char = row[index];
+    const next = row[index + 1];
+
+    if (char === '"' && quoted && next === '"') {
+      current += '"';
+      index += 1;
+    } else if (char === '"') {
+      quoted = !quoted;
+    } else if (char === "," && !quoted) {
+      cells.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  cells.push(current);
+  return cells.map((cell) => cell.trim());
+}
+
+function slugifyPlayerId(value = "") {
+  return normalizePlayerSearch(value).replace(/\s+/g, "_");
+}
+
+function parseFifaCsvPlayers(csvText = "") {
+  const rows = String(csvText).split(/\r?\n/).filter(Boolean);
+  const [headerRow, ...dataRows] = rows;
+  if (!headerRow || dataRows.length === 0) return [];
+
+  const headers = parseCsvRow(headerRow);
+  const indexByHeader = new Map(headers.map((header, index) => [header, index]));
+  const getCell = (row, header) => row[indexByHeader.get(header)] || "";
+
+  return dataRows
+    .map(parseCsvRow)
+    .map((row) => {
+      const shortName = getCell(row, "name");
+      const fullName = getCell(row, "full_name");
+      const displayName = fullName || shortName;
+      if (!displayName) return null;
+
+      const birthYear = Number(String(getCell(row, "birth_date")).split("/").at(-1)) || null;
+      const positions = getCell(row, "positions")
+        .split(",")
+        .map((position) => position.trim())
+        .filter(Boolean);
+      const overall = Number(getCell(row, "overall_rating")) || 0;
+
+      return {
+        id: `fifa_${slugifyPlayerId(displayName || shortName)}`,
+        name: displayName,
+        full_name: fullName || displayName,
+        search_name: normalizePlayerSearch(displayName),
+        aliases: uniqueByNormalized([shortName, fullName, displayName]),
+        nationality: getCell(row, "nationality"),
+        position: positions[0] || "",
+        position_group: positions[0] || "",
+        birth_year: birthYear,
+        clubs: [],
+        main_clubs: [],
+        national_team: getCell(row, "national_team") || getCell(row, "nationality"),
+        popularity_score: overall ? overall * 10 : 0,
+        source: "fifa_csv",
+      };
+    })
+    .filter(Boolean);
 }
 
 const IMPORTANT_FALLBACK_PLAYERS = [
@@ -246,13 +321,55 @@ const IMPORTANT_FALLBACK_PLAYERS = [
     popularity_score: 760,
     source: "manual_seed",
   },
+  {
+    id: "claudio_marchisio",
+    name: "Claudio Marchisio",
+    full_name: "Claudio Marchisio",
+    search_name: "claudio marchisio",
+    aliases: ["Marchisio"],
+    nationality: "Italy",
+    position: "Midfielder",
+    position_group: "Midfield",
+    birth_year: 1986,
+    active_from: 2005,
+    active_to: 2019,
+    is_retired: true,
+    clubs: ["Juventus", "Empoli", "Zenit Saint Petersburg"],
+    main_clubs: ["Juventus"],
+    national_team: "Italy",
+    popularity_score: 850,
+    source: "manual_seed",
+  },
 ];
 
-const LOCAL_PLAYER_INDEX = mergeDuplicatePlayers([
+const BASE_LOCAL_PLAYER_INDEX = mergeDuplicatePlayers([
   ...STARTER_PLAYERS,
+  ...LEGEND_PLAYERS,
   ...IMPORTANT_FALLBACK_PLAYERS,
 ]).map(normalizePlayer);
 let cachedSearchIndexPromise = null;
+let cachedLocalPlayerIndexPromise = null;
+
+async function loadLocalPlayerIndex() {
+  if (cachedLocalPlayerIndexPromise) return cachedLocalPlayerIndexPromise;
+
+  cachedLocalPlayerIndexPromise = (async () => {
+    try {
+      const csvModule = await import("../data/fifa_players.csv?raw");
+      const csvPlayers = parseFifaCsvPlayers(csvModule.default || "");
+
+      return mergeDuplicatePlayers([
+        ...BASE_LOCAL_PLAYER_INDEX,
+        ...csvPlayers,
+      ]).map(normalizePlayer);
+    } catch (error) {
+      console.warn("Could not load imported CSV player index", error);
+      return BASE_LOCAL_PLAYER_INDEX;
+    }
+  })();
+
+  return cachedLocalPlayerIndexPromise;
+}
 
 function uniqueByNormalized(values = []) {
   const seen = new Set();
@@ -326,8 +443,12 @@ function mergeDuplicatePlayers(players = []) {
       ...winner,
       aliases: uniqueByNormalized([
         winner?.name,
+        winner?.full_name,
+        winner?.search_name,
         ...(winner?.aliases || []),
         loser?.name,
+        loser?.full_name,
+        loser?.search_name,
         ...(loser?.aliases || []),
       ]),
       clubs: uniqueByNormalized([...(winner?.clubs || []), ...(loser?.clubs || [])]),
@@ -432,8 +553,8 @@ function scorePlayerMatch(player, query) {
   };
 }
 
-function getEligibleFindPlayerFallbackPool() {
-  return LOCAL_PLAYER_INDEX.filter(
+function getEligibleFindPlayerFallbackPool(players = BASE_LOCAL_PLAYER_INDEX) {
+  return players.filter(
     (player) =>
       player.id &&
       player.name &&
@@ -447,7 +568,9 @@ async function loadSearchPlayerIndex() {
   if (cachedSearchIndexPromise) return cachedSearchIndexPromise;
 
   cachedSearchIndexPromise = (async () => {
-    if (!isSupabaseConfigured || !supabase) return LOCAL_PLAYER_INDEX;
+    const localPlayerIndex = await loadLocalPlayerIndex();
+
+    if (!isSupabaseConfigured || !supabase) return localPlayerIndex;
 
     const batchSize = 1000;
     const allPlayers = [];
@@ -462,17 +585,21 @@ async function loadSearchPlayerIndex() {
 
       if (error) {
         console.error("Could not build player search index", error);
-        return LOCAL_PLAYER_INDEX;
+        return localPlayerIndex;
       }
 
       allPlayers.push(...(data || []));
       if (!data || data.length < batchSize) break;
     }
 
-    return mergeDuplicatePlayers([...allPlayers, ...LOCAL_PLAYER_INDEX]).map(normalizePlayer);
+    return mergeDuplicatePlayers([...allPlayers, ...localPlayerIndex]).map(normalizePlayer);
   })();
 
   return cachedSearchIndexPromise;
+}
+
+export async function buildPlayerSearchIndex() {
+  return loadSearchPlayerIndex();
 }
 
 function sortAndLimitPlayers(players, query, limit) {
@@ -513,7 +640,8 @@ export async function fetchPlayers(limit = 30) {
 }
 
 export async function fetchFindPlayerPool() {
-  const fallbackPool = getEligibleFindPlayerFallbackPool();
+  const localPlayerIndex = await loadLocalPlayerIndex();
+  const fallbackPool = getEligibleFindPlayerFallbackPool(localPlayerIndex);
   if (!isSupabaseConfigured || !supabase) {
     return { players: fallbackPool, error: null };
   }

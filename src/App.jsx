@@ -23,7 +23,7 @@ import {
   syncLocalStatsToProfile,
   updateProfile,
 } from "./lib/profileService";
-import { fetchFindPlayerPool, searchPlayers } from "./lib/playerService";
+import { buildPlayerSearchIndex, fetchFindPlayerPool, searchPlayers } from "./lib/playerService";
 import { isPlayerAnswerMatch } from "./lib/playerAnswer";
 import {
   findMatchingAnswer,
@@ -1040,28 +1040,57 @@ export default function FootballQuizMVP() {
 
     let cancelled = false;
 
-    async function checkCareerSearchCoverage() {
+    async function checkPlayerSearchCoverage() {
+      await buildPlayerSearchIndex();
       const missing = [];
-      const uniqueAnswers = [...new Set(CAREER_QUESTIONS.map((question) => question.answer))];
+      const targets = [
+        ...CAREER_QUESTIONS.map((question) => ({
+          mode: "career",
+          id: question.id || question.question,
+          answer: question.answer,
+        })),
+        ...WHO_AM_I_QUESTIONS.map((question) => ({
+          mode: "who-am-i",
+          id: question.id || question.answer,
+          answer: question,
+        })),
+        ...DAILY_LIST_CHALLENGES.filter(isPlayerAnswerType).flatMap((challenge) =>
+          (challenge.answers || []).map((answer, index) => ({
+            mode: "daily-list",
+            id: `${challenge.id || "daily"}:${index}`,
+            answer,
+          }))
+        ),
+      ];
 
-      for (const answer of uniqueAnswers) {
-        const { players } = await searchPlayers(answer, 8);
+      for (const target of targets) {
+        const answerLabel = getAnswerLabel(target.answer);
+        if (!answerLabel) continue;
+        const { players } = await searchPlayers(answerLabel, 8);
         const found = players.some((player) =>
           isPlayerAnswerCorrect({
             selectedPlayer: player,
-            correctAnswer: answer,
+            correctAnswer: target.answer,
           })
         );
 
-        if (!found) missing.push(answer);
+        if (!found) {
+          const { players: closeMatches } = await searchPlayers(answerLabel.split(" ").at(-1), 4);
+          missing.push({
+            mode: target.mode,
+            id: target.id,
+            answer: answerLabel,
+            closest: closeMatches.map((player) => player.name),
+          });
+        }
       }
 
       if (!cancelled && missing.length) {
-        console.warn("Career Path answers missing from player search index", missing);
+        console.warn("Player-answer content missing from shared search index", missing);
       }
     }
 
-    checkCareerSearchCoverage();
+    checkPlayerSearchCoverage();
 
     return () => {
       cancelled = true;
@@ -6242,10 +6271,19 @@ const startConnectionsGame = (difficulty = null) => {
   const submitTextAnswer = () => {
     if ((!textAnswer.trim() && !careerSelectedPlayer) || selected) return;
 
+    const careerTypedPlayerMatch =
+      gameMode === "career" &&
+      !careerSelectedPlayer &&
+      isPlayerAnswerCorrect({
+        typedAnswer: textAnswer,
+        correctAnswer: current?.answer,
+      });
+
     const submittedAnswer =
       gameMode === "career" &&
-      careerSelectedPlayer &&
-      isCorrectPlayerAnswer(careerSelectedPlayer, current?.answer)
+      ((careerSelectedPlayer &&
+        isCorrectPlayerAnswer(careerSelectedPlayer, current?.answer)) ||
+        careerTypedPlayerMatch)
         ? current.answer
         : careerSelectedPlayer?.name || textAnswer;
 

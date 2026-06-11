@@ -356,4 +356,20 @@ if (import.meta.env?.DEV) {
     }) === true,
     "Mbappe should match Mbappé"
   );
+
+  [
+    ["Kante", "N'Golo Kanté"],
+    ["Ngolo Kante", "N'Golo Kanté"],
+    ["Musiala", "Jamal Musiala"],
+    ["Marchisio", "Claudio Marchisio"],
+    ["Aguero", "Sergio Agüero"],
+    ["Ozil", "Mesut Özil"],
+    ["Modric", "Luka Modrić"],
+    ["Pique", "Gerard Piqué"],
+  ].forEach(([typedAnswer, answer]) => {
+    console.assert(
+      isPlayerAnswerCorrect({ typedAnswer, correctAnswer: answer }) === true,
+      `${typedAnswer} should match ${answer}`
+    );
+  });
 }
