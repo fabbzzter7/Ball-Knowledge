@@ -360,6 +360,7 @@ if (import.meta.env?.DEV) {
   [
     ["Kante", "N'Golo Kanté"],
     ["Ngolo Kante", "N'Golo Kanté"],
+    ["Emenike", "Emmanuel Emenike"],
     ["Musiala", "Jamal Musiala"],
     ["Marchisio", "Claudio Marchisio"],
     ["Aguero", "Sergio Agüero"],

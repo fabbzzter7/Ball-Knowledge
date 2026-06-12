@@ -5918,11 +5918,11 @@ export const WHO_AM_I_QUESTIONS = [
     clues: [
       "I am from Argentina.",
       "I am/was a central defender.",
-      "I had very recognizable curly hair.",
       "I have played in Italy and Spain before moving to England.",
       "I have played for AC Milan and Deportivo La Coruna.",
       "I became a long-serving player at Newcastle United.",
       "I captained Newcastle.",
+      "I had very recognizable curly hair.",
       "I represented Argentina internationally.",
       "My initials are FC.",
       "I am Fabricio Coloccini.",

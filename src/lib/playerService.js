@@ -340,6 +340,27 @@ const IMPORTANT_FALLBACK_PLAYERS = [
     popularity_score: 850,
     source: "manual_seed",
   },
+  {
+    id: "emmanuel_emenike",
+    name: "Emmanuel Emenike",
+    full_name: "Emmanuel Emenike",
+    search_name: "emmanuel emenike",
+    aliases: ["Emenike"],
+    nationality: "Nigeria",
+    position: "Striker",
+    position_group: "Attack",
+    birth_year: 1987,
+    active_from: 2007,
+    active_to: 2021,
+    is_retired: true,
+    clubs: ["Spartak Moscow", "Fenerbahce", "West Ham United", "Olympiacos"],
+    main_clubs: ["Spartak Moscow", "Fenerbahce", "West Ham United", "Olympiacos"],
+    national_team: "Nigeria",
+    difficulty: "Hard",
+    popularity_score: 720,
+    source: "manual_cult_seed_2026",
+    source_id: "emmanuel_emenike",
+  },
 ];
 
 const BASE_LOCAL_PLAYER_INDEX = mergeDuplicatePlayers([

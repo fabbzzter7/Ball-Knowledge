@@ -16259,5 +16259,4958 @@ export const QUESTIONS = [
       "Gianluigi Buffon"
     ],
     "answer": "Jerzy Dudek"
-  }
+  },  {
+    "difficulty": "Easy",
+    "question": "Which commentator is famous for shouting 'Aguerooooo' in 2012?",
+    "options": [
+      "Martin Tyler",
+      "Peter Drury",
+      "Clive Tyldesley",
+      "John Motson"
+    ],
+    "answer": "Martin Tyler",
+    "id": "general_1219",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Sergio Agüero score the famous 2012 title-winning goal for?",
+    "options": [
+      "Manchester City",
+      "Atlético Madrid",
+      "Barcelona",
+      "Independiente"
+    ],
+    "answer": "Manchester City",
+    "id": "general_1220",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club were Manchester City playing when Sergio Agüero scored his famous 2012 title-winning goal?",
+    "options": [
+      "QPR",
+      "Chelsea",
+      "Tottenham",
+      "Everton"
+    ],
+    "answer": "QPR",
+    "id": "general_1221",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which commentator is famous for the line 'Roma have risen from their ruins'?",
+    "options": [
+      "Peter Drury",
+      "Martin Tyler",
+      "Gary Neville",
+      "Alan Smith"
+    ],
+    "answer": "Peter Drury",
+    "id": "general_1222",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club completed a famous comeback against Barcelona at Anfield in 2019?",
+    "options": [
+      "Liverpool",
+      "Chelsea",
+      "Manchester United",
+      "Tottenham"
+    ],
+    "answer": "Liverpool",
+    "id": "general_1223",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player scored twice for Liverpool against Barcelona in the 4-0 comeback in 2019?",
+    "options": [
+      "Divock Origi",
+      "Mohamed Salah",
+      "Roberto Firmino",
+      "Sadio Mané"
+    ],
+    "answer": "Divock Origi",
+    "id": "general_1224",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which Liverpool defender took the quick corner against Barcelona in 2019?",
+    "options": [
+      "Trent Alexander-Arnold",
+      "Virgil van Dijk",
+      "Andy Robertson",
+      "Joel Matip"
+    ],
+    "answer": "Trent Alexander-Arnold",
+    "id": "general_1225",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Barcelona beat 6-1 in the famous 2017 comeback?",
+    "options": [
+      "PSG",
+      "Bayern Munich",
+      "Juventus",
+      "Chelsea"
+    ],
+    "answer": "PSG",
+    "id": "general_1226",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which Brazilian scored the late free-kick and penalty in Barcelona's 6-1 comeback against PSG?",
+    "options": [
+      "Neymar",
+      "Ronaldinho",
+      "Rivaldo",
+      "Dani Alves"
+    ],
+    "answer": "Neymar",
+    "id": "general_1227",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which Barcelona player scored the final goal in the 6-1 comeback against PSG?",
+    "options": [
+      "Sergi Roberto",
+      "Lionel Messi",
+      "Luis Suárez",
+      "Neymar"
+    ],
+    "answer": "Sergi Roberto",
+    "id": "general_1228",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which country is famous for the yellow shirt and blue shorts in international football?",
+    "options": [
+      "Brazil",
+      "Argentina",
+      "Germany",
+      "France"
+    ],
+    "answer": "Brazil",
+    "id": "general_1229",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country is famous for the sky blue and white striped shirt?",
+    "options": [
+      "Argentina",
+      "Brazil",
+      "Portugal",
+      "Italy"
+    ],
+    "answer": "Argentina",
+    "id": "general_1230",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country is famous for the nickname 'Azzurri'?",
+    "options": [
+      "Italy",
+      "France",
+      "Spain",
+      "Portugal"
+    ],
+    "answer": "Italy",
+    "id": "general_1231",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country is famous for the nickname 'Les Bleus'?",
+    "options": [
+      "France",
+      "Italy",
+      "Belgium",
+      "Netherlands"
+    ],
+    "answer": "France",
+    "id": "general_1232",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country is famous for the nickname 'La Roja'?",
+    "options": [
+      "Spain",
+      "Portugal",
+      "Chile",
+      "Mexico"
+    ],
+    "answer": "Spain",
+    "id": "general_1233",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country is famous for the nickname 'Oranje'?",
+    "options": [
+      "Netherlands",
+      "Germany",
+      "Belgium",
+      "Denmark"
+    ],
+    "answer": "Netherlands",
+    "id": "general_1234",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country is famous for the nickname 'Die Mannschaft'?",
+    "options": [
+      "Germany",
+      "Austria",
+      "Switzerland",
+      "Netherlands"
+    ],
+    "answer": "Germany",
+    "id": "general_1235",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country is famous for the nickname 'Seleção'?",
+    "options": [
+      "Brazil",
+      "Portugal",
+      "Spain",
+      "Argentina"
+    ],
+    "answer": "Brazil",
+    "id": "general_1236",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country did Eusébio represent?",
+    "options": [
+      "Portugal",
+      "Brazil",
+      "Spain",
+      "Mozambique"
+    ],
+    "answer": "Portugal",
+    "id": "general_1237",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Eusébio most associated with?",
+    "options": [
+      "Benfica",
+      "Porto",
+      "Sporting CP",
+      "Real Madrid"
+    ],
+    "answer": "Benfica",
+    "id": "general_1238",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which derby is played between Liverpool and Everton?",
+    "options": [
+      "Merseyside derby",
+      "Manchester derby",
+      "North London derby",
+      "Tyne-Wear derby"
+    ],
+    "answer": "Merseyside derby",
+    "id": "general_1239",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which derby is played between Arsenal and Tottenham?",
+    "options": [
+      "North London derby",
+      "Merseyside derby",
+      "Manchester derby",
+      "West London derby"
+    ],
+    "answer": "North London derby",
+    "id": "general_1240",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which derby is played between Manchester United and Manchester City?",
+    "options": [
+      "Manchester derby",
+      "Merseyside derby",
+      "North London derby",
+      "Second City derby"
+    ],
+    "answer": "Manchester derby",
+    "id": "general_1241",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which derby is played between AC Milan and Inter?",
+    "options": [
+      "Derby della Madonnina",
+      "Derby d'Italia",
+      "Rome derby",
+      "Turin derby"
+    ],
+    "answer": "Derby della Madonnina",
+    "id": "general_1242",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which derby is played between Roma and Lazio?",
+    "options": [
+      "Derby della Capitale",
+      "Derby della Madonnina",
+      "Derby d'Italia",
+      "Turin derby"
+    ],
+    "answer": "Derby della Capitale",
+    "id": "general_1243",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which derby is played between Real Madrid and Atlético Madrid?",
+    "options": [
+      "Madrid derby",
+      "Seville derby",
+      "Basque derby",
+      "Catalan derby"
+    ],
+    "answer": "Madrid derby",
+    "id": "general_1244",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which match is known as El Clásico?",
+    "options": [
+      "Real Madrid vs Barcelona",
+      "Barcelona vs Atlético Madrid",
+      "Real Madrid vs Sevilla",
+      "Valencia vs Villarreal"
+    ],
+    "answer": "Real Madrid vs Barcelona",
+    "id": "general_1245",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which derby is played between Sevilla and Real Betis?",
+    "options": [
+      "Seville derby",
+      "Madrid derby",
+      "Basque derby",
+      "Valencian derby"
+    ],
+    "answer": "Seville derby",
+    "id": "general_1246",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which derby is played between Newcastle United and Sunderland?",
+    "options": [
+      "Tyne-Wear derby",
+      "Merseyside derby",
+      "Steel City derby",
+      "Second City derby"
+    ],
+    "answer": "Tyne-Wear derby",
+    "id": "general_1247",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which derby is played between Aston Villa and Birmingham City?",
+    "options": [
+      "Second City derby",
+      "Tyne-Wear derby",
+      "Merseyside derby",
+      "Steel City derby"
+    ],
+    "answer": "Second City derby",
+    "id": "general_1248",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the 'Siuuu' celebration?",
+    "options": [
+      "Cristiano Ronaldo",
+      "Lionel Messi",
+      "Neymar",
+      "Kylian Mbappé"
+    ],
+    "answer": "Cristiano Ronaldo",
+    "id": "general_1249",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the mask celebration?",
+    "options": [
+      "Victor Osimhen",
+      "Harry Kane",
+      "Robert Lewandowski",
+      "Karim Benzema"
+    ],
+    "answer": "Victor Osimhen",
+    "id": "general_1250",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the 'shush' celebration at the Camp Nou in 2017?",
+    "options": [
+      "Cristiano Ronaldo",
+      "Lionel Messi",
+      "Sergio Ramos",
+      "Neymar"
+    ],
+    "answer": "Cristiano Ronaldo",
+    "id": "general_1251",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for holding his shirt up to the Real Madrid fans in 2017?",
+    "options": [
+      "Lionel Messi",
+      "Cristiano Ronaldo",
+      "Neymar",
+      "Luis Suárez"
+    ],
+    "answer": "Lionel Messi",
+    "id": "general_1252",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the heart celebration and number 11 at Tottenham?",
+    "options": [
+      "Gareth Bale",
+      "Harry Kane",
+      "Son Heung-min",
+      "Dele Alli"
+    ],
+    "answer": "Gareth Bale",
+    "id": "general_1253",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the 'binoculars' celebration?",
+    "options": [
+      "Dele Alli",
+      "Wayne Rooney",
+      "Raheem Sterling",
+      "Marcus Rashford"
+    ],
+    "answer": "Dele Alli",
+    "id": "general_1254",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the meditation celebration at Manchester United?",
+    "options": [
+      "Marcus Rashford",
+      "Bruno Fernandes",
+      "Paul Pogba",
+      "Jadon Sancho"
+    ],
+    "answer": "Marcus Rashford",
+    "id": "general_1255",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the 'A' celebration for his daughter?",
+    "options": [
+      "Antoine Griezmann",
+      "Kylian Mbappé",
+      "Olivier Giroud",
+      "Paul Pogba"
+    ],
+    "answer": "Antoine Griezmann",
+    "id": "general_1256",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the folding arms celebration?",
+    "options": [
+      "Kylian Mbappé",
+      "Erling Haaland",
+      "Neymar",
+      "Vinícius Jr"
+    ],
+    "answer": "Kylian Mbappé",
+    "id": "general_1257",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player often celebrated by doing a phone-call gesture?",
+    "options": [
+      "Gabriel Jesus",
+      "Harry Maguire",
+      "James Maddison",
+      "Jamie Vardy"
+    ],
+    "answer": "Gabriel Jesus",
+    "id": "general_1258",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at Signal Iduna Park?",
+    "options": [
+      "Borussia Dortmund",
+      "Bayern Munich",
+      "RB Leipzig",
+      "Schalke"
+    ],
+    "answer": "Borussia Dortmund",
+    "id": "general_1259",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at the Allianz Arena?",
+    "options": [
+      "Bayern Munich",
+      "Borussia Dortmund",
+      "Bayer Leverkusen",
+      "Stuttgart"
+    ],
+    "answer": "Bayern Munich",
+    "id": "general_1260",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at the Parc des Princes?",
+    "options": [
+      "PSG",
+      "Marseille",
+      "Lyon",
+      "Monaco"
+    ],
+    "answer": "PSG",
+    "id": "general_1261",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at the Johan Cruyff Arena?",
+    "options": [
+      "Ajax",
+      "PSV",
+      "Feyenoord",
+      "AZ Alkmaar"
+    ],
+    "answer": "Ajax",
+    "id": "general_1262",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at Estádio da Luz?",
+    "options": [
+      "Benfica",
+      "Porto",
+      "Sporting CP",
+      "Braga"
+    ],
+    "answer": "Benfica",
+    "id": "general_1263",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at Estádio do Dragão?",
+    "options": [
+      "Porto",
+      "Benfica",
+      "Sporting CP",
+      "Braga"
+    ],
+    "answer": "Porto",
+    "id": "general_1264",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at the José Alvalade Stadium?",
+    "options": [
+      "Sporting CP",
+      "Benfica",
+      "Porto",
+      "Braga"
+    ],
+    "answer": "Sporting CP",
+    "id": "general_1265",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at De Kuip?",
+    "options": [
+      "Feyenoord",
+      "Ajax",
+      "PSV",
+      "Twente"
+    ],
+    "answer": "Feyenoord",
+    "id": "general_1266",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at the Mestalla?",
+    "options": [
+      "Valencia",
+      "Sevilla",
+      "Villarreal",
+      "Real Betis"
+    ],
+    "answer": "Valencia",
+    "id": "general_1267",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at the Ramón Sánchez Pizjuán Stadium?",
+    "options": [
+      "Sevilla",
+      "Real Betis",
+      "Valencia",
+      "Villarreal"
+    ],
+    "answer": "Sevilla",
+    "id": "general_1268",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which player scored the winning goal in the 2010 World Cup final?",
+    "options": [
+      "Andrés Iniesta",
+      "Xavi",
+      "David Villa",
+      "Fernando Torres"
+    ],
+    "answer": "Andrés Iniesta",
+    "id": "general_1269",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player scored the winning goal in the 2014 World Cup final?",
+    "options": [
+      "Mario Götze",
+      "Thomas Müller",
+      "Miroslav Klose",
+      "Toni Kroos"
+    ],
+    "answer": "Mario Götze",
+    "id": "general_1270",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player scored twice for France in the 1998 World Cup final?",
+    "options": [
+      "Zinedine Zidane",
+      "Thierry Henry",
+      "Youri Djorkaeff",
+      "Emmanuel Petit"
+    ],
+    "answer": "Zinedine Zidane",
+    "id": "general_1271",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which Brazilian scored twice in the 2002 World Cup final?",
+    "options": [
+      "Ronaldo",
+      "Ronaldinho",
+      "Rivaldo",
+      "Cafu"
+    ],
+    "answer": "Ronaldo",
+    "id": "general_1272",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country did Brazil beat in the 2002 World Cup final?",
+    "options": [
+      "Germany",
+      "Argentina",
+      "France",
+      "Italy"
+    ],
+    "answer": "Germany",
+    "id": "general_1273",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country did France beat in the 2018 World Cup final?",
+    "options": [
+      "Croatia",
+      "Argentina",
+      "Belgium",
+      "England"
+    ],
+    "answer": "Croatia",
+    "id": "general_1274",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country did Argentina beat in the 2022 World Cup final?",
+    "options": [
+      "France",
+      "Croatia",
+      "Brazil",
+      "Netherlands"
+    ],
+    "answer": "France",
+    "id": "general_1275",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which goalkeeper made a famous late save against Randal Kolo Muani in the 2022 World Cup final?",
+    "options": [
+      "Emiliano Martínez",
+      "Hugo Lloris",
+      "Alisson",
+      "Thibaut Courtois"
+    ],
+    "answer": "Emiliano Martínez",
+    "id": "general_1276",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player scored a hat-trick for France in the 2022 World Cup final?",
+    "options": [
+      "Kylian Mbappé",
+      "Antoine Griezmann",
+      "Olivier Giroud",
+      "Ousmane Dembélé"
+    ],
+    "answer": "Kylian Mbappé",
+    "id": "general_1277",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player scored a famous panenka penalty in the 2006 World Cup final?",
+    "options": [
+      "Zinedine Zidane",
+      "Andrea Pirlo",
+      "Francesco Totti",
+      "Thierry Henry"
+    ],
+    "answer": "Zinedine Zidane",
+    "id": "general_1278",
+    "category": "general"
+  },  {
+    "difficulty": "Easy",
+    "question": "Which commentator is famous for the line 'Corner taken quickly... Origi!'?",
+    "options": [
+      "Steve Hunter",
+      "Martin Tyler",
+      "Peter Drury",
+      "Clive Tyldesley"
+    ],
+    "answer": "Steve Hunter",
+    "id": "general_1279",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club was on the receiving end of Liverpool's famous 'corner taken quickly' goal?",
+    "options": [
+      "Barcelona",
+      "Real Madrid",
+      "Bayern Munich",
+      "PSG"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1280",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player scored Liverpool's famous 'corner taken quickly' goal against Barcelona?",
+    "options": [
+      "Divock Origi",
+      "Mohamed Salah",
+      "Sadio Mané",
+      "Roberto Firmino"
+    ],
+    "answer": "Divock Origi",
+    "id": "general_1281",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which commentator is famous for saying 'Manchester City are still alive here' before Agüero's goal?",
+    "options": [
+      "Martin Tyler",
+      "Peter Drury",
+      "Alan Parry",
+      "Clive Tyldesley"
+    ],
+    "answer": "Martin Tyler",
+    "id": "general_1282",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player scored Manchester City's famous 93:20 goal?",
+    "options": [
+      "Sergio Agüero",
+      "Edin Džeko",
+      "David Silva",
+      "Yaya Touré"
+    ],
+    "answer": "Sergio Agüero",
+    "id": "general_1283",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player scored just before Agüero in Manchester City's 2012 title comeback against QPR?",
+    "options": [
+      "Edin Džeko",
+      "Mario Balotelli",
+      "Carlos Tevez",
+      "David Silva"
+    ],
+    "answer": "Edin Džeko",
+    "id": "general_1284",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player assisted Sergio Agüero's famous 2012 title-winning goal?",
+    "options": [
+      "Mario Balotelli",
+      "David Silva",
+      "Edin Džeko",
+      "Yaya Touré"
+    ],
+    "answer": "Mario Balotelli",
+    "id": "general_1285",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which commentator is especially known for poetic Champions League commentary?",
+    "options": [
+      "Peter Drury",
+      "Roy Keane",
+      "Jamie Carragher",
+      "Gary Neville"
+    ],
+    "answer": "Peter Drury",
+    "id": "general_1286",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which commentator was a famous voice of English football and often called 'Motty'?",
+    "options": [
+      "John Motson",
+      "Martin Tyler",
+      "Peter Drury",
+      "Clive Tyldesley"
+    ],
+    "answer": "John Motson",
+    "id": "general_1287",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which former Manchester United player became famous for emotional commentary during Chelsea vs Barcelona in 2012?",
+    "options": [
+      "Gary Neville",
+      "Roy Keane",
+      "Paul Scholes",
+      "Rio Ferdinand"
+    ],
+    "answer": "Gary Neville",
+    "id": "general_1288",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which Chelsea striker scored the equaliser in the 2012 Champions League final?",
+    "options": [
+      "Didier Drogba",
+      "Fernando Torres",
+      "Nicolas Anelka",
+      "Salomon Kalou"
+    ],
+    "answer": "Didier Drogba",
+    "id": "general_1289",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which Chelsea player scored the winning penalty in the 2012 Champions League final shootout?",
+    "options": [
+      "Didier Drogba",
+      "Frank Lampard",
+      "Ashley Cole",
+      "Juan Mata"
+    ],
+    "answer": "Didier Drogba",
+    "id": "general_1290",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which goalkeeper was Chelsea's hero in the 2012 Champions League final?",
+    "options": [
+      "Petr Čech",
+      "Thibaut Courtois",
+      "Edwin van der Sar",
+      "Gianluigi Buffon"
+    ],
+    "answer": "Petr Čech",
+    "id": "general_1291",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which Bayern Munich player missed a penalty in extra time in the 2012 Champions League final?",
+    "options": [
+      "Arjen Robben",
+      "Franck Ribéry",
+      "Thomas Müller",
+      "Mario Gómez"
+    ],
+    "answer": "Arjen Robben",
+    "id": "general_1292",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which stadium hosted the 2012 Champions League final?",
+    "options": [
+      "Allianz Arena",
+      "Wembley",
+      "San Siro",
+      "Camp Nou"
+    ],
+    "answer": "Allianz Arena",
+    "id": "general_1293",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Chelsea beat in the 2012 Champions League final?",
+    "options": [
+      "Bayern Munich",
+      "Barcelona",
+      "Real Madrid",
+      "Borussia Dortmund"
+    ],
+    "answer": "Bayern Munich",
+    "id": "general_1294",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Manchester United beat in the 1999 Champions League final?",
+    "options": [
+      "Bayern Munich",
+      "Juventus",
+      "Barcelona",
+      "AC Milan"
+    ],
+    "answer": "Bayern Munich",
+    "id": "general_1295",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which Manchester United player scored the winning goal in the 1999 Champions League final?",
+    "options": [
+      "Ole Gunnar Solskjær",
+      "Teddy Sheringham",
+      "David Beckham",
+      "Ryan Giggs"
+    ],
+    "answer": "Ole Gunnar Solskjær",
+    "id": "general_1296",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which Manchester United player scored the equaliser in the 1999 Champions League final?",
+    "options": [
+      "Teddy Sheringham",
+      "Ole Gunnar Solskjær",
+      "Dwight Yorke",
+      "Andy Cole"
+    ],
+    "answer": "Teddy Sheringham",
+    "id": "general_1297",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which stadium hosted the 1999 Champions League final?",
+    "options": [
+      "Camp Nou",
+      "Old Trafford",
+      "Wembley",
+      "San Siro"
+    ],
+    "answer": "Camp Nou",
+    "id": "general_1298",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which player scored the famous volley for Real Madrid in the 2002 Champions League final?",
+    "options": [
+      "Zinedine Zidane",
+      "Raúl",
+      "Ronaldo",
+      "Roberto Carlos"
+    ],
+    "answer": "Zinedine Zidane",
+    "id": "general_1299",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Real Madrid beat in the 2002 Champions League final?",
+    "options": [
+      "Bayer Leverkusen",
+      "Bayern Munich",
+      "Juventus",
+      "AC Milan"
+    ],
+    "answer": "Bayer Leverkusen",
+    "id": "general_1300",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which goalkeeper made famous saves for Real Madrid in the 2002 Champions League final?",
+    "options": [
+      "Iker Casillas",
+      "Keylor Navas",
+      "Thibaut Courtois",
+      "Gianluigi Buffon"
+    ],
+    "answer": "Iker Casillas",
+    "id": "general_1301",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player scored Real Madrid's stoppage-time equaliser in the 2014 Champions League final?",
+    "options": [
+      "Sergio Ramos",
+      "Gareth Bale",
+      "Cristiano Ronaldo",
+      "Karim Benzema"
+    ],
+    "answer": "Sergio Ramos",
+    "id": "general_1302",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club lost to Real Madrid in the 2014 Champions League final?",
+    "options": [
+      "Atlético Madrid",
+      "Barcelona",
+      "Bayern Munich",
+      "Juventus"
+    ],
+    "answer": "Atlético Madrid",
+    "id": "general_1303",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "What is Real Madrid's 10th European Cup famously called?",
+    "options": [
+      "La Décima",
+      "La Remontada",
+      "El Clásico",
+      "La Roja"
+    ],
+    "answer": "La Décima",
+    "id": "general_1304",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player scored a famous overhead kick for Real Madrid against Juventus in 2018?",
+    "options": [
+      "Cristiano Ronaldo",
+      "Gareth Bale",
+      "Karim Benzema",
+      "Sergio Ramos"
+    ],
+    "answer": "Cristiano Ronaldo",
+    "id": "general_1305",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player scored a famous bicycle kick in the 2018 Champions League final?",
+    "options": [
+      "Gareth Bale",
+      "Cristiano Ronaldo",
+      "Sadio Mané",
+      "Karim Benzema"
+    ],
+    "answer": "Gareth Bale",
+    "id": "general_1306",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which goalkeeper made two famous mistakes in the 2018 Champions League final?",
+    "options": [
+      "Loris Karius",
+      "Alisson",
+      "Simon Mignolet",
+      "David de Gea"
+    ],
+    "answer": "Loris Karius",
+    "id": "general_1307",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club lost the 2018 Champions League final to Real Madrid?",
+    "options": [
+      "Liverpool",
+      "Juventus",
+      "Bayern Munich",
+      "PSG"
+    ],
+    "answer": "Liverpool",
+    "id": "general_1308",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which player is known as 'The Egyptian King'?",
+    "options": [
+      "Mohamed Salah",
+      "Riyad Mahrez",
+      "Hakim Ziyech",
+      "Achraf Hakimi"
+    ],
+    "answer": "Mohamed Salah",
+    "id": "general_1309",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is known as 'The Little Magician'?",
+    "options": [
+      "Philippe Coutinho",
+      "Sergio Busquets",
+      "Gerard Piqué",
+      "Jordi Alba"
+    ],
+    "answer": "Philippe Coutinho",
+    "id": "general_1310",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is nicknamed 'El Niño'?",
+    "options": [
+      "Fernando Torres",
+      "David Villa",
+      "Raúl",
+      "Sergio Ramos"
+    ],
+    "answer": "Fernando Torres",
+    "id": "general_1311",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is nicknamed 'El Fenómeno'?",
+    "options": [
+      "Ronaldo Nazário",
+      "Ronaldinho",
+      "Cristiano Ronaldo",
+      "Neymar"
+    ],
+    "answer": "Ronaldo Nazário",
+    "id": "general_1312",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is nicknamed 'The Kaiser'?",
+    "options": [
+      "Franz Beckenbauer",
+      "Gerd Müller",
+      "Lothar Matthäus",
+      "Oliver Kahn"
+    ],
+    "answer": "Franz Beckenbauer",
+    "id": "general_1313",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is nicknamed 'Der Bomber'?",
+    "options": [
+      "Gerd Müller",
+      "Miroslav Klose",
+      "Thomas Müller",
+      "Jürgen Klinsmann"
+    ],
+    "answer": "Gerd Müller",
+    "id": "general_1314",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which goalkeeper was nicknamed 'Der Titan'?",
+    "options": [
+      "Oliver Kahn",
+      "Manuel Neuer",
+      "Jens Lehmann",
+      "Sepp Maier"
+    ],
+    "answer": "Oliver Kahn",
+    "id": "general_1315",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player was known as 'The Divine Ponytail'?",
+    "options": [
+      "Roberto Baggio",
+      "Alessandro Del Piero",
+      "Francesco Totti",
+      "Andrea Pirlo"
+    ],
+    "answer": "Roberto Baggio",
+    "id": "general_1316",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is often called 'The King of Rome'?",
+    "options": [
+      "Francesco Totti",
+      "Daniele De Rossi",
+      "Paulo Dybala",
+      "Gabriel Batistuta"
+    ],
+    "answer": "Francesco Totti",
+    "id": "general_1317",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is known as 'The Prince of Rome'?",
+    "options": [
+      "Daniele De Rossi",
+      "Francesco Totti",
+      "Alessandro Nesta",
+      "Gianluca Mancini"
+    ],
+    "answer": "Daniele De Rossi",
+    "id": "general_1318",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which club is strongly associated with the phrase 'You'll Never Walk Alone'?",
+    "options": [
+      "Liverpool",
+      "Chelsea",
+      "Arsenal",
+      "Manchester City"
+    ],
+    "answer": "Liverpool",
+    "id": "general_1319",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is strongly associated with the anthem 'Blue Moon'?",
+    "options": [
+      "Manchester City",
+      "Chelsea",
+      "Everton",
+      "Leicester City"
+    ],
+    "answer": "Manchester City",
+    "id": "general_1320",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is strongly associated with the song 'I'm Forever Blowing Bubbles'?",
+    "options": [
+      "West Ham United",
+      "Crystal Palace",
+      "Tottenham",
+      "Fulham"
+    ],
+    "answer": "West Ham United",
+    "id": "general_1321",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is strongly associated with 'Glory Glory Man United'?",
+    "options": [
+      "Manchester United",
+      "Liverpool",
+      "Arsenal",
+      "Chelsea"
+    ],
+    "answer": "Manchester United",
+    "id": "general_1322",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club's fans are famous for 'You'll Never Walk Alone' at Celtic Park?",
+    "options": [
+      "Celtic",
+      "Rangers",
+      "Aberdeen",
+      "Hearts"
+    ],
+    "answer": "Celtic",
+    "id": "general_1323",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is strongly associated with 'Marching On Together'?",
+    "options": [
+      "Leeds United",
+      "Newcastle United",
+      "Everton",
+      "Aston Villa"
+    ],
+    "answer": "Leeds United",
+    "id": "general_1324",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is strongly associated with 'North London Forever'?",
+    "options": [
+      "Arsenal",
+      "Tottenham",
+      "Chelsea",
+      "West Ham United"
+    ],
+    "answer": "Arsenal",
+    "id": "general_1325",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is strongly associated with 'When the Saints Go Marching In'?",
+    "options": [
+      "Southampton",
+      "Brighton",
+      "Bournemouth",
+      "Portsmouth"
+    ],
+    "answer": "Southampton",
+    "id": "general_1326",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which German club is famous for the 'Yellow Wall'?",
+    "options": [
+      "Borussia Dortmund",
+      "Bayern Munich",
+      "Schalke",
+      "Stuttgart"
+    ],
+    "answer": "Borussia Dortmund",
+    "id": "general_1327",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which stadium has the famous 'Yellow Wall' stand?",
+    "options": [
+      "Signal Iduna Park",
+      "Allianz Arena",
+      "Olympiastadion",
+      "Veltins-Arena"
+    ],
+    "answer": "Signal Iduna Park",
+    "id": "general_1328",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which player wore number 10 for Barcelona and Argentina for many years?",
+    "options": [
+      "Lionel Messi",
+      "Andrés Iniesta",
+      "Xavi",
+      "Neymar"
+    ],
+    "answer": "Lionel Messi",
+    "id": "general_1329",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player wore number 7 at Manchester United and Real Madrid?",
+    "options": [
+      "Cristiano Ronaldo",
+      "David Beckham",
+      "Eric Cantona",
+      "Raúl"
+    ],
+    "answer": "Cristiano Ronaldo",
+    "id": "general_1330",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Barcelona's number 6 shirt?",
+    "options": [
+      "Xavi",
+      "Lionel Messi",
+      "Carles Puyol",
+      "Ronaldinho"
+    ],
+    "answer": "Xavi",
+    "id": "general_1331",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Barcelona's number 8 shirt?",
+    "options": [
+      "Andrés Iniesta",
+      "Xavi",
+      "Sergio Busquets",
+      "Gerard Piqué"
+    ],
+    "answer": "Andrés Iniesta",
+    "id": "general_1332",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Real Madrid's number 4 shirt?",
+    "options": [
+      "Sergio Ramos",
+      "Karim Benzema",
+      "Luka Modrić",
+      "Marcelo"
+    ],
+    "answer": "Sergio Ramos",
+    "id": "general_1333",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Real Madrid's number 5 shirt?",
+    "options": [
+      "Zinedine Zidane",
+      "Cristiano Ronaldo",
+      "Raúl",
+      "Iker Casillas"
+    ],
+    "answer": "Zinedine Zidane",
+    "id": "general_1334",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with AC Milan's number 3 shirt?",
+    "options": [
+      "Paolo Maldini",
+      "Andrea Pirlo",
+      "Kaká",
+      "Alessandro Nesta"
+    ],
+    "answer": "Paolo Maldini",
+    "id": "general_1335",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with AC Milan's number 22 shirt?",
+    "options": [
+      "Kaká",
+      "Paolo Maldini",
+      "Andrea Pirlo",
+      "Filippo Inzaghi"
+    ],
+    "answer": "Kaká",
+    "id": "general_1336",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Juventus' number 10 shirt?",
+    "options": [
+      "Alessandro Del Piero",
+      "Gianluigi Buffon",
+      "Giorgio Chiellini",
+      "Pavel Nedvěd"
+    ],
+    "answer": "Alessandro Del Piero",
+    "id": "general_1337",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which goalkeeper is strongly associated with Juventus' number 1 shirt?",
+    "options": [
+      "Gianluigi Buffon",
+      "Manuel Neuer",
+      "Iker Casillas",
+      "Petr Čech"
+    ],
+    "answer": "Gianluigi Buffon",
+    "id": "general_1338",
+    "category": "general"
+  },  {
+    "difficulty": "Easy",
+    "question": "Which manager is most associated with Arsenal's Invincibles season?",
+    "options": [
+      "Arsène Wenger",
+      "Sir Alex Ferguson",
+      "José Mourinho",
+      "Rafael Benítez"
+    ],
+    "answer": "Arsène Wenger",
+    "id": "general_1339",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which manager is most associated with Manchester United's Premier League dominance?",
+    "options": [
+      "Sir Alex Ferguson",
+      "Pep Guardiola",
+      "Carlo Ancelotti",
+      "Jürgen Klopp"
+    ],
+    "answer": "Sir Alex Ferguson",
+    "id": "general_1340",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which manager led Liverpool to the Premier League title in 2020?",
+    "options": [
+      "Jürgen Klopp",
+      "Rafael Benítez",
+      "Brendan Rodgers",
+      "Kenny Dalglish"
+    ],
+    "answer": "Jürgen Klopp",
+    "id": "general_1341",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which manager led Manchester City to their first Champions League title?",
+    "options": [
+      "Pep Guardiola",
+      "Roberto Mancini",
+      "Manuel Pellegrini",
+      "Carlo Ancelotti"
+    ],
+    "answer": "Pep Guardiola",
+    "id": "general_1342",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which manager led Chelsea to their first Premier League title?",
+    "options": [
+      "José Mourinho",
+      "Carlo Ancelotti",
+      "Antonio Conte",
+      "Claudio Ranieri"
+    ],
+    "answer": "José Mourinho",
+    "id": "general_1343",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which manager led Leicester City to the Premier League title in 2016?",
+    "options": [
+      "Claudio Ranieri",
+      "Brendan Rodgers",
+      "Nigel Pearson",
+      "Roberto Mancini"
+    ],
+    "answer": "Claudio Ranieri",
+    "id": "general_1344",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which manager is famous for saying 'I am a special one'?",
+    "options": [
+      "José Mourinho",
+      "Pep Guardiola",
+      "Jürgen Klopp",
+      "Antonio Conte"
+    ],
+    "answer": "José Mourinho",
+    "id": "general_1345",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which manager is strongly associated with tiki-taka football at Barcelona?",
+    "options": [
+      "Pep Guardiola",
+      "José Mourinho",
+      "Diego Simeone",
+      "Carlo Ancelotti"
+    ],
+    "answer": "Pep Guardiola",
+    "id": "general_1346",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which manager is strongly associated with Atlético Madrid?",
+    "options": [
+      "Diego Simeone",
+      "Zinedine Zidane",
+      "Luis Enrique",
+      "Unai Emery"
+    ],
+    "answer": "Diego Simeone",
+    "id": "general_1347",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which manager led Real Madrid to three Champions League titles in a row?",
+    "options": [
+      "Zinedine Zidane",
+      "José Mourinho",
+      "Carlo Ancelotti",
+      "Rafael Benítez"
+    ],
+    "answer": "Zinedine Zidane",
+    "id": "general_1348",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed the Red Devils?",
+    "options": [
+      "Manchester United",
+      "Liverpool",
+      "Arsenal",
+      "Bayern Munich"
+    ],
+    "answer": "Manchester United",
+    "id": "general_1349",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed the Gunners?",
+    "options": [
+      "Arsenal",
+      "Chelsea",
+      "Tottenham",
+      "West Ham United"
+    ],
+    "answer": "Arsenal",
+    "id": "general_1350",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed the Blues?",
+    "options": [
+      "Chelsea",
+      "Liverpool",
+      "Arsenal",
+      "Tottenham"
+    ],
+    "answer": "Chelsea",
+    "id": "general_1351",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed the Toffees?",
+    "options": [
+      "Everton",
+      "West Ham United",
+      "Aston Villa",
+      "Leeds United"
+    ],
+    "answer": "Everton",
+    "id": "general_1352",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed the Hammers?",
+    "options": [
+      "West Ham United",
+      "Aston Villa",
+      "Crystal Palace",
+      "Fulham"
+    ],
+    "answer": "West Ham United",
+    "id": "general_1353",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed the Magpies?",
+    "options": [
+      "Newcastle United",
+      "Leeds United",
+      "Brighton",
+      "Burnley"
+    ],
+    "answer": "Newcastle United",
+    "id": "general_1354",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed the Eagles?",
+    "options": [
+      "Crystal Palace",
+      "Everton",
+      "Southampton",
+      "Norwich City"
+    ],
+    "answer": "Crystal Palace",
+    "id": "general_1355",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed the Foxes?",
+    "options": [
+      "Leicester City",
+      "Wolves",
+      "Nottingham Forest",
+      "Brentford"
+    ],
+    "answer": "Leicester City",
+    "id": "general_1356",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed the Saints?",
+    "options": [
+      "Southampton",
+      "Brighton",
+      "Bournemouth",
+      "Fulham"
+    ],
+    "answer": "Southampton",
+    "id": "general_1357",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed Wolves?",
+    "options": [
+      "Wolverhampton Wanderers",
+      "West Bromwich Albion",
+      "Watford",
+      "Wigan Athletic"
+    ],
+    "answer": "Wolverhampton Wanderers",
+    "id": "general_1358",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed Los Blancos?",
+    "options": [
+      "Real Madrid",
+      "Barcelona",
+      "Valencia",
+      "Sevilla"
+    ],
+    "answer": "Real Madrid",
+    "id": "general_1359",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed Blaugrana?",
+    "options": [
+      "Barcelona",
+      "Real Madrid",
+      "Atlético Madrid",
+      "Sevilla"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1360",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed Los Colchoneros?",
+    "options": [
+      "Atlético Madrid",
+      "Real Madrid",
+      "Valencia",
+      "Villarreal"
+    ],
+    "answer": "Atlético Madrid",
+    "id": "general_1361",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed the Yellow Submarine?",
+    "options": [
+      "Villarreal",
+      "Valencia",
+      "Sevilla",
+      "Real Betis"
+    ],
+    "answer": "Villarreal",
+    "id": "general_1362",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed Los Che?",
+    "options": [
+      "Valencia",
+      "Sevilla",
+      "Real Betis",
+      "Athletic Club"
+    ],
+    "answer": "Valencia",
+    "id": "general_1363",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed the Old Lady?",
+    "options": [
+      "Juventus",
+      "AC Milan",
+      "Inter",
+      "Roma"
+    ],
+    "answer": "Juventus",
+    "id": "general_1364",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed the Rossoneri?",
+    "options": [
+      "AC Milan",
+      "Inter",
+      "Juventus",
+      "Roma"
+    ],
+    "answer": "AC Milan",
+    "id": "general_1365",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed the Nerazzurri?",
+    "options": [
+      "Inter",
+      "AC Milan",
+      "Atalanta",
+      "Lazio"
+    ],
+    "answer": "Inter",
+    "id": "general_1366",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed the Giallorossi?",
+    "options": [
+      "Roma",
+      "Lazio",
+      "Napoli",
+      "Fiorentina"
+    ],
+    "answer": "Roma",
+    "id": "general_1367",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is nicknamed the Partenopei?",
+    "options": [
+      "Napoli",
+      "Roma",
+      "Lazio",
+      "Sampdoria"
+    ],
+    "answer": "Napoli",
+    "id": "general_1368",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with the number 14 shirt?",
+    "options": [
+      "Johan Cruyff",
+      "Pelé",
+      "Diego Maradona",
+      "Zinedine Zidane"
+    ],
+    "answer": "Johan Cruyff",
+    "id": "general_1369",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with the number 10 shirt for Argentina?",
+    "options": [
+      "Diego Maradona",
+      "Gabriel Batistuta",
+      "Javier Zanetti",
+      "Sergio Agüero"
+    ],
+    "answer": "Diego Maradona",
+    "id": "general_1370",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player wore number 10 for Brazil at the 2002 World Cup?",
+    "options": [
+      "Rivaldo",
+      "Ronaldo",
+      "Ronaldinho",
+      "Kaká"
+    ],
+    "answer": "Rivaldo",
+    "id": "general_1371",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player wore number 9 for Brazil at the 2002 World Cup?",
+    "options": [
+      "Ronaldo",
+      "Rivaldo",
+      "Ronaldinho",
+      "Cafu"
+    ],
+    "answer": "Ronaldo",
+    "id": "general_1372",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player wore number 11 for Brazil at the 2002 World Cup?",
+    "options": [
+      "Ronaldinho",
+      "Ronaldo",
+      "Rivaldo",
+      "Roberto Carlos"
+    ],
+    "answer": "Ronaldinho",
+    "id": "general_1373",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Liverpool's number 8 shirt?",
+    "options": [
+      "Steven Gerrard",
+      "Mohamed Salah",
+      "Fernando Torres",
+      "Jamie Carragher"
+    ],
+    "answer": "Steven Gerrard",
+    "id": "general_1374",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Chelsea's number 8 shirt?",
+    "options": [
+      "Frank Lampard",
+      "Didier Drogba",
+      "John Terry",
+      "Eden Hazard"
+    ],
+    "answer": "Frank Lampard",
+    "id": "general_1375",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Manchester United's number 18 shirt?",
+    "options": [
+      "Paul Scholes",
+      "Ryan Giggs",
+      "Wayne Rooney",
+      "Roy Keane"
+    ],
+    "answer": "Paul Scholes",
+    "id": "general_1376",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Manchester United's number 11 shirt?",
+    "options": [
+      "Ryan Giggs",
+      "Paul Scholes",
+      "Roy Keane",
+      "Rio Ferdinand"
+    ],
+    "answer": "Ryan Giggs",
+    "id": "general_1377",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Manchester United's number 10 shirt in the 2010s?",
+    "options": [
+      "Wayne Rooney",
+      "Cristiano Ronaldo",
+      "Paul Scholes",
+      "David Beckham"
+    ],
+    "answer": "Wayne Rooney",
+    "id": "general_1378",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the 'Why always me?' shirt celebration?",
+    "options": [
+      "Mario Balotelli",
+      "Zlatan Ibrahimović",
+      "Paul Pogba",
+      "Carlos Tevez"
+    ],
+    "answer": "Mario Balotelli",
+    "id": "general_1379",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club was Mario Balotelli playing for during the 'Why always me?' celebration?",
+    "options": [
+      "Manchester City",
+      "Liverpool",
+      "Inter",
+      "AC Milan"
+    ],
+    "answer": "Manchester City",
+    "id": "general_1380",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the 'I belong to Jesus' shirt celebration?",
+    "options": [
+      "Kaká",
+      "Neymar",
+      "Roberto Firmino",
+      "Rivaldo"
+    ],
+    "answer": "Kaká",
+    "id": "general_1381",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the baby-rocking celebration?",
+    "options": [
+      "Bebeto",
+      "Romário",
+      "Ronaldo",
+      "Rivaldo"
+    ],
+    "answer": "Bebeto",
+    "id": "general_1382",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the robot celebration?",
+    "options": [
+      "Peter Crouch",
+      "Wayne Rooney",
+      "Jermain Defoe",
+      "Michael Owen"
+    ],
+    "answer": "Peter Crouch",
+    "id": "general_1383",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the golf celebration at Real Madrid?",
+    "options": [
+      "Gareth Bale",
+      "Cristiano Ronaldo",
+      "Karim Benzema",
+      "Sergio Ramos"
+    ],
+    "answer": "Gareth Bale",
+    "id": "general_1384",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the 'calma' celebration at Camp Nou?",
+    "options": [
+      "Cristiano Ronaldo",
+      "Lionel Messi",
+      "Sergio Ramos",
+      "Raúl"
+    ],
+    "answer": "Cristiano Ronaldo",
+    "id": "general_1385",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for kissing his wrist tattoos after scoring?",
+    "options": [
+      "Luis Suárez",
+      "Lionel Messi",
+      "Neymar",
+      "Sergio Ramos"
+    ],
+    "answer": "Luis Suárez",
+    "id": "general_1386",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the 'take the L' dance celebration?",
+    "options": [
+      "Antoine Griezmann",
+      "Kylian Mbappé",
+      "Paul Pogba",
+      "Neymar"
+    ],
+    "answer": "Antoine Griezmann",
+    "id": "general_1387",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the heart-hands celebration at Tottenham?",
+    "options": [
+      "Son Heung-min",
+      "Harry Kane",
+      "Dele Alli",
+      "Christian Eriksen"
+    ],
+    "answer": "Son Heung-min",
+    "id": "general_1388",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which trophy is won by the Champions League winner?",
+    "options": [
+      "European Cup",
+      "FA Cup",
+      "Copa del Rey",
+      "Community Shield"
+    ],
+    "answer": "European Cup",
+    "id": "general_1389",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which trophy is won by the Europa League winner?",
+    "options": [
+      "Europa League trophy",
+      "European Cup",
+      "FA Cup",
+      "Super Cup"
+    ],
+    "answer": "Europa League trophy",
+    "id": "general_1390",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which English cup competition is the oldest national football competition?",
+    "options": [
+      "FA Cup",
+      "League Cup",
+      "Community Shield",
+      "EFL Trophy"
+    ],
+    "answer": "FA Cup",
+    "id": "general_1391",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which Spanish cup competition is called the Copa del Rey?",
+    "options": [
+      "Spanish King's Cup",
+      "Spanish Super Cup",
+      "Spanish League Cup",
+      "Spanish Charity Shield"
+    ],
+    "answer": "Spanish King's Cup",
+    "id": "general_1392",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which Italian cup competition is called the Coppa Italia?",
+    "options": [
+      "Italian Cup",
+      "Italian Super Cup",
+      "Italian League",
+      "Italian Shield"
+    ],
+    "answer": "Italian Cup",
+    "id": "general_1393",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which German cup competition is called the DFB-Pokal?",
+    "options": [
+      "German Cup",
+      "German Super Cup",
+      "German League",
+      "German Shield"
+    ],
+    "answer": "German Cup",
+    "id": "general_1394",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which French cup competition is called the Coupe de France?",
+    "options": [
+      "French Cup",
+      "French Super Cup",
+      "French League",
+      "French Shield"
+    ],
+    "answer": "French Cup",
+    "id": "general_1395",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which match is usually played between the Champions League winner and Europa League winner?",
+    "options": [
+      "UEFA Super Cup",
+      "Community Shield",
+      "Club World Cup final",
+      "Nations League final"
+    ],
+    "answer": "UEFA Super Cup",
+    "id": "general_1396",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which tournament is contested by national teams from Europe?",
+    "options": [
+      "UEFA European Championship",
+      "Copa América",
+      "AFCON",
+      "Gold Cup"
+    ],
+    "answer": "UEFA European Championship",
+    "id": "general_1397",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which tournament is contested by national teams from South America?",
+    "options": [
+      "Copa América",
+      "UEFA European Championship",
+      "AFCON",
+      "Asian Cup"
+    ],
+    "answer": "Copa América",
+    "id": "general_1398",
+    "category": "general"
+  },  {
+    "difficulty": "Easy",
+    "question": "Which club is known for the motto 'Més que un club'?",
+    "options": [
+      "Barcelona",
+      "Real Madrid",
+      "Atlético Madrid",
+      "Valencia"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1399",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is known for the motto 'Hala Madrid'?",
+    "options": [
+      "Real Madrid",
+      "Barcelona",
+      "Sevilla",
+      "Villarreal"
+    ],
+    "answer": "Real Madrid",
+    "id": "general_1400",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is known for the chant 'Allez Allez Allez' in recent European nights?",
+    "options": [
+      "Liverpool",
+      "Chelsea",
+      "Arsenal",
+      "Everton"
+    ],
+    "answer": "Liverpool",
+    "id": "general_1401",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is strongly associated with the phrase 'This is Anfield'?",
+    "options": [
+      "Liverpool",
+      "Manchester United",
+      "Chelsea",
+      "Arsenal"
+    ],
+    "answer": "Liverpool",
+    "id": "general_1402",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which stadium has the famous 'This is Anfield' sign?",
+    "options": [
+      "Anfield",
+      "Old Trafford",
+      "Stamford Bridge",
+      "Emirates Stadium"
+    ],
+    "answer": "Anfield",
+    "id": "general_1403",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which stadium is nicknamed the Theatre of Dreams?",
+    "options": [
+      "Old Trafford",
+      "Anfield",
+      "Wembley",
+      "Etihad Stadium"
+    ],
+    "answer": "Old Trafford",
+    "id": "general_1404",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at Old Trafford?",
+    "options": [
+      "Manchester United",
+      "Manchester City",
+      "Liverpool",
+      "Everton"
+    ],
+    "answer": "Manchester United",
+    "id": "general_1405",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at Stamford Bridge?",
+    "options": [
+      "Chelsea",
+      "Arsenal",
+      "Tottenham",
+      "West Ham United"
+    ],
+    "answer": "Chelsea",
+    "id": "general_1406",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at the Emirates Stadium?",
+    "options": [
+      "Arsenal",
+      "Tottenham",
+      "Chelsea",
+      "Fulham"
+    ],
+    "answer": "Arsenal",
+    "id": "general_1407",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at the Tottenham Hotspur Stadium?",
+    "options": [
+      "Tottenham",
+      "Arsenal",
+      "Chelsea",
+      "West Ham United"
+    ],
+    "answer": "Tottenham",
+    "id": "general_1408",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at the Etihad Stadium?",
+    "options": [
+      "Manchester City",
+      "Manchester United",
+      "Newcastle United",
+      "Leicester City"
+    ],
+    "answer": "Manchester City",
+    "id": "general_1409",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at St James' Park?",
+    "options": [
+      "Newcastle United",
+      "Sunderland",
+      "Leeds United",
+      "Everton"
+    ],
+    "answer": "Newcastle United",
+    "id": "general_1410",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at Goodison Park?",
+    "options": [
+      "Everton",
+      "Liverpool",
+      "Aston Villa",
+      "West Ham United"
+    ],
+    "answer": "Everton",
+    "id": "general_1411",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at Villa Park?",
+    "options": [
+      "Aston Villa",
+      "Birmingham City",
+      "West Bromwich Albion",
+      "Wolves"
+    ],
+    "answer": "Aston Villa",
+    "id": "general_1412",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at the London Stadium?",
+    "options": [
+      "West Ham United",
+      "Chelsea",
+      "Arsenal",
+      "Tottenham"
+    ],
+    "answer": "West Ham United",
+    "id": "general_1413",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at Selhurst Park?",
+    "options": [
+      "Crystal Palace",
+      "Brighton",
+      "Fulham",
+      "Brentford"
+    ],
+    "answer": "Crystal Palace",
+    "id": "general_1414",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at Craven Cottage?",
+    "options": [
+      "Fulham",
+      "Chelsea",
+      "Brentford",
+      "QPR"
+    ],
+    "answer": "Fulham",
+    "id": "general_1415",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at Elland Road?",
+    "options": [
+      "Leeds United",
+      "Sheffield Wednesday",
+      "Nottingham Forest",
+      "Derby County"
+    ],
+    "answer": "Leeds United",
+    "id": "general_1416",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at the City Ground?",
+    "options": [
+      "Nottingham Forest",
+      "Leicester City",
+      "Derby County",
+      "Sheffield United"
+    ],
+    "answer": "Nottingham Forest",
+    "id": "general_1417",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club plays at Molineux?",
+    "options": [
+      "Wolves",
+      "Aston Villa",
+      "West Bromwich Albion",
+      "Birmingham City"
+    ],
+    "answer": "Wolves",
+    "id": "general_1418",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which player is known for the 'cupped ears' celebration at Manchester United?",
+    "options": [
+      "Memphis Depay",
+      "Bruno Fernandes",
+      "Wayne Rooney",
+      "Marcus Rashford"
+    ],
+    "answer": "Memphis Depay",
+    "id": "general_1419",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the 'shark' celebration at Chelsea?",
+    "options": [
+      "Didier Drogba",
+      "Diego Costa",
+      "Eden Hazard",
+      "Nicolas Anelka"
+    ],
+    "answer": "Didier Drogba",
+    "id": "general_1420",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for doing a front flip celebration?",
+    "options": [
+      "Obafemi Martins",
+      "Peter Crouch",
+      "Wayne Rooney",
+      "Zlatan Ibrahimović"
+    ],
+    "answer": "Obafemi Martins",
+    "id": "general_1421",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player became famous for the backflip celebration at Borussia Dortmund?",
+    "options": [
+      "Pierre-Emerick Aubameyang",
+      "Robert Lewandowski",
+      "Marco Reus",
+      "Mario Götze"
+    ],
+    "answer": "Pierre-Emerick Aubameyang",
+    "id": "general_1422",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for wearing a Spider-Man mask celebration?",
+    "options": [
+      "Pierre-Emerick Aubameyang",
+      "Neymar",
+      "Kylian Mbappé",
+      "Mario Balotelli"
+    ],
+    "answer": "Pierre-Emerick Aubameyang",
+    "id": "general_1423",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the 'salt bae' celebration?",
+    "options": [
+      "Nicolò Zaniolo",
+      "Cristiano Ronaldo",
+      "Antoine Griezmann",
+      "Paulo Dybala"
+    ],
+    "answer": "Nicolò Zaniolo",
+    "id": "general_1424",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is famous for the gladiator mask celebration?",
+    "options": [
+      "Paulo Dybala",
+      "Lionel Messi",
+      "Ángel Di María",
+      "Lautaro Martínez"
+    ],
+    "answer": "Paulo Dybala",
+    "id": "general_1425",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is known for the 'calma' gesture after scoring at Camp Nou?",
+    "options": [
+      "Cristiano Ronaldo",
+      "Raúl",
+      "Sergio Ramos",
+      "Karim Benzema"
+    ],
+    "answer": "Cristiano Ronaldo",
+    "id": "general_1426",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player celebrated by revealing a shirt saying 'Why always me?'?",
+    "options": [
+      "Mario Balotelli",
+      "Carlos Tevez",
+      "Emmanuel Adebayor",
+      "Robinho"
+    ],
+    "answer": "Mario Balotelli",
+    "id": "general_1427",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player famously ran the length of the pitch to celebrate against Arsenal?",
+    "options": [
+      "Emmanuel Adebayor",
+      "Robin van Persie",
+      "Samir Nasri",
+      "Carlos Tevez"
+    ],
+    "answer": "Emmanuel Adebayor",
+    "id": "general_1428",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which player is known as 'The Non-Flying Dutchman'?",
+    "options": [
+      "Dennis Bergkamp",
+      "Robin van Persie",
+      "Arjen Robben",
+      "Ruud van Nistelrooy"
+    ],
+    "answer": "Dennis Bergkamp",
+    "id": "general_1429",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is known as 'The Iceman'?",
+    "options": [
+      "Dennis Bergkamp",
+      "Zlatan Ibrahimović",
+      "Andrea Pirlo",
+      "Fernando Torres"
+    ],
+    "answer": "Dennis Bergkamp",
+    "id": "general_1430",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is known as 'The Baby-Faced Assassin'?",
+    "options": [
+      "Ole Gunnar Solskjær",
+      "Michael Owen",
+      "Wayne Rooney",
+      "Javier Hernández"
+    ],
+    "answer": "Ole Gunnar Solskjær",
+    "id": "general_1431",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is known as 'Chicharito'?",
+    "options": [
+      "Javier Hernández",
+      "Carlos Vela",
+      "Hirving Lozano",
+      "Raúl Jiménez"
+    ],
+    "answer": "Javier Hernández",
+    "id": "general_1432",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is known as 'El Pistolero'?",
+    "options": [
+      "Luis Suárez",
+      "Edinson Cavani",
+      "Diego Forlán",
+      "Sergio Agüero"
+    ],
+    "answer": "Luis Suárez",
+    "id": "general_1433",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is known as 'Kun'?",
+    "options": [
+      "Sergio Agüero",
+      "Carlos Tevez",
+      "Ángel Di María",
+      "Paulo Dybala"
+    ],
+    "answer": "Sergio Agüero",
+    "id": "general_1434",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is known as 'El Apache'?",
+    "options": [
+      "Carlos Tevez",
+      "Sergio Agüero",
+      "Javier Mascherano",
+      "Juan Román Riquelme"
+    ],
+    "answer": "Carlos Tevez",
+    "id": "general_1435",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is known as 'El Fideo'?",
+    "options": [
+      "Ángel Di María",
+      "Lionel Messi",
+      "Paulo Dybala",
+      "Gonzalo Higuaín"
+    ],
+    "answer": "Ángel Di María",
+    "id": "general_1436",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is known as 'La Pulga'?",
+    "options": [
+      "Lionel Messi",
+      "Diego Maradona",
+      "Sergio Agüero",
+      "Pablo Aimar"
+    ],
+    "answer": "Lionel Messi",
+    "id": "general_1437",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is known as 'O Fenômeno'?",
+    "options": [
+      "Ronaldo Nazário",
+      "Ronaldinho",
+      "Rivaldo",
+      "Romário"
+    ],
+    "answer": "Ronaldo Nazário",
+    "id": "general_1438",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which player was famous for wearing Edgar Davids-style protective glasses?",
+    "options": [
+      "Edgar Davids",
+      "Clarence Seedorf",
+      "Patrick Kluivert",
+      "Ruud Gullit"
+    ],
+    "answer": "Edgar Davids",
+    "id": "general_1439",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which Dutch player was nicknamed 'The Pitbull'?",
+    "options": [
+      "Edgar Davids",
+      "Wesley Sneijder",
+      "Mark van Bommel",
+      "Nigel de Jong"
+    ],
+    "answer": "Edgar Davids",
+    "id": "general_1440",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which Italian midfielder was nicknamed 'The Architect'?",
+    "options": [
+      "Andrea Pirlo",
+      "Gennaro Gattuso",
+      "Daniele De Rossi",
+      "Claudio Marchisio"
+    ],
+    "answer": "Andrea Pirlo",
+    "id": "general_1441",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which Italian midfielder was nicknamed 'Ringhio'?",
+    "options": [
+      "Gennaro Gattuso",
+      "Andrea Pirlo",
+      "Francesco Totti",
+      "Alessandro Del Piero"
+    ],
+    "answer": "Gennaro Gattuso",
+    "id": "general_1442",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which Italian defender was known as 'Il Capitano' at AC Milan?",
+    "options": [
+      "Paolo Maldini",
+      "Alessandro Nesta",
+      "Fabio Cannavaro",
+      "Franco Baresi"
+    ],
+    "answer": "Paolo Maldini",
+    "id": "general_1443",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which goalkeeper is known as 'San Iker'?",
+    "options": [
+      "Iker Casillas",
+      "Gianluigi Buffon",
+      "Manuel Neuer",
+      "Petr Čech"
+    ],
+    "answer": "Iker Casillas",
+    "id": "general_1444",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which goalkeeper is known as 'Superman' in Italian football culture?",
+    "options": [
+      "Gianluigi Buffon",
+      "Iker Casillas",
+      "Oliver Kahn",
+      "Petr Čech"
+    ],
+    "answer": "Gianluigi Buffon",
+    "id": "general_1445",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which goalkeeper is famous for wearing a protective helmet?",
+    "options": [
+      "Petr Čech",
+      "Gianluigi Buffon",
+      "David de Gea",
+      "Manuel Neuer"
+    ],
+    "answer": "Petr Čech",
+    "id": "general_1446",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which goalkeeper is famous for the sweeper-keeper role with Germany and Bayern Munich?",
+    "options": [
+      "Manuel Neuer",
+      "Oliver Kahn",
+      "Jens Lehmann",
+      "Marc-André ter Stegen"
+    ],
+    "answer": "Manuel Neuer",
+    "id": "general_1447",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which goalkeeper made a famous save from Pelé at the 1970 World Cup?",
+    "options": [
+      "Gordon Banks",
+      "Dino Zoff",
+      "Sepp Maier",
+      "Lev Yashin"
+    ],
+    "answer": "Gordon Banks",
+    "id": "general_1448",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Medium",
+    "question": "Which player scored the 'ghost goal' for Chelsea against Liverpool in 2005?",
+    "options": [
+      "Luis García",
+      "Frank Lampard",
+      "Didier Drogba",
+      "Steven Gerrard"
+    ],
+    "answer": "Luis García",
+    "id": "general_1449",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Liverpool beat in the 2005 Champions League semi-final after the 'ghost goal'?",
+    "options": [
+      "Chelsea",
+      "Juventus",
+      "AC Milan",
+      "Bayer Leverkusen"
+    ],
+    "answer": "Chelsea",
+    "id": "general_1450",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which player scored the famous 'slip' goal against Liverpool in 2014?",
+    "options": [
+      "Demba Ba",
+      "Fernando Torres",
+      "Samuel Eto'o",
+      "Willian"
+    ],
+    "answer": "Demba Ba",
+    "id": "general_1451",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club benefited from Steven Gerrard's famous slip in 2014?",
+    "options": [
+      "Chelsea",
+      "Manchester City",
+      "Arsenal",
+      "Everton"
+    ],
+    "answer": "Chelsea",
+    "id": "general_1452",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which player scored the famous long-range goal for Manchester City against Leicester in 2019?",
+    "options": [
+      "Vincent Kompany",
+      "Kevin De Bruyne",
+      "Yaya Touré",
+      "David Silva"
+    ],
+    "answer": "Vincent Kompany",
+    "id": "general_1453",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which player scored a famous volley for Newcastle against Aston Villa in 2019?",
+    "options": [
+      "Papiss Cissé",
+      "Jonjo Shelvey",
+      "Ayoze Pérez",
+      "Miguel Almirón"
+    ],
+    "answer": "Papiss Cissé",
+    "id": "general_1454",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which player scored a famous outside-of-the-foot goal for Portugal against Belgium in 2007?",
+    "options": [
+      "Ricardo Quaresma",
+      "Cristiano Ronaldo",
+      "Nani",
+      "Deco"
+    ],
+    "answer": "Ricardo Quaresma",
+    "id": "general_1455",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which player is especially known for the trivela technique?",
+    "options": [
+      "Ricardo Quaresma",
+      "David Beckham",
+      "Andrea Pirlo",
+      "Xabi Alonso"
+    ],
+    "answer": "Ricardo Quaresma",
+    "id": "general_1456",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which player scored Arsenal's famous solo goal against Newcastle in 2002?",
+    "options": [
+      "Dennis Bergkamp",
+      "Thierry Henry",
+      "Robert Pirès",
+      "Patrick Vieira"
+    ],
+    "answer": "Dennis Bergkamp",
+    "id": "general_1457",
+    "category": "general"
+  },  {
+    "difficulty": "Easy",
+    "question": "Which club did Cristiano Ronaldo join from Sporting CP in 2003?",
+    "options": [
+      "Manchester United",
+      "Real Madrid",
+      "Juventus",
+      "Barcelona"
+    ],
+    "answer": "Manchester United",
+    "id": "general_1459",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Cristiano Ronaldo join in 2009?",
+    "options": [
+      "Real Madrid",
+      "Barcelona",
+      "Juventus",
+      "PSG"
+    ],
+    "answer": "Real Madrid",
+    "id": "general_1460",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Neymar leave Barcelona for in 2017?",
+    "options": [
+      "PSG",
+      "Real Madrid",
+      "Manchester City",
+      "Chelsea"
+    ],
+    "answer": "PSG",
+    "id": "general_1461",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Luis Suárez join after leaving Liverpool in 2014?",
+    "options": [
+      "Barcelona",
+      "Real Madrid",
+      "Atlético Madrid",
+      "Juventus"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1462",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Gareth Bale leave to join Real Madrid?",
+    "options": [
+      "Tottenham",
+      "Southampton",
+      "Arsenal",
+      "Manchester United"
+    ],
+    "answer": "Tottenham",
+    "id": "general_1463",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Eden Hazard leave to join Real Madrid?",
+    "options": [
+      "Chelsea",
+      "Lille",
+      "Arsenal",
+      "PSG"
+    ],
+    "answer": "Chelsea",
+    "id": "general_1464",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Luka Modrić leave to join Real Madrid?",
+    "options": [
+      "Tottenham",
+      "Dinamo Zagreb",
+      "Inter",
+      "Chelsea"
+    ],
+    "answer": "Tottenham",
+    "id": "general_1465",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Karim Benzema join Real Madrid from?",
+    "options": [
+      "Lyon",
+      "Marseille",
+      "PSG",
+      "Monaco"
+    ],
+    "answer": "Lyon",
+    "id": "general_1466",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Robert Lewandowski leave to join Bayern Munich?",
+    "options": [
+      "Borussia Dortmund",
+      "Lech Poznań",
+      "Schalke",
+      "Wolfsburg"
+    ],
+    "answer": "Borussia Dortmund",
+    "id": "general_1467",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Erling Haaland join from Borussia Dortmund?",
+    "options": [
+      "Manchester City",
+      "Real Madrid",
+      "Bayern Munich",
+      "Chelsea"
+    ],
+    "answer": "Manchester City",
+    "id": "general_1468",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which club is strongly associated with Lionel Messi's early career?",
+    "options": [
+      "Barcelona",
+      "PSG",
+      "Inter Miami",
+      "Newell's Old Boys"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1469",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Lionel Messi join after leaving Barcelona?",
+    "options": [
+      "PSG",
+      "Manchester City",
+      "Inter Miami",
+      "Newell's Old Boys"
+    ],
+    "answer": "PSG",
+    "id": "general_1470",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which MLS club did Lionel Messi join in 2023?",
+    "options": [
+      "Inter Miami",
+      "LA Galaxy",
+      "New York City FC",
+      "Atlanta United"
+    ],
+    "answer": "Inter Miami",
+    "id": "general_1471",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did David Beckham join after leaving Manchester United?",
+    "options": [
+      "Real Madrid",
+      "AC Milan",
+      "LA Galaxy",
+      "PSG"
+    ],
+    "answer": "Real Madrid",
+    "id": "general_1472",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which MLS club did David Beckham famously join?",
+    "options": [
+      "LA Galaxy",
+      "Inter Miami",
+      "New York Red Bulls",
+      "Toronto FC"
+    ],
+    "answer": "LA Galaxy",
+    "id": "general_1473",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Zlatan Ibrahimović join after leaving Barcelona?",
+    "options": [
+      "AC Milan",
+      "Inter",
+      "Juventus",
+      "PSG"
+    ],
+    "answer": "AC Milan",
+    "id": "general_1474",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which French club did Zlatan Ibrahimović play for?",
+    "options": [
+      "PSG",
+      "Marseille",
+      "Lyon",
+      "Monaco"
+    ],
+    "answer": "PSG",
+    "id": "general_1475",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which MLS club did Zlatan Ibrahimović play for?",
+    "options": [
+      "LA Galaxy",
+      "Inter Miami",
+      "New York City FC",
+      "Chicago Fire"
+    ],
+    "answer": "LA Galaxy",
+    "id": "general_1476",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Thierry Henry play for in the Premier League?",
+    "options": [
+      "Arsenal",
+      "Chelsea",
+      "Liverpool",
+      "Manchester United"
+    ],
+    "answer": "Arsenal",
+    "id": "general_1477",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Thierry Henry join after leaving Arsenal?",
+    "options": [
+      "Barcelona",
+      "Real Madrid",
+      "Juventus",
+      "Inter"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1478",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with the number 7 shirt at Manchester United before Cristiano Ronaldo?",
+    "options": [
+      "David Beckham",
+      "Wayne Rooney",
+      "Paul Scholes",
+      "Rio Ferdinand"
+    ],
+    "answer": "David Beckham",
+    "id": "general_1479",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with the number 7 shirt at Manchester United in the 1990s?",
+    "options": [
+      "Eric Cantona",
+      "Roy Keane",
+      "Gary Neville",
+      "Teddy Sheringham"
+    ],
+    "answer": "Eric Cantona",
+    "id": "general_1480",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with the number 14 shirt at Arsenal?",
+    "options": [
+      "Thierry Henry",
+      "Dennis Bergkamp",
+      "Patrick Vieira",
+      "Robert Pirès"
+    ],
+    "answer": "Thierry Henry",
+    "id": "general_1481",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Arsenal's number 10 shirt in the Invincibles era?",
+    "options": [
+      "Dennis Bergkamp",
+      "Thierry Henry",
+      "Patrick Vieira",
+      "Freddie Ljungberg"
+    ],
+    "answer": "Dennis Bergkamp",
+    "id": "general_1482",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Arsenal's number 4 shirt?",
+    "options": [
+      "Patrick Vieira",
+      "Thierry Henry",
+      "Cesc Fàbregas",
+      "Sol Campbell"
+    ],
+    "answer": "Patrick Vieira",
+    "id": "general_1483",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Liverpool's number 9 shirt in the late 2000s?",
+    "options": [
+      "Fernando Torres",
+      "Steven Gerrard",
+      "Luis Suárez",
+      "Dirk Kuyt"
+    ],
+    "answer": "Fernando Torres",
+    "id": "general_1484",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Liverpool's number 7 shirt in the early 2010s?",
+    "options": [
+      "Luis Suárez",
+      "Fernando Torres",
+      "Steven Gerrard",
+      "Daniel Sturridge"
+    ],
+    "answer": "Luis Suárez",
+    "id": "general_1485",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Chelsea's number 26 shirt?",
+    "options": [
+      "John Terry",
+      "Frank Lampard",
+      "Didier Drogba",
+      "Eden Hazard"
+    ],
+    "answer": "John Terry",
+    "id": "general_1486",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Chelsea's number 11 shirt?",
+    "options": [
+      "Didier Drogba",
+      "Frank Lampard",
+      "John Terry",
+      "Claude Makélélé"
+    ],
+    "answer": "Didier Drogba",
+    "id": "general_1487",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player is strongly associated with Chelsea's number 10 shirt in the late 2010s?",
+    "options": [
+      "Eden Hazard",
+      "Didier Drogba",
+      "Frank Lampard",
+      "Oscar"
+    ],
+    "answer": "Eden Hazard",
+    "id": "general_1488",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Ronaldinho play for when he won the Champions League in 2006?",
+    "options": [
+      "Barcelona",
+      "AC Milan",
+      "PSG",
+      "Grêmio"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1489",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Kaká win the Ballon d'Or while playing for?",
+    "options": [
+      "AC Milan",
+      "Real Madrid",
+      "São Paulo",
+      "Orlando City"
+    ],
+    "answer": "AC Milan",
+    "id": "general_1490",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Andrea Pirlo most associated with in the Champions League?",
+    "options": [
+      "AC Milan",
+      "Juventus",
+      "Inter",
+      "Brescia"
+    ],
+    "answer": "AC Milan",
+    "id": "general_1491",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club did Andrea Pirlo join from AC Milan in 2011?",
+    "options": [
+      "Juventus",
+      "Inter",
+      "Roma",
+      "Napoli"
+    ],
+    "answer": "Juventus",
+    "id": "general_1492",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Francesco Totti most associated with?",
+    "options": [
+      "Roma",
+      "Lazio",
+      "AC Milan",
+      "Juventus"
+    ],
+    "answer": "Roma",
+    "id": "general_1493",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Paolo Maldini most associated with?",
+    "options": [
+      "AC Milan",
+      "Inter",
+      "Juventus",
+      "Roma"
+    ],
+    "answer": "AC Milan",
+    "id": "general_1494",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Javier Zanetti most associated with?",
+    "options": [
+      "Inter",
+      "AC Milan",
+      "Juventus",
+      "Roma"
+    ],
+    "answer": "Inter",
+    "id": "general_1495",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Alessandro Del Piero most associated with?",
+    "options": [
+      "Juventus",
+      "AC Milan",
+      "Inter",
+      "Roma"
+    ],
+    "answer": "Juventus",
+    "id": "general_1496",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Steven Gerrard most associated with?",
+    "options": [
+      "Liverpool",
+      "Chelsea",
+      "Rangers",
+      "Aston Villa"
+    ],
+    "answer": "Liverpool",
+    "id": "general_1497",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Jamie Carragher most associated with?",
+    "options": [
+      "Liverpool",
+      "Everton",
+      "Manchester United",
+      "Newcastle United"
+    ],
+    "answer": "Liverpool",
+    "id": "general_1498",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Carles Puyol most associated with?",
+    "options": [
+      "Barcelona",
+      "Real Madrid",
+      "Valencia",
+      "PSG"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1499",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Xavi most associated with?",
+    "options": [
+      "Barcelona",
+      "Real Madrid",
+      "Valencia",
+      "Atlético Madrid"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1500",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Andrés Iniesta most associated with?",
+    "options": [
+      "Barcelona",
+      "Real Madrid",
+      "Atlético Madrid",
+      "Sevilla"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1501",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Iker Casillas most associated with?",
+    "options": [
+      "Real Madrid",
+      "Barcelona",
+      "Porto",
+      "Valencia"
+    ],
+    "answer": "Real Madrid",
+    "id": "general_1502",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Raúl most associated with?",
+    "options": [
+      "Real Madrid",
+      "Barcelona",
+      "Atlético Madrid",
+      "Valencia"
+    ],
+    "answer": "Real Madrid",
+    "id": "general_1503",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Marcelo most associated with?",
+    "options": [
+      "Real Madrid",
+      "Fluminense",
+      "Olympiacos",
+      "Juventus"
+    ],
+    "answer": "Real Madrid",
+    "id": "general_1504",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Dani Alves most associated with in Europe?",
+    "options": [
+      "Barcelona",
+      "PSG",
+      "Juventus",
+      "Sevilla"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1505",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Sergio Busquets most associated with?",
+    "options": [
+      "Barcelona",
+      "Real Madrid",
+      "Inter Miami",
+      "Valencia"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1506",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Gerard Piqué most associated with?",
+    "options": [
+      "Barcelona",
+      "Manchester United",
+      "Real Madrid",
+      "Zaragoza"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1507",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which club is Sergio Ramos most associated with?",
+    "options": [
+      "Real Madrid",
+      "Sevilla",
+      "PSG",
+      "Barcelona"
+    ],
+    "answer": "Real Madrid",
+    "id": "general_1508",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Easy",
+    "question": "Which country won Euro 2004?",
+    "options": [
+      "Greece",
+      "Portugal",
+      "France",
+      "Italy"
+    ],
+    "answer": "Greece",
+    "id": "general_1509",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country hosted Euro 2004?",
+    "options": [
+      "Portugal",
+      "Greece",
+      "France",
+      "Spain"
+    ],
+    "answer": "Portugal",
+    "id": "general_1510",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country won Euro 2008?",
+    "options": [
+      "Spain",
+      "Germany",
+      "Italy",
+      "Netherlands"
+    ],
+    "answer": "Spain",
+    "id": "general_1511",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country won Euro 2012?",
+    "options": [
+      "Spain",
+      "Italy",
+      "Germany",
+      "Portugal"
+    ],
+    "answer": "Spain",
+    "id": "general_1512",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country won Euro 2016?",
+    "options": [
+      "Portugal",
+      "France",
+      "Germany",
+      "Spain"
+    ],
+    "answer": "Portugal",
+    "id": "general_1513",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country won Euro 2020?",
+    "options": [
+      "Italy",
+      "England",
+      "Spain",
+      "France"
+    ],
+    "answer": "Italy",
+    "id": "general_1514",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country did Portugal beat in the Euro 2016 final?",
+    "options": [
+      "France",
+      "Germany",
+      "Spain",
+      "Italy"
+    ],
+    "answer": "France",
+    "id": "general_1515",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which player scored the winning goal for Portugal in the Euro 2016 final?",
+    "options": [
+      "Éder",
+      "Cristiano Ronaldo",
+      "Nani",
+      "Ricardo Quaresma"
+    ],
+    "answer": "Éder",
+    "id": "general_1516",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which country did Italy beat in the Euro 2020 final?",
+    "options": [
+      "England",
+      "Spain",
+      "Belgium",
+      "Denmark"
+    ],
+    "answer": "England",
+    "id": "general_1517",
+    "category": "general"
+  },
+  {
+    "difficulty": "Easy",
+    "question": "Which stadium hosted the Euro 2020 final?",
+    "options": [
+      "Wembley",
+      "Stadio Olimpico",
+      "Allianz Arena",
+      "Camp Nou"
+    ],
+    "answer": "Wembley",
+    "id": "general_1518",
+    "category": "general"
+  },  {
+    "difficulty": "Medium",
+    "question": "Which club did Dimitar Berbatov join Manchester United from?",
+    "options": [
+      "Tottenham",
+      "Bayer Leverkusen",
+      "Fulham",
+      "Monaco"
+    ],
+    "answer": "Tottenham",
+    "id": "general_1519",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Diego Forlán play for before joining Villarreal?",
+    "options": [
+      "Manchester United",
+      "Atlético Madrid",
+      "Inter",
+      "Independiente"
+    ],
+    "answer": "Manchester United",
+    "id": "general_1520",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Spanish club is Juan Román Riquelme strongly associated with in Europe?",
+    "options": [
+      "Villarreal",
+      "Valencia",
+      "Sevilla",
+      "Real Betis"
+    ],
+    "answer": "Villarreal",
+    "id": "general_1521",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Juan Román Riquelme join in Europe from Boca Juniors?",
+    "options": [
+      "Barcelona",
+      "Villarreal",
+      "Valencia",
+      "Atlético Madrid"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1522",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Jay-Jay Okocha play for in the Premier League?",
+    "options": [
+      "Bolton Wanderers",
+      "Blackburn Rovers",
+      "Fulham",
+      "Portsmouth"
+    ],
+    "answer": "Bolton Wanderers",
+    "id": "general_1523",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Premier League club is Morten Gamst Pedersen strongly associated with?",
+    "options": [
+      "Blackburn Rovers",
+      "Bolton Wanderers",
+      "Wigan Athletic",
+      "Sunderland"
+    ],
+    "answer": "Blackburn Rovers",
+    "id": "general_1524",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Premier League club is Yakubu most associated with?",
+    "options": [
+      "Everton",
+      "Chelsea",
+      "Arsenal",
+      "Liverpool"
+    ],
+    "answer": "Everton",
+    "id": "general_1525",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Premier League club did Michu become a cult hero for?",
+    "options": [
+      "Swansea City",
+      "Stoke City",
+      "Wigan Athletic",
+      "Hull City"
+    ],
+    "answer": "Swansea City",
+    "id": "general_1526",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Papiss Cissé score a famous outside-foot goal for against Chelsea?",
+    "options": [
+      "Newcastle United",
+      "Sunderland",
+      "West Ham United",
+      "Everton"
+    ],
+    "answer": "Newcastle United",
+    "id": "general_1527",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Hatem Ben Arfa play for in the Premier League?",
+    "options": [
+      "Newcastle United",
+      "Arsenal",
+      "Chelsea",
+      "Manchester United"
+    ],
+    "answer": "Newcastle United",
+    "id": "general_1528",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Wesley Sneijder join after leaving Real Madrid in 2009?",
+    "options": [
+      "Inter",
+      "AC Milan",
+      "Bayern Munich",
+      "Chelsea"
+    ],
+    "answer": "Inter",
+    "id": "general_1529",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Arjen Robben join after leaving Real Madrid?",
+    "options": [
+      "Bayern Munich",
+      "Chelsea",
+      "PSV",
+      "Inter"
+    ],
+    "answer": "Bayern Munich",
+    "id": "general_1530",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Samuel Eto'o join after leaving Barcelona in 2009?",
+    "options": [
+      "Inter",
+      "Chelsea",
+      "Anzhi",
+      "AC Milan"
+    ],
+    "answer": "Inter",
+    "id": "general_1531",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Zlatan Ibrahimović join in the swap deal involving Samuel Eto'o?",
+    "options": [
+      "Barcelona",
+      "Inter",
+      "AC Milan",
+      "Juventus"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1532",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Diego Milito score twice for in the 2010 Champions League final?",
+    "options": [
+      "Inter",
+      "AC Milan",
+      "Atlético Madrid",
+      "Porto"
+    ],
+    "answer": "Inter",
+    "id": "general_1533",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Inter beat in the 2010 Champions League final?",
+    "options": [
+      "Bayern Munich",
+      "Barcelona",
+      "Chelsea",
+      "Manchester United"
+    ],
+    "answer": "Bayern Munich",
+    "id": "general_1534",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which manager led Inter to the treble in 2010?",
+    "options": [
+      "José Mourinho",
+      "Roberto Mancini",
+      "Rafael Benítez",
+      "Antonio Conte"
+    ],
+    "answer": "José Mourinho",
+    "id": "general_1535",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Porto beat in the 2004 Champions League final?",
+    "options": [
+      "Monaco",
+      "Deportivo La Coruña",
+      "Lyon",
+      "Chelsea"
+    ],
+    "answer": "Monaco",
+    "id": "general_1536",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which manager led Porto to the 2004 Champions League title?",
+    "options": [
+      "José Mourinho",
+      "André Villas-Boas",
+      "Luís Felipe Scolari",
+      "Carlo Ancelotti"
+    ],
+    "answer": "José Mourinho",
+    "id": "general_1537",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Portuguese midfielder was a key star for Porto in their 2004 Champions League win?",
+    "options": [
+      "Deco",
+      "Rui Costa",
+      "João Moutinho",
+      "Nani"
+    ],
+    "answer": "Deco",
+    "id": "general_1538",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Medium",
+    "question": "Which club knocked Barcelona out of the 2018 Champions League after a 3-0 comeback in Rome?",
+    "options": [
+      "Roma",
+      "Juventus",
+      "Napoli",
+      "Inter"
+    ],
+    "answer": "Roma",
+    "id": "general_1539",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Roma defender scored the famous header against Barcelona in the 2018 comeback?",
+    "options": [
+      "Kostas Manolas",
+      "Daniele De Rossi",
+      "Edin Džeko",
+      "Alessandro Florenzi"
+    ],
+    "answer": "Kostas Manolas",
+    "id": "general_1540",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Tottenham beat with a late Lucas Moura goal in the 2019 Champions League semi-final?",
+    "options": [
+      "Ajax",
+      "Barcelona",
+      "Dortmund",
+      "Manchester City"
+    ],
+    "answer": "Ajax",
+    "id": "general_1541",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Tottenham player scored a hat-trick against Ajax in the 2019 Champions League semi-final?",
+    "options": [
+      "Lucas Moura",
+      "Harry Kane",
+      "Son Heung-min",
+      "Dele Alli"
+    ],
+    "answer": "Lucas Moura",
+    "id": "general_1542",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Ajax eliminate in the 2019 Champions League round of 16?",
+    "options": [
+      "Real Madrid",
+      "Barcelona",
+      "PSG",
+      "Bayern Munich"
+    ],
+    "answer": "Real Madrid",
+    "id": "general_1543",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Ajax player scored a famous goal at the Bernabéu against Real Madrid in 2019?",
+    "options": [
+      "Lasse Schöne",
+      "Frenkie de Jong",
+      "Matthijs de Ligt",
+      "David Neres"
+    ],
+    "answer": "Lasse Schöne",
+    "id": "general_1544",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Manchester United knock out after a late Rashford penalty in 2019?",
+    "options": [
+      "PSG",
+      "Barcelona",
+      "Juventus",
+      "Bayern Munich"
+    ],
+    "answer": "PSG",
+    "id": "general_1545",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Manchester United player scored the late penalty against PSG in 2019?",
+    "options": [
+      "Marcus Rashford",
+      "Romelu Lukaku",
+      "Paul Pogba",
+      "Bruno Fernandes"
+    ],
+    "answer": "Marcus Rashford",
+    "id": "general_1546",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Barcelona beat 6-1 in the 2017 Champions League comeback?",
+    "options": [
+      "PSG",
+      "Roma",
+      "Juventus",
+      "Chelsea"
+    ],
+    "answer": "PSG",
+    "id": "general_1547",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which player scored Barcelona's sixth goal against PSG in 2017?",
+    "options": [
+      "Sergi Roberto",
+      "Neymar",
+      "Lionel Messi",
+      "Luis Suárez"
+    ],
+    "answer": "Sergi Roberto",
+    "id": "general_1548",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Medium",
+    "question": "Which country did Greece beat in the Euro 2004 final?",
+    "options": [
+      "Portugal",
+      "France",
+      "Czech Republic",
+      "Netherlands"
+    ],
+    "answer": "Portugal",
+    "id": "general_1549",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Greek player scored the winning goal in the Euro 2004 final?",
+    "options": [
+      "Angelos Charisteas",
+      "Theodoros Zagorakis",
+      "Georgios Karagounis",
+      "Traianos Dellas"
+    ],
+    "answer": "Angelos Charisteas",
+    "id": "general_1550",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which country did Spain beat in the Euro 2008 final?",
+    "options": [
+      "Germany",
+      "Italy",
+      "Portugal",
+      "Netherlands"
+    ],
+    "answer": "Germany",
+    "id": "general_1551",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which player scored the only goal in the Euro 2008 final?",
+    "options": [
+      "Fernando Torres",
+      "David Villa",
+      "Xavi",
+      "Cesc Fàbregas"
+    ],
+    "answer": "Fernando Torres",
+    "id": "general_1552",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which country did Spain beat in the Euro 2012 final?",
+    "options": [
+      "Italy",
+      "Germany",
+      "Portugal",
+      "France"
+    ],
+    "answer": "Italy",
+    "id": "general_1553",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "What was the score in the Euro 2012 final between Spain and Italy?",
+    "options": [
+      "4-0",
+      "2-0",
+      "3-1",
+      "1-0"
+    ],
+    "answer": "4-0",
+    "id": "general_1554",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which country did Italy beat on penalties in the Euro 2020 semi-final?",
+    "options": [
+      "Spain",
+      "England",
+      "Belgium",
+      "Denmark"
+    ],
+    "answer": "Spain",
+    "id": "general_1555",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which player missed the decisive penalty for England in the Euro 2020 final shootout?",
+    "options": [
+      "Bukayo Saka",
+      "Jadon Sancho",
+      "Marcus Rashford",
+      "Harry Kane"
+    ],
+    "answer": "Bukayo Saka",
+    "id": "general_1556",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Italian goalkeeper saved penalties in the Euro 2020 final shootout?",
+    "options": [
+      "Gianluigi Donnarumma",
+      "Gianluigi Buffon",
+      "Salvatore Sirigu",
+      "Alex Meret"
+    ],
+    "answer": "Gianluigi Donnarumma",
+    "id": "general_1557",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which England player scored very early in the Euro 2020 final?",
+    "options": [
+      "Luke Shaw",
+      "Harry Kane",
+      "Raheem Sterling",
+      "Mason Mount"
+    ],
+    "answer": "Luke Shaw",
+    "id": "general_1558",
+    "category": "general"
+  },  {
+    "difficulty": "Medium",
+    "question": "Which club did Ruud van Nistelrooy join after leaving Manchester United?",
+    "options": [
+      "Real Madrid",
+      "Bayern Munich",
+      "AC Milan",
+      "Barcelona"
+    ],
+    "answer": "Real Madrid",
+    "id": "general_1559",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Robin van Persie leave to join Manchester United?",
+    "options": [
+      "Arsenal",
+      "Feyenoord",
+      "Chelsea",
+      "Tottenham"
+    ],
+    "answer": "Arsenal",
+    "id": "general_1560",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Cesc Fàbregas leave Arsenal for in 2011?",
+    "options": [
+      "Barcelona",
+      "Chelsea",
+      "Real Madrid",
+      "AC Milan"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1561",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Alexis Sánchez join after leaving Barcelona?",
+    "options": [
+      "Arsenal",
+      "Manchester United",
+      "Inter",
+      "Chelsea"
+    ],
+    "answer": "Arsenal",
+    "id": "general_1562",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Mesut Özil join after leaving Real Madrid?",
+    "options": [
+      "Arsenal",
+      "Inter",
+      "Chelsea",
+      "Bayern Munich"
+    ],
+    "answer": "Arsenal",
+    "id": "general_1563",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Fernando Torres join after leaving Liverpool?",
+    "options": [
+      "Chelsea",
+      "Atlético Madrid",
+      "AC Milan",
+      "Barcelona"
+    ],
+    "answer": "Chelsea",
+    "id": "general_1564",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Fernando Torres return to after leaving Chelsea and AC Milan?",
+    "options": [
+      "Atlético Madrid",
+      "Liverpool",
+      "Valencia",
+      "Sevilla"
+    ],
+    "answer": "Atlético Madrid",
+    "id": "general_1565",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Radamel Falcao play for before joining Monaco?",
+    "options": [
+      "Atlético Madrid",
+      "Porto",
+      "Chelsea",
+      "Manchester United"
+    ],
+    "answer": "Atlético Madrid",
+    "id": "general_1566",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did James Rodríguez join after his breakout 2014 World Cup?",
+    "options": [
+      "Real Madrid",
+      "Barcelona",
+      "Bayern Munich",
+      "Manchester United"
+    ],
+    "answer": "Real Madrid",
+    "id": "general_1567",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did James Rodríguez play for before joining Real Madrid?",
+    "options": [
+      "Monaco",
+      "Porto",
+      "Bayern Munich",
+      "Atlético Madrid"
+    ],
+    "answer": "Monaco",
+    "id": "general_1568",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Medium",
+    "question": "Which player scored Colombia's famous volley against Uruguay at the 2014 World Cup?",
+    "options": [
+      "James Rodríguez",
+      "Radamel Falcao",
+      "Juan Cuadrado",
+      "Jackson Martínez"
+    ],
+    "answer": "James Rodríguez",
+    "id": "general_1569",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which country did Colombia beat when James Rodríguez scored his famous 2014 World Cup volley?",
+    "options": [
+      "Uruguay",
+      "Brazil",
+      "Chile",
+      "Argentina"
+    ],
+    "answer": "Uruguay",
+    "id": "general_1570",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Dutch player scored a famous flying header against Spain in the 2014 World Cup?",
+    "options": [
+      "Robin van Persie",
+      "Arjen Robben",
+      "Wesley Sneijder",
+      "Dirk Kuyt"
+    ],
+    "answer": "Robin van Persie",
+    "id": "general_1571",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which country did the Netherlands beat 5-1 at the 2014 World Cup?",
+    "options": [
+      "Spain",
+      "Portugal",
+      "Chile",
+      "Brazil"
+    ],
+    "answer": "Spain",
+    "id": "general_1572",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which player scored twice for the Netherlands against Spain in the 5-1 win at the 2014 World Cup?",
+    "options": [
+      "Arjen Robben",
+      "Robin van Persie",
+      "Wesley Sneijder",
+      "Klaas-Jan Huntelaar"
+    ],
+    "answer": "Arjen Robben",
+    "id": "general_1573",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which player scored Germany's opening goal in the 7-1 win over Brazil in 2014?",
+    "options": [
+      "Thomas Müller",
+      "Miroslav Klose",
+      "Toni Kroos",
+      "Sami Khedira"
+    ],
+    "answer": "Thomas Müller",
+    "id": "general_1574",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which German player became the all-time World Cup top scorer during the 7-1 win over Brazil?",
+    "options": [
+      "Miroslav Klose",
+      "Thomas Müller",
+      "Toni Kroos",
+      "Mario Götze"
+    ],
+    "answer": "Miroslav Klose",
+    "id": "general_1575",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which German midfielder scored twice in quick succession against Brazil in the 7-1 World Cup semi-final?",
+    "options": [
+      "Toni Kroos",
+      "Mesut Özil",
+      "Sami Khedira",
+      "Bastian Schweinsteiger"
+    ],
+    "answer": "Toni Kroos",
+    "id": "general_1576",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Brazil player scored their consolation goal in the 7-1 defeat to Germany?",
+    "options": [
+      "Oscar",
+      "Neymar",
+      "Fred",
+      "Hulk"
+    ],
+    "answer": "Oscar",
+    "id": "general_1577",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Brazil defender was suspended for the 7-1 defeat to Germany in 2014?",
+    "options": [
+      "Thiago Silva",
+      "David Luiz",
+      "Dante",
+      "Marcelo"
+    ],
+    "answer": "Thiago Silva",
+    "id": "general_1578",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Medium",
+    "question": "Which player scored the winning goal for Chelsea against Barcelona in the 2012 Champions League semi-final second leg?",
+    "options": [
+      "Fernando Torres",
+      "Didier Drogba",
+      "Ramires",
+      "Frank Lampard"
+    ],
+    "answer": "Fernando Torres",
+    "id": "general_1579",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Chelsea player scored a famous chip against Barcelona in the 2012 Champions League semi-final?",
+    "options": [
+      "Ramires",
+      "Fernando Torres",
+      "Didier Drogba",
+      "Juan Mata"
+    ],
+    "answer": "Ramires",
+    "id": "general_1580",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Chelsea eliminate in the 2012 Champions League semi-finals?",
+    "options": [
+      "Barcelona",
+      "Real Madrid",
+      "Bayern Munich",
+      "AC Milan"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1581",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Barcelona player missed a penalty against Chelsea in the 2012 Champions League semi-final?",
+    "options": [
+      "Lionel Messi",
+      "Xavi",
+      "Cesc Fàbregas",
+      "Andrés Iniesta"
+    ],
+    "answer": "Lionel Messi",
+    "id": "general_1582",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Chelsea captain was sent off against Barcelona in the 2012 Champions League semi-final?",
+    "options": [
+      "John Terry",
+      "Frank Lampard",
+      "Ashley Cole",
+      "Didier Drogba"
+    ],
+    "answer": "John Terry",
+    "id": "general_1583",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Bayern Munich beat 7-0 on aggregate in the 2013 Champions League semi-final?",
+    "options": [
+      "Barcelona",
+      "Real Madrid",
+      "Juventus",
+      "Arsenal"
+    ],
+    "answer": "Barcelona",
+    "id": "general_1584",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which two German clubs played the 2013 Champions League final?",
+    "options": [
+      "Bayern Munich and Borussia Dortmund",
+      "Bayern Munich and Schalke",
+      "Dortmund and Leverkusen",
+      "Bayern Munich and Wolfsburg"
+    ],
+    "answer": "Bayern Munich and Borussia Dortmund",
+    "id": "general_1585",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which player scored Bayern Munich's winning goal in the 2013 Champions League final?",
+    "options": [
+      "Arjen Robben",
+      "Mario Mandžukić",
+      "Thomas Müller",
+      "Franck Ribéry"
+    ],
+    "answer": "Arjen Robben",
+    "id": "general_1586",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which stadium hosted the 2013 Champions League final between Bayern and Dortmund?",
+    "options": [
+      "Wembley",
+      "Allianz Arena",
+      "Olympiastadion",
+      "San Siro"
+    ],
+    "answer": "Wembley",
+    "id": "general_1587",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Dortmund player scored a penalty in the 2013 Champions League final?",
+    "options": [
+      "İlkay Gündoğan",
+      "Robert Lewandowski",
+      "Marco Reus",
+      "Mario Götze"
+    ],
+    "answer": "İlkay Gündoğan",
+    "id": "general_1588",
+    "category": "general"
+  },
+
+  {
+    "difficulty": "Medium",
+    "question": "Which player scored four goals for Borussia Dortmund against Real Madrid in 2013?",
+    "options": [
+      "Robert Lewandowski",
+      "Marco Reus",
+      "Mario Götze",
+      "Pierre-Emerick Aubameyang"
+    ],
+    "answer": "Robert Lewandowski",
+    "id": "general_1589",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Borussia Dortmund beat when Lewandowski scored four goals in a Champions League semi-final?",
+    "options": [
+      "Real Madrid",
+      "Barcelona",
+      "Bayern Munich",
+      "Manchester United"
+    ],
+    "answer": "Real Madrid",
+    "id": "general_1590",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Real Madrid player scored a hat-trick against Wolfsburg in the 2016 Champions League quarter-final comeback?",
+    "options": [
+      "Cristiano Ronaldo",
+      "Karim Benzema",
+      "Gareth Bale",
+      "Sergio Ramos"
+    ],
+    "answer": "Cristiano Ronaldo",
+    "id": "general_1591",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Real Madrid overturn a 2-0 first-leg deficit against in the 2016 Champions League quarter-finals?",
+    "options": [
+      "Wolfsburg",
+      "Roma",
+      "Napoli",
+      "Schalke"
+    ],
+    "answer": "Wolfsburg",
+    "id": "general_1592",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Juventus player scored a bicycle kick against Real Madrid in the 2017 Champions League final?",
+    "options": [
+      "Mario Mandžukić",
+      "Paulo Dybala",
+      "Gonzalo Higuaín",
+      "Dani Alves"
+    ],
+    "answer": "Mario Mandžukić",
+    "id": "general_1593",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which club did Real Madrid beat in the 2017 Champions League final?",
+    "options": [
+      "Juventus",
+      "Atlético Madrid",
+      "Bayern Munich",
+      "Liverpool"
+    ],
+    "answer": "Juventus",
+    "id": "general_1594",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Real Madrid player scored twice in the 2017 Champions League final?",
+    "options": [
+      "Cristiano Ronaldo",
+      "Karim Benzema",
+      "Gareth Bale",
+      "Isco"
+    ],
+    "answer": "Cristiano Ronaldo",
+    "id": "general_1595",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Liverpool player scored in the 2018 Champions League final before Real Madrid won 3-1?",
+    "options": [
+      "Sadio Mané",
+      "Mohamed Salah",
+      "Roberto Firmino",
+      "Adam Lallana"
+    ],
+    "answer": "Sadio Mané",
+    "id": "general_1596",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Real Madrid striker scored after pressing Loris Karius in the 2018 Champions League final?",
+    "options": [
+      "Karim Benzema",
+      "Cristiano Ronaldo",
+      "Gareth Bale",
+      "Marco Asensio"
+    ],
+    "answer": "Karim Benzema",
+    "id": "general_1597",
+    "category": "general"
+  },
+  {
+    "difficulty": "Medium",
+    "question": "Which Liverpool forward was injured after a challenge with Sergio Ramos in the 2018 Champions League final?",
+    "options": [
+      "Mohamed Salah",
+      "Sadio Mané",
+      "Roberto Firmino",
+      "Divock Origi"
+    ],
+    "answer": "Mohamed Salah",
+    "id": "general_1598",
+    "category": "general"
+  },
+  
+
 ];

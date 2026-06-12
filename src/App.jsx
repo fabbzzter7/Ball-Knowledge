@@ -8,7 +8,10 @@ import PlayerPicker from "./components/PlayerPicker";
 
 import { QUESTIONS } from "./QUESTIONS";
 import { CAREER_QUESTIONS } from "./CAREER_QUESTIONS";
-import { DAILY_LIST_CHALLENGES } from "./DAILY_LIST_CHALLENGES";
+import {
+  DAILY_LIST_CHALLENGES,
+  auditDailyListChallenges,
+} from "./DAILY_LIST_CHALLENGES";
 import { WORLD_CUP_QUESTIONS } from "./WORLD_CUP_QUESTIONS";
 import { CONNECTIONS_PUZZLES } from "./CONNECTIONS_PUZZLES";
 import { WHO_AM_I_QUESTIONS } from "./WHO_AM_I_QUESTIONS";
@@ -458,11 +461,19 @@ function getYesterdayDateKey() {
 }
 
 function getTodayChallenge() {
-  if (!DAILY_LIST_CHALLENGES || DAILY_LIST_CHALLENGES.length === 0) {
+  const validChallenges = (DAILY_LIST_CHALLENGES || []).filter(
+    (challenge) => challenge && challenge.disabled !== true && getChallengeAnswers(challenge).length > 0
+  );
+
+  if (validChallenges.length === 0) {
+    if (import.meta.env?.DEV) {
+      console.warn("No valid Daily/Top 10 challenges available");
+    }
+
     return {
       id: "fallback",
       label: "Daily Challenge",
-      question: "No daily challenge found.",
+      question: "Challenge unavailable.",
       answers: [],
     };
   }
@@ -477,10 +488,54 @@ function getTodayChallenge() {
 
   const oneDay = 1000 * 60 * 60 * 24;
   const daysPassed = Math.floor((todayDate - startDate) / oneDay);
-  const index = daysPassed % DAILY_LIST_CHALLENGES.length;
+  const index = daysPassed % validChallenges.length;
 
-  return DAILY_LIST_CHALLENGES[index];
+  return validChallenges[index] || validChallenges[0];
 }
+
+function getChallengeAnswers(challenge) {
+  return Array.isArray(challenge?.answers) ? challenge.answers : [];
+}
+
+function getChallengeTargetCount(challenge) {
+  const answerCount = getChallengeAnswers(challenge).length;
+  const targetCount = Number(challenge?.targetCount);
+
+  if (Number.isFinite(targetCount) && targetCount > 0) {
+    return Math.min(answerCount, Math.floor(targetCount));
+  }
+
+  return answerCount;
+}
+
+function getChallengeRuleHint(challenge) {
+  const answerCount = getChallengeAnswers(challenge).length;
+  const targetCount = getChallengeTargetCount(challenge);
+
+  if (!answerCount) return "";
+  if (targetCount < answerCount) {
+    return `Any ${targetCount} accepted from ${answerCount} valid answers. Any order accepted.`;
+  }
+
+  return "Any order accepted.";
+}
+
+const REQUIRED_PLAYER_SEARCH_NAMES = [
+  "Emmanuel Emenike",
+  "Jamal Musiala",
+  "N'Golo Kanté",
+  "Lionel Messi",
+  "Claudio Marchisio",
+  "Harry Kewell",
+  "Kylian Mbappé",
+  "Sergio Agüero",
+  "Mesut Özil",
+  "Luka Modrić",
+  "Gerard Piqué",
+  "Zlatan Ibrahimović",
+  "Kevin De Bruyne",
+  "Virgil van Dijk",
+];
 
 function getStreakReward(streak) {
   const dayInRoad = ((Math.max(1, streak) - 1) % 7) + 1;
@@ -890,6 +945,10 @@ function getCategoryClass(categoryId) {
 
 export default function FootballQuizMVP() {
   const todayChallenge = getTodayChallenge();
+  const dailyAnswers = getChallengeAnswers(todayChallenge);
+  const dailyTargetCount = getChallengeTargetCount(todayChallenge);
+  const dailyRuleHint = getChallengeRuleHint(todayChallenge);
+  const dailyChallengeUnavailable = dailyAnswers.length === 0;
 
   const [gameStarted, setGameStarted] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
@@ -1039,6 +1098,11 @@ export default function FootballQuizMVP() {
     if (!import.meta.env?.DEV) return undefined;
 
     let cancelled = false;
+    const contentWarnings = auditDailyListChallenges();
+
+    if (contentWarnings.length) {
+      console.warn("Daily/Top 10 content audit warnings", contentWarnings);
+    }
 
     async function checkPlayerSearchCoverage() {
       await buildPlayerSearchIndex();
@@ -1055,12 +1119,17 @@ export default function FootballQuizMVP() {
           answer: question,
         })),
         ...DAILY_LIST_CHALLENGES.filter(isPlayerAnswerType).flatMap((challenge) =>
-          (challenge.answers || []).map((answer, index) => ({
+          getChallengeAnswers(challenge).map((answer, index) => ({
             mode: "daily-list",
             id: `${challenge.id || "daily"}:${index}`,
             answer,
           }))
         ),
+        ...REQUIRED_PLAYER_SEARCH_NAMES.map((answer) => ({
+          mode: "required-player",
+          id: answer,
+          answer,
+        })),
       ];
 
       for (const target of targets) {
@@ -1344,14 +1413,6 @@ const isHomeScreen =
   const activeLeagueDay = leagueDashboard?.leagueDay || null;
   const activeLeagueSubmission = leagueDashboard?.currentSubmission || null;
   const currentLeagueQuizQuestion = leagueQuizQuestions[leagueQuizIndex];
-  const leagueTop10Score = leagueTop10Found.length;
-  const leagueTop10TotalWithCurrent = leagueTop10TotalScore + leagueTop10Score;
-  const isLeagueTop10PlayerChallenge = isPlayerAnswerType(leagueTop10Challenge);
-  const currentLeagueWhoAmI = leagueWhoAmIQuestions[leagueWhoAmIIndex];
-  const leagueWhoAmIVisibleClues = currentLeagueWhoAmI
-    ? currentLeagueWhoAmI.clues.slice(0, leagueWhoAmIClueIndex + 1)
-    : [];
-  const leagueWhoAmIPointsAvailable = Math.max(1, 10 - leagueWhoAmIClueIndex);
   const leagueSettings = activeLeague
     ? getLeagueSettingsSummary(activeLeague)
     : getLeagueFormatConfig(
@@ -1362,6 +1423,20 @@ const isHomeScreen =
         leagueCustomFindPlayerCount,
         leagueFindPlayerScoringMode
       );
+  const leagueTop10Score = leagueTop10Found.length;
+  const leagueTop10TargetCount = getChallengeTargetCount(leagueTop10Challenge);
+  const leagueTop10MaxPoints =
+    leagueTop10Challenges.reduce(
+      (total, challenge) => total + getChallengeTargetCount(challenge),
+      0
+    ) || leagueSettings.top10Count * 10;
+  const leagueTop10TotalWithCurrent = leagueTop10TotalScore + leagueTop10Score;
+  const isLeagueTop10PlayerChallenge = isPlayerAnswerType(leagueTop10Challenge);
+  const currentLeagueWhoAmI = leagueWhoAmIQuestions[leagueWhoAmIIndex];
+  const leagueWhoAmIVisibleClues = currentLeagueWhoAmI
+    ? currentLeagueWhoAmI.clues.slice(0, leagueWhoAmIClueIndex + 1)
+    : [];
+  const leagueWhoAmIPointsAvailable = Math.max(1, 10 - leagueWhoAmIClueIndex);
   const leagueWhoAmIMaxPoints = leagueSettings.whoamiCount * 10;
   const leagueFindPlayerMaxPoints = (leagueSettings.findPlayerCount || 0) * 10;
   const currentLeagueFindPlayerTarget =
@@ -3084,7 +3159,7 @@ const isHomeScreen =
     const result = {
       date: getDailyDateKey(),
       found,
-      total: todayChallenge.answers.length,
+      total: dailyTargetCount,
       coins: earned,
       previousStreak: streakInfo?.previousStreak ?? Math.max(0, dailyStreak - 1),
       streak: streakInfo?.newStreak || dailyStreak,
@@ -4590,17 +4665,20 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
+    const leagueTop10Answers = getChallengeAnswers(leagueTop10Challenge);
+    if (leagueTop10Answers.length === 0) return;
+
     const matchedAnswer = findMatchingAnswer({
       typedAnswer: guessText,
       selectedPlayer: guessedPlayer,
-      answers: leagueTop10Challenge.answers,
+      answers: leagueTop10Answers,
     });
     const alreadyFound =
       matchedAnswer && leagueTop10Found.includes(matchedAnswer);
     const matchedRank = matchedAnswer
-      ? leagueTop10Challenge.answers.indexOf(matchedAnswer) + 1
+      ? leagueTop10Answers.indexOf(matchedAnswer) + 1
       : 0;
-    let displayRank = leagueTop10Challenge.answers.length;
+    let displayRank = leagueTop10Answers.length;
 
     setLeagueTop10Scanning(true);
     setLeagueTop10Reveal({
@@ -4642,7 +4720,7 @@ const startConnectionsGame = (difficulty = null) => {
         setLeagueTop10SelectedPlayer(null);
         playCorrectSound();
 
-        if (leagueTop10Found.length + 1 >= leagueTop10Challenge.answers.length) {
+        if (leagueTop10Found.length + 1 >= leagueTop10TargetCount) {
           window.setTimeout(
             () => advanceAfterLeagueTop10(leagueTop10Found.length + 1),
             700
@@ -6094,25 +6172,25 @@ const startConnectionsGame = (difficulty = null) => {
       ? playerOverride
       : dailySelectedPlayer;
     const guessText = guessedPlayer?.name || dailyInput.trim();
-    if (!guessText || rewardPopup || wrongPopup || isRevealing) return;
+    if (!guessText || dailyChallengeUnavailable || rewardPopup || wrongPopup || isRevealing) return;
 
     setDailyCelebratedAnswer(null);
 
     const matchedAnswer = findMatchingAnswer({
       typedAnswer: guessText,
       selectedPlayer: guessedPlayer,
-      answers: todayChallenge.answers,
+      answers: dailyAnswers,
     });
 
     if (matchedAnswer && !foundAnswers.includes(matchedAnswer)) {
-      const rank = todayChallenge.answers.indexOf(matchedAnswer) + 1;
+      const rank = dailyAnswers.indexOf(matchedAnswer) + 1;
       const rewardPerCorrect = 15;
 
       setDailyInput("");
       setDailySelectedPlayer(null);
       setIsRevealing(true);
 
-      let displayRank = todayChallenge.answers.length;
+      let displayRank = dailyAnswers.length;
 
       setDailyReveal({
         type: "correct",
@@ -6160,7 +6238,7 @@ const startConnectionsGame = (difficulty = null) => {
               setDailyCelebratedAnswer(null);
             }, 900);
 
-            if (newFoundAnswers.length === todayChallenge.answers.length) {
+            if (newFoundAnswers.length >= dailyTargetCount) {
               finishDaily(newFoundAnswers.length, newDailyCoinsEarned);
             }
           }, 900);
@@ -6185,7 +6263,7 @@ const startConnectionsGame = (difficulty = null) => {
       setDailySelectedPlayer(null);
       setIsRevealing(true);
 
-      let displayRank = todayChallenge.answers.length;
+      let displayRank = dailyAnswers.length;
 
       setDailyReveal({
         type: "wrong",
@@ -7643,7 +7721,7 @@ const startConnectionsGame = (difficulty = null) => {
                 )}
                 <span>
                   Top 10 {leagueTop10Index + 1}/{leagueSettings.top10Count}:{" "}
-                  {leagueTop10Score}/10
+                  {Math.min(leagueTop10Score, leagueTop10TargetCount)}/{leagueTop10TargetCount}
                 </span>
                 <span>
                   {Array.from({ length: 3 }).map((_, index) => (
@@ -7694,7 +7772,7 @@ const startConnectionsGame = (difficulty = null) => {
               </AnimatePresence>
 
               <div className="league-top10-list">
-                {leagueTop10Challenge.answers.map((answer, index) => {
+                {getChallengeAnswers(leagueTop10Challenge).map((answer, index) => {
                   const found = leagueTop10Found.includes(answer);
                   const rank = index + 1;
                   const isScanning =
@@ -7748,11 +7826,11 @@ const startConnectionsGame = (difficulty = null) => {
               <div className="league-kicker">Top 10 Reveal</div>
               <h1>{leagueTop10Challenge.label}</h1>
               <p>
-                {leagueTop10Score}/10 found. Review the list, then keep climbing.
+                {Math.min(leagueTop10Score, leagueTop10TargetCount)}/{leagueTop10TargetCount} found. Review the list, then keep climbing.
               </p>
 
               <div className="league-top10-reveal-list">
-                {leagueTop10Challenge.answers.map((answer, index) => {
+                {getChallengeAnswers(leagueTop10Challenge).map((answer, index) => {
                   const found = leagueTop10Found.includes(answer);
 
                   return (
@@ -7802,7 +7880,7 @@ const startConnectionsGame = (difficulty = null) => {
                 )}
                 {leagueSettings.top10Count > 0 && (
                   <span>
-                    Top 10: {leagueTop10TotalWithCurrent}/{leagueSettings.top10Count * 10}
+                    Top 10: {leagueTop10TotalWithCurrent}/{leagueTop10MaxPoints}
                   </span>
                 )}
                 <span>
@@ -7878,7 +7956,7 @@ const startConnectionsGame = (difficulty = null) => {
                 )}
                 {leagueSettings.top10Count > 0 && (
                   <span>
-                    Top 10: {leagueTop10TotalWithCurrent}/{leagueSettings.top10Count * 10}
+                    Top 10: {leagueTop10TotalWithCurrent}/{leagueTop10MaxPoints}
                   </span>
                 )}
                 {leagueSettings.whoamiCount > 0 && (
@@ -7992,7 +8070,7 @@ const startConnectionsGame = (difficulty = null) => {
                   <div>
                     <span>Top 10</span>
                     <strong>
-                      {leagueResult.top10Score}/{leagueSettings.top10Count * 10}
+                      {leagueResult.top10Score}/{leagueTop10MaxPoints}
                     </strong>
                   </div>
                 )}
@@ -9598,7 +9676,7 @@ const startConnectionsGame = (difficulty = null) => {
                                 ? `Quiz ${submission.quiz_score}/${leagueSettings.quizCount} • `
                                 : ""}
                               {leagueSettings.top10Count > 0
-                                ? `Top 10 ${submission.top10_score}/${leagueSettings.top10Count * 10} • `
+                                ? `Top 10 ${submission.top10_score}/${leagueTop10MaxPoints} • `
                                 : ""}
                               {leagueSettings.whoamiCount > 0
                                 ? `Who Am I ${submission.whoami_score || 0}/${leagueSettings.whoamiCount * 10} • `
@@ -10863,7 +10941,22 @@ const startConnectionsGame = (difficulty = null) => {
           ← Home
         </button>
 
-        <AnimatePresence>
+        {dailyChallengeUnavailable ? (
+          <div className="daily-list-wrapper">
+            <div className="daily-question-card">
+              <h2 className="daily-list-label">Daily Challenge</h2>
+              <h1 className="daily-list-title">Challenge unavailable</h1>
+              <p className="daily-list-question">
+                Today’s list challenge could not be loaded. Please go back home and try again.
+              </p>
+              <button className="daily-submit-button" type="button" onClick={restart}>
+                Back to Home
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <AnimatePresence>
           {dailyReveal?.phase === "result" && (
             <motion.div
               className={`rank-reveal-overlay ${dailyReveal.type || ""}`}
@@ -10898,7 +10991,7 @@ const startConnectionsGame = (difficulty = null) => {
           )}
         </AnimatePresence>
 
-        <AnimatePresence>
+            <AnimatePresence>
           {wrongPopup && (
             <motion.div
               className="wrong-overlay"
@@ -10914,12 +11007,12 @@ const startConnectionsGame = (difficulty = null) => {
           )}
         </AnimatePresence>
 
-        <div className="daily-list-wrapper">
-          <div className="daily-date-card">
-            <span>Daily</span>
-            <strong>{formatDisplayDate(getDailyDateKey())}</strong>
-            <span>Challenge</span>
-          </div>
+            <div className="daily-list-wrapper">
+              <div className="daily-date-card">
+                <span>Daily</span>
+                <strong>{formatDisplayDate(getDailyDateKey())}</strong>
+                <span>Challenge</span>
+              </div>
 
           <div className="daily-question-card">
             <h2 className="daily-list-label">🔥 DAILY CHALLENGE</h2>
@@ -10927,6 +11020,9 @@ const startConnectionsGame = (difficulty = null) => {
             <h1 className="daily-list-title">{todayChallenge.label}</h1>
 
             <p className="daily-list-question">{todayChallenge.question}</p>
+            {dailyRuleHint && (
+              <p className="daily-list-rule-hint">{dailyRuleHint}</p>
+            )}
           </div>
 
           <div className="daily-list-stats">
@@ -10935,7 +11031,7 @@ const startConnectionsGame = (difficulty = null) => {
             </span>
 
             <span className="daily-stat-pill">
-              Completed <strong>{foundAnswers.length}/{todayChallenge.answers.length}</strong>
+              Completed <strong>{Math.min(foundAnswers.length, dailyTargetCount)}/{dailyTargetCount}</strong>
             </span>
 
             <span className="daily-stat-pill">
@@ -10943,8 +11039,8 @@ const startConnectionsGame = (difficulty = null) => {
             </span>
           </div>
 
-          <div className="pyramid-list">
-            {todayChallenge.answers.map((answer, index) => {
+              <div className="pyramid-list">
+                {dailyAnswers.map((answer, index) => {
               const isFound = foundAnswers.includes(answer);
               const rank = index + 1;
               const isScanning =
@@ -10964,21 +11060,21 @@ const startConnectionsGame = (difficulty = null) => {
                   }`}
                   style={{ width: `${width}%` }}
                   initial={false}
-                  animate={
-                    isJustFound
-                      ? { scale: [1, 1.12, 1], y: [0, -7, 0] }
-                      : isFound
-                      ? { scale: [1, 1.08, 1] }
-                      : {}
-                  }
-                  transition={{ duration: 0.45 }}
+	                  animate={
+	                    isJustFound
+	                      ? { scale: [1, 1.12, 1], y: [0, -7, 0] }
+	                      : isFound
+	                      ? { scale: [1, 1.08, 1] }
+	                      : {}
+	                  }
+	                  transition={{ duration: 0.45 }}
                 >
                   <span className="pyramid-rank">#{rank}</span>
                   <span>{isFound ? formatAnswerWithValue(answer) : "?????"}</span>
                 </motion.div>
               );
             })}
-          </div>
+              </div>
 
           <GuessInput
             answerType={isDailyPlayerChallenge ? "player" : "text"}
@@ -11000,7 +11096,9 @@ const startConnectionsGame = (difficulty = null) => {
             maxSuggestions={4}
             autoFocus
           />
-        </div>
+            </div>
+          </>
+        )}
       </div>
     );
   }
@@ -11008,7 +11106,7 @@ const startConnectionsGame = (difficulty = null) => {
   if (finished) {
     const isDaily = gameMode === "daily-list";
     const dailyCompleted =
-      isDaily && foundAnswers.length === todayChallenge.answers.length;
+      isDaily && foundAnswers.length >= dailyTargetCount;
     const opponentScore =
       mockOpponentScore ?? createMockOpponentScore(score);
     const multiplayerWon = score >= opponentScore;
@@ -11044,7 +11142,7 @@ const startConnectionsGame = (difficulty = null) => {
               <div className="daily-result-badge">DAILY RESULT</div>
 
               <div className="daily-result-score">
-                {foundAnswers.length}/{todayChallenge.answers.length}
+                {Math.min(foundAnswers.length, dailyTargetCount)}/{dailyTargetCount}
               </div>
 
               <div className="daily-result-subtitle">players found</div>
@@ -11069,7 +11167,7 @@ const startConnectionsGame = (difficulty = null) => {
                   <div className="daily-missing-title">Missing answers</div>
 
                   <div className="daily-missing-list">
-                    {todayChallenge.answers.map((answer, index) => {
+                    {dailyAnswers.map((answer, index) => {
                       const found = foundAnswers.includes(answer);
 
                       return (

@@ -16,6 +16,1368 @@ export const DAILY_LIST_CHALLENGES = [
       { answer: "Frank Lampard", value: "106 caps" },
       { answer: "Billy Wright", value: "105 caps" },
     ],
+  },  {
+    id: "played-for-real-madrid-and-barcelona",
+    label: "Played for Real Madrid and Barcelona",
+    question: "Can you name 10 players who played for both Real Madrid and Barcelona?",
+    answerType: "player",
+    answers: [
+      { answer: "Luis Figo", value: "Barcelona and Real Madrid", aliases: ["Figo"] },
+      { answer: "Ronaldo", value: "Barcelona and Real Madrid", aliases: ["R9", "Ronaldo Nazario"] },
+      { answer: "Samuel Eto'o", value: "Real Madrid and Barcelona", aliases: ["Samuel Etoo", "Eto'o", "Etoo"] },
+      { answer: "Luis Enrique", value: "Real Madrid and Barcelona" },
+      { answer: "Michael Laudrup", value: "Barcelona and Real Madrid", aliases: ["Laudrup"] },
+      { answer: "Bernd Schuster", value: "Barcelona and Real Madrid", aliases: ["Schuster"] },
+      { answer: "Gheorghe Hagi", value: "Real Madrid and Barcelona", aliases: ["Hagi"] },
+      { answer: "Javier Saviola", value: "Barcelona and Real Madrid", aliases: ["Saviola"] },
+      { answer: "Robert Prosinecki", value: "Real Madrid and Barcelona", aliases: ["Prosinecki"] },
+      { answer: "Miquel Soler", value: "Barcelona and Real Madrid", aliases: ["Soler"] },
+    ],
+  },
+
+  {
+    id: "played-for-man-united-and-real-madrid",
+    label: "Played for Man United and Real Madrid",
+    question: "Can you name 10 players who played for both Manchester United and Real Madrid?",
+    answerType: "player",
+    answers: [
+      { answer: "Cristiano Ronaldo", value: "Man United and Real Madrid", aliases: ["Ronaldo", "CR7"] },
+      { answer: "David Beckham", value: "Man United and Real Madrid", aliases: ["Beckham"] },
+      { answer: "Ruud van Nistelrooy", value: "Man United and Real Madrid", aliases: ["Van Nistelrooy"] },
+      { answer: "Raphael Varane", value: "Real Madrid and Man United", aliases: ["Raphaël Varane", "Varane"] },
+      { answer: "Casemiro", value: "Real Madrid and Man United" },
+      { answer: "Angel Di Maria", value: "Real Madrid and Man United", aliases: ["Ángel Di María", "Di Maria"] },
+      { answer: "Javier Hernandez", value: "Man United and Real Madrid", aliases: ["Chicharito", "Javier Hernández"] },
+      { answer: "Gabriel Heinze", value: "Man United and Real Madrid", aliases: ["Heinze"] },
+      { answer: "Michael Owen", value: "Real Madrid and Man United", aliases: ["Owen"] },
+      { answer: "Laurie Cunningham", value: "Real Madrid and Man United", aliases: ["Cunningham"] },
+    ],
+  },
+
+  {
+    id: "played-for-arsenal-and-chelsea",
+    label: "Played for Arsenal and Chelsea",
+    question: "Can you name 10 players who played for both Arsenal and Chelsea?",
+    answerType: "player",
+    answers: [
+      { answer: "Ashley Cole", value: "Arsenal and Chelsea" },
+      { answer: "Cesc Fabregas", value: "Arsenal and Chelsea", aliases: ["Cesc Fàbregas", "Fabregas"] },
+      { answer: "Olivier Giroud", value: "Arsenal and Chelsea", aliases: ["Giroud"] },
+      { answer: "Petr Cech", value: "Chelsea and Arsenal", aliases: ["Petr Čech", "Cech"] },
+      { answer: "Willian", value: "Chelsea and Arsenal" },
+      { answer: "David Luiz", value: "Chelsea and Arsenal" },
+      { answer: "William Gallas", value: "Chelsea and Arsenal", aliases: ["Gallas"] },
+      { answer: "Nicolas Anelka", value: "Arsenal and Chelsea", aliases: ["Anelka"] },
+      { answer: "Lassana Diarra", value: "Chelsea and Arsenal", aliases: ["Diarra"] },
+      { answer: "Jorginho", value: "Chelsea and Arsenal" },
+    ],
+  },
+
+  {
+    id: "played-for-ac-milan-and-inter",
+    label: "Played for AC Milan and Inter",
+    question: "Can you name 10 players who played for both AC Milan and Inter?",
+    answerType: "player",
+    answers: [
+      { answer: "Andrea Pirlo", value: "Inter and AC Milan", aliases: ["Pirlo"] },
+      { answer: "Clarence Seedorf", value: "Inter and AC Milan", aliases: ["Seedorf"] },
+      { answer: "Zlatan Ibrahimovic", value: "Inter and AC Milan", aliases: ["Zlatan", "Ibrahimovic"] },
+      { answer: "Ronaldo", value: "Inter and AC Milan", aliases: ["R9", "Ronaldo Nazario"] },
+      { answer: "Roberto Baggio", value: "AC Milan and Inter", aliases: ["Baggio"] },
+      { answer: "Christian Vieri", value: "Inter and AC Milan", aliases: ["Vieri"] },
+      { answer: "Hernan Crespo", value: "Inter and AC Milan", aliases: ["Hernán Crespo", "Crespo"] },
+      { answer: "Mario Balotelli", value: "Inter and AC Milan", aliases: ["Balotelli"] },
+      { answer: "Hakan Calhanoglu", value: "AC Milan and Inter", aliases: ["Hakan Çalhanoğlu", "Calhanoglu"] },
+      { answer: "Sulley Muntari", value: "Inter and AC Milan", aliases: ["Muntari"] },
+    ],
+  },
+
+  {
+    id: "mourinho-managed-clubs",
+    label: "Jose Mourinho clubs",
+    question: "Can you name 10 clubs managed by Jose Mourinho?",
+    answerType: "club",
+    targetCount: 10,
+    answers: [
+      { answer: "Benfica", value: "Managed in Portugal" },
+      { answer: "Uniao de Leiria", value: "Managed in Portugal", aliases: ["União de Leiria", "Leiria"] },
+      { answer: "Porto", value: "Won the Champions League" },
+      { answer: "Chelsea", value: "Multiple spells" },
+      { answer: "Inter", value: "Won the treble", aliases: ["Inter Milan", "Internazionale"] },
+      { answer: "Real Madrid", value: "Managed in La Liga" },
+      { answer: "Manchester United", value: "Managed in the Premier League", aliases: ["Man United", "Man Utd"] },
+      { answer: "Tottenham Hotspur", value: "Managed in the Premier League", aliases: ["Tottenham", "Spurs"] },
+      { answer: "Roma", value: "Won the Conference League" },
+      { answer: "Fenerbahce", value: "Managed in Turkey", aliases: ["Fenerbahçe"] },
+    ],
+  },
+
+  {
+    id: "ancelotti-managed-clubs",
+    label: "Carlo Ancelotti clubs",
+    question: "Can you name 10 clubs managed by Carlo Ancelotti?",
+    answerType: "club",
+    answers: [
+      { answer: "Reggiana", value: "Early managerial job" },
+      { answer: "Parma", value: "Managed in Serie A" },
+      { answer: "Juventus", value: "Managed in Serie A" },
+      { answer: "AC Milan", value: "Won Champions League titles", aliases: ["Milan"] },
+      { answer: "Chelsea", value: "Won the Premier League" },
+      { answer: "Paris Saint-Germain", value: "Managed in France", aliases: ["PSG"] },
+      { answer: "Real Madrid", value: "Won multiple Champions League titles" },
+      { answer: "Bayern Munich", value: "Managed in Germany", aliases: ["Bayern"] },
+      { answer: "Napoli", value: "Managed in Serie A" },
+      { answer: "Everton", value: "Managed in the Premier League" },
+    ],
+  },
+
+  {
+    id: "zlatan-clubs",
+    label: "Zlatan clubs",
+    question: "Can you name every club Zlatan Ibrahimovic played for?",
+    answerType: "club",
+    targetCount: 9,
+    answers: [
+      { answer: "Malmo FF", value: "Sweden", aliases: ["Malmö FF", "Malmo"] },
+      { answer: "Ajax", value: "Netherlands" },
+      { answer: "Juventus", value: "Italy" },
+      { answer: "Inter", value: "Italy", aliases: ["Inter Milan", "Internazionale"] },
+      { answer: "Barcelona", value: "Spain", aliases: ["FC Barcelona"] },
+      { answer: "AC Milan", value: "Italy", aliases: ["Milan"] },
+      { answer: "Paris Saint-Germain", value: "France", aliases: ["PSG"] },
+      { answer: "Manchester United", value: "England", aliases: ["Man United", "Man Utd"] },
+      { answer: "LA Galaxy", value: "United States", aliases: ["Los Angeles Galaxy"] },
+    ],
+  },
+
+  {
+    id: "anelka-clubs",
+    label: "Nicolas Anelka clubs",
+    question: "Can you name 10 clubs Nicolas Anelka played for?",
+    answerType: "club",
+    answers: [
+      { answer: "Paris Saint-Germain", value: "France", aliases: ["PSG"] },
+      { answer: "Arsenal", value: "England" },
+      { answer: "Real Madrid", value: "Spain" },
+      { answer: "Liverpool", value: "England" },
+      { answer: "Manchester City", value: "England", aliases: ["Man City"] },
+      { answer: "Fenerbahce", value: "Turkey", aliases: ["Fenerbahçe"] },
+      { answer: "Bolton Wanderers", value: "England", aliases: ["Bolton"] },
+      { answer: "Chelsea", value: "England" },
+      { answer: "Shanghai Shenhua", value: "China" },
+      { answer: "Juventus", value: "Italy" },
+    ],
+  },
+
+  {
+    id: "ucl-winning-managers-since-2000",
+    label: "UCL winning managers since 2000",
+    question: "Can you name 10 managers who won the Champions League from 2000 onwards?",
+    answerType: "manager",
+    answers: [
+      { answer: "Vicente del Bosque", value: "Real Madrid", aliases: ["Del Bosque"] },
+      { answer: "Ottmar Hitzfeld", value: "Bayern Munich", aliases: ["Hitzfeld"] },
+      { answer: "Carlo Ancelotti", value: "AC Milan and Real Madrid", aliases: ["Ancelotti"] },
+      { answer: "Jose Mourinho", value: "Porto and Inter", aliases: ["José Mourinho", "Mourinho"] },
+      { answer: "Rafael Benitez", value: "Liverpool", aliases: ["Rafa Benitez", "Rafael Benítez", "Benitez"] },
+      { answer: "Frank Rijkaard", value: "Barcelona", aliases: ["Rijkaard"] },
+      { answer: "Sir Alex Ferguson", value: "Manchester United", aliases: ["Alex Ferguson", "Ferguson"] },
+      { answer: "Pep Guardiola", value: "Barcelona and Manchester City", aliases: ["Guardiola"] },
+      { answer: "Jupp Heynckes", value: "Bayern Munich", aliases: ["Heynckes"] },
+      { answer: "Zinedine Zidane", value: "Real Madrid", aliases: ["Zidane"] },
+    ],
+  },
+
+  {
+    id: "world-cup-winning-managers-since-1978",
+    label: "World Cup winning managers",
+    question: "Can you name 10 managers who won the men's FIFA World Cup from 1978 onwards?",
+    answerType: "manager",
+    answers: [
+      { answer: "Cesar Luis Menotti", value: "Argentina 1978", aliases: ["César Luis Menotti", "Menotti"] },
+      { answer: "Enzo Bearzot", value: "Italy 1982", aliases: ["Bearzot"] },
+      { answer: "Carlos Bilardo", value: "Argentina 1986", aliases: ["Bilardo"] },
+      { answer: "Franz Beckenbauer", value: "West Germany 1990", aliases: ["Beckenbauer"] },
+      { answer: "Mario Zagallo", value: "Brazil 1970", aliases: ["Zagallo"] },
+      { answer: "Aime Jacquet", value: "France 1998", aliases: ["Aimé Jacquet", "Jacquet"] },
+      { answer: "Luiz Felipe Scolari", value: "Brazil 2002", aliases: ["Scolari"] },
+      { answer: "Marcello Lippi", value: "Italy 2006", aliases: ["Lippi"] },
+      { answer: "Vicente del Bosque", value: "Spain 2010", aliases: ["Del Bosque"] },
+      { answer: "Joachim Low", value: "Germany 2014", aliases: ["Joachim Löw", "Low", "Löw"] },
+    ],
+  },
+
+  {
+    id: "brazil-2002-world-cup-squad",
+    label: "Brazil 2002 squad",
+    question: "Can you name 10 players from Brazil's 2002 World Cup winning squad?",
+    answerType: "player",
+    answers: [
+      { answer: "Ronaldo", value: "Forward", aliases: ["R9", "Ronaldo Nazario"] },
+      { answer: "Ronaldinho", value: "Forward" },
+      { answer: "Rivaldo", value: "Forward" },
+      { answer: "Cafu", value: "Captain" },
+      { answer: "Roberto Carlos", value: "Left-back" },
+      { answer: "Lucio", value: "Defender", aliases: ["Lúcio"] },
+      { answer: "Marcos", value: "Goalkeeper" },
+      { answer: "Gilberto Silva", value: "Midfielder" },
+      { answer: "Kaka", value: "Young squad member", aliases: ["Kaká"] },
+      { answer: "Denilson", value: "Winger" },
+    ],
+  },
+
+  {
+    id: "france-1998-world-cup-squad",
+    label: "France 1998 squad",
+    question: "Can you name 10 players from France's 1998 World Cup winning squad?",
+    answerType: "player",
+    answers: [
+      { answer: "Zinedine Zidane", value: "Midfielder", aliases: ["Zidane"] },
+      { answer: "Didier Deschamps", value: "Captain", aliases: ["Deschamps"] },
+      { answer: "Fabien Barthez", value: "Goalkeeper", aliases: ["Barthez"] },
+      { answer: "Lilian Thuram", value: "Defender", aliases: ["Thuram"] },
+      { answer: "Marcel Desailly", value: "Defender", aliases: ["Desailly"] },
+      { answer: "Laurent Blanc", value: "Defender", aliases: ["Blanc"] },
+      { answer: "Bixente Lizarazu", value: "Defender", aliases: ["Lizarazu"] },
+      { answer: "Emmanuel Petit", value: "Midfielder", aliases: ["Petit"] },
+      { answer: "Youri Djorkaeff", value: "Forward", aliases: ["Djorkaeff"] },
+      { answer: "Thierry Henry", value: "Forward", aliases: ["Henry"] },
+    ],
+  },
+
+  {
+    id: "spain-2010-final-starting-xi",
+    label: "Spain 2010 final XI",
+    question: "Can you name Spain's starting XI from the 2010 World Cup final?",
+    answerType: "player",
+    targetCount: 11,
+    answers: [
+      { answer: "Iker Casillas", value: "Goalkeeper", aliases: ["Casillas"] },
+      { answer: "Sergio Ramos", value: "Right-back", aliases: ["Ramos"] },
+      { answer: "Gerard Pique", value: "Centre-back", aliases: ["Gerard Piqué", "Pique"] },
+      { answer: "Carles Puyol", value: "Centre-back", aliases: ["Puyol"] },
+      { answer: "Joan Capdevila", value: "Left-back", aliases: ["Capdevila"] },
+      { answer: "Sergio Busquets", value: "Midfielder", aliases: ["Busquets"] },
+      { answer: "Xabi Alonso", value: "Midfielder" },
+      { answer: "Xavi", value: "Midfielder" },
+      { answer: "Andres Iniesta", value: "Midfielder", aliases: ["Andrés Iniesta", "Iniesta"] },
+      { answer: "Pedro", value: "Forward", aliases: ["Pedro Rodriguez", "Pedro Rodríguez"] },
+      { answer: "David Villa", value: "Forward", aliases: ["Villa"] },
+    ],
+  },
+
+  {
+    id: "arsenal-invincibles-players",
+    label: "Arsenal Invincibles",
+    question: "Can you name 10 players from Arsenal's 2003-04 Invincibles squad?",
+    answerType: "player",
+    answers: [
+      { answer: "Thierry Henry", value: "Forward", aliases: ["Henry"] },
+      { answer: "Dennis Bergkamp", value: "Forward", aliases: ["Bergkamp"] },
+      { answer: "Patrick Vieira", value: "Midfielder", aliases: ["Vieira"] },
+      { answer: "Robert Pires", value: "Midfielder", aliases: ["Robert Pirès", "Pires"] },
+      { answer: "Freddie Ljungberg", value: "Midfielder", aliases: ["Ljungberg"] },
+      { answer: "Sol Campbell", value: "Defender", aliases: ["Campbell"] },
+      { answer: "Ashley Cole", value: "Defender" },
+      { answer: "Lauren", value: "Defender" },
+      { answer: "Kolo Toure", value: "Defender", aliases: ["Kolo Touré", "Toure"] },
+      { answer: "Jens Lehmann", value: "Goalkeeper", aliases: ["Lehmann"] },
+    ],
+  },
+
+  {
+    id: "man-united-1999-treble-squad",
+    label: "Man United 1999 Treble squad",
+    question: "Can you name 10 players from Manchester United's 1998-99 Treble-winning squad?",
+    answerType: "player",
+    answers: [
+      { answer: "Peter Schmeichel", value: "Goalkeeper", aliases: ["Schmeichel"] },
+      { answer: "Gary Neville", value: "Defender", aliases: ["Neville"] },
+      { answer: "Jaap Stam", value: "Defender", aliases: ["Stam"] },
+      { answer: "Denis Irwin", value: "Defender", aliases: ["Irwin"] },
+      { answer: "Roy Keane", value: "Midfielder", aliases: ["Keane"] },
+      { answer: "Paul Scholes", value: "Midfielder", aliases: ["Scholes"] },
+      { answer: "Ryan Giggs", value: "Midfielder", aliases: ["Giggs"] },
+      { answer: "David Beckham", value: "Midfielder", aliases: ["Beckham"] },
+      { answer: "Dwight Yorke", value: "Forward", aliases: ["Yorke"] },
+      { answer: "Andy Cole", value: "Forward", aliases: ["Andrew Cole", "Cole"] },
+    ],
+  },
+
+  {
+    id: "barcelona-2009-ucl-final-starting-xi",
+    label: "Barcelona 2009 UCL final XI",
+    question: "Can you name Barcelona's starting XI from the 2009 Champions League final?",
+    answerType: "player",
+    targetCount: 11,
+    answers: [
+      { answer: "Victor Valdes", value: "Goalkeeper", aliases: ["Víctor Valdés", "Valdes"] },
+      { answer: "Carles Puyol", value: "Defender", aliases: ["Puyol"] },
+      { answer: "Gerard Pique", value: "Defender", aliases: ["Gerard Piqué", "Pique"] },
+      { answer: "Yaya Toure", value: "Defender", aliases: ["Yaya Touré", "Toure"] },
+      { answer: "Sylvinho", value: "Defender" },
+      { answer: "Sergio Busquets", value: "Midfielder", aliases: ["Busquets"] },
+      { answer: "Xavi", value: "Midfielder" },
+      { answer: "Andres Iniesta", value: "Midfielder", aliases: ["Andrés Iniesta", "Iniesta"] },
+      { answer: "Lionel Messi", value: "Forward", aliases: ["Messi"] },
+      { answer: "Samuel Eto'o", value: "Forward", aliases: ["Samuel Etoo", "Eto'o", "Etoo"] },
+      { answer: "Thierry Henry", value: "Forward", aliases: ["Henry"] },
+    ],
+  },
+
+  {
+    id: "chelsea-2012-ucl-final-starting-xi",
+    label: "Chelsea 2012 UCL final XI",
+    question: "Can you name Chelsea's starting XI from the 2012 Champions League final?",
+    answerType: "player",
+    targetCount: 11,
+    answers: [
+      { answer: "Petr Cech", value: "Goalkeeper", aliases: ["Petr Čech", "Cech"] },
+      { answer: "Jose Bosingwa", value: "Defender", aliases: ["José Bosingwa", "Bosingwa"] },
+      { answer: "Gary Cahill", value: "Defender", aliases: ["Cahill"] },
+      { answer: "David Luiz", value: "Defender" },
+      { answer: "Ashley Cole", value: "Defender" },
+      { answer: "John Obi Mikel", value: "Midfielder", aliases: ["Mikel", "Obi Mikel"] },
+      { answer: "Frank Lampard", value: "Midfielder", aliases: ["Lampard"] },
+      { answer: "Ryan Bertrand", value: "Midfielder", aliases: ["Bertrand"] },
+      { answer: "Juan Mata", value: "Midfielder", aliases: ["Mata"] },
+      { answer: "Salomon Kalou", value: "Forward", aliases: ["Kalou"] },
+      { answer: "Didier Drogba", value: "Forward", aliases: ["Drogba"] },
+    ],
+  },
+
+  {
+    id: "leicester-2016-title-winners",
+    label: "Leicester 2016 title winners",
+    question: "Can you name 10 players from Leicester City's 2015-16 Premier League title-winning squad?",
+    answerType: "player",
+    answers: [
+      { answer: "Jamie Vardy", value: "Forward", aliases: ["Vardy"] },
+      { answer: "Riyad Mahrez", value: "Winger", aliases: ["Mahrez"] },
+      { answer: "N'Golo Kante", value: "Midfielder", aliases: ["N'Golo Kanté", "Kante"] },
+      { answer: "Kasper Schmeichel", value: "Goalkeeper", aliases: ["Schmeichel"] },
+      { answer: "Wes Morgan", value: "Defender", aliases: ["Morgan"] },
+      { answer: "Robert Huth", value: "Defender", aliases: ["Huth"] },
+      { answer: "Danny Drinkwater", value: "Midfielder", aliases: ["Drinkwater"] },
+      { answer: "Marc Albrighton", value: "Winger", aliases: ["Albrighton"] },
+      { answer: "Shinji Okazaki", value: "Forward", aliases: ["Okazaki"] },
+      { answer: "Christian Fuchs", value: "Defender", aliases: ["Fuchs"] },
+    ],
+  },
+
+  {
+    id: "players-won-world-cup-and-ballon-dor",
+    label: "World Cup and Ballon d'Or winners",
+    question: "Can you name 10 players who have won both the men's World Cup and the Ballon d'Or?",
+    answerType: "player",
+    answers: [
+      { answer: "Bobby Charlton", value: "England and Ballon d'Or winner", aliases: ["Charlton"] },
+      { answer: "Franz Beckenbauer", value: "Germany and Ballon d'Or winner", aliases: ["Beckenbauer"] },
+      { answer: "Gerd Muller", value: "Germany and Ballon d'Or winner", aliases: ["Gerd Müller", "Muller"] },
+      { answer: "Paolo Rossi", value: "Italy and Ballon d'Or winner", aliases: ["Rossi"] },
+      { answer: "Zinedine Zidane", value: "France and Ballon d'Or winner", aliases: ["Zidane"] },
+      { answer: "Ronaldo", value: "Brazil and Ballon d'Or winner", aliases: ["R9", "Ronaldo Nazario"] },
+      { answer: "Rivaldo", value: "Brazil and Ballon d'Or winner" },
+      { answer: "Ronaldinho", value: "Brazil and Ballon d'Or winner" },
+      { answer: "Fabio Cannavaro", value: "Italy and Ballon d'Or winner", aliases: ["Cannavaro"] },
+      { answer: "Lionel Messi", value: "Argentina and Ballon d'Or winner", aliases: ["Messi"] },
+    ],
+  },
+
+  {
+    id: "europa-league-most-titles-clubs",
+    label: "Europa League title clubs",
+    question: "Can you name 10 clubs with the most UEFA Cup/Europa League titles?",
+    answerType: "club",
+    answers: [
+      { answer: "Sevilla", value: "Most titles" },
+      { answer: "Inter", value: "Multiple titles", aliases: ["Inter Milan", "Internazionale"] },
+      { answer: "Liverpool", value: "Multiple titles" },
+      { answer: "Juventus", value: "Multiple titles" },
+      { answer: "Atletico Madrid", value: "Multiple titles", aliases: ["Atlético Madrid", "Atleti"] },
+      { answer: "Borussia Monchengladbach", value: "Multiple titles", aliases: ["Borussia Mönchengladbach", "Gladbach"] },
+      { answer: "Tottenham Hotspur", value: "Multiple titles", aliases: ["Tottenham", "Spurs"] },
+      { answer: "Feyenoord", value: "Multiple titles" },
+      { answer: "Porto", value: "Multiple titles" },
+      { answer: "Parma", value: "Multiple titles" },
+    ],
+  },
+
+  {
+    id: "african-player-of-year-winners",
+    label: "African Player of the Year winners",
+    question: "Can you name 10 players who have won African Footballer of the Year?",
+    answerType: "player",
+    answers: [
+      { answer: "George Weah", value: "Liberia", aliases: ["Weah"] },
+      { answer: "Abedi Pele", value: "Ghana", aliases: ["Abedi Pelé"] },
+      { answer: "Nwankwo Kanu", value: "Nigeria", aliases: ["Kanu"] },
+      { answer: "Samuel Eto'o", value: "Cameroon", aliases: ["Samuel Etoo", "Eto'o", "Etoo"] },
+      { answer: "Didier Drogba", value: "Ivory Coast", aliases: ["Drogba"] },
+      { answer: "Yaya Toure", value: "Ivory Coast", aliases: ["Yaya Touré", "Toure"] },
+      { answer: "Riyad Mahrez", value: "Algeria", aliases: ["Mahrez"] },
+      { answer: "Mohamed Salah", value: "Egypt", aliases: ["Salah", "Mo Salah"] },
+      { answer: "Sadio Mane", value: "Senegal", aliases: ["Sadio Mané", "Mane"] },
+      { answer: "Victor Osimhen", value: "Nigeria", aliases: ["Osimhen"] },
+    ],
+  },
+
+  {
+    id: "puskas-award-winners",
+    label: "Puskas Award winners",
+    question: "Can you name 10 players who have won the FIFA Puskas Award?",
+    answerType: "player",
+    answers: [
+      { answer: "Cristiano Ronaldo", value: "2009", aliases: ["Ronaldo", "CR7"] },
+      { answer: "Hamit Altintop", value: "2010", aliases: ["Hamit Altıntop", "Altintop"] },
+      { answer: "Neymar", value: "2011" },
+      { answer: "Miroslav Stoch", value: "2012", aliases: ["Stoch"] },
+      { answer: "Zlatan Ibrahimovic", value: "2013", aliases: ["Zlatan", "Ibrahimovic"] },
+      { answer: "James Rodriguez", value: "2014", aliases: ["James Rodríguez", "James"] },
+      { answer: "Olivier Giroud", value: "2017", aliases: ["Giroud"] },
+      { answer: "Mohamed Salah", value: "2018", aliases: ["Salah", "Mo Salah"] },
+      { answer: "Son Heung-min", value: "2020", aliases: ["Heung-Min Son", "Son"] },
+      { answer: "Erik Lamela", value: "2021", aliases: ["Lamela"] },
+    ],
+  },{
+  id: "argentina-2022-world-cup-final-starting-xi",
+  label: "Argentina 2022 World Cup final XI",
+  question: "Can you name 10 players from Argentina's starting XI in the 2022 World Cup final?",
+  answerType: "player",
+  targetCount: 10,
+  answers: [
+    { answer: "Emiliano Martinez", value: "Goalkeeper", aliases: ["Emiliano Martínez", "Dibu Martinez", "Dibu Martínez", "Martinez"] },
+    { answer: "Nahuel Molina", value: "Right-back", aliases: ["Molina"] },
+    { answer: "Cristian Romero", value: "Centre-back", aliases: ["Romero", "Cuti Romero"] },
+    { answer: "Nicolas Otamendi", value: "Centre-back", aliases: ["Nicolás Otamendi", "Otamendi"] },
+    { answer: "Nicolas Tagliafico", value: "Left-back", aliases: ["Nicolás Tagliafico", "Tagliafico"] },
+    { answer: "Rodrigo De Paul", value: "Midfielder", aliases: ["De Paul"] },
+    { answer: "Enzo Fernandez", value: "Midfielder", aliases: ["Enzo Fernández", "Enzo"] },
+    { answer: "Alexis Mac Allister", value: "Midfielder", aliases: ["Mac Allister"] },
+    { answer: "Angel Di Maria", value: "Forward", aliases: ["Ángel Di María", "Di Maria"] },
+    { answer: "Lionel Messi", value: "Captain", aliases: ["Messi"] },
+    { answer: "Julian Alvarez", value: "Forward", aliases: ["Julián Álvarez", "Alvarez"] },
+  ],
+},  {
+    id: "real-madrid-2017-ucl-final-starting-xi",
+    label: "Real Madrid 2017 UCL final XI",
+    question: "Can you name 10 players from Real Madrid's starting XI in the 2017 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Keylor Navas", value: "Goalkeeper", aliases: ["Navas"] },
+      { answer: "Dani Carvajal", value: "Right-back", aliases: ["Daniel Carvajal", "Carvajal"] },
+      { answer: "Raphael Varane", value: "Centre-back", aliases: ["Raphaël Varane", "Varane"] },
+      { answer: "Sergio Ramos", value: "Centre-back", aliases: ["Ramos"] },
+      { answer: "Marcelo", value: "Left-back" },
+      { answer: "Casemiro", value: "Midfielder" },
+      { answer: "Luka Modric", value: "Midfielder", aliases: ["Luka Modrić", "Modric"] },
+      { answer: "Toni Kroos", value: "Midfielder", aliases: ["Kroos"] },
+      { answer: "Isco", value: "Midfielder" },
+      { answer: "Karim Benzema", value: "Forward", aliases: ["Benzema"] },
+      { answer: "Cristiano Ronaldo", value: "Forward", aliases: ["Ronaldo", "CR7"] },
+    ],
+  },
+
+  {
+    id: "juventus-2017-ucl-final-starting-xi",
+    label: "Juventus 2017 UCL final XI",
+    question: "Can you name 10 players from Juventus' starting XI in the 2017 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Gianluigi Buffon", value: "Goalkeeper", aliases: ["Buffon", "Gigi Buffon"] },
+      { answer: "Andrea Barzagli", value: "Defender", aliases: ["Barzagli"] },
+      { answer: "Leonardo Bonucci", value: "Defender", aliases: ["Bonucci"] },
+      { answer: "Giorgio Chiellini", value: "Defender", aliases: ["Chiellini"] },
+      { answer: "Dani Alves", value: "Wing-back", aliases: ["Daniel Alves"] },
+      { answer: "Alex Sandro", value: "Wing-back" },
+      { answer: "Miralem Pjanic", value: "Midfielder", aliases: ["Miralem Pjanić", "Pjanic"] },
+      { answer: "Sami Khedira", value: "Midfielder", aliases: ["Khedira"] },
+      { answer: "Paulo Dybala", value: "Forward", aliases: ["Dybala"] },
+      { answer: "Mario Mandzukic", value: "Forward", aliases: ["Mario Mandžukić", "Mandzukic"] },
+      { answer: "Gonzalo Higuain", value: "Forward", aliases: ["Gonzalo Higuaín", "Higuain"] },
+    ],
+  },
+
+  {
+    id: "liverpool-2019-barcelona-comeback-starting-xi",
+    label: "Liverpool 4-0 Barcelona XI",
+    question: "Can you name 10 players from Liverpool's starting XI in the 4-0 comeback against Barcelona in 2019?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Alisson", value: "Goalkeeper", aliases: ["Alisson Becker"] },
+      { answer: "Trent Alexander-Arnold", value: "Right-back", aliases: ["Trent", "Alexander-Arnold", "TAA"] },
+      { answer: "Joel Matip", value: "Centre-back", aliases: ["Matip"] },
+      { answer: "Virgil van Dijk", value: "Centre-back", aliases: ["Van Dijk", "VVD"] },
+      { answer: "Andy Robertson", value: "Left-back", aliases: ["Andrew Robertson", "Robertson"] },
+      { answer: "Fabinho", value: "Midfielder" },
+      { answer: "Jordan Henderson", value: "Midfielder", aliases: ["Henderson"] },
+      { answer: "James Milner", value: "Midfielder", aliases: ["Milner"] },
+      { answer: "Xherdan Shaqiri", value: "Winger", aliases: ["Shaqiri"] },
+      { answer: "Sadio Mane", value: "Winger", aliases: ["Sadio Mané", "Mane"] },
+      { answer: "Divock Origi", value: "Forward", aliases: ["Origi"] },
+    ],
+  },
+
+  {
+    id: "barcelona-2019-liverpool-away-starting-xi",
+    label: "Barcelona 2019 Anfield XI",
+    question: "Can you name 10 players from Barcelona's starting XI in the 4-0 loss at Anfield in 2019?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Marc-Andre ter Stegen", value: "Goalkeeper", aliases: ["Marc-André ter Stegen", "Ter Stegen"] },
+      { answer: "Sergi Roberto", value: "Right-back" },
+      { answer: "Gerard Pique", value: "Centre-back", aliases: ["Gerard Piqué", "Pique"] },
+      { answer: "Clement Lenglet", value: "Centre-back", aliases: ["Clément Lenglet", "Lenglet"] },
+      { answer: "Jordi Alba", value: "Left-back" },
+      { answer: "Sergio Busquets", value: "Midfielder", aliases: ["Busquets"] },
+      { answer: "Ivan Rakitic", value: "Midfielder", aliases: ["Ivan Rakitić", "Rakitic"] },
+      { answer: "Arturo Vidal", value: "Midfielder", aliases: ["Vidal"] },
+      { answer: "Philippe Coutinho", value: "Forward", aliases: ["Coutinho"] },
+      { answer: "Luis Suarez", value: "Forward", aliases: ["Luis Suárez", "Suarez"] },
+      { answer: "Lionel Messi", value: "Forward", aliases: ["Messi"] },
+    ],
+  },
+
+  {
+    id: "barcelona-2017-psg-remontada-starting-xi",
+    label: "Barcelona 6-1 PSG XI",
+    question: "Can you name 10 players from Barcelona's starting XI in the 6-1 comeback against PSG in 2017?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Marc-Andre ter Stegen", value: "Goalkeeper", aliases: ["Marc-André ter Stegen", "Ter Stegen"] },
+      { answer: "Javier Mascherano", value: "Defender", aliases: ["Mascherano"] },
+      { answer: "Gerard Pique", value: "Defender", aliases: ["Gerard Piqué", "Pique"] },
+      { answer: "Samuel Umtiti", value: "Defender", aliases: ["Umtiti"] },
+      { answer: "Rafinha", value: "Midfielder" },
+      { answer: "Ivan Rakitic", value: "Midfielder", aliases: ["Ivan Rakitić", "Rakitic"] },
+      { answer: "Sergio Busquets", value: "Midfielder", aliases: ["Busquets"] },
+      { answer: "Andres Iniesta", value: "Midfielder", aliases: ["Andrés Iniesta", "Iniesta"] },
+      { answer: "Lionel Messi", value: "Forward", aliases: ["Messi"] },
+      { answer: "Luis Suarez", value: "Forward", aliases: ["Luis Suárez", "Suarez"] },
+      { answer: "Neymar", value: "Forward" },
+    ],
+  },
+
+  {
+    id: "psg-2017-barcelona-remontada-starting-xi",
+    label: "PSG 2017 Remontada XI",
+    question: "Can you name 10 players from PSG's starting XI in the 6-1 loss against Barcelona in 2017?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Kevin Trapp", value: "Goalkeeper", aliases: ["Trapp"] },
+      { answer: "Thomas Meunier", value: "Right-back", aliases: ["Meunier"] },
+      { answer: "Marquinhos", value: "Centre-back" },
+      { answer: "Thiago Silva", value: "Centre-back" },
+      { answer: "Layvin Kurzawa", value: "Left-back", aliases: ["Kurzawa"] },
+      { answer: "Adrien Rabiot", value: "Midfielder", aliases: ["Rabiot"] },
+      { answer: "Marco Verratti", value: "Midfielder", aliases: ["Verratti"] },
+      { answer: "Blaise Matuidi", value: "Midfielder", aliases: ["Matuidi"] },
+      { answer: "Julian Draxler", value: "Forward", aliases: ["Draxler"] },
+      { answer: "Lucas Moura", value: "Forward", aliases: ["Lucas"] },
+      { answer: "Edinson Cavani", value: "Forward", aliases: ["Cavani"] },
+    ],
+  },
+
+  {
+    id: "argentina-2022-world-cup-final-starting-xi",
+    label: "Argentina 2022 World Cup final XI",
+    question: "Can you name 10 players from Argentina's starting XI in the 2022 World Cup final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Emiliano Martinez", value: "Goalkeeper", aliases: ["Emiliano Martínez", "Dibu Martinez", "Dibu Martínez", "Martinez"] },
+      { answer: "Nahuel Molina", value: "Right-back", aliases: ["Molina"] },
+      { answer: "Cristian Romero", value: "Centre-back", aliases: ["Romero", "Cuti Romero"] },
+      { answer: "Nicolas Otamendi", value: "Centre-back", aliases: ["Nicolás Otamendi", "Otamendi"] },
+      { answer: "Nicolas Tagliafico", value: "Left-back", aliases: ["Nicolás Tagliafico", "Tagliafico"] },
+      { answer: "Rodrigo De Paul", value: "Midfielder", aliases: ["De Paul"] },
+      { answer: "Enzo Fernandez", value: "Midfielder", aliases: ["Enzo Fernández", "Enzo"] },
+      { answer: "Alexis Mac Allister", value: "Midfielder", aliases: ["Mac Allister"] },
+      { answer: "Angel Di Maria", value: "Forward", aliases: ["Ángel Di María", "Di Maria"] },
+      { answer: "Lionel Messi", value: "Captain", aliases: ["Messi"] },
+      { answer: "Julian Alvarez", value: "Forward", aliases: ["Julián Álvarez", "Alvarez"] },
+    ],
+  },
+
+  {
+    id: "france-2022-world-cup-final-starting-xi",
+    label: "France 2022 World Cup final XI",
+    question: "Can you name 10 players from France's starting XI in the 2022 World Cup final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Hugo Lloris", value: "Goalkeeper", aliases: ["Lloris"] },
+      { answer: "Jules Kounde", value: "Right-back", aliases: ["Jules Koundé", "Kounde"] },
+      { answer: "Raphael Varane", value: "Centre-back", aliases: ["Raphaël Varane", "Varane"] },
+      { answer: "Dayot Upamecano", value: "Centre-back", aliases: ["Upamecano"] },
+      { answer: "Theo Hernandez", value: "Left-back", aliases: ["Théo Hernandez", "Hernandez"] },
+      { answer: "Aurelien Tchouameni", value: "Midfielder", aliases: ["Aurélien Tchouaméni", "Tchouameni"] },
+      { answer: "Adrien Rabiot", value: "Midfielder", aliases: ["Rabiot"] },
+      { answer: "Antoine Griezmann", value: "Midfielder", aliases: ["Griezmann"] },
+      { answer: "Ousmane Dembele", value: "Forward", aliases: ["Ousmane Dembélé", "Dembele"] },
+      { answer: "Olivier Giroud", value: "Forward", aliases: ["Giroud"] },
+      { answer: "Kylian Mbappe", value: "Forward", aliases: ["Kylian Mbappé", "Mbappe"] },
+    ],
+  },
+
+  {
+    id: "france-2018-world-cup-final-starting-xi",
+    label: "France 2018 World Cup final XI",
+    question: "Can you name 10 players from France's starting XI in the 2018 World Cup final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Hugo Lloris", value: "Goalkeeper", aliases: ["Lloris"] },
+      { answer: "Benjamin Pavard", value: "Right-back", aliases: ["Pavard"] },
+      { answer: "Raphael Varane", value: "Centre-back", aliases: ["Raphaël Varane", "Varane"] },
+      { answer: "Samuel Umtiti", value: "Centre-back", aliases: ["Umtiti"] },
+      { answer: "Lucas Hernandez", value: "Left-back", aliases: ["Lucas Hernández", "Hernandez"] },
+      { answer: "N'Golo Kante", value: "Midfielder", aliases: ["N'Golo Kanté", "Kante"] },
+      { answer: "Paul Pogba", value: "Midfielder", aliases: ["Pogba"] },
+      { answer: "Blaise Matuidi", value: "Midfielder", aliases: ["Matuidi"] },
+      { answer: "Kylian Mbappe", value: "Forward", aliases: ["Kylian Mbappé", "Mbappe"] },
+      { answer: "Olivier Giroud", value: "Forward", aliases: ["Giroud"] },
+      { answer: "Antoine Griezmann", value: "Forward", aliases: ["Griezmann"] },
+    ],
+  },
+
+  {
+    id: "croatia-2018-world-cup-final-starting-xi",
+    label: "Croatia 2018 World Cup final XI",
+    question: "Can you name 10 players from Croatia's starting XI in the 2018 World Cup final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Danijel Subasic", value: "Goalkeeper", aliases: ["Danijel Subašić", "Subasic"] },
+      { answer: "Sime Vrsaljko", value: "Right-back", aliases: ["Šime Vrsaljko", "Vrsaljko"] },
+      { answer: "Dejan Lovren", value: "Centre-back", aliases: ["Lovren"] },
+      { answer: "Domagoj Vida", value: "Centre-back", aliases: ["Vida"] },
+      { answer: "Ivan Strinic", value: "Left-back", aliases: ["Ivan Strinić", "Strinic"] },
+      { answer: "Marcelo Brozovic", value: "Midfielder", aliases: ["Marcelo Brozović", "Brozovic"] },
+      { answer: "Ivan Rakitic", value: "Midfielder", aliases: ["Ivan Rakitić", "Rakitic"] },
+      { answer: "Luka Modric", value: "Captain", aliases: ["Luka Modrić", "Modric"] },
+      { answer: "Ante Rebic", value: "Forward", aliases: ["Ante Rebić", "Rebic"] },
+      { answer: "Ivan Perisic", value: "Forward", aliases: ["Ivan Perišić", "Perisic"] },
+      { answer: "Mario Mandzukic", value: "Forward", aliases: ["Mario Mandžukić", "Mandzukic"] },
+    ],
+  },
+
+  {
+    id: "germany-2014-world-cup-final-starting-xi",
+    label: "Germany 2014 World Cup final XI",
+    question: "Can you name 10 players from Germany's starting XI in the 2014 World Cup final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Manuel Neuer", value: "Goalkeeper", aliases: ["Neuer"] },
+      { answer: "Philipp Lahm", value: "Right-back", aliases: ["Lahm"] },
+      { answer: "Jerome Boateng", value: "Centre-back", aliases: ["Jérôme Boateng", "Boateng"] },
+      { answer: "Mats Hummels", value: "Centre-back", aliases: ["Hummels"] },
+      { answer: "Benedikt Howedes", value: "Left-back", aliases: ["Benedikt Höwedes", "Howedes"] },
+      { answer: "Bastian Schweinsteiger", value: "Midfielder", aliases: ["Schweinsteiger"] },
+      { answer: "Christoph Kramer", value: "Midfielder", aliases: ["Kramer"] },
+      { answer: "Toni Kroos", value: "Midfielder", aliases: ["Kroos"] },
+      { answer: "Mesut Ozil", value: "Attacking midfielder", aliases: ["Mesut Özil", "Ozil"] },
+      { answer: "Thomas Muller", value: "Forward", aliases: ["Thomas Müller", "Muller"] },
+      { answer: "Miroslav Klose", value: "Forward", aliases: ["Klose"] },
+    ],
+  },
+
+  {
+    id: "portugal-2016-euro-final-starting-xi",
+    label: "Portugal Euro 2016 final XI",
+    question: "Can you name 10 players from Portugal's starting XI in the Euro 2016 final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Rui Patricio", value: "Goalkeeper", aliases: ["Rui Patrício", "Patricio"] },
+      { answer: "Cedric Soares", value: "Right-back", aliases: ["Cédric Soares", "Cedric"] },
+      { answer: "Pepe", value: "Centre-back" },
+      { answer: "Jose Fonte", value: "Centre-back", aliases: ["José Fonte", "Fonte"] },
+      { answer: "Raphael Guerreiro", value: "Left-back", aliases: ["Raphaël Guerreiro", "Guerreiro"] },
+      { answer: "William Carvalho", value: "Midfielder" },
+      { answer: "Renato Sanches", value: "Midfielder" },
+      { answer: "Adrien Silva", value: "Midfielder" },
+      { answer: "Joao Mario", value: "Midfielder", aliases: ["João Mário", "Joao Mario"] },
+      { answer: "Nani", value: "Forward" },
+      { answer: "Cristiano Ronaldo", value: "Captain", aliases: ["Ronaldo", "CR7"] },
+    ],
+  },
+
+  {
+    id: "man-city-2012-qpr-title-starting-xi",
+    label: "Man City 3-2 QPR XI",
+    question: "Can you name 10 players from Manchester City's starting XI in the 3-2 title win against QPR in 2012?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Joe Hart", value: "Goalkeeper", aliases: ["Hart"] },
+      { answer: "Pablo Zabaleta", value: "Right-back", aliases: ["Zabaleta"] },
+      { answer: "Vincent Kompany", value: "Centre-back", aliases: ["Kompany"] },
+      { answer: "Joleon Lescott", value: "Centre-back", aliases: ["Lescott"] },
+      { answer: "Gael Clichy", value: "Left-back", aliases: ["Gaël Clichy", "Clichy"] },
+      { answer: "Gareth Barry", value: "Midfielder", aliases: ["Barry"] },
+      { answer: "Yaya Toure", value: "Midfielder", aliases: ["Yaya Touré", "Toure"] },
+      { answer: "David Silva", value: "Midfielder" },
+      { answer: "Samir Nasri", value: "Midfielder", aliases: ["Nasri"] },
+      { answer: "Carlos Tevez", value: "Forward", aliases: ["Carlos Tévez", "Tevez"] },
+      { answer: "Sergio Aguero", value: "Forward", aliases: ["Sergio Agüero", "Aguero"] },
+    ],
+  },
+
+  {
+    id: "man-united-1999-ucl-final-starting-xi",
+    label: "Man United 1999 UCL final XI",
+    question: "Can you name 10 players from Manchester United's starting XI in the 1999 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Peter Schmeichel", value: "Goalkeeper", aliases: ["Schmeichel"] },
+      { answer: "Gary Neville", value: "Right-back", aliases: ["Neville"] },
+      { answer: "Jaap Stam", value: "Centre-back", aliases: ["Stam"] },
+      { answer: "Ronny Johnsen", value: "Centre-back", aliases: ["Johnsen"] },
+      { answer: "Denis Irwin", value: "Left-back", aliases: ["Irwin"] },
+      { answer: "David Beckham", value: "Midfielder", aliases: ["Beckham"] },
+      { answer: "Nicky Butt", value: "Midfielder", aliases: ["Butt"] },
+      { answer: "Jesper Blomqvist", value: "Midfielder", aliases: ["Blomqvist"] },
+      { answer: "Ryan Giggs", value: "Midfielder", aliases: ["Giggs"] },
+      { answer: "Dwight Yorke", value: "Forward", aliases: ["Yorke"] },
+      { answer: "Andy Cole", value: "Forward", aliases: ["Andrew Cole", "Cole"] },
+    ],
+  },
+
+  {
+    id: "bayern-1999-ucl-final-starting-xi",
+    label: "Bayern 1999 UCL final XI",
+    question: "Can you name 10 players from Bayern Munich's starting XI in the 1999 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Oliver Kahn", value: "Goalkeeper", aliases: ["Kahn"] },
+      { answer: "Markus Babbel", value: "Defender", aliases: ["Babbel"] },
+      { answer: "Lothar Matthaus", value: "Defender", aliases: ["Lothar Matthäus", "Matthaus"] },
+      { answer: "Thomas Linke", value: "Defender", aliases: ["Linke"] },
+      { answer: "Michael Tarnat", value: "Defender", aliases: ["Tarnat"] },
+      { answer: "Stefan Effenberg", value: "Midfielder", aliases: ["Effenberg"] },
+      { answer: "Jens Jeremies", value: "Midfielder", aliases: ["Jeremies"] },
+      { answer: "Mario Basler", value: "Midfielder", aliases: ["Basler"] },
+      { answer: "Mehmet Scholl", value: "Forward", aliases: ["Scholl"] },
+      { answer: "Alexander Zickler", value: "Forward", aliases: ["Zickler"] },
+      { answer: "Carsten Jancker", value: "Forward", aliases: ["Jancker"] },
+    ],
+  },
+
+  {
+    id: "barcelona-2011-ucl-final-starting-xi",
+    label: "Barcelona 2011 UCL final XI",
+    question: "Can you name 10 players from Barcelona's starting XI in the 2011 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Victor Valdes", value: "Goalkeeper", aliases: ["Víctor Valdés", "Valdes"] },
+      { answer: "Dani Alves", value: "Right-back", aliases: ["Daniel Alves"] },
+      { answer: "Gerard Pique", value: "Centre-back", aliases: ["Gerard Piqué", "Pique"] },
+      { answer: "Javier Mascherano", value: "Centre-back", aliases: ["Mascherano"] },
+      { answer: "Eric Abidal", value: "Left-back", aliases: ["Abidal"] },
+      { answer: "Sergio Busquets", value: "Midfielder", aliases: ["Busquets"] },
+      { answer: "Xavi", value: "Midfielder" },
+      { answer: "Andres Iniesta", value: "Midfielder", aliases: ["Andrés Iniesta", "Iniesta"] },
+      { answer: "Pedro", value: "Forward", aliases: ["Pedro Rodriguez", "Pedro Rodríguez"] },
+      { answer: "Lionel Messi", value: "Forward", aliases: ["Messi"] },
+      { answer: "David Villa", value: "Forward", aliases: ["Villa"] },
+    ],
+  },
+
+  {
+    id: "man-united-2011-ucl-final-starting-xi",
+    label: "Man United 2011 UCL final XI",
+    question: "Can you name 10 players from Manchester United's starting XI in the 2011 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Edwin van der Sar", value: "Goalkeeper", aliases: ["Van der Sar"] },
+      { answer: "Fabio", value: "Right-back", aliases: ["Fábio"] },
+      { answer: "Rio Ferdinand", value: "Centre-back", aliases: ["Ferdinand"] },
+      { answer: "Nemanja Vidic", value: "Centre-back", aliases: ["Nemanja Vidić", "Vidic"] },
+      { answer: "Patrice Evra", value: "Left-back", aliases: ["Evra"] },
+      { answer: "Michael Carrick", value: "Midfielder", aliases: ["Carrick"] },
+      { answer: "Ryan Giggs", value: "Midfielder", aliases: ["Giggs"] },
+      { answer: "Park Ji-sung", value: "Midfielder", aliases: ["Park", "Ji Sung Park"] },
+      { answer: "Antonio Valencia", value: "Winger", aliases: ["Valencia"] },
+      { answer: "Wayne Rooney", value: "Forward", aliases: ["Rooney"] },
+      { answer: "Javier Hernandez", value: "Forward", aliases: ["Chicharito", "Javier Hernández"] },
+    ],
+  },
+
+  {
+    id: "ac-milan-2007-ucl-final-starting-xi",
+    label: "AC Milan 2007 UCL final XI",
+    question: "Can you name 10 players from AC Milan's starting XI in the 2007 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Dida", value: "Goalkeeper" },
+      { answer: "Massimo Oddo", value: "Right-back", aliases: ["Oddo"] },
+      { answer: "Alessandro Nesta", value: "Centre-back", aliases: ["Nesta"] },
+      { answer: "Paolo Maldini", value: "Centre-back", aliases: ["Maldini"] },
+      { answer: "Marek Jankulovski", value: "Left-back", aliases: ["Jankulovski"] },
+      { answer: "Gennaro Gattuso", value: "Midfielder", aliases: ["Gattuso"] },
+      { answer: "Andrea Pirlo", value: "Midfielder", aliases: ["Pirlo"] },
+      { answer: "Massimo Ambrosini", value: "Midfielder", aliases: ["Ambrosini"] },
+      { answer: "Clarence Seedorf", value: "Attacking midfielder", aliases: ["Seedorf"] },
+      { answer: "Kaka", value: "Attacking midfielder", aliases: ["Kaká"] },
+      { answer: "Filippo Inzaghi", value: "Forward", aliases: ["Inzaghi", "Pippo"] },
+    ],
+  },
+
+  {
+    id: "liverpool-2007-ucl-final-starting-xi",
+    label: "Liverpool 2007 UCL final XI",
+    question: "Can you name 10 players from Liverpool's starting XI in the 2007 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Pepe Reina", value: "Goalkeeper", aliases: ["Reina"] },
+      { answer: "Steve Finnan", value: "Right-back", aliases: ["Finnan"] },
+      { answer: "Daniel Agger", value: "Centre-back", aliases: ["Agger"] },
+      { answer: "Jamie Carragher", value: "Centre-back", aliases: ["Carragher"] },
+      { answer: "John Arne Riise", value: "Left-back", aliases: ["Riise"] },
+      { answer: "Javier Mascherano", value: "Midfielder", aliases: ["Mascherano"] },
+      { answer: "Xabi Alonso", value: "Midfielder" },
+      { answer: "Steven Gerrard", value: "Captain", aliases: ["Gerrard"] },
+      { answer: "Jermaine Pennant", value: "Winger", aliases: ["Pennant"] },
+      { answer: "Boudewijn Zenden", value: "Winger", aliases: ["Zenden"] },
+      { answer: "Dirk Kuyt", value: "Forward", aliases: ["Kuyt"] },
+    ],
+  },
+
+  {
+    id: "real-madrid-2014-ucl-final-starting-xi",
+    label: "Real Madrid 2014 UCL final XI",
+    question: "Can you name 10 players from Real Madrid's starting XI in the 2014 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Iker Casillas", value: "Goalkeeper", aliases: ["Casillas"] },
+      { answer: "Dani Carvajal", value: "Right-back", aliases: ["Daniel Carvajal", "Carvajal"] },
+      { answer: "Raphael Varane", value: "Centre-back", aliases: ["Raphaël Varane", "Varane"] },
+      { answer: "Sergio Ramos", value: "Centre-back", aliases: ["Ramos"] },
+      { answer: "Fabio Coentrao", value: "Left-back", aliases: ["Fábio Coentrão", "Coentrao"] },
+      { answer: "Sami Khedira", value: "Midfielder", aliases: ["Khedira"] },
+      { answer: "Luka Modric", value: "Midfielder", aliases: ["Luka Modrić", "Modric"] },
+      { answer: "Angel Di Maria", value: "Midfielder", aliases: ["Ángel Di María", "Di Maria"] },
+      { answer: "Gareth Bale", value: "Forward", aliases: ["Bale"] },
+      { answer: "Karim Benzema", value: "Forward", aliases: ["Benzema"] },
+      { answer: "Cristiano Ronaldo", value: "Forward", aliases: ["Ronaldo", "CR7"] },
+    ],
+  },
+
+  {
+    id: "atletico-madrid-2014-ucl-final-starting-xi",
+    label: "Atletico 2014 UCL final XI",
+    question: "Can you name 10 players from Atletico Madrid's starting XI in the 2014 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Thibaut Courtois", value: "Goalkeeper", aliases: ["Courtois"] },
+      { answer: "Juanfran", value: "Right-back" },
+      { answer: "Miranda", value: "Centre-back" },
+      { answer: "Diego Godin", value: "Centre-back", aliases: ["Diego Godín", "Godin"] },
+      { answer: "Filipe Luis", value: "Left-back" },
+      { answer: "Gabi", value: "Midfielder" },
+      { answer: "Tiago", value: "Midfielder" },
+      { answer: "Koke", value: "Midfielder" },
+      { answer: "Raul Garcia", value: "Midfielder", aliases: ["Raúl García", "Raul Garcia"] },
+      { answer: "David Villa", value: "Forward", aliases: ["Villa"] },
+      { answer: "Diego Costa", value: "Forward", aliases: ["Costa"] },
+    ],
+  },
+
+  {
+    id: "tottenham-2019-ajax-comeback-starting-xi",
+    label: "Tottenham 3-2 Ajax XI",
+    question: "Can you name 10 players from Tottenham's starting XI in the 3-2 comeback against Ajax in 2019?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Hugo Lloris", value: "Goalkeeper", aliases: ["Lloris"] },
+      { answer: "Kieran Trippier", value: "Right-back", aliases: ["Trippier"] },
+      { answer: "Toby Alderweireld", value: "Centre-back", aliases: ["Alderweireld"] },
+      { answer: "Jan Vertonghen", value: "Centre-back", aliases: ["Vertonghen"] },
+      { answer: "Danny Rose", value: "Left-back", aliases: ["Rose"] },
+      { answer: "Victor Wanyama", value: "Midfielder", aliases: ["Wanyama"] },
+      { answer: "Moussa Sissoko", value: "Midfielder", aliases: ["Sissoko"] },
+      { answer: "Christian Eriksen", value: "Midfielder", aliases: ["Eriksen"] },
+      { answer: "Dele Alli", value: "Midfielder", aliases: ["Dele"] },
+      { answer: "Son Heung-min", value: "Forward", aliases: ["Heung-Min Son", "Son"] },
+      { answer: "Lucas Moura", value: "Forward", aliases: ["Lucas"] },
+    ],
+  },
+
+  {
+    id: "ajax-2019-tottenham-collapse-starting-xi",
+    label: "Ajax 2019 Spurs semi-final XI",
+    question: "Can you name 10 players from Ajax's starting XI in the 3-2 loss against Tottenham in 2019?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Andre Onana", value: "Goalkeeper", aliases: ["André Onana", "Onana"] },
+      { answer: "Noussair Mazraoui", value: "Right-back", aliases: ["Mazraoui"] },
+      { answer: "Matthijs de Ligt", value: "Centre-back", aliases: ["De Ligt"] },
+      { answer: "Daley Blind", value: "Centre-back", aliases: ["Blind"] },
+      { answer: "Nicolas Tagliafico", value: "Left-back", aliases: ["Nicolás Tagliafico", "Tagliafico"] },
+      { answer: "Lasse Schone", value: "Midfielder", aliases: ["Lasse Schöne", "Schone"] },
+      { answer: "Frenkie de Jong", value: "Midfielder", aliases: ["De Jong"] },
+      { answer: "Donny van de Beek", value: "Midfielder", aliases: ["Van de Beek"] },
+      { answer: "Hakim Ziyech", value: "Forward", aliases: ["Ziyech"] },
+      { answer: "Kasper Dolberg", value: "Forward", aliases: ["Dolberg"] },
+      { answer: "Dusan Tadic", value: "Forward", aliases: ["Dušan Tadić", "Tadic"] },
+    ],
+  },  {
+    id: "bayern-2020-ucl-final-starting-xi",
+    label: "Bayern 2020 UCL final XI",
+    question: "Can you name 10 players from Bayern Munich's starting XI in the 2020 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Manuel Neuer", value: "Goalkeeper", aliases: ["Neuer"] },
+      { answer: "Joshua Kimmich", value: "Right-back", aliases: ["Kimmich"] },
+      { answer: "Jerome Boateng", value: "Centre-back", aliases: ["Jérôme Boateng", "Boateng"] },
+      { answer: "David Alaba", value: "Centre-back", aliases: ["Alaba"] },
+      { answer: "Alphonso Davies", value: "Left-back", aliases: ["Davies"] },
+      { answer: "Thiago Alcantara", value: "Midfielder", aliases: ["Thiago", "Thiago Alcântara"] },
+      { answer: "Leon Goretzka", value: "Midfielder", aliases: ["Goretzka"] },
+      { answer: "Serge Gnabry", value: "Winger", aliases: ["Gnabry"] },
+      { answer: "Thomas Muller", value: "Attacking midfielder", aliases: ["Thomas Müller", "Muller"] },
+      { answer: "Kingsley Coman", value: "Winger", aliases: ["Coman"] },
+      { answer: "Robert Lewandowski", value: "Forward", aliases: ["Lewandowski"] },
+    ],
+  },
+
+  {
+    id: "psg-2020-ucl-final-starting-xi",
+    label: "PSG 2020 UCL final XI",
+    question: "Can you name 10 players from PSG's starting XI in the 2020 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Keylor Navas", value: "Goalkeeper", aliases: ["Navas"] },
+      { answer: "Thilo Kehrer", value: "Right-back", aliases: ["Kehrer"] },
+      { answer: "Thiago Silva", value: "Centre-back" },
+      { answer: "Presnel Kimpembe", value: "Centre-back", aliases: ["Kimpembe"] },
+      { answer: "Juan Bernat", value: "Left-back", aliases: ["Bernat"] },
+      { answer: "Marquinhos", value: "Midfielder" },
+      { answer: "Ander Herrera", value: "Midfielder", aliases: ["Herrera"] },
+      { answer: "Leandro Paredes", value: "Midfielder", aliases: ["Paredes"] },
+      { answer: "Angel Di Maria", value: "Forward", aliases: ["Ángel Di María", "Di Maria"] },
+      { answer: "Neymar", value: "Forward" },
+      { answer: "Kylian Mbappe", value: "Forward", aliases: ["Kylian Mbappé", "Mbappe"] },
+    ],
+  },
+
+  {
+    id: "chelsea-2021-ucl-final-starting-xi",
+    label: "Chelsea 2021 UCL final XI",
+    question: "Can you name 10 players from Chelsea's starting XI in the 2021 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Edouard Mendy", value: "Goalkeeper", aliases: ["Édouard Mendy", "Mendy"] },
+      { answer: "Cesar Azpilicueta", value: "Defender", aliases: ["César Azpilicueta", "Azpilicueta"] },
+      { answer: "Thiago Silva", value: "Defender" },
+      { answer: "Antonio Rudiger", value: "Defender", aliases: ["Antonio Rüdiger", "Rudiger"] },
+      { answer: "Reece James", value: "Right wing-back" },
+      { answer: "Ben Chilwell", value: "Left wing-back", aliases: ["Chilwell"] },
+      { answer: "N'Golo Kante", value: "Midfielder", aliases: ["N'Golo Kanté", "Kante"] },
+      { answer: "Jorginho", value: "Midfielder" },
+      { answer: "Mason Mount", value: "Attacking midfielder", aliases: ["Mount"] },
+      { answer: "Kai Havertz", value: "Forward", aliases: ["Havertz"] },
+      { answer: "Timo Werner", value: "Forward", aliases: ["Werner"] },
+    ],
+  },
+
+  {
+    id: "man-city-2021-ucl-final-starting-xi",
+    label: "Man City 2021 UCL final XI",
+    question: "Can you name 10 players from Manchester City's starting XI in the 2021 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Ederson", value: "Goalkeeper" },
+      { answer: "Kyle Walker", value: "Right-back", aliases: ["Walker"] },
+      { answer: "John Stones", value: "Centre-back", aliases: ["Stones"] },
+      { answer: "Ruben Dias", value: "Centre-back", aliases: ["Rúben Dias", "Dias"] },
+      { answer: "Oleksandr Zinchenko", value: "Left-back", aliases: ["Zinchenko"] },
+      { answer: "Ilkay Gundogan", value: "Midfielder", aliases: ["İlkay Gündoğan", "Gundogan"] },
+      { answer: "Bernardo Silva", value: "Midfielder", aliases: ["Bernardo"] },
+      { answer: "Phil Foden", value: "Midfielder", aliases: ["Foden"] },
+      { answer: "Kevin De Bruyne", value: "Forward", aliases: ["De Bruyne", "KDB"] },
+      { answer: "Riyad Mahrez", value: "Forward", aliases: ["Mahrez"] },
+      { answer: "Raheem Sterling", value: "Forward", aliases: ["Sterling"] },
+    ],
+  },
+
+  {
+    id: "real-madrid-2022-ucl-final-starting-xi",
+    label: "Real Madrid 2022 UCL final XI",
+    question: "Can you name 10 players from Real Madrid's starting XI in the 2022 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Thibaut Courtois", value: "Goalkeeper", aliases: ["Courtois"] },
+      { answer: "Dani Carvajal", value: "Right-back", aliases: ["Daniel Carvajal", "Carvajal"] },
+      { answer: "Eder Militao", value: "Centre-back", aliases: ["Éder Militão", "Militao"] },
+      { answer: "David Alaba", value: "Centre-back", aliases: ["Alaba"] },
+      { answer: "Ferland Mendy", value: "Left-back", aliases: ["Mendy"] },
+      { answer: "Casemiro", value: "Midfielder" },
+      { answer: "Toni Kroos", value: "Midfielder", aliases: ["Kroos"] },
+      { answer: "Luka Modric", value: "Midfielder", aliases: ["Luka Modrić", "Modric"] },
+      { answer: "Federico Valverde", value: "Forward", aliases: ["Valverde", "Fede Valverde"] },
+      { answer: "Vinicius Junior", value: "Forward", aliases: ["Vinícius Júnior", "Vini Jr", "Vinicius"] },
+      { answer: "Karim Benzema", value: "Forward", aliases: ["Benzema"] },
+    ],
+  },
+
+  {
+    id: "liverpool-2022-ucl-final-starting-xi",
+    label: "Liverpool 2022 UCL final XI",
+    question: "Can you name 10 players from Liverpool's starting XI in the 2022 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Alisson", value: "Goalkeeper", aliases: ["Alisson Becker"] },
+      { answer: "Trent Alexander-Arnold", value: "Right-back", aliases: ["Trent", "Alexander-Arnold", "TAA"] },
+      { answer: "Ibrahima Konate", value: "Centre-back", aliases: ["Ibrahima Konaté", "Konate"] },
+      { answer: "Virgil van Dijk", value: "Centre-back", aliases: ["Van Dijk", "VVD"] },
+      { answer: "Andy Robertson", value: "Left-back", aliases: ["Andrew Robertson", "Robertson"] },
+      { answer: "Fabinho", value: "Midfielder" },
+      { answer: "Jordan Henderson", value: "Midfielder", aliases: ["Henderson"] },
+      { answer: "Thiago Alcantara", value: "Midfielder", aliases: ["Thiago", "Thiago Alcântara"] },
+      { answer: "Mohamed Salah", value: "Forward", aliases: ["Salah", "Mo Salah"] },
+      { answer: "Sadio Mane", value: "Forward", aliases: ["Sadio Mané", "Mane"] },
+      { answer: "Luis Diaz", value: "Forward", aliases: ["Luis Díaz", "Diaz"] },
+    ],
+  },
+
+  {
+    id: "real-madrid-2018-ucl-final-starting-xi",
+    label: "Real Madrid 2018 UCL final XI",
+    question: "Can you name 10 players from Real Madrid's starting XI in the 2018 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Keylor Navas", value: "Goalkeeper", aliases: ["Navas"] },
+      { answer: "Dani Carvajal", value: "Right-back", aliases: ["Daniel Carvajal", "Carvajal"] },
+      { answer: "Raphael Varane", value: "Centre-back", aliases: ["Raphaël Varane", "Varane"] },
+      { answer: "Sergio Ramos", value: "Centre-back", aliases: ["Ramos"] },
+      { answer: "Marcelo", value: "Left-back" },
+      { answer: "Casemiro", value: "Midfielder" },
+      { answer: "Luka Modric", value: "Midfielder", aliases: ["Luka Modrić", "Modric"] },
+      { answer: "Toni Kroos", value: "Midfielder", aliases: ["Kroos"] },
+      { answer: "Isco", value: "Midfielder" },
+      { answer: "Karim Benzema", value: "Forward", aliases: ["Benzema"] },
+      { answer: "Cristiano Ronaldo", value: "Forward", aliases: ["Ronaldo", "CR7"] },
+    ],
+  },
+
+  {
+    id: "liverpool-2018-ucl-final-starting-xi",
+    label: "Liverpool 2018 UCL final XI",
+    question: "Can you name 10 players from Liverpool's starting XI in the 2018 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Loris Karius", value: "Goalkeeper", aliases: ["Karius"] },
+      { answer: "Trent Alexander-Arnold", value: "Right-back", aliases: ["Trent", "Alexander-Arnold", "TAA"] },
+      { answer: "Dejan Lovren", value: "Centre-back", aliases: ["Lovren"] },
+      { answer: "Virgil van Dijk", value: "Centre-back", aliases: ["Van Dijk", "VVD"] },
+      { answer: "Andy Robertson", value: "Left-back", aliases: ["Andrew Robertson", "Robertson"] },
+      { answer: "Jordan Henderson", value: "Midfielder", aliases: ["Henderson"] },
+      { answer: "Georginio Wijnaldum", value: "Midfielder", aliases: ["Wijnaldum", "Gini Wijnaldum"] },
+      { answer: "James Milner", value: "Midfielder", aliases: ["Milner"] },
+      { answer: "Mohamed Salah", value: "Forward", aliases: ["Salah", "Mo Salah"] },
+      { answer: "Roberto Firmino", value: "Forward", aliases: ["Firmino"] },
+      { answer: "Sadio Mane", value: "Forward", aliases: ["Sadio Mané", "Mane"] },
+    ],
+  },
+
+  {
+    id: "brazil-2002-world-cup-final-starting-xi",
+    label: "Brazil 2002 World Cup final XI",
+    question: "Can you name 10 players from Brazil's starting XI in the 2002 World Cup final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Marcos", value: "Goalkeeper" },
+      { answer: "Lucio", value: "Defender", aliases: ["Lúcio"] },
+      { answer: "Edmilson", value: "Defender", aliases: ["Edmílson"] },
+      { answer: "Roque Junior", value: "Defender", aliases: ["Roque Júnior"] },
+      { answer: "Cafu", value: "Captain" },
+      { answer: "Roberto Carlos", value: "Left wing-back" },
+      { answer: "Gilberto Silva", value: "Midfielder" },
+      { answer: "Kleberson", value: "Midfielder", aliases: ["Kléberson"] },
+      { answer: "Ronaldinho", value: "Forward" },
+      { answer: "Rivaldo", value: "Forward" },
+      { answer: "Ronaldo", value: "Forward", aliases: ["R9", "Ronaldo Nazario"] },
+    ],
+  },
+
+  {
+    id: "italy-2006-world-cup-final-starting-xi",
+    label: "Italy 2006 World Cup final XI",
+    question: "Can you name 10 players from Italy's starting XI in the 2006 World Cup final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Gianluigi Buffon", value: "Goalkeeper", aliases: ["Buffon", "Gigi Buffon"] },
+      { answer: "Gianluca Zambrotta", value: "Right-back", aliases: ["Zambrotta"] },
+      { answer: "Fabio Cannavaro", value: "Centre-back", aliases: ["Cannavaro"] },
+      { answer: "Marco Materazzi", value: "Centre-back", aliases: ["Materazzi"] },
+      { answer: "Fabio Grosso", value: "Left-back", aliases: ["Grosso"] },
+      { answer: "Gennaro Gattuso", value: "Midfielder", aliases: ["Gattuso"] },
+      { answer: "Andrea Pirlo", value: "Midfielder", aliases: ["Pirlo"] },
+      { answer: "Simone Perrotta", value: "Midfielder", aliases: ["Perrotta"] },
+      { answer: "Mauro Camoranesi", value: "Midfielder", aliases: ["Camoranesi"] },
+      { answer: "Francesco Totti", value: "Forward", aliases: ["Totti"] },
+      { answer: "Luca Toni", value: "Forward", aliases: ["Toni"] },
+    ],
+  },
+
+  {
+    id: "france-2006-world-cup-final-starting-xi",
+    label: "France 2006 World Cup final XI",
+    question: "Can you name 10 players from France's starting XI in the 2006 World Cup final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Fabien Barthez", value: "Goalkeeper", aliases: ["Barthez"] },
+      { answer: "Willy Sagnol", value: "Right-back", aliases: ["Sagnol"] },
+      { answer: "Lilian Thuram", value: "Centre-back", aliases: ["Thuram"] },
+      { answer: "William Gallas", value: "Centre-back", aliases: ["Gallas"] },
+      { answer: "Eric Abidal", value: "Left-back", aliases: ["Abidal"] },
+      { answer: "Claude Makelele", value: "Midfielder", aliases: ["Claude Makélélé", "Makelele"] },
+      { answer: "Patrick Vieira", value: "Midfielder", aliases: ["Vieira"] },
+      { answer: "Franck Ribery", value: "Midfielder", aliases: ["Franck Ribéry", "Ribery"] },
+      { answer: "Zinedine Zidane", value: "Captain", aliases: ["Zidane"] },
+      { answer: "Florent Malouda", value: "Midfielder", aliases: ["Malouda"] },
+      { answer: "Thierry Henry", value: "Forward", aliases: ["Henry"] },
+    ],
+  },
+
+  {
+    id: "netherlands-2010-world-cup-final-starting-xi",
+    label: "Netherlands 2010 World Cup final XI",
+    question: "Can you name 10 players from the Netherlands' starting XI in the 2010 World Cup final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Maarten Stekelenburg", value: "Goalkeeper", aliases: ["Stekelenburg"] },
+      { answer: "Gregory van der Wiel", value: "Right-back", aliases: ["Van der Wiel"] },
+      { answer: "John Heitinga", value: "Centre-back", aliases: ["Heitinga"] },
+      { answer: "Joris Mathijsen", value: "Centre-back", aliases: ["Mathijsen"] },
+      { answer: "Giovanni van Bronckhorst", value: "Left-back", aliases: ["Van Bronckhorst"] },
+      { answer: "Mark van Bommel", value: "Midfielder", aliases: ["Van Bommel"] },
+      { answer: "Nigel de Jong", value: "Midfielder", aliases: ["De Jong"] },
+      { answer: "Dirk Kuyt", value: "Winger", aliases: ["Kuyt"] },
+      { answer: "Wesley Sneijder", value: "Attacking midfielder", aliases: ["Sneijder"] },
+      { answer: "Arjen Robben", value: "Winger", aliases: ["Robben"] },
+      { answer: "Robin van Persie", value: "Forward", aliases: ["Van Persie"] },
+    ],
+  },
+
+  {
+    id: "england-1966-world-cup-final-starting-xi",
+    label: "England 1966 World Cup final XI",
+    question: "Can you name 10 players from England's starting XI in the 1966 World Cup final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Gordon Banks", value: "Goalkeeper", aliases: ["Banks"] },
+      { answer: "George Cohen", value: "Right-back", aliases: ["Cohen"] },
+      { answer: "Ray Wilson", value: "Left-back", aliases: ["Wilson"] },
+      { answer: "Nobby Stiles", value: "Midfielder", aliases: ["Stiles"] },
+      { answer: "Jack Charlton", value: "Centre-back", aliases: ["Charlton"] },
+      { answer: "Bobby Moore", value: "Captain", aliases: ["Moore"] },
+      { answer: "Alan Ball", value: "Midfielder", aliases: ["Ball"] },
+      { answer: "Roger Hunt", value: "Forward", aliases: ["Hunt"] },
+      { answer: "Bobby Charlton", value: "Midfielder", aliases: ["Charlton"] },
+      { answer: "Geoff Hurst", value: "Forward", aliases: ["Hurst"] },
+      { answer: "Martin Peters", value: "Midfielder", aliases: ["Peters"] },
+    ],
+  },
+
+  {
+    id: "brazil-2014-germany-7-1-starting-xi",
+    label: "Brazil 1-7 Germany XI",
+    question: "Can you name 10 players from Brazil's starting XI in the 7-1 loss against Germany in 2014?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Julio Cesar", value: "Goalkeeper", aliases: ["Júlio César", "Julio Cesar"] },
+      { answer: "Maicon", value: "Right-back" },
+      { answer: "David Luiz", value: "Centre-back" },
+      { answer: "Dante", value: "Centre-back" },
+      { answer: "Marcelo", value: "Left-back" },
+      { answer: "Fernandinho", value: "Midfielder" },
+      { answer: "Luiz Gustavo", value: "Midfielder" },
+      { answer: "Hulk", value: "Forward" },
+      { answer: "Oscar", value: "Midfielder" },
+      { answer: "Bernard", value: "Forward" },
+      { answer: "Fred", value: "Forward" },
+    ],
+  },
+
+  {
+    id: "germany-2014-brazil-7-1-starting-xi",
+    label: "Germany 7-1 Brazil XI",
+    question: "Can you name 10 players from Germany's starting XI in the 7-1 win against Brazil in 2014?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Manuel Neuer", value: "Goalkeeper", aliases: ["Neuer"] },
+      { answer: "Philipp Lahm", value: "Right-back", aliases: ["Lahm"] },
+      { answer: "Jerome Boateng", value: "Centre-back", aliases: ["Jérôme Boateng", "Boateng"] },
+      { answer: "Mats Hummels", value: "Centre-back", aliases: ["Hummels"] },
+      { answer: "Benedikt Howedes", value: "Left-back", aliases: ["Benedikt Höwedes", "Howedes"] },
+      { answer: "Sami Khedira", value: "Midfielder", aliases: ["Khedira"] },
+      { answer: "Bastian Schweinsteiger", value: "Midfielder", aliases: ["Schweinsteiger"] },
+      { answer: "Toni Kroos", value: "Midfielder", aliases: ["Kroos"] },
+      { answer: "Mesut Ozil", value: "Attacking midfielder", aliases: ["Mesut Özil", "Ozil"] },
+      { answer: "Thomas Muller", value: "Forward", aliases: ["Thomas Müller", "Muller"] },
+      { answer: "Miroslav Klose", value: "Forward", aliases: ["Klose"] },
+    ],
+  },
+
+  {
+    id: "netherlands-2014-spain-5-1-starting-xi",
+    label: "Netherlands 5-1 Spain XI",
+    question: "Can you name 10 players from the Netherlands' starting XI in the 5-1 win against Spain in 2014?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Jasper Cillessen", value: "Goalkeeper", aliases: ["Cillessen"] },
+      { answer: "Daryl Janmaat", value: "Right wing-back", aliases: ["Janmaat"] },
+      { answer: "Ron Vlaar", value: "Centre-back", aliases: ["Vlaar"] },
+      { answer: "Stefan de Vrij", value: "Centre-back", aliases: ["De Vrij"] },
+      { answer: "Bruno Martins Indi", value: "Centre-back", aliases: ["Martins Indi"] },
+      { answer: "Daley Blind", value: "Left wing-back", aliases: ["Blind"] },
+      { answer: "Jonathan de Guzman", value: "Midfielder", aliases: ["De Guzman"] },
+      { answer: "Nigel de Jong", value: "Midfielder", aliases: ["De Jong"] },
+      { answer: "Wesley Sneijder", value: "Attacking midfielder", aliases: ["Sneijder"] },
+      { answer: "Arjen Robben", value: "Forward", aliases: ["Robben"] },
+      { answer: "Robin van Persie", value: "Forward", aliases: ["Van Persie"] },
+    ],
+  },
+
+  {
+    id: "spain-2014-netherlands-5-1-starting-xi",
+    label: "Spain 1-5 Netherlands XI",
+    question: "Can you name 10 players from Spain's starting XI in the 5-1 loss against the Netherlands in 2014?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Iker Casillas", value: "Goalkeeper", aliases: ["Casillas"] },
+      { answer: "Cesar Azpilicueta", value: "Right-back", aliases: ["César Azpilicueta", "Azpilicueta"] },
+      { answer: "Gerard Pique", value: "Centre-back", aliases: ["Gerard Piqué", "Pique"] },
+      { answer: "Sergio Ramos", value: "Centre-back", aliases: ["Ramos"] },
+      { answer: "Jordi Alba", value: "Left-back" },
+      { answer: "Sergio Busquets", value: "Midfielder", aliases: ["Busquets"] },
+      { answer: "Xabi Alonso", value: "Midfielder" },
+      { answer: "Xavi", value: "Midfielder" },
+      { answer: "Andres Iniesta", value: "Midfielder", aliases: ["Andrés Iniesta", "Iniesta"] },
+      { answer: "David Silva", value: "Forward" },
+      { answer: "Diego Costa", value: "Forward", aliases: ["Costa"] },
+    ],
+  },
+
+  {
+    id: "barcelona-2006-ucl-final-starting-xi",
+    label: "Barcelona 2006 UCL final XI",
+    question: "Can you name 10 players from Barcelona's starting XI in the 2006 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Victor Valdes", value: "Goalkeeper", aliases: ["Víctor Valdés", "Valdes"] },
+      { answer: "Oleguer", value: "Right-back" },
+      { answer: "Rafael Marquez", value: "Centre-back", aliases: ["Rafael Márquez", "Marquez"] },
+      { answer: "Carles Puyol", value: "Centre-back", aliases: ["Puyol"] },
+      { answer: "Giovanni van Bronckhorst", value: "Left-back", aliases: ["Van Bronckhorst"] },
+      { answer: "Edmilson", value: "Midfielder", aliases: ["Edmílson"] },
+      { answer: "Deco", value: "Midfielder" },
+      { answer: "Mark van Bommel", value: "Midfielder", aliases: ["Van Bommel"] },
+      { answer: "Ludovic Giuly", value: "Forward", aliases: ["Giuly"] },
+      { answer: "Samuel Eto'o", value: "Forward", aliases: ["Samuel Etoo", "Eto'o", "Etoo"] },
+      { answer: "Ronaldinho", value: "Forward" },
+    ],
+  },
+
+  {
+    id: "arsenal-2006-ucl-final-starting-xi",
+    label: "Arsenal 2006 UCL final XI",
+    question: "Can you name 10 players from Arsenal's starting XI in the 2006 Champions League final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Jens Lehmann", value: "Goalkeeper", aliases: ["Lehmann"] },
+      { answer: "Emmanuel Eboue", value: "Right-back", aliases: ["Emmanuel Eboué", "Eboue"] },
+      { answer: "Kolo Toure", value: "Centre-back", aliases: ["Kolo Touré", "Toure"] },
+      { answer: "Sol Campbell", value: "Centre-back", aliases: ["Campbell"] },
+      { answer: "Ashley Cole", value: "Left-back" },
+      { answer: "Alexander Hleb", value: "Midfielder", aliases: ["Hleb"] },
+      { answer: "Gilberto Silva", value: "Midfielder" },
+      { answer: "Cesc Fabregas", value: "Midfielder", aliases: ["Cesc Fàbregas", "Fabregas"] },
+      { answer: "Freddie Ljungberg", value: "Midfielder", aliases: ["Ljungberg"] },
+      { answer: "Robert Pires", value: "Midfielder", aliases: ["Robert Pirès", "Pires"] },
+      { answer: "Thierry Henry", value: "Forward", aliases: ["Henry"] },
+    ],
+  },
+
+  {
+    id: "france-1998-world-cup-final-starting-xi",
+    label: "France 1998 World Cup final XI",
+    question: "Can you name 10 players from France's starting XI in the 1998 World Cup final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Fabien Barthez", value: "Goalkeeper", aliases: ["Barthez"] },
+      { answer: "Lilian Thuram", value: "Right-back", aliases: ["Thuram"] },
+      { answer: "Marcel Desailly", value: "Centre-back", aliases: ["Desailly"] },
+      { answer: "Frank Leboeuf", value: "Centre-back", aliases: ["Leboeuf"] },
+      { answer: "Bixente Lizarazu", value: "Left-back", aliases: ["Lizarazu"] },
+      { answer: "Didier Deschamps", value: "Captain", aliases: ["Deschamps"] },
+      { answer: "Christian Karembeu", value: "Midfielder", aliases: ["Karembeu"] },
+      { answer: "Emmanuel Petit", value: "Midfielder", aliases: ["Petit"] },
+      { answer: "Zinedine Zidane", value: "Midfielder", aliases: ["Zidane"] },
+      { answer: "Youri Djorkaeff", value: "Forward", aliases: ["Djorkaeff"] },
+      { answer: "Stephane Guivarc'h", value: "Forward", aliases: ["Stéphane Guivarc'h", "Guivarch"] },
+    ],
+  },
+
+  {
+    id: "brazil-1998-world-cup-final-starting-xi",
+    label: "Brazil 1998 World Cup final XI",
+    question: "Can you name 10 players from Brazil's starting XI in the 1998 World Cup final?",
+    answerType: "player",
+    targetCount: 10,
+    answers: [
+      { answer: "Claudio Taffarel", value: "Goalkeeper", aliases: ["Cláudio Taffarel", "Taffarel"] },
+      { answer: "Cafu", value: "Right-back" },
+      { answer: "Aldair", value: "Centre-back" },
+      { answer: "Junior Baiano", value: "Centre-back", aliases: ["Júnior Baiano"] },
+      { answer: "Roberto Carlos", value: "Left-back" },
+      { answer: "Dunga", value: "Captain" },
+      { answer: "Cesar Sampaio", value: "Midfielder", aliases: ["César Sampaio"] },
+      { answer: "Rivaldo", value: "Midfielder" },
+      { answer: "Leonardo", value: "Midfielder" },
+      { answer: "Bebeto", value: "Forward" },
+      { answer: "Ronaldo", value: "Forward", aliases: ["R9", "Ronaldo Nazario"] },
+    ],
   },
   {
     id: "ucl-top-scorers",
@@ -90,8 +1452,8 @@ export const DAILY_LIST_CHALLENGES = [
   },
   {
     id: "ballon-dor-winners-modern",
-    label: "Modern Ballon d'Or winners",
-    question: "Can you name 10 players who have won the Ballon d'Or since 2000?",
+    label: "Ballon d'Or winners 2000-2023",
+    question: "Can you name the 10 different players who won the Ballon d'Or from 2000 through 2023?",
     answerType: "player",
     answers: [
       { answer: "Luis Figo", value: "2000", aliases: ["Figo"] },
@@ -102,7 +1464,7 @@ export const DAILY_LIST_CHALLENGES = [
       { answer: "Ronaldinho", value: "2005" },
       { answer: "Fabio Cannavaro", value: "2006", aliases: ["Cannavaro"] },
       { answer: "Kaka", value: "2007", aliases: ["Kaká"] },
-      { answer: "Cristiano Ronaldo", value: "5 wins", aliases: ["Ronaldo", "CR7"] },
+      { answer: "Cristiano Ronaldo", value: "5 wins", aliases: ["CR7"] },
       { answer: "Lionel Messi", value: "8 wins", aliases: ["Messi"] },
     ],
   },
@@ -385,7 +1747,8 @@ export const DAILY_LIST_CHALLENGES = [
   {
     id: "world-cup-most-titles-countries",
     label: "World Cup title countries",
-    question: "Can you name all countries with the most men's FIFA World Cup titles?",
+    question: "Can you name every country that has won the men's FIFA World Cup?",
+    targetCount: 8,
     answers: [
       { answer: "Brazil", value: "5 titles" },
       { answer: "Germany", value: "4 titles", aliases: ["West Germany"] },
@@ -401,7 +1764,7 @@ export const DAILY_LIST_CHALLENGES = [
   {
     id: "euros-most-titles-countries",
     label: "Euro title countries",
-    question: "Can you name 10 countries with the most UEFA European Championship titles or final appearances?",
+    question: "Can you name 10 countries that have won the UEFA European Championship?",
     answers: [
       { answer: "Spain", value: "4 titles" },
       { answer: "Germany", value: "3 titles" },
@@ -437,7 +1800,8 @@ export const DAILY_LIST_CHALLENGES = [
   {
     id: "la-liga-most-titles-clubs",
     label: "La Liga title clubs",
-    question: "Can you name 10 clubs with the most La Liga titles?",
+    question: "Can you name every club that has won La Liga?",
+    targetCount: 9,
     answers: [
       { answer: "Real Madrid", value: "36 titles" },
       { answer: "Barcelona", value: "27 titles", aliases: ["FC Barcelona"] },
@@ -448,7 +1812,6 @@ export const DAILY_LIST_CHALLENGES = [
       { answer: "Deportivo La Coruna", value: "1 title", aliases: ["Deportivo La Coruña", "Deportivo"] },
       { answer: "Sevilla", value: "1 title" },
       { answer: "Real Betis", value: "1 title", aliases: ["Betis"] },
-      { answer: "Real Valladolid", value: "0 titles / historic top-flight club", aliases: ["Valladolid"] },
     ],
   },
 
@@ -509,8 +1872,9 @@ export const DAILY_LIST_CHALLENGES = [
   {
     id: "ucl-final-goalscorers-modern",
     label: "Modern UCL final goalscorers",
-    question: "Can you name 10 players who scored in a Champions League final since 2000?",
+    question: "Can you name 10 players who scored in a Champions League final from 2000 through 2024?",
     answerType: "player",
+    targetCount: 10,
     answers: [
       { answer: "Zinedine Zidane", value: "2002 final", aliases: ["Zidane"] },
       { answer: "Hernan Crespo", value: "2005 final", aliases: ["Hernán Crespo", "Crespo"] },
@@ -528,8 +1892,9 @@ export const DAILY_LIST_CHALLENGES = [
   {
     id: "world-cup-final-goalscorers-modern",
     label: "Modern World Cup final scorers",
-    question: "Can you name 10 players who scored in a men's World Cup final since 1998?",
+    question: "Can you name 10 players credited with a goal in a men's World Cup final from 1998 through 2022?",
     answerType: "player",
+    targetCount: 10,
     answers: [
       { answer: "Zinedine Zidane", value: "1998 and 2006 finals", aliases: ["Zidane"] },
       { answer: "Emmanuel Petit", value: "1998 final", aliases: ["Petit"] },
@@ -537,7 +1902,10 @@ export const DAILY_LIST_CHALLENGES = [
       { answer: "Marco Materazzi", value: "2006 final", aliases: ["Materazzi"] },
       { answer: "Andres Iniesta", value: "2010 final", aliases: ["Andrés Iniesta", "Iniesta"] },
       { answer: "Mario Gotze", value: "2014 final", aliases: ["Mario Götze", "Gotze"] },
+      { answer: "Mario Mandzukic", value: "2018 final", aliases: ["Mario Mandžukić", "Mandzukic"] },
       { answer: "Antoine Griezmann", value: "2018 final", aliases: ["Griezmann"] },
+      { answer: "Paul Pogba", value: "2018 final", aliases: ["Pogba"] },
+      { answer: "Ivan Perisic", value: "2018 final", aliases: ["Ivan Perišić", "Perisic"] },
       { answer: "Kylian Mbappe", value: "2018 and 2022 finals", aliases: ["Kylian Mbappé", "Mbappe"] },
       { answer: "Lionel Messi", value: "2022 final", aliases: ["Messi"] },
       { answer: "Angel Di Maria", value: "2022 final", aliases: ["Ángel Di María", "Di Maria"] },
@@ -721,7 +2089,7 @@ export const DAILY_LIST_CHALLENGES = [
     answers: [
       { answer: "Gerd Muller", value: "566 goals", aliases: ["Gerd Müller", "Muller"] },
       { answer: "Robert Lewandowski", value: "344 goals", aliases: ["Lewandowski"] },
-      { answer: "Thomas Muller", value: "240+ goals", aliases: ["Thomas Müller", "Muller"] },
+      { answer: "Thomas Muller", value: "240+ goals", aliases: ["Thomas Müller"] },
       { answer: "Karl-Heinz Rummenigge", value: "217 goals", aliases: ["Rummenigge"] },
       { answer: "Rainer Ohlhauser", value: "167 goals", aliases: ["Ohlhauser"] },
       { answer: "Roland Wohlfarth", value: "155 goals", aliases: ["Wohlfarth"] },
@@ -1180,7 +2548,7 @@ export const DAILY_LIST_CHALLENGES = [
       { answer: "Jurgen Klinsmann", value: "47 goals", aliases: ["Jürgen Klinsmann", "Klinsmann"] },
       { answer: "Karl-Heinz Rummenigge", value: "45 goals", aliases: ["Rummenigge"] },
       { answer: "Uwe Seeler", value: "43 goals", aliases: ["Seeler"] },
-      { answer: "Thomas Muller", value: "45+ goals", aliases: ["Thomas Müller", "Muller"] },
+      { answer: "Thomas Muller", value: "45+ goals", aliases: ["Thomas Müller"] },
       { answer: "Michael Ballack", value: "42 goals", aliases: ["Ballack"] },
       { answer: "Oliver Bierhoff", value: "37 goals", aliases: ["Bierhoff"] },
     ],
@@ -1265,7 +2633,8 @@ export const DAILY_LIST_CHALLENGES = [
   {
     id: "world-cup-hosts-modern",
     label: "Modern World Cup hosts",
-    question: "Can you name 10 countries that have hosted the men's FIFA World Cup since 1982?",
+    question: "Can you name any 10 countries that hosted the men's FIFA World Cup from 1982 through 2022?",
+    targetCount: 10,
     answers: [
       { answer: "Spain", value: "1982" },
       { answer: "Mexico", value: "1986" },
@@ -1277,13 +2646,15 @@ export const DAILY_LIST_CHALLENGES = [
       { answer: "Germany", value: "2006" },
       { answer: "South Africa", value: "2010" },
       { answer: "Brazil", value: "2014" },
+      { answer: "Russia", value: "2018" },
+      { answer: "Qatar", value: "2022" },
     ],
   },
 
   {
     id: "euro-hosts-modern",
     label: "Modern Euro hosts",
-    question: "Can you name 10 countries that hosted or co-hosted the UEFA European Championship since 1996?",
+    question: "Can you name the 10 countries that hosted or co-hosted the UEFA European Championship from 1996 through 2024, excluding the multi-country Euro 2020 edition?",
     answers: [
       { answer: "England", value: "1996" },
       { answer: "Belgium", value: "2000 co-host" },
@@ -1300,24 +2671,24 @@ export const DAILY_LIST_CHALLENGES = [
 
   {
     id: "ucl-winners-since-2000-clubs",
-    label: "UCL winners since 2000",
-    question: "Can you name 10 clubs that have won the Champions League since 2000?",
+    label: "UCL winners 2000-2024",
+    question: "Can you name the 10 different clubs that won the Champions League final from 2000 through 2024?",
     answers: [
-      { answer: "Real Madrid", value: "8 titles since 2000" },
-      { answer: "Barcelona", value: "4 titles since 2000", aliases: ["FC Barcelona"] },
-      { answer: "Bayern Munich", value: "3 titles since 2000", aliases: ["Bayern"] },
-      { answer: "AC Milan", value: "2 titles since 2000", aliases: ["Milan"] },
-      { answer: "Liverpool", value: "2 titles since 2000" },
-      { answer: "Chelsea", value: "2 titles since 2000" },
-      { answer: "Inter", value: "1 title since 2000", aliases: ["Inter Milan", "Internazionale"] },
-      { answer: "Manchester United", value: "1 title since 2000", aliases: ["Man United", "Man Utd"] },
-      { answer: "Porto", value: "1 title since 2000" },
-      { answer: "Manchester City", value: "1 title since 2000", aliases: ["Man City"] },
+      { answer: "Real Madrid", value: "8 titles, 2000-2024" },
+      { answer: "Barcelona", value: "4 titles, 2000-2024", aliases: ["FC Barcelona", "Barca", "Barça"] },
+      { answer: "Bayern Munich", value: "3 titles, 2000-2024", aliases: ["Bayern"] },
+      { answer: "AC Milan", value: "2 titles, 2000-2024", aliases: ["Milan"] },
+      { answer: "Liverpool", value: "2 titles, 2000-2024" },
+      { answer: "Chelsea", value: "2 titles, 2000-2024" },
+      { answer: "Inter", value: "1 title, 2000-2024", aliases: ["Inter Milan", "Internazionale"] },
+      { answer: "Manchester United", value: "1 title, 2000-2024", aliases: ["Man United", "Man Utd"] },
+      { answer: "Porto", value: "1 title, 2000-2024" },
+      { answer: "Manchester City", value: "1 title, 2000-2024", aliases: ["Man City"] },
     ],
   },  {
     id: "world-cup-golden-ball-winners",
-    label: "World Cup Golden Ball winners",
-    question: "Can you name 10 players who have won the FIFA World Cup Golden Ball?",
+    label: "World Cup Golden Ball best players",
+    question: "Can you name the 10 players who won the FIFA World Cup Golden Ball best player award from 1982 through 2022?",
     answerType: "player",
     targetCount: 10,
     answers: [
@@ -1336,8 +2707,8 @@ export const DAILY_LIST_CHALLENGES = [
 
   {
     id: "world-cup-golden-boot-winners-modern",
-    label: "Modern World Cup Golden Boot winners",
-    question: "Can you name 10 players who have won the FIFA World Cup Golden Boot since 1982?",
+    label: "World Cup Golden Boot top scorers",
+    question: "Can you name any 10 FIFA World Cup Golden Boot highest-scorer award winners from 1982 through 2022?",
     answerType: "player",
     targetCount: 10,
     answers: [
@@ -1358,8 +2729,8 @@ export const DAILY_LIST_CHALLENGES = [
 
   {
     id: "world-cup-winning-captains-modern",
-    label: "Modern World Cup winning captains",
-    question: "Can you name 10 captains who lifted the men's FIFA World Cup from 1982 to 2022?",
+    label: "World Cup winning captains 1982-2022",
+    question: "Can you name any 10 captains who lifted the men's FIFA World Cup from 1982 through 2022?",
     answerType: "player",
     targetCount: 10,
     answers: [
@@ -1379,8 +2750,8 @@ export const DAILY_LIST_CHALLENGES = [
 
   {
     id: "world-cup-final-goalkeepers-modern",
-    label: "Modern World Cup final goalkeepers",
-    question: "Can you name 10 goalkeepers who started a men's World Cup final since 1994?",
+    label: "World Cup final goalkeepers 1994-2022",
+    question: "Can you name any 10 goalkeepers who started a men's World Cup final from 1994 through 2022?",
     answerType: "player",
     targetCount: 10,
     answers: [
@@ -1401,8 +2772,8 @@ export const DAILY_LIST_CHALLENGES = [
 
   {
     id: "ucl-winning-captains-modern",
-    label: "Modern Champions League winning captains",
-    question: "Can you name 10 captains who lifted the Champions League trophy since 2000?",
+    label: "Champions League winning captains 2001-2021",
+    question: "Can you name any 10 captains who lifted the Champions League trophy from 2001 through 2021?",
     answerType: "player",
     targetCount: 10,
     answers: [
@@ -1423,8 +2794,8 @@ export const DAILY_LIST_CHALLENGES = [
 
   {
     id: "ucl-final-losing-clubs-since-2000",
-    label: "UCL final losing clubs since 2000",
-    question: "Can you name 10 clubs that lost a Champions League final since 2000?",
+    label: "UCL final losing clubs 2000-2024",
+    question: "Can you name any 10 clubs that lost a Champions League final from 2000 through 2024?",
     targetCount: 10,
     answers: [
       { answer: "Valencia", value: "2000 and 2001" },
@@ -1446,12 +2817,12 @@ export const DAILY_LIST_CHALLENGES = [
 
   {
     id: "world-cup-final-losing-countries-modern",
-    label: "Modern World Cup final losers",
-    question: "Can you name 10 countries that lost a men's World Cup final from 1978 to 2022?",
-    targetCount: 10,
+    label: "World Cup final losers 1978-2022",
+    question: "Can you name the countries that lost a men's World Cup final from 1978 through 2022?",
+    targetCount: 8,
     answers: [
       { answer: "Netherlands", value: "1978 and 2010", aliases: ["Holland"] },
-      { answer: "West Germany", value: "1982 and 1986", aliases: ["Germany"] },
+      { answer: "West Germany", value: "1982 and 1986" },
       { answer: "Argentina", value: "1990 and 2014" },
       { answer: "Italy", value: "1994" },
       { answer: "Brazil", value: "1998" },
@@ -1464,7 +2835,7 @@ export const DAILY_LIST_CHALLENGES = [
   {
     id: "ucl-final-venues-since-2000",
     label: "Champions League final venues",
-    question: "Can you name 10 stadiums that hosted a Champions League final since 2000?",
+    question: "Can you name any 10 stadiums that hosted a Champions League final from 2000 through 2024?",
     targetCount: 10,
     answers: [
       { answer: "Stade de France", value: "2000, 2006 and 2022" },
@@ -1473,7 +2844,12 @@ export const DAILY_LIST_CHALLENGES = [
       { answer: "Old Trafford", value: "2003" },
       { answer: "Arena AufSchalke", value: "2004", aliases: ["Veltins-Arena"] },
       { answer: "Ataturk Olympic Stadium", value: "2005 and 2023", aliases: ["Atatürk Olympic Stadium"] },
+      { answer: "Olympic Stadium Athens", value: "2007", aliases: ["Athens Olympic Stadium", "OAKA"] },
+      { answer: "Luzhniki Stadium", value: "2008", aliases: ["Luzhniki"] },
+      { answer: "Stadio Olimpico", value: "2009" },
+      { answer: "Santiago Bernabeu", value: "2010", aliases: ["Santiago Bernabéu", "Bernabeu"] },
       { answer: "Olympiastadion", value: "2015", aliases: ["Berlin Olympic Stadium"] },
+      { answer: "Allianz Arena", value: "2012", aliases: ["Football Arena Munich"] },
       { answer: "Wembley Stadium", value: "2011, 2013 and 2024", aliases: ["Wembley"] },
       { answer: "Estadio da Luz", value: "2014 and 2020", aliases: ["Estádio da Luz"] },
       { answer: "Millennium Stadium", value: "2017", aliases: ["Principality Stadium"] },
@@ -1485,8 +2861,8 @@ export const DAILY_LIST_CHALLENGES = [
 
   {
     id: "world-cup-final-venues-modern",
-    label: "Modern World Cup final venues",
-    question: "Can you name 10 stadiums that hosted a men's World Cup final from 1982 to 2022?",
+    label: "World Cup final venues 1982-2022",
+    question: "Can you name any 10 stadiums that hosted a men's World Cup final from 1982 through 2022?",
     targetCount: 10,
     answers: [
       { answer: "Santiago Bernabeu", value: "1982", aliases: ["Santiago Bernabéu", "Bernabeu"] },
@@ -1506,7 +2882,7 @@ export const DAILY_LIST_CHALLENGES = [
   {
     id: "euro-final-goalscorers-since-1996",
     label: "Euro final goalscorers",
-    question: "Can you name 10 players who scored in a UEFA Euro final since 1996?",
+    question: "Can you name any 10 players who scored in a UEFA Euro final from 1996 through 2024?",
     answerType: "player",
     targetCount: 10,
     answers: [
@@ -1530,30 +2906,30 @@ export const DAILY_LIST_CHALLENGES = [
 
   {
     id: "players-scored-in-ucl-and-world-cup-finals",
-    label: "Scored in UCL and World Cup finals",
-    question: "Can you name players who have scored in both a Champions League final and a World Cup final?",
+    label: "UCL or World Cup final scorers",
+    question: "Can you name 10 players who scored in a Champions League final or a men's World Cup final?",
     answerType: "player",
     targetCount: 10,
     answers: [
       { answer: "Zinedine Zidane", value: "UCL 2002 / WC 1998 and 2006", aliases: ["Zidane"] },
       { answer: "Lionel Messi", value: "UCL 2009, 2011 / WC 2022", aliases: ["Messi"] },
-      { answer: "Cristiano Ronaldo", value: "UCL 2008, 2014, 2017 / WC not final", aliases: ["Ronaldo", "CR7"] },
+      { answer: "Cristiano Ronaldo", value: "UCL 2008, 2014, 2017 / WC not final", aliases: ["CR7"] },
       { answer: "Samuel Eto'o", value: "UCL finals / no WC final", aliases: ["Eto'o", "Etoo"] },
       { answer: "Kylian Mbappe", value: "WC 2018 and 2022 / no UCL final goal", aliases: ["Mbappé", "Mbappe"] },
       { answer: "Mario Mandzukic", value: "UCL 2013, 2017 / WC 2018", aliases: ["Mario Mandžukić", "Mandzukic"] },
-      { answer: "Angel Di Maria", value: "UCL 2014 assist / WC 2022 goal", aliases: ["Ángel Di María", "Di Maria"] },
+      { answer: "Angel Di Maria", value: "WC 2022 final goal", aliases: ["Ángel Di María", "Di Maria"] },
       { answer: "Ronaldo", value: "WC 2002 / no UCL final goal", aliases: ["R9", "Ronaldo Nazario"] },
-      { answer: "Zlatan Ibrahimovic", value: "No final goals", aliases: ["Zlatan"] },
+      { answer: "Gareth Bale", value: "UCL 2014 and 2018 final goals", aliases: ["Bale"] },
       { answer: "Didier Drogba", value: "UCL 2012 / no WC final", aliases: ["Drogba"] },
     ],
   },
 
   {
     id: "euro-winning-captains-modern",
-    label: "Modern Euro winning captains",
-    question: "Can you name 10 captains who lifted the UEFA European Championship from 1988 to 2024?",
+    label: "Euro winning captains 1988-2024",
+    question: "Can you name the captains who lifted the UEFA European Championship from 1988 through 2024?",
     answerType: "player",
-    targetCount: 10,
+    targetCount: 9,
     answers: [
       { answer: "Ruud Gullit", value: "Netherlands / 1988", aliases: ["Gullit"] },
       { answer: "Lars Olsen", value: "Denmark / 1992" },
@@ -1570,7 +2946,7 @@ export const DAILY_LIST_CHALLENGES = [
   {
     id: "copa-america-most-titles-countries",
     label: "Copa America title countries",
-    question: "Can you name countries with the most Copa America titles?",
+    question: "Can you name every country that has won the Copa America?",
     targetCount: 8,
     answers: [
       { answer: "Argentina", value: "16 titles" },
@@ -1587,7 +2963,7 @@ export const DAILY_LIST_CHALLENGES = [
   {
     id: "afcon-most-titles-countries",
     label: "AFCON title countries",
-    question: "Can you name 10 countries with the most Africa Cup of Nations titles?",
+    question: "Can you name any 10 countries that have won the Africa Cup of Nations?",
     targetCount: 10,
     answers: [
       { answer: "Egypt", value: "7 titles" },
@@ -1611,8 +2987,8 @@ export const DAILY_LIST_CHALLENGES = [
   {
     id: "asian-cup-most-titles-countries",
     label: "Asian Cup title countries",
-    question: "Can you name countries with the most AFC Asian Cup titles?",
-    targetCount: 10,
+    question: "Can you name every country that has won the AFC Asian Cup?",
+    targetCount: 9,
     answers: [
       { answer: "Japan", value: "4 titles" },
       { answer: "Saudi Arabia", value: "3 titles" },
@@ -1629,8 +3005,8 @@ export const DAILY_LIST_CHALLENGES = [
   {
     id: "ucl-finals-decided-by-penalties",
     label: "UCL finals decided by penalties",
-    question: "Can you name clubs involved in Champions League finals decided by penalties since 2000?",
-    targetCount: 10,
+    question: "Can you name every club involved in a Champions League final decided by penalties from 2000 through 2024?",
+    targetCount: 9,
     answers: [
       { answer: "Bayern Munich", value: "2001 and 2012", aliases: ["Bayern"] },
       { answer: "Valencia", value: "2001" },
@@ -1647,37 +3023,33 @@ export const DAILY_LIST_CHALLENGES = [
   {
     id: "world-cup-finals-decided-by-penalties",
     label: "World Cup penalty finals",
-    question: "Can you name countries involved in men's World Cup finals decided by penalties?",
-    targetCount: 6,
+    question: "Can you name every country involved in a men's World Cup final decided by penalties?",
+    targetCount: 4,
     answers: [
       { answer: "Brazil", value: "1994 winner" },
       { answer: "Italy", value: "1994 loser and 2006 winner" },
       { answer: "France", value: "2006 loser and 2022 loser" },
       { answer: "Argentina", value: "2022 winner" },
-      { answer: "Germany", value: "None as final shootout team", aliases: ["West Germany"] },
-      { answer: "Croatia", value: "No final shootout", aliases: [] },
     ],
   },
 
   {
     id: "euros-finals-decided-by-penalties",
     label: "Euro penalty finals",
-    question: "Can you name countries involved in UEFA Euro finals decided by penalties?",
-    targetCount: 6,
+    question: "Can you name every country involved in a UEFA Euro final decided by penalties?",
+    targetCount: 4,
     answers: [
       { answer: "Czechoslovakia", value: "1976 winner" },
       { answer: "West Germany", value: "1976 loser", aliases: ["Germany"] },
       { answer: "Italy", value: "2020 winner" },
       { answer: "England", value: "2020 loser" },
-      { answer: "Spain", value: "No Euro final shootout win", aliases: [] },
-      { answer: "France", value: "No Euro final shootout win", aliases: [] },
     ],
   },
 
   {
     id: "world-cup-hat-trick-scorers-modern",
-    label: "Modern World Cup hat-tricks",
-    question: "Can you name 10 players who scored a men's World Cup hat-trick from 1982 to 2022?",
+    label: "World Cup hat-tricks 1982-2022",
+    question: "Can you name 10 players who scored a men's World Cup hat-trick from 1982 through 2022?",
     answerType: "player",
     targetCount: 10,
     answers: [
@@ -1695,3 +3067,148 @@ export const DAILY_LIST_CHALLENGES = [
   },
   
 ];
+
+function normalizeContentAnswer(value = "") {
+  return String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function auditDailyListChallenges(challenges = DAILY_LIST_CHALLENGES) {
+  if (!Array.isArray(challenges)) return [];
+
+  const warnings = [];
+  const goldenBallWinners = new Set(
+    [
+      "Paolo Rossi",
+      "Diego Maradona",
+      "Salvatore Schillaci",
+      "Romario",
+      "Ronaldo",
+      "Oliver Kahn",
+      "Zinedine Zidane",
+      "Diego Forlan",
+      "Lionel Messi",
+      "Luka Modric",
+    ].map(normalizeContentAnswer)
+  );
+  const goldenBootWinners = new Set(
+    [
+      "Paolo Rossi",
+      "Gary Lineker",
+      "Salvatore Schillaci",
+      "Oleg Salenko",
+      "Hristo Stoichkov",
+      "Davor Suker",
+      "Ronaldo",
+      "Miroslav Klose",
+      "Thomas Muller",
+      "James Rodriguez",
+      "Harry Kane",
+      "Kylian Mbappe",
+    ].map(normalizeContentAnswer)
+  );
+
+  challenges.forEach((challenge) => {
+    const answers = Array.isArray(challenge.answers) ? challenge.answers : [];
+    const labels = answers
+      .map((answer) => (typeof answer === "string" ? answer : answer?.answer))
+      .filter(Boolean);
+    const normalizedLabels = labels.map(normalizeContentAnswer);
+    const duplicates = labels.filter(
+      (label, index) =>
+        normalizedLabels.indexOf(normalizeContentAnswer(label)) !== index
+    );
+    const targetCount = Number(challenge.targetCount) || answers.length;
+    const question = challenge.question || "";
+    const riskySince =
+      /\bsince\b/i.test(question) && !/\bthrough\b|\bto\b|\buntil\b/i.test(question);
+    const vagueTop =
+      /\btop\b/i.test(question) &&
+      !/\bmost\b|\bhighest\b|\ball-time\b|\btitles\b|\bgoals\b|\bappearances\b|\bcaps\b|\bscorers\b/i.test(question);
+    const acceptedAnswerOwners = new Map();
+    const acceptedCollisions = [];
+
+    answers.forEach((answer) => {
+      const primary = typeof answer === "string" ? answer : answer?.answer;
+      const aliases = typeof answer === "string" ? [] : answer?.aliases || [];
+
+      [primary, ...aliases].filter(Boolean).forEach((value) => {
+        const normalized = normalizeContentAnswer(value);
+        if (!normalized) return;
+
+        const existing = acceptedAnswerOwners.get(normalized);
+        if (existing && existing !== primary) {
+          acceptedCollisions.push({ value, first: existing, second: primary });
+        } else {
+          acceptedAnswerOwners.set(normalized, primary);
+        }
+      });
+    });
+
+    if (!answers.length) {
+      warnings.push({ id: challenge.id, issue: "empty answers" });
+    }
+
+    if (duplicates.length) {
+      warnings.push({ id: challenge.id, issue: "duplicate answers", duplicates });
+    }
+
+    if (acceptedCollisions.length) {
+      warnings.push({
+        id: challenge.id,
+        issue: "duplicate accepted answer or alias",
+        collisions: acceptedCollisions,
+      });
+    }
+
+    if (targetCount > answers.length) {
+      warnings.push({
+        id: challenge.id,
+        issue: "targetCount exceeds answer count",
+        targetCount,
+        answerCount: answers.length,
+      });
+    }
+
+    if (riskySince) {
+      warnings.push({ id: challenge.id, issue: "ambiguous since wording", question });
+    }
+
+    if (vagueTop) {
+      warnings.push({ id: challenge.id, issue: "vague top wording", question });
+    }
+
+    if (/golden ball/i.test(question) || /golden ball/i.test(challenge.label || "")) {
+      const wrongBootOnly = normalizedLabels.filter(
+        (label) => goldenBootWinners.has(label) && !goldenBallWinners.has(label)
+      );
+      if (wrongBootOnly.length) {
+        warnings.push({
+          id: challenge.id,
+          issue: "Golden Ball question includes Golden Boot-only winners",
+          answers: wrongBootOnly,
+        });
+      }
+    }
+
+    if (/golden boot/i.test(question) || /golden boot/i.test(challenge.label || "")) {
+      const wrongBallOnly = normalizedLabels.filter(
+        (label) => goldenBallWinners.has(label) && !goldenBootWinners.has(label)
+      );
+      if (wrongBallOnly.length) {
+        warnings.push({
+          id: challenge.id,
+          issue: "Golden Boot question includes Golden Ball-only winners",
+          answers: wrongBallOnly,
+        });
+      }
+    }
+  });
+
+  return warnings;
+}

@@ -14926,6 +14926,16 @@ body,
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.62) !important;
 }
 
+.daily-list-rule-hint {
+  margin: 8px auto 0;
+  max-width: 560px;
+  color: rgba(236, 255, 246, 0.74) !important;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-shadow: 0 0 14px rgba(57, 255, 159, 0.18) !important;
+}
+
 .home-stat-pill strong,
 .daily-stat-pill strong,
 .hud-value,
