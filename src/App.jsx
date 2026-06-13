@@ -66,6 +66,7 @@ import {
   fetchMyLeagues,
   getOrCreateLeagueDay,
   joinLeague,
+  leaveLeague,
   submitLeagueDailyResult,
 } from "./lib/leagueService";
 import {
@@ -998,6 +999,7 @@ export default function FootballQuizMVP() {
   const [leagueChallengeOpen, setLeagueChallengeOpen] = useState(false);
   const [leagueChallengePhase, setLeagueChallengePhase] = useState("intro");
   const [leagueLeaveConfirmOpen, setLeagueLeaveConfirmOpen] = useState(false);
+  const [leagueExitConfirmOpen, setLeagueExitConfirmOpen] = useState(false);
   const [leagueAttemptSubmitting, setLeagueAttemptSubmitting] = useState(false);
   const [leagueQuizQuestions, setLeagueQuizQuestions] = useState([]);
   const [leagueQuizIndex, setLeagueQuizIndex] = useState(0);
@@ -4272,6 +4274,63 @@ const startConnectionsGame = (difficulty = null) => {
     }
 
     setMyLeagues(leagues);
+  };
+
+  const confirmLeaveActiveLeague = async () => {
+    playClickSound();
+
+    if (!activeLeague?.id) return;
+    if (!isSupabaseConfigured || !supabase) {
+      setMultiplayerError("Supabase env vars are missing");
+      return;
+    }
+
+    const leaguePlayerId = effectiveAuthUser?.id || playerId;
+    if (!leaguePlayerId) {
+      setMultiplayerError("Still loading your profile. Try again in a moment.");
+      return;
+    }
+
+    setLeagueLoading(true);
+    setMultiplayerError("");
+    setMultiplayerNotice("");
+
+    const { left, archived, transferredTo, error } = await leaveLeague(supabase, {
+      leagueId: activeLeague.id,
+      playerId: leaguePlayerId,
+    });
+
+    setLeagueLoading(false);
+
+    if (error || !left) {
+      console.error("Could not leave league", {
+        error,
+        leagueId: activeLeague.id,
+        playerId: leaguePlayerId,
+        isCreator: activeLeague.created_by_id === leaguePlayerId,
+      });
+      setMultiplayerError(getLeagueErrorMessage(error, "Could not leave league"));
+      return;
+    }
+
+    clearLeagueAttempt(activeLeagueDay?.id);
+    setLeagueExitConfirmOpen(false);
+    setLeagueDashboard(null);
+    setLeagueChallengeOpen(false);
+    setMyLeagues((currentLeagues) =>
+      currentLeagues.filter((row) => row.league?.id !== activeLeague.id)
+    );
+    setMultiplayerStep("my-leagues");
+    setMultiplayerNotice(
+      archived
+        ? "League archived"
+        : transferredTo
+        ? `Left league. Ownership moved to ${transferredTo.username || "another member"}.`
+        : "Left league"
+    );
+
+    const { leagues, error: refreshError } = await fetchMyLeagues(supabase, leaguePlayerId);
+    if (!refreshError) setMyLeagues(leagues);
   };
 
   const customizeLeaguePreset = (format) => {
@@ -9587,7 +9646,17 @@ const startConnectionsGame = (difficulty = null) => {
                       <div className="league-kicker">🏆 League</div>
                       <h2>{leagueDashboard.league.name}</h2>
                     </div>
-                    <div className="league-code-pill">{leagueDashboard.league.league_code}</div>
+                    <div className="league-dashboard-actions">
+                      <div className="league-code-pill">{leagueDashboard.league.league_code}</div>
+                      <button
+                        type="button"
+                        className="league-leave-button"
+                        onClick={() => setLeagueExitConfirmOpen(true)}
+                        disabled={leagueLoading}
+                      >
+                        Leave league
+                      </button>
+                    </div>
                   </div>
 
                   <div className="league-meta-row">
@@ -9693,6 +9762,38 @@ const startConnectionsGame = (difficulty = null) => {
                       );
                     })}
                   </div>
+
+                  {leagueExitConfirmOpen && (
+                    <div className="match-delete-overlay">
+                      <div className="match-delete-modal league-leave-modal">
+                        <strong>Leave this league?</strong>
+                        <span>Are you sure you want to leave this league?</span>
+                        {activeLeague?.created_by_id === (effectiveAuthUser?.id || playerId) && (
+                          <small>
+                            If other members are still here, ownership will move to another member.
+                            If not, the league will be archived.
+                          </small>
+                        )}
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => setLeagueExitConfirmOpen(false)}
+                            disabled={leagueLoading}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            className="danger"
+                            onClick={confirmLeaveActiveLeague}
+                            disabled={leagueLoading}
+                          >
+                            {leagueLoading ? "Leaving..." : "Leave league"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

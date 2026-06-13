@@ -214,6 +214,85 @@ export async function fetchMyLeagues(supabase, playerId) {
   return { leagues: rows, error: null };
 }
 
+export async function leaveLeague(supabase, { leagueId, playerId }) {
+  if (!leagueId || !playerId) {
+    return { left: false, archived: false, transferredTo: null, error: new Error("Missing league or player") };
+  }
+
+  const [{ data: league, error: leagueError }, { data: members, error: membersError }] =
+    await Promise.all([
+      supabase.from("leagues").select("*").eq("id", leagueId).maybeSingle(),
+      supabase.from("league_members").select("*").eq("league_id", leagueId),
+    ]);
+
+  if (leagueError || !league) {
+    return { left: false, archived: false, transferredTo: null, error: leagueError || new Error("League not found") };
+  }
+
+  if (membersError) {
+    return { left: false, archived: false, transferredTo: null, error: membersError };
+  }
+
+  const currentMember = (members || []).find((member) => member.player_id === playerId);
+  if (!currentMember) {
+    return { left: false, archived: false, transferredTo: null, error: new Error("You are not a member of this league") };
+  }
+
+  const isCreator = league.created_by_id === playerId;
+  const otherMembers = (members || [])
+    .filter((member) => member.player_id !== playerId)
+    .sort((a, b) => {
+      const pointsDiff = (b.total_points || 0) - (a.total_points || 0);
+      if (pointsDiff) return pointsDiff;
+      return String(a.joined_at || "").localeCompare(String(b.joined_at || ""));
+    });
+
+  if (isCreator && otherMembers.length > 0) {
+    const nextOwner = otherMembers[0];
+    const { error: transferError } = await supabase
+      .from("leagues")
+      .update({
+        created_by_id: nextOwner.player_id,
+        created_by_username: nextOwner.username,
+      })
+      .eq("id", leagueId)
+      .eq("created_by_id", playerId);
+
+    if (transferError) {
+      return { left: false, archived: false, transferredTo: null, error: transferError };
+    }
+  }
+
+  if (isCreator && otherMembers.length === 0) {
+    const { error: archiveError } = await supabase
+      .from("leagues")
+      .update({ status: "archived" })
+      .eq("id", leagueId)
+      .eq("created_by_id", playerId);
+
+    if (archiveError) {
+      return { left: false, archived: false, transferredTo: null, error: archiveError };
+    }
+  }
+
+  const { error: deleteMemberError } = await supabase
+    .from("league_members")
+    .delete()
+    .eq("league_id", leagueId)
+    .eq("player_id", playerId);
+
+  if (deleteMemberError) {
+    return { left: false, archived: false, transferredTo: null, error: deleteMemberError };
+  }
+
+  return {
+    left: true,
+    archived: isCreator && otherMembers.length === 0,
+    transferredTo: isCreator && otherMembers.length > 0 ? otherMembers[0] : null,
+    error: null,
+  };
+}
+
 export async function getOrCreateLeagueDay(supabase, league) {
   const dayKey = getTodayKey();
   const dayNumber = getLeagueDayNumber(league.start_date, dayKey);
