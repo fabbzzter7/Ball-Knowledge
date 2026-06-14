@@ -1282,5 +1282,2403 @@ export const CAREER_PATH_MULTI_QUESTIONS = [
       "Avi Nimni"
     ],
     "answer": "Yossi Benayoun"
+  },  {
+    "id": "career_path_106",
+    "category": "career_path",
+    "question": "West Ham United -> Chelsea -> Manchester City -> New York City FC",
+    "options": [
+      "Frank Lampard",
+      "Steven Gerrard",
+      "Joe Cole",
+      "Michael Carrick"
+    ],
+    "answer": "Frank Lampard"
+  },
+  {
+    "id": "career_path_107",
+    "category": "career_path",
+    "question": "Liverpool -> Real Madrid -> Newcastle United -> Manchester United -> Stoke City",
+    "options": [
+      "Michael Owen",
+      "Robbie Fowler",
+      "Emile Heskey",
+      "Peter Crouch"
+    ],
+    "answer": "Michael Owen"
+  },
+  {
+    "id": "career_path_108",
+    "category": "career_path",
+    "question": "West Ham United -> Leeds United -> Manchester United -> Queens Park Rangers",
+    "options": [
+      "Rio Ferdinand",
+      "Sol Campbell",
+      "John Terry",
+      "Ledley King"
+    ],
+    "answer": "Rio Ferdinand"
+  },
+  {
+    "id": "career_path_109",
+    "category": "career_path",
+    "question": "Tottenham -> Arsenal -> Portsmouth -> Notts County -> Arsenal -> Newcastle United",
+    "options": [
+      "Sol Campbell",
+      "Rio Ferdinand",
+      "John Terry",
+      "Tony Adams"
+    ],
+    "answer": "Sol Campbell"
+  },
+  {
+    "id": "career_path_110",
+    "category": "career_path",
+    "question": "Arsenal -> Chelsea -> Roma -> LA Galaxy -> Derby County",
+    "options": [
+      "Ashley Cole",
+      "Gael Clichy",
+      "Kieran Gibbs",
+      "Wayne Bridge"
+    ],
+    "answer": "Ashley Cole"
+  },
+  {
+    "id": "career_path_111",
+    "category": "career_path",
+    "question": "West Ham United -> Chelsea -> Liverpool -> Lille -> West Ham United -> Aston Villa -> Coventry City -> Tampa Bay Rowdies",
+    "options": [
+      "Joe Cole",
+      "Frank Lampard",
+      "Michael Carrick",
+      "Jermain Defoe"
+    ],
+    "answer": "Joe Cole"
+  },
+  {
+    "id": "career_path_112",
+    "category": "career_path",
+    "question": "CSKA Sofia -> Bayer Leverkusen -> Tottenham -> Manchester United -> Fulham -> Monaco -> PAOK -> Kerala Blasters",
+    "options": [
+      "Dimitar Berbatov",
+      "Hristo Stoichkov",
+      "Mladen Petric",
+      "Davor Suker"
+    ],
+    "answer": "Dimitar Berbatov"
+  },
+  {
+    "id": "career_path_113",
+    "category": "career_path",
+    "question": "Ajax -> Hamburg -> Real Madrid -> Tottenham -> Hamburg -> Real Betis -> Midtjylland -> Esbjerg",
+    "options": [
+      "Rafael van der Vaart",
+      "Wesley Sneijder",
+      "Arjen Robben",
+      "Klaas-Jan Huntelaar"
+    ],
+    "answer": "Rafael van der Vaart"
+  },
+  {
+    "id": "career_path_114",
+    "category": "career_path",
+    "question": "PSV -> De Graafschap -> AGOVV -> Heerenveen -> Ajax -> Real Madrid -> Milan -> Schalke -> Ajax -> Schalke",
+    "options": [
+      "Klaas-Jan Huntelaar",
+      "Ruud van Nistelrooy",
+      "Dirk Kuyt",
+      "Robin van Persie"
+    ],
+    "answer": "Klaas-Jan Huntelaar"
+  },
+  {
+    "id": "career_path_115",
+    "category": "career_path",
+    "question": "Fortuna Sittard -> PSV -> Barcelona -> Bayern Munich -> Milan -> PSV",
+    "options": [
+      "Mark van Bommel",
+      "Rafael van der Vaart",
+      "Giovanni van Bronckhorst",
+      "Nigel de Jong"
+    ],
+    "answer": "Mark van Bommel"
+  },
+  {
+    "id": "career_path_116",
+    "category": "career_path",
+    "question": "Zwolle -> Cambuur -> Willem II -> PSV -> Manchester United -> Lazio -> Milan -> Ajax",
+    "options": [
+      "Jaap Stam",
+      "Ronald Koeman",
+      "Frank de Boer",
+      "Giovanni van Bronckhorst"
+    ],
+    "answer": "Jaap Stam"
+  },
+  {
+    "id": "career_path_117",
+    "category": "career_path",
+    "question": "KB -> Brondby -> Juventus -> Barcelona -> Real Madrid -> Vissel Kobe -> Ajax",
+    "options": [
+      "Michael Laudrup",
+      "Brian Laudrup",
+      "Peter Schmeichel",
+      "Jesper Gronkjaer"
+    ],
+    "answer": "Michael Laudrup"
+  },
+  {
+    "id": "career_path_118",
+    "category": "career_path",
+    "question": "Brondby -> Uerdingen -> Bayern Munich -> Fiorentina -> Milan -> Rangers -> Chelsea -> Copenhagen -> Ajax",
+    "options": [
+      "Brian Laudrup",
+      "Michael Laudrup",
+      "Jon Dahl Tomasson",
+      "Martin Jorgensen"
+    ],
+    "answer": "Brian Laudrup"
+  },
+  {
+    "id": "career_path_119",
+    "category": "career_path",
+    "question": "Hvidovre -> Brondby -> Manchester United -> Sporting CP -> Aston Villa -> Manchester City",
+    "options": [
+      "Peter Schmeichel",
+      "Edwin van der Sar",
+      "Kasper Schmeichel",
+      "Thomas Sorensen"
+    ],
+    "answer": "Peter Schmeichel"
+  },
+  {
+    "id": "career_path_120",
+    "category": "career_path",
+    "question": "Hogaborg -> Helsingborg -> Feyenoord -> Celtic -> Barcelona -> Helsingborg -> Manchester United -> Helsingborg",
+    "options": [
+      "Henrik Larsson",
+      "Zlatan Ibrahimovic",
+      "Tomas Brolin",
+      "Freddie Ljungberg"
+    ],
+    "answer": "Henrik Larsson"
+  },
+  {
+    "id": "career_path_121",
+    "category": "career_path",
+    "question": "GIF Sundsvall -> IFK Norrkoping -> Parma -> Leeds United -> Crystal Palace -> Hudiksvall",
+    "options": [
+      "Tomas Brolin",
+      "Henrik Larsson",
+      "Kenneth Andersson",
+      "Martin Dahlin"
+    ],
+    "answer": "Tomas Brolin"
+  },
+  {
+    "id": "career_path_122",
+    "category": "career_path",
+    "question": "Halmstad -> Arsenal -> West Ham United -> Seattle Sounders -> Chicago Fire -> Celtic -> Mumbai City",
+    "options": [
+      "Freddie Ljungberg",
+      "Sebastian Larsson",
+      "Kim Kallstrom",
+      "Anders Svensson"
+    ],
+    "answer": "Freddie Ljungberg"
+  },
+  {
+    "id": "career_path_123",
+    "category": "career_path",
+    "question": "Sporting CP -> Barcelona -> Porto -> Inter -> Besiktas",
+    "options": [
+      "Ricardo Quaresma",
+      "Luis Figo",
+      "Deco",
+      "Simao"
+    ],
+    "answer": "Ricardo Quaresma"
+  },
+  {
+    "id": "career_path_124",
+    "category": "career_path",
+    "question": "Sporting CP -> Barcelona -> Porto -> Chelsea -> Fluminense",
+    "options": [
+      "Deco",
+      "Luis Figo",
+      "Ricardo Quaresma",
+      "Rui Costa"
+    ],
+    "answer": "Deco"
+  },
+  {
+    "id": "career_path_125",
+    "category": "career_path",
+    "question": "Benfica -> Fiorentina -> Milan",
+    "options": [
+      "Rui Costa",
+      "Deco",
+      "Joao Pinto",
+      "Pauleta"
+    ],
+    "answer": "Rui Costa"
+  },
+  {
+    "id": "career_path_126",
+    "category": "career_path",
+    "question": "Estoril -> Salamanca -> Deportivo La Coruna -> Bordeaux -> Paris Saint-Germain",
+    "options": [
+      "Pauleta",
+      "Nuno Gomes",
+      "Joao Pinto",
+      "Helder Postiga"
+    ],
+    "answer": "Pauleta"
+  },
+  {
+    "id": "career_path_127",
+    "category": "career_path",
+    "question": "Sporting CP -> Manchester United -> Fenerbahce -> Valencia -> Lazio -> Sporting CP",
+    "options": [
+      "Nani",
+      "Cristiano Ronaldo",
+      "Ricardo Quaresma",
+      "Simao"
+    ],
+    "answer": "Nani"
+  },
+  {
+    "id": "career_path_128",
+    "category": "career_path",
+    "question": "Real Betis -> Valencia -> Malaga -> Fiorentina -> Levante -> Real Betis",
+    "options": [
+      "Joaquin",
+      "Vicente",
+      "Juan Mata",
+      "David Silva"
+    ],
+    "answer": "Joaquin"
+  },
+  {
+    "id": "career_path_129",
+    "category": "career_path",
+    "question": "Valencia -> Chelsea -> Manchester United -> Galatasaray -> Vissel Kobe -> Western Sydney Wanderers",
+    "options": [
+      "Juan Mata",
+      "David Silva",
+      "Santi Cazorla",
+      "Pedro"
+    ],
+    "answer": "Juan Mata"
+  },
+  {
+    "id": "career_path_130",
+    "category": "career_path",
+    "question": "Las Palmas -> Valencia -> Manchester City -> Real Sociedad",
+    "options": [
+      "David Silva",
+      "Juan Mata",
+      "Santi Cazorla",
+      "Jesus Navas"
+    ],
+    "answer": "David Silva"
+  },
+  {
+    "id": "career_path_131",
+    "category": "career_path",
+    "question": "Villarreal -> Malaga -> Arsenal -> Villarreal -> Al Sadd -> Real Oviedo",
+    "options": [
+      "Santi Cazorla",
+      "David Silva",
+      "Juan Mata",
+      "Joaquin"
+    ],
+    "answer": "Santi Cazorla"
+  },
+  {
+    "id": "career_path_132",
+    "category": "career_path",
+    "question": "Sevilla -> Manchester City -> Sevilla",
+    "options": [
+      "Jesus Navas",
+      "Joaquin",
+      "Pedro",
+      "David Silva"
+    ],
+    "answer": "Jesus Navas"
+  },
+  {
+    "id": "career_path_133",
+    "category": "career_path",
+    "question": "Barcelona -> Chelsea -> Roma -> Lazio",
+    "options": [
+      "Pedro",
+      "Cesc Fabregas",
+      "Bojan Krkic",
+      "Thiago Alcantara"
+    ],
+    "answer": "Pedro"
+  },
+  {
+    "id": "career_path_134",
+    "category": "career_path",
+    "question": "Barcelona -> Roma -> Milan -> Ajax -> Stoke City -> Mainz -> Alaves -> Montreal Impact -> Vissel Kobe",
+    "options": [
+      "Bojan Krkic",
+      "Pedro",
+      "Thiago Alcantara",
+      "Gerard Deulofeu"
+    ],
+    "answer": "Bojan Krkic"
+  },
+  {
+    "id": "career_path_135",
+    "category": "career_path",
+    "question": "Barcelona -> Bayern Munich -> Liverpool -> Al Arabi",
+    "options": [
+      "Thiago Alcantara",
+      "Xavi",
+      "Cesc Fabregas",
+      "Sergio Busquets"
+    ],
+    "answer": "Thiago Alcantara"
+  },
+  {
+    "id": "career_path_136",
+    "category": "career_path",
+    "question": "Rennes -> Borussia Dortmund -> Barcelona -> Paris Saint-Germain",
+    "options": [
+      "Ousmane Dembele",
+      "Kingsley Coman",
+      "Jadon Sancho",
+      "Pierre-Emerick Aubameyang"
+    ],
+    "answer": "Ousmane Dembele"
+  },
+  {
+    "id": "career_path_137",
+    "category": "career_path",
+    "question": "Lyon -> Arsenal -> Lyon",
+    "options": [
+      "Alexandre Lacazette",
+      "Karim Benzema",
+      "Hatem Ben Arfa",
+      "Nabil Fekir"
+    ],
+    "answer": "Alexandre Lacazette"
+  },
+  {
+    "id": "career_path_138",
+    "category": "career_path",
+    "question": "Lyon -> Nice -> Marseille -> Newcastle United -> Hull City -> Rennes -> Valladolid -> Bordeaux -> Lille",
+    "options": [
+      "Hatem Ben Arfa",
+      "Samir Nasri",
+      "Yoann Gourcuff",
+      "Nabil Fekir"
+    ],
+    "answer": "Hatem Ben Arfa"
+  },
+  {
+    "id": "career_path_139",
+    "category": "career_path",
+    "question": "Marseille -> Arsenal -> Manchester City -> Sevilla -> Antalyaspor -> West Ham United -> Anderlecht",
+    "options": [
+      "Samir Nasri",
+      "Hatem Ben Arfa",
+      "Dimitri Payet",
+      "Florian Thauvin"
+    ],
+    "answer": "Samir Nasri"
+  },
+  {
+    "id": "career_path_140",
+    "category": "career_path",
+    "question": "Nantes -> Marseille -> West Ham United -> Marseille -> Vasco da Gama",
+    "options": [
+      "Dimitri Payet",
+      "Samir Nasri",
+      "Florian Thauvin",
+      "Mathieu Valbuena"
+    ],
+    "answer": "Dimitri Payet"
+  },
+  {
+    "id": "career_path_141",
+    "category": "career_path",
+    "question": "Lorient -> Marseille -> Tigres",
+    "options": [
+      "Andre-Pierre Gignac",
+      "Florian Thauvin",
+      "Dimitri Payet",
+      "Bafetimbi Gomis"
+    ],
+    "answer": "Andre-Pierre Gignac"
+  },
+  {
+    "id": "career_path_142",
+    "category": "career_path",
+    "question": "Lyon -> Real Madrid -> Milan -> Dijon",
+    "options": [
+      "Yoann Gourcuff",
+      "Karim Benzema",
+      "Hatem Ben Arfa",
+      "Samir Nasri"
+    ],
+    "answer": "Yoann Gourcuff"
+  },
+  {
+    "id": "career_path_143",
+    "category": "career_path",
+    "question": "Manchester United -> Juventus -> Manchester United -> Juventus",
+    "options": [
+      "Paul Pogba",
+      "Patrice Evra",
+      "Lassana Diarra",
+      "N'Golo Kante"
+    ],
+    "answer": "Paul Pogba"
+  },
+  {
+    "id": "career_path_144",
+    "category": "career_path",
+    "question": "Monaco -> Manchester United -> Juventus -> Marseille -> West Ham United",
+    "options": [
+      "Patrice Evra",
+      "Paul Pogba",
+      "Lilian Thuram",
+      "Eric Abidal"
+    ],
+    "answer": "Patrice Evra"
+  },
+  {
+    "id": "career_path_145",
+    "category": "career_path",
+    "question": "Monaco -> Parma -> Juventus -> Barcelona",
+    "options": [
+      "Lilian Thuram",
+      "Patrice Evra",
+      "Eric Abidal",
+      "Marcel Desailly"
+    ],
+    "answer": "Lilian Thuram"
+  },
+  {
+    "id": "career_path_146",
+    "category": "career_path",
+    "question": "Monaco -> Lille -> Lyon -> Barcelona -> Monaco -> Olympiacos",
+    "options": [
+      "Eric Abidal",
+      "Lilian Thuram",
+      "Patrice Evra",
+      "William Gallas"
+    ],
+    "answer": "Eric Abidal"
+  },
+  {
+    "id": "career_path_147",
+    "category": "career_path",
+    "question": "Caen -> Marseille -> Milan -> Chelsea -> Al-Gharafa",
+    "options": [
+      "Marcel Desailly",
+      "Didier Deschamps",
+      "Claude Makelele",
+      "William Gallas"
+    ],
+    "answer": "Marcel Desailly"
+  },
+  {
+    "id": "career_path_148",
+    "category": "career_path",
+    "question": "Nantes -> Marseille -> Juventus -> Chelsea -> Valencia",
+    "options": [
+      "Didier Deschamps",
+      "Marcel Desailly",
+      "Claude Makelele",
+      "Emmanuel Petit"
+    ],
+    "answer": "Didier Deschamps"
+  },
+  {
+    "id": "career_path_149",
+    "category": "career_path",
+    "question": "Nantes -> Marseille -> Celta Vigo -> Real Madrid -> Chelsea -> Paris Saint-Germain -> Bastia",
+    "options": [
+      "Claude Makelele",
+      "Didier Deschamps",
+      "Patrick Vieira",
+      "Emmanuel Petit"
+    ],
+    "answer": "Claude Makelele"
+  },
+  {
+    "id": "career_path_150",
+    "category": "career_path",
+    "question": "Cannes -> Milan -> Arsenal -> Juventus -> Inter -> Manchester City",
+    "options": [
+      "Patrick Vieira",
+      "Claude Makelele",
+      "Emmanuel Petit",
+      "Robert Pires"
+    ],
+    "answer": "Patrick Vieira"
+  },
+  {
+    "id": "career_path_151",
+    "category": "career_path",
+    "question": "Monaco -> Arsenal -> Barcelona -> Chelsea",
+    "options": [
+      "Emmanuel Petit",
+      "Patrick Vieira",
+      "Robert Pires",
+      "Sylvain Wiltord"
+    ],
+    "answer": "Emmanuel Petit"
+  },
+  {
+    "id": "career_path_152",
+    "category": "career_path",
+    "question": "Metz -> Marseille -> Arsenal -> Villarreal -> Aston Villa -> Goa",
+    "options": [
+      "Robert Pires",
+      "Sylvain Wiltord",
+      "Emmanuel Petit",
+      "Ludovic Giuly"
+    ],
+    "answer": "Robert Pires"
+  },
+  {
+    "id": "career_path_153",
+    "category": "career_path",
+    "question": "Rennes -> Bordeaux -> Arsenal -> Lyon -> Rennes -> Metz -> Nantes",
+    "options": [
+      "Sylvain Wiltord",
+      "Robert Pires",
+      "Nicolas Anelka",
+      "Florent Malouda"
+    ],
+    "answer": "Sylvain Wiltord"
+  },
+  {
+    "id": "career_path_154",
+    "category": "career_path",
+    "question": "Paris Saint-Germain -> Arsenal -> Real Madrid -> Paris Saint-Germain -> Liverpool -> Manchester City -> Chelsea -> Shanghai Shenhua -> Juventus -> West Bromwich Albion -> Mumbai City",
+    "options": [
+      "Nicolas Anelka",
+      "Didier Drogba",
+      "Samuel Eto'o",
+      "Florent Malouda"
+    ],
+    "answer": "Nicolas Anelka"
+  },
+  {
+    "id": "career_path_155",
+    "category": "career_path",
+    "question": "Chateauroux -> Guingamp -> Lyon -> Chelsea -> Trabzonspor -> Delhi Dynamos",
+    "options": [
+      "Florent Malouda",
+      "Robert Pires",
+      "Sylvain Wiltord",
+      "Ludovic Giuly"
+    ],
+    "answer": "Florent Malouda"
+  },
+  {
+    "id": "career_path_156",
+    "category": "career_path",
+    "question": "Lyon -> Monaco -> Barcelona -> Roma -> Paris Saint-Germain -> Lorient",
+    "options": [
+      "Ludovic Giuly",
+      "Florent Malouda",
+      "Robert Pires",
+      "Bixente Lizarazu"
+    ],
+    "answer": "Ludovic Giuly"
+  },
+  {
+    "id": "career_path_157",
+    "category": "career_path",
+    "question": "Bordeaux -> Athletic Bilbao -> Bayern Munich -> Marseille",
+    "options": [
+      "Bixente Lizarazu",
+      "Lilian Thuram",
+      "Eric Abidal",
+      "Patrice Evra"
+    ],
+    "answer": "Bixente Lizarazu"
+  },
+  {
+    "id": "career_path_158",
+    "category": "career_path",
+    "question": "Chemnitzer FC -> Kaiserslautern -> Bayer Leverkusen -> Bayern Munich -> Chelsea -> Bayer Leverkusen",
+    "options": [
+      "Michael Ballack",
+      "Miroslav Klose",
+      "Bastian Schweinsteiger",
+      "Toni Kroos"
+    ],
+    "answer": "Michael Ballack"
+  },
+  {
+    "id": "career_path_159",
+    "category": "career_path",
+    "question": "Karlsruhe -> Bayern Munich",
+    "options": [
+      "Oliver Kahn",
+      "Manuel Neuer",
+      "Jens Lehmann",
+      "Timo Hildebrand"
+    ],
+    "answer": "Oliver Kahn"
+  },
+  {
+    "id": "career_path_160",
+    "category": "career_path",
+    "question": "Stuttgart -> Bayern Munich -> Fiorentina -> Besiktas -> Wolfsburg -> Stuttgart",
+    "options": [
+      "Mario Gomez",
+      "Miroslav Klose",
+      "Lukas Podolski",
+      "Oliver Bierhoff"
+    ],
+    "answer": "Mario Gomez"
+  },
+  {
+    "id": "career_path_161",
+    "category": "career_path",
+    "question": "Koln -> Bayern Munich -> Koln -> Arsenal -> Galatasaray -> Vissel Kobe -> Antalyaspor -> Gornik Zabrze",
+    "options": [
+      "Lukas Podolski",
+      "Mario Gomez",
+      "Miroslav Klose",
+      "Thomas Muller"
+    ],
+    "answer": "Lukas Podolski"
+  },
+  {
+    "id": "career_path_162",
+    "category": "career_path",
+    "question": "Hannover 96 -> Werder Bremen -> Arsenal",
+    "options": [
+      "Per Mertesacker",
+      "Mats Hummels",
+      "Jerome Boateng",
+      "Benedikt Howedes"
+    ],
+    "answer": "Per Mertesacker"
+  },
+  {
+    "id": "career_path_163",
+    "category": "career_path",
+    "question": "Stuttgart -> Real Madrid -> Juventus -> Hertha Berlin",
+    "options": [
+      "Sami Khedira",
+      "Toni Kroos",
+      "Mesut Ozil",
+      "Emre Can"
+    ],
+    "answer": "Sami Khedira"
+  },
+  {
+    "id": "career_path_164",
+    "category": "career_path",
+    "question": "Everton -> Sampdoria -> Valencia -> Arsenal -> Schalke -> Levante",
+    "options": [
+      "Shkodran Mustafi",
+      "Per Mertesacker",
+      "Benedikt Howedes",
+      "Jerome Boateng"
+    ],
+    "answer": "Shkodran Mustafi"
+  },
+  {
+    "id": "career_path_165",
+    "category": "career_path",
+    "question": "Borussia Dortmund -> Bayern Munich -> Borussia Dortmund -> PSV -> Eintracht Frankfurt",
+    "options": [
+      "Mario Gotze",
+      "Marco Reus",
+      "Ilkay Gundogan",
+      "Mats Hummels"
+    ],
+    "answer": "Mario Gotze"
+  },
+  {
+    "id": "career_path_166",
+    "category": "career_path",
+    "question": "Rot Weiss Ahlen -> Borussia Monchengladbach -> Borussia Dortmund -> LA Galaxy",
+    "options": [
+      "Marco Reus",
+      "Mario Gotze",
+      "Julian Brandt",
+      "Andre Schurrle"
+    ],
+    "answer": "Marco Reus"
+  },
+  {
+    "id": "career_path_167",
+    "category": "career_path",
+    "question": "Milan -> Saint-Etienne -> Borussia Dortmund -> Arsenal -> Barcelona -> Chelsea -> Marseille",
+    "options": [
+      "Pierre-Emerick Aubameyang",
+      "Ousmane Dembele",
+      "Alexandre Lacazette",
+      "Moussa Dembele"
+    ],
+    "answer": "Pierre-Emerick Aubameyang"
+  },
+  {
+    "id": "career_path_168",
+    "category": "career_path",
+    "question": "Pyunik -> Metalurh Donetsk -> Shakhtar Donetsk -> Borussia Dortmund -> Manchester United -> Arsenal -> Roma -> Inter",
+    "options": [
+      "Henrikh Mkhitaryan",
+      "Ilkay Gundogan",
+      "Shinji Kagawa",
+      "Nuri Sahin"
+    ],
+    "answer": "Henrikh Mkhitaryan"
+  },
+  {
+    "id": "career_path_169",
+    "category": "career_path",
+    "question": "Bochum -> Nurnberg -> Borussia Dortmund -> Manchester City -> Barcelona -> Manchester City",
+    "options": [
+      "Ilkay Gundogan",
+      "Toni Kroos",
+      "Sami Khedira",
+      "Emre Can"
+    ],
+    "answer": "Ilkay Gundogan"
+  },
+  {
+    "id": "career_path_170",
+    "category": "career_path",
+    "question": "Cerezo Osaka -> Borussia Dortmund -> Manchester United -> Borussia Dortmund -> Zaragoza -> PAOK -> Sint-Truiden -> Cerezo Osaka",
+    "options": [
+      "Shinji Kagawa",
+      "Keisuke Honda",
+      "Hidetoshi Nakata",
+      "Takumi Minamino"
+    ],
+    "answer": "Shinji Kagawa"
+  },
+  {
+    "id": "career_path_171",
+    "category": "career_path",
+    "question": "Bayern Munich -> Borussia Dortmund -> Bayern Munich -> Borussia Dortmund -> Roma",
+    "options": [
+      "Mats Hummels",
+      "Jerome Boateng",
+      "Niklas Sule",
+      "Benedikt Howedes"
+    ],
+    "answer": "Mats Hummels"
+  },
+  {
+    "id": "career_path_172",
+    "category": "career_path",
+    "question": "Hrvatski Dragovoljac -> Lokomotiva Zagreb -> Dinamo Zagreb -> Inter -> Al Nassr",
+    "options": [
+      "Marcelo Brozovic",
+      "Ivan Rakitic",
+      "Mateo Kovacic",
+      "Ivan Perisic"
+    ],
+    "answer": "Marcelo Brozovic"
+  },
+  {
+    "id": "career_path_173",
+    "category": "career_path",
+    "question": "Sochaux -> Club Brugge -> Borussia Dortmund -> Wolfsburg -> Inter -> Bayern Munich -> Tottenham -> Hajduk Split",
+    "options": [
+      "Ivan Perisic",
+      "Mario Mandzukic",
+      "Marcelo Brozovic",
+      "Ante Rebic"
+    ],
+    "answer": "Ivan Perisic"
+  },
+  {
+    "id": "career_path_174",
+    "category": "career_path",
+    "question": "Zeljeznicar -> Teplice -> Wolfsburg -> Manchester City -> Roma -> Inter -> Fenerbahce",
+    "options": [
+      "Edin Dzeko",
+      "Miralem Pjanic",
+      "Vedad Ibisevic",
+      "Milan Baros"
+    ],
+    "answer": "Edin Dzeko"
+  },
+  {
+    "id": "career_path_175",
+    "category": "career_path",
+    "question": "Metz -> Lyon -> Roma -> Juventus -> Barcelona -> Besiktas -> Sharjah",
+    "options": [
+      "Miralem Pjanic",
+      "Edin Dzeko",
+      "Haris Medunjanin",
+      "Zvjezdan Misimovic"
+    ],
+    "answer": "Miralem Pjanic"
+  },
+  {
+    "id": "career_path_176",
+    "category": "career_path",
+    "question": "Roma -> Boca Juniors",
+    "options": [
+      "Daniele De Rossi",
+      "Francesco Totti",
+      "Andrea Pirlo",
+      "Gennaro Gattuso"
+    ],
+    "answer": "Daniele De Rossi"
+  },
+  {
+    "id": "career_path_177",
+    "category": "career_path",
+    "question": "Parma -> Juventus -> Paris Saint-Germain -> Juventus -> Parma",
+    "options": [
+      "Gianluigi Buffon",
+      "Edwin van der Sar",
+      "Iker Casillas",
+      "Francesco Toldo"
+    ],
+    "answer": "Gianluigi Buffon"
+  },
+  {
+    "id": "career_path_178",
+    "category": "career_path",
+    "question": "Napoli -> Parma -> Inter -> Juventus -> Real Madrid -> Juventus -> Al Ahli",
+    "options": [
+      "Fabio Cannavaro",
+      "Alessandro Nesta",
+      "Paolo Maldini",
+      "Marco Materazzi"
+    ],
+    "answer": "Fabio Cannavaro"
+  },
+  {
+    "id": "career_path_179",
+    "category": "career_path",
+    "question": "Lazio -> Milan -> Montreal Impact -> Chennaiyin",
+    "options": [
+      "Alessandro Nesta",
+      "Fabio Cannavaro",
+      "Paolo Maldini",
+      "Gianluca Zambrotta"
+    ],
+    "answer": "Alessandro Nesta"
+  },
+  {
+    "id": "career_path_180",
+    "category": "career_path",
+    "question": "Perugia -> Rangers -> Salernitana -> Milan -> Sion",
+    "options": [
+      "Gennaro Gattuso",
+      "Andrea Pirlo",
+      "Alessandro Nesta",
+      "Daniele De Rossi"
+    ],
+    "answer": "Gennaro Gattuso"
+  },
+  {
+    "id": "career_path_181",
+    "category": "career_path",
+    "question": "Como -> Bari -> Juventus -> Barcelona -> Milan -> Chiasso",
+    "options": [
+      "Gianluca Zambrotta",
+      "Fabio Grosso",
+      "Christian Panucci",
+      "Massimo Oddo"
+    ],
+    "answer": "Gianluca Zambrotta"
+  },
+  {
+    "id": "career_path_182",
+    "category": "career_path",
+    "question": "Perugia -> Everton -> Perugia -> Inter -> Chennaiyin",
+    "options": [
+      "Marco Materazzi",
+      "Fabio Cannavaro",
+      "Alessandro Nesta",
+      "Christian Panucci"
+    ],
+    "answer": "Marco Materazzi"
+  },
+  {
+    "id": "career_path_183",
+    "category": "career_path",
+    "question": "Prato -> Torino -> Pisa -> Ravenna -> Venezia -> Atalanta -> Juventus -> Atletico Madrid -> Lazio -> Inter -> Milan -> Monaco -> Atalanta -> Fiorentina",
+    "options": [
+      "Christian Vieri",
+      "Filippo Inzaghi",
+      "Alessandro Del Piero",
+      "Luca Toni"
+    ],
+    "answer": "Christian Vieri"
+  },
+  {
+    "id": "career_path_184",
+    "category": "career_path",
+    "question": "Piacenza -> Parma -> Atalanta -> Juventus -> Milan",
+    "options": [
+      "Filippo Inzaghi",
+      "Christian Vieri",
+      "Luca Toni",
+      "Alberto Gilardino"
+    ],
+    "answer": "Filippo Inzaghi"
+  },
+  {
+    "id": "career_path_185",
+    "category": "career_path",
+    "question": "Padova -> Juventus -> Sydney FC -> Delhi Dynamos",
+    "options": [
+      "Alessandro Del Piero",
+      "Filippo Inzaghi",
+      "Roberto Baggio",
+      "Francesco Totti"
+    ],
+    "answer": "Alessandro Del Piero"
+  },
+  {
+    "id": "career_path_186",
+    "category": "career_path",
+    "question": "Empoli -> Udinese",
+    "options": [
+      "Antonio Di Natale",
+      "Luca Toni",
+      "Alberto Gilardino",
+      "Vincenzo Iaquinta"
+    ],
+    "answer": "Antonio Di Natale"
+  },
+  {
+    "id": "career_path_187",
+    "category": "career_path",
+    "question": "Bari -> Roma -> Real Madrid -> Sampdoria -> Milan -> Inter -> Parma -> Sampdoria -> Verona",
+    "options": [
+      "Antonio Cassano",
+      "Francesco Totti",
+      "Alessandro Del Piero",
+      "Roberto Baggio"
+    ],
+    "answer": "Antonio Cassano"
+  },
+  {
+    "id": "career_path_188",
+    "category": "career_path",
+    "question": "Cremonese -> Sampdoria -> Juventus -> Chelsea",
+    "options": [
+      "Gianluca Vialli",
+      "Gianfranco Zola",
+      "Roberto Mancini",
+      "Fabrizio Ravanelli"
+    ],
+    "answer": "Gianluca Vialli"
+  },
+  {
+    "id": "career_path_189",
+    "category": "career_path",
+    "question": "Nuorese -> Torres -> Napoli -> Parma -> Chelsea -> Cagliari",
+    "options": [
+      "Gianfranco Zola",
+      "Gianluca Vialli",
+      "Roberto Mancini",
+      "Fabrizio Ravanelli"
+    ],
+    "answer": "Gianfranco Zola"
+  },
+  {
+    "id": "career_path_190",
+    "category": "career_path",
+    "question": "Messina -> Juventus -> Inter -> Jubilo Iwata",
+    "options": [
+      "Salvatore Schillaci",
+      "Roberto Baggio",
+      "Gianluca Vialli",
+      "Fabrizio Ravanelli"
+    ],
+    "answer": "Salvatore Schillaci"
+  },
+  {
+    "id": "career_path_191",
+    "category": "career_path",
+    "question": "Perugia -> Avellino -> Casertana -> Reggiana -> Juventus -> Middlesbrough -> Marseille -> Lazio -> Derby County -> Dundee -> Perugia",
+    "options": [
+      "Fabrizio Ravanelli",
+      "Gianluca Vialli",
+      "Christian Vieri",
+      "Salvatore Schillaci"
+    ],
+    "answer": "Fabrizio Ravanelli"
+  },
+  {
+    "id": "career_path_192",
+    "category": "career_path",
+    "question": "Platense -> Monaco -> Juventus -> Hercules -> Baniyas -> River Plate -> Newell's Old Boys -> Pune City",
+    "options": [
+      "David Trezeguet",
+      "Thierry Henry",
+      "Nicolas Anelka",
+      "Karim Benzema"
+    ],
+    "answer": "David Trezeguet"
+  },
+  {
+    "id": "career_path_193",
+    "category": "career_path",
+    "question": "Boulogne -> Caen -> Leicester City -> Chelsea -> Al-Ittihad",
+    "options": [
+      "N'Golo Kante",
+      "Riyad Mahrez",
+      "Claude Makelele",
+      "Michael Essien"
+    ],
+    "answer": "N'Golo Kante"
+  },
+  {
+    "id": "career_path_194",
+    "category": "career_path",
+    "question": "Quimper -> Le Havre -> Leicester City -> Manchester City -> Al-Ahli",
+    "options": [
+      "Riyad Mahrez",
+      "N'Golo Kante",
+      "Sadio Mane",
+      "Hakim Ziyech"
+    ],
+    "answer": "Riyad Mahrez"
+  },
+  {
+    "id": "career_path_195",
+    "category": "career_path",
+    "question": "Bastia -> Lyon -> Chelsea -> Real Madrid -> Milan -> Panathinaikos -> Persib Bandung -> Sabail",
+    "options": [
+      "Michael Essien",
+      "John Obi Mikel",
+      "Claude Makelele",
+      "Didier Drogba"
+    ],
+    "answer": "Michael Essien"
+  },
+  {
+    "id": "career_path_196",
+    "category": "career_path",
+    "question": "Lyn -> Chelsea -> Tianjin TEDA -> Middlesbrough -> Trabzonspor -> Stoke City -> Kuwait SC",
+    "options": [
+      "John Obi Mikel",
+      "Michael Essien",
+      "Yaya Toure",
+      "Victor Moses"
+    ],
+    "answer": "John Obi Mikel"
+  },
+  {
+    "id": "career_path_197",
+    "category": "career_path",
+    "question": "Porto -> Chelsea -> Real Madrid -> Monaco -> Shanghai SIPG",
+    "options": [
+      "Ricardo Carvalho",
+      "Pepe",
+      "Paulo Ferreira",
+      "Bruno Alves"
+    ],
+    "answer": "Ricardo Carvalho"
+  },
+  {
+    "id": "career_path_198",
+    "category": "career_path",
+    "question": "Maritimo -> Porto -> Real Madrid -> Besiktas -> Porto",
+    "options": [
+      "Pepe",
+      "Ricardo Carvalho",
+      "Bruno Alves",
+      "Fabio Coentrao"
+    ],
+    "answer": "Pepe"
+  },
+  {
+    "id": "career_path_199",
+    "category": "career_path",
+    "question": "Real Madrid -> Porto",
+    "options": [
+      "Iker Casillas",
+      "Gianluigi Buffon",
+      "Keylor Navas",
+      "Diego Lopez"
+    ],
+    "answer": "Iker Casillas"
+  },
+  {
+    "id": "career_path_200",
+    "category": "career_path",
+    "question": "Lens -> Real Madrid -> Manchester United -> Como",
+    "options": [
+      "Raphael Varane",
+      "Samuel Umtiti",
+      "Dayot Upamecano",
+      "Jules Kounde"
+    ],
+    "answer": "Raphael Varane"
+  },
+  {
+    "id": "career_path_201",
+    "category": "career_path",
+    "question": "Sao Paulo -> Real Madrid -> Porto -> Real Madrid -> Manchester United",
+    "options": [
+      "Casemiro",
+      "Fabinho",
+      "Fernandinho",
+      "Lucas Leiva"
+    ],
+    "answer": "Casemiro"
+  },
+  {
+    "id": "career_path_202",
+    "category": "career_path",
+    "question": "Valencia -> Malaga -> Real Madrid -> Sevilla -> Real Betis",
+    "options": [
+      "Isco",
+      "David Silva",
+      "Juan Mata",
+      "Santi Cazorla"
+    ],
+    "answer": "Isco"
+  },
+  {
+    "id": "career_path_203",
+    "category": "career_path",
+    "question": "Celta Vigo -> Valencia -> Liverpool -> Juventus -> Paris Saint-Germain",
+    "options": [
+      "Mohamed Sissoko",
+      "Lassana Diarra",
+      "Moussa Sissoko",
+      "Seydou Keita"
+    ],
+    "answer": "Mohamed Sissoko"
+  },
+  {
+    "id": "career_path_204",
+    "category": "career_path",
+    "question": "Le Havre -> Chelsea -> Arsenal -> Portsmouth -> Real Madrid -> Marseille -> Al Jazira -> Paris Saint-Germain",
+    "options": [
+      "Lassana Diarra",
+      "Claude Makelele",
+      "Momo Sissoko",
+      "Mathieu Flamini"
+    ],
+    "answer": "Lassana Diarra"
+  },
+  {
+    "id": "career_path_205",
+    "category": "career_path",
+    "question": "Marseille -> Arsenal -> Milan -> Arsenal -> Crystal Palace -> Getafe",
+    "options": [
+      "Mathieu Flamini",
+      "Lassana Diarra",
+      "Samir Nasri",
+      "Abou Diaby"
+    ],
+    "answer": "Mathieu Flamini"
+  },  {
+    "id": "career_path_206",
+    "category": "career_path",
+    "question": "Real Valladolid -> Real Madrid -> Al Rayyan -> Bolton Wanderers",
+    "options": [
+      "Fernando Hierro",
+      "Michel Salgado",
+      "Ivan Helguera",
+      "Fernando Morientes"
+    ],
+    "answer": "Fernando Hierro"
+  },
+  {
+    "id": "career_path_207",
+    "category": "career_path",
+    "question": "Celta Vigo -> Real Madrid -> Blackburn Rovers",
+    "options": [
+      "Michel Salgado",
+      "Fernando Hierro",
+      "Ivan Helguera",
+      "Aitor Karanka"
+    ],
+    "answer": "Michel Salgado"
+  },
+  {
+    "id": "career_path_208",
+    "category": "career_path",
+    "question": "Athletic Bilbao -> Juventus -> Sevilla -> Swansea City -> Tottenham -> Napoli -> Udinese -> Eibar",
+    "options": [
+      "Fernando Llorente",
+      "Aritz Aduriz",
+      "Alvaro Negredo",
+      "Roberto Soldado"
+    ],
+    "answer": "Fernando Llorente"
+  },
+  {
+    "id": "career_path_209",
+    "category": "career_path",
+    "question": "Athletic Bilbao -> Burgos -> Real Valladolid -> Mallorca -> Valencia -> Athletic Bilbao",
+    "options": [
+      "Aritz Aduriz",
+      "Fernando Llorente",
+      "Roberto Soldado",
+      "Alvaro Negredo"
+    ],
+    "answer": "Aritz Aduriz"
+  },
+  {
+    "id": "career_path_210",
+    "category": "career_path",
+    "question": "Braga -> Atletico Madrid -> Real Valladolid -> Atletico Madrid -> Chelsea -> Atletico Madrid -> Atletico Mineiro -> Wolverhampton Wanderers -> Botafogo",
+    "options": [
+      "Diego Costa",
+      "Radamel Falcao",
+      "Fernando Torres",
+      "Alvaro Morata"
+    ],
+    "answer": "Diego Costa"
+  },
+  {
+    "id": "career_path_211",
+    "category": "career_path",
+    "question": "Figueirense -> Deportivo La Coruna -> Atletico Madrid -> Chelsea -> Atletico Madrid -> Flamengo",
+    "options": [
+      "Filipe Luis",
+      "Marcelo",
+      "Alex Sandro",
+      "Dani Alves"
+    ],
+    "answer": "Filipe Luis"
+  },
+  {
+    "id": "career_path_212",
+    "category": "career_path",
+    "question": "Cerro -> Nacional -> Villarreal -> Atletico Madrid -> Inter -> Cagliari -> Atletico Mineiro -> Velez Sarsfield",
+    "options": [
+      "Diego Godin",
+      "Jose Gimenez",
+      "Martin Caceres",
+      "Diego Lugano"
+    ],
+    "answer": "Diego Godin"
+  },
+  {
+    "id": "career_path_213",
+    "category": "career_path",
+    "question": "Olimpija Ljubljana -> Benfica -> Atletico Madrid",
+    "options": [
+      "Jan Oblak",
+      "Samir Handanovic",
+      "Thibaut Courtois",
+      "Keylor Navas"
+    ],
+    "answer": "Jan Oblak"
+  },
+  {
+    "id": "career_path_214",
+    "category": "career_path",
+    "question": "Saprissa -> Albacete -> Levante -> Real Madrid -> Paris Saint-Germain",
+    "options": [
+      "Keylor Navas",
+      "Jan Oblak",
+      "Iker Casillas",
+      "Diego Lopez"
+    ],
+    "answer": "Keylor Navas"
+  },
+  {
+    "id": "career_path_215",
+    "category": "career_path",
+    "question": "Lugo -> Real Madrid -> Villarreal -> Sevilla -> Milan -> Espanyol -> Rayo Vallecano",
+    "options": [
+      "Diego Lopez",
+      "Iker Casillas",
+      "Pepe Reina",
+      "Victor Valdes"
+    ],
+    "answer": "Diego Lopez"
+  },
+  {
+    "id": "career_path_216",
+    "category": "career_path",
+    "question": "Barcelona -> Villarreal -> Liverpool -> Napoli -> Bayern Munich -> Napoli -> Milan -> Aston Villa -> Lazio -> Villarreal -> Como",
+    "options": [
+      "Pepe Reina",
+      "Victor Valdes",
+      "Iker Casillas",
+      "Diego Lopez"
+    ],
+    "answer": "Pepe Reina"
+  },
+  {
+    "id": "career_path_217",
+    "category": "career_path",
+    "question": "Barcelona -> Manchester United -> Middlesbrough",
+    "options": [
+      "Victor Valdes",
+      "Pepe Reina",
+      "Iker Casillas",
+      "David de Gea"
+    ],
+    "answer": "Victor Valdes"
+  },
+  {
+    "id": "career_path_218",
+    "category": "career_path",
+    "question": "Valencia -> Barcelona -> Inter Miami",
+    "options": [
+      "Jordi Alba",
+      "Dani Alves",
+      "Sergio Busquets",
+      "Pedro"
+    ],
+    "answer": "Jordi Alba"
+  },
+  {
+    "id": "career_path_219",
+    "category": "career_path",
+    "question": "Manchester United -> Barcelona",
+    "options": [
+      "Gerard Pique",
+      "Carles Puyol",
+      "Sergio Ramos",
+      "Jordi Alba"
+    ],
+    "answer": "Gerard Pique"
+  },
+  {
+    "id": "career_path_220",
+    "category": "career_path",
+    "question": "Sevilla -> Real Madrid -> Paris Saint-Germain -> Sevilla",
+    "options": [
+      "Sergio Ramos",
+      "Gerard Pique",
+      "Fernando Hierro",
+      "Carles Puyol"
+    ],
+    "answer": "Sergio Ramos"
+  },
+  {
+    "id": "career_path_221",
+    "category": "career_path",
+    "question": "RS Futebol -> Juventude -> Porto -> Dynamo Moscow -> Fluminense -> Milan -> Paris Saint-Germain -> Chelsea -> Fluminense",
+    "options": [
+      "Thiago Silva",
+      "David Luiz",
+      "Marquinhos",
+      "Lucio"
+    ],
+    "answer": "Thiago Silva"
+  },
+  {
+    "id": "career_path_222",
+    "category": "career_path",
+    "question": "Vitoria -> Benfica -> Chelsea -> Paris Saint-Germain -> Chelsea -> Arsenal -> Flamengo",
+    "options": [
+      "David Luiz",
+      "Thiago Silva",
+      "Alex",
+      "Marquinhos"
+    ],
+    "answer": "David Luiz"
+  },
+  {
+    "id": "career_path_223",
+    "category": "career_path",
+    "question": "Vitoria -> Kawasaki Frontale -> Consadole Sapporo -> Tokyo Verdy -> Porto -> Zenit -> Shanghai SIPG -> Atletico Mineiro",
+    "options": [
+      "Hulk",
+      "Oscar",
+      "Willian",
+      "Fred"
+    ],
+    "answer": "Hulk"
+  },
+  {
+    "id": "career_path_224",
+    "category": "career_path",
+    "question": "Sao Paulo -> Internacional -> Chelsea -> Shanghai Port",
+    "options": [
+      "Oscar",
+      "Willian",
+      "Lucas Moura",
+      "Philippe Coutinho"
+    ],
+    "answer": "Oscar"
+  },
+  {
+    "id": "career_path_225",
+    "category": "career_path",
+    "question": "Corinthians -> Shakhtar Donetsk -> Anzhi Makhachkala -> Chelsea -> Arsenal -> Corinthians -> Fulham",
+    "options": [
+      "Willian",
+      "Oscar",
+      "Ramires",
+      "Lucas Moura"
+    ],
+    "answer": "Willian"
+  },
+  {
+    "id": "career_path_226",
+    "category": "career_path",
+    "question": "Internacional -> Shakhtar Donetsk -> Manchester United -> Fenerbahce",
+    "options": [
+      "Fred",
+      "Fernandinho",
+      "Fabinho",
+      "Casemiro"
+    ],
+    "answer": "Fred"
+  },
+  {
+    "id": "career_path_227",
+    "category": "career_path",
+    "question": "Atletico Paranaense -> Shakhtar Donetsk -> Manchester City -> Athletico Paranaense",
+    "options": [
+      "Fernandinho",
+      "Fred",
+      "Fabinho",
+      "Ramires"
+    ],
+    "answer": "Fernandinho"
+  },
+  {
+    "id": "career_path_228",
+    "category": "career_path",
+    "question": "Fluminense -> Rio Ave -> Monaco -> Liverpool -> Al-Ittihad",
+    "options": [
+      "Fabinho",
+      "Casemiro",
+      "Fernandinho",
+      "Lucas Leiva"
+    ],
+    "answer": "Fabinho"
+  },
+  {
+    "id": "career_path_229",
+    "category": "career_path",
+    "question": "Joinville -> Cruzeiro -> Benfica -> Chelsea -> Jiangsu Suning -> Palmeiras",
+    "options": [
+      "Ramires",
+      "Oscar",
+      "Willian",
+      "Paulinho"
+    ],
+    "answer": "Ramires"
+  },
+  {
+    "id": "career_path_230",
+    "category": "career_path",
+    "question": "Sao Paulo -> Paris Saint-Germain -> Tottenham -> Sao Paulo",
+    "options": [
+      "Lucas Moura",
+      "Oscar",
+      "Willian",
+      "Robinho"
+    ],
+    "answer": "Lucas Moura"
+  },
+  {
+    "id": "career_path_231",
+    "category": "career_path",
+    "question": "Vasco da Gama -> Inter -> Liverpool -> Barcelona -> Aston Villa",
+    "options": [
+      "Philippe Coutinho",
+      "Roberto Firmino",
+      "Lucas Moura",
+      "Oscar"
+    ],
+    "answer": "Philippe Coutinho"
+  },
+  {
+    "id": "career_path_232",
+    "category": "career_path",
+    "question": "Figueirense -> Hoffenheim -> Liverpool -> Al Ahli",
+    "options": [
+      "Roberto Firmino",
+      "Philippe Coutinho",
+      "Gabriel Jesus",
+      "Richarlison"
+    ],
+    "answer": "Roberto Firmino"
+  },
+  {
+    "id": "career_path_233",
+    "category": "career_path",
+    "question": "Palmeiras -> Manchester City -> Arsenal",
+    "options": [
+      "Gabriel Jesus",
+      "Roberto Firmino",
+      "Richarlison",
+      "Gabriel Martinelli"
+    ],
+    "answer": "Gabriel Jesus"
+  },
+  {
+    "id": "career_path_234",
+    "category": "career_path",
+    "question": "Instituto -> Palermo -> Juventus -> Roma",
+    "options": [
+      "Paulo Dybala",
+      "Mauro Icardi",
+      "Lautaro Martinez",
+      "Angel Di Maria"
+    ],
+    "answer": "Paulo Dybala"
+  },
+  {
+    "id": "career_path_235",
+    "category": "career_path",
+    "question": "Racing Club -> Inter",
+    "options": [
+      "Lautaro Martinez",
+      "Paulo Dybala",
+      "Mauro Icardi",
+      "Sergio Aguero"
+    ],
+    "answer": "Lautaro Martinez"
+  },
+  {
+    "id": "career_path_236",
+    "category": "career_path",
+    "question": "Sampdoria -> Inter -> Paris Saint-Germain -> Galatasaray",
+    "options": [
+      "Mauro Icardi",
+      "Lautaro Martinez",
+      "Paulo Dybala",
+      "Gonzalo Higuain"
+    ],
+    "answer": "Mauro Icardi"
+  },
+  {
+    "id": "career_path_237",
+    "category": "career_path",
+    "question": "Velez Sarsfield -> Porto -> Valencia -> Manchester City -> Benfica",
+    "options": [
+      "Nicolas Otamendi",
+      "Walter Samuel",
+      "Roberto Ayala",
+      "Gabriel Heinze"
+    ],
+    "answer": "Nicolas Otamendi"
+  },
+  {
+    "id": "career_path_238",
+    "category": "career_path",
+    "question": "San Lorenzo -> Napoli -> Paris Saint-Germain -> Hebei China Fortune",
+    "options": [
+      "Ezequiel Lavezzi",
+      "Angel Di Maria",
+      "Javier Pastore",
+      "Mauro Icardi"
+    ],
+    "answer": "Ezequiel Lavezzi"
+  },
+  {
+    "id": "career_path_239",
+    "category": "career_path",
+    "question": "Boca Juniors -> Valencia -> Atletico Madrid -> Sevilla -> Inter -> Sevilla -> Al Shabab -> Newell's Old Boys",
+    "options": [
+      "Ever Banega",
+      "Pablo Aimar",
+      "Juan Roman Riquelme",
+      "Javier Saviola"
+    ],
+    "answer": "Ever Banega"
+  },
+  {
+    "id": "career_path_240",
+    "category": "career_path",
+    "question": "Huracan de Tres Arroyos -> Banfield -> Boca Juniors -> Genoa -> Inter -> Bologna -> Brescia",
+    "options": [
+      "Rodrigo Palacio",
+      "Diego Milito",
+      "Hernan Crespo",
+      "Mauro Icardi"
+    ],
+    "answer": "Rodrigo Palacio"
+  },
+  {
+    "id": "career_path_241",
+    "category": "career_path",
+    "question": "Novara -> Udinese -> Sampdoria -> Sporting CP -> Manchester United",
+    "options": [
+      "Bruno Fernandes",
+      "Nani",
+      "Deco",
+      "Joao Moutinho"
+    ],
+    "answer": "Bruno Fernandes"
+  },
+  {
+    "id": "career_path_242",
+    "category": "career_path",
+    "question": "Benfica -> Monaco -> Manchester City",
+    "options": [
+      "Bernardo Silva",
+      "Joao Cancelo",
+      "Bruno Fernandes",
+      "Ruben Dias"
+    ],
+    "answer": "Bernardo Silva"
+  },
+  {
+    "id": "career_path_243",
+    "category": "career_path",
+    "question": "Benfica -> Valencia -> Juventus -> Manchester City -> Al Hilal",
+    "options": [
+      "Joao Cancelo",
+      "Bernardo Silva",
+      "Dani Alves",
+      "Ricardo Quaresma"
+    ],
+    "answer": "Joao Cancelo"
+  },
+  {
+    "id": "career_path_244",
+    "category": "career_path",
+    "question": "Tottenham -> Bayern Munich",
+    "options": [
+      "Harry Kane",
+      "Dele Alli",
+      "Son Heung-min",
+      "Gareth Bale"
+    ],
+    "answer": "Harry Kane"
+  },
+  {
+    "id": "career_path_245",
+    "category": "career_path",
+    "question": "MK Dons -> Tottenham -> Everton -> Como",
+    "options": [
+      "Dele Alli",
+      "Harry Kane",
+      "Jesse Lingard",
+      "Jack Wilshere"
+    ],
+    "answer": "Dele Alli"
+  },
+  {
+    "id": "career_path_246",
+    "category": "career_path",
+    "question": "Ajax -> Tottenham -> Inter -> Brentford -> Manchester United",
+    "options": [
+      "Christian Eriksen",
+      "Rafael van der Vaart",
+      "Wesley Sneijder",
+      "Dele Alli"
+    ],
+    "answer": "Christian Eriksen"
+  },
+  {
+    "id": "career_path_247",
+    "category": "career_path",
+    "question": "Hamburg -> Bayer Leverkusen -> Tottenham",
+    "options": [
+      "Son Heung-min",
+      "Park Ji-sung",
+      "Shinji Kagawa",
+      "Takumi Minamino"
+    ],
+    "answer": "Son Heung-min"
+  },
+  {
+    "id": "career_path_248",
+    "category": "career_path",
+    "question": "Bryne -> Molde -> Red Bull Salzburg -> Borussia Dortmund -> Manchester City",
+    "options": [
+      "Erling Haaland",
+      "Martin Odegaard",
+      "Alexander Sorloth",
+      "Julian Alvarez"
+    ],
+    "answer": "Erling Haaland"
+  },
+  {
+    "id": "career_path_249",
+    "category": "career_path",
+    "question": "Villarreal -> Atletico Madrid -> Manchester City",
+    "options": [
+      "Rodri",
+      "Sergio Busquets",
+      "Koke",
+      "Saul Niguez"
+    ],
+    "answer": "Rodri"
+  },
+  {
+    "id": "career_path_250",
+    "category": "career_path",
+    "question": "Las Palmas -> Barcelona",
+    "options": [
+      "Pedri",
+      "Gavi",
+      "Ansu Fati",
+      "Ferran Torres"
+    ],
+    "answer": "Pedri"
+  },
+  {
+    "id": "career_path_251",
+    "category": "career_path",
+    "question": "Birmingham City -> Borussia Dortmund -> Real Madrid",
+    "options": [
+      "Jude Bellingham",
+      "Jadon Sancho",
+      "Jamie Bynoe-Gittens",
+      "Giovanni Reyna"
+    ],
+    "answer": "Jude Bellingham"
+  },
+  {
+    "id": "career_path_252",
+    "category": "career_path",
+    "question": "Flamengo -> Real Madrid",
+    "options": [
+      "Vinicius Junior",
+      "Rodrygo",
+      "Endrick",
+      "Reinier"
+    ],
+    "answer": "Vinicius Junior"
+  },
+  {
+    "id": "career_path_253",
+    "category": "career_path",
+    "question": "Santos -> Real Madrid",
+    "options": [
+      "Rodrygo",
+      "Vinicius Junior",
+      "Neymar",
+      "Robinho"
+    ],
+    "answer": "Rodrygo"
+  },
+  {
+    "id": "career_path_254",
+    "category": "career_path",
+    "question": "Penarol -> Real Madrid",
+    "options": [
+      "Federico Valverde",
+      "Rodrygo",
+      "Aurelien Tchouameni",
+      "Eduardo Camavinga"
+    ],
+    "answer": "Federico Valverde"
+  },
+  {
+    "id": "career_path_255",
+    "category": "career_path",
+    "question": "Bordeaux -> Monaco -> Real Madrid",
+    "options": [
+      "Aurelien Tchouameni",
+      "Eduardo Camavinga",
+      "Jude Bellingham",
+      "Federico Valverde"
+    ],
+    "answer": "Aurelien Tchouameni"
+  },
+  {
+    "id": "career_path_256",
+    "category": "career_path",
+    "question": "Rennes -> Real Madrid",
+    "options": [
+      "Eduardo Camavinga",
+      "Aurelien Tchouameni",
+      "Ousmane Dembele",
+      "Ferland Mendy"
+    ],
+    "answer": "Eduardo Camavinga"
+  },
+  {
+    "id": "career_path_257",
+    "category": "career_path",
+    "question": "West Ham United -> Arsenal",
+    "options": [
+      "Declan Rice",
+      "Mason Mount",
+      "Jack Grealish",
+      "James Maddison"
+    ],
+    "answer": "Declan Rice"
+  },
+  {
+    "id": "career_path_258",
+    "category": "career_path",
+    "question": "Bayer Leverkusen -> Chelsea -> Arsenal",
+    "options": [
+      "Kai Havertz",
+      "Timo Werner",
+      "Julian Brandt",
+      "Mesut Ozil"
+    ],
+    "answer": "Kai Havertz"
+  },
+  {
+    "id": "career_path_259",
+    "category": "career_path",
+    "question": "Anderlecht -> Chelsea -> Everton -> Manchester United -> Inter -> Chelsea -> Napoli",
+    "options": [
+      "Romelu Lukaku",
+      "Didier Drogba",
+      "Samuel Eto'o",
+      "Mauro Icardi"
+    ],
+    "answer": "Romelu Lukaku"
+  },
+  {
+    "id": "career_path_260",
+    "category": "career_path",
+    "question": "Genk -> Chelsea -> Atletico Madrid -> Chelsea -> Real Madrid",
+    "options": [
+      "Thibaut Courtois",
+      "Jan Oblak",
+      "Keylor Navas",
+      "Petr Cech"
+    ],
+    "answer": "Thibaut Courtois"
+  },
+  {
+    "id": "career_path_261",
+    "category": "career_path",
+    "question": "Internacional -> Roma -> Liverpool",
+    "options": [
+      "Alisson",
+      "Ederson",
+      "Julio Cesar",
+      "Dida"
+    ],
+    "answer": "Alisson"
+  },
+  {
+    "id": "career_path_262",
+    "category": "career_path",
+    "question": "Groningen -> Celtic -> Southampton -> Liverpool",
+    "options": [
+      "Virgil van Dijk",
+      "Andrew Robertson",
+      "Joel Matip",
+      "Dejan Lovren"
+    ],
+    "answer": "Virgil van Dijk"
+  },
+  {
+    "id": "career_path_263",
+    "category": "career_path",
+    "question": "Queen's Park -> Dundee United -> Hull City -> Liverpool",
+    "options": [
+      "Andrew Robertson",
+      "Kieran Tierney",
+      "Virgil van Dijk",
+      "James Milner"
+    ],
+    "answer": "Andrew Robertson"
+  },
+  {
+    "id": "career_path_264",
+    "category": "career_path",
+    "question": "El Mokawloon -> Basel -> Chelsea -> Fiorentina -> Roma -> Liverpool",
+    "options": [
+      "Mohamed Salah",
+      "Sadio Mane",
+      "Riyad Mahrez",
+      "Hakim Ziyech"
+    ],
+    "answer": "Mohamed Salah"
+  },
+  {
+    "id": "career_path_265",
+    "category": "career_path",
+    "question": "AGOVV -> Utrecht -> PSV -> Napoli -> Galatasaray",
+    "options": [
+      "Dries Mertens",
+      "Romelu Lukaku",
+      "Eden Hazard",
+      "Kevin De Bruyne"
+    ],
+    "answer": "Dries Mertens"
+  },
+  {
+    "id": "career_path_266",
+    "category": "career_path",
+    "question": "Monaco -> Atletico Madrid -> Dalian Yifang -> Atletico Madrid -> Al Shabab",
+    "options": [
+      "Yannick Carrasco",
+      "Axel Witsel",
+      "Dries Mertens",
+      "Eden Hazard"
+    ],
+    "answer": "Yannick Carrasco"
+  },
+  {
+    "id": "career_path_267",
+    "category": "career_path",
+    "question": "Standard Liege -> Everton -> Manchester United -> Shandong Taishan",
+    "options": [
+      "Marouane Fellaini",
+      "Axel Witsel",
+      "Mousa Dembele",
+      "Radja Nainggolan"
+    ],
+    "answer": "Marouane Fellaini"
+  },
+  {
+    "id": "career_path_268",
+    "category": "career_path",
+    "question": "Standard Liege -> Benfica -> Zenit -> Tianjin Tianhai -> Borussia Dortmund -> Atletico Madrid",
+    "options": [
+      "Axel Witsel",
+      "Marouane Fellaini",
+      "Yannick Carrasco",
+      "Radja Nainggolan"
+    ],
+    "answer": "Axel Witsel"
+  },
+  {
+    "id": "career_path_269",
+    "category": "career_path",
+    "question": "Ajax -> Atletico Madrid -> Southampton -> Tottenham -> Al-Duhail -> Royal Antwerp",
+    "options": [
+      "Toby Alderweireld",
+      "Jan Vertonghen",
+      "Thomas Vermaelen",
+      "Vincent Kompany"
+    ],
+    "answer": "Toby Alderweireld"
+  },
+  {
+    "id": "career_path_270",
+    "category": "career_path",
+    "question": "Ajax -> Tottenham -> Benfica -> Anderlecht",
+    "options": [
+      "Jan Vertonghen",
+      "Toby Alderweireld",
+      "Thomas Vermaelen",
+      "Vincent Kompany"
+    ],
+    "answer": "Jan Vertonghen"
+  },
+  {
+    "id": "career_path_271",
+    "category": "career_path",
+    "question": "Anderlecht -> Hamburg -> Manchester City -> Anderlecht",
+    "options": [
+      "Vincent Kompany",
+      "Jan Vertonghen",
+      "Thomas Vermaelen",
+      "Marouane Fellaini"
+    ],
+    "answer": "Vincent Kompany"
+  },
+  {
+    "id": "career_path_272",
+    "category": "career_path",
+    "question": "Basel -> Bayern Munich -> Inter -> Stoke City -> Liverpool -> Lyon -> Chicago Fire -> Basel",
+    "options": [
+      "Xherdan Shaqiri",
+      "Granit Xhaka",
+      "Ivan Rakitic",
+      "Hakan Calhanoglu"
+    ],
+    "answer": "Xherdan Shaqiri"
+  },
+  {
+    "id": "career_path_273",
+    "category": "career_path",
+    "question": "Basel -> Borussia Monchengladbach -> Arsenal -> Bayer Leverkusen",
+    "options": [
+      "Granit Xhaka",
+      "Xherdan Shaqiri",
+      "Toni Kroos",
+      "Ilkay Gundogan"
+    ],
+    "answer": "Granit Xhaka"
+  },
+  {
+    "id": "career_path_274",
+    "category": "career_path",
+    "question": "Mighty Barrolle -> Monaco -> Paris Saint-Germain -> Milan -> Chelsea -> Manchester City -> Marseille -> Al Jazira",
+    "options": [
+      "George Weah",
+      "Didier Drogba",
+      "Samuel Eto'o",
+      "Nwankwo Kanu"
+    ],
+    "answer": "George Weah"
+  },
+  {
+    "id": "career_path_275",
+    "category": "career_path",
+    "question": "ASEC Mimosas -> Arsenal -> Manchester City -> Liverpool -> Celtic",
+    "options": [
+      "Kolo Toure",
+      "Yaya Toure",
+      "Emmanuel Eboue",
+      "Sol Campbell"
+    ],
+    "answer": "Kolo Toure"
+  },
+  {
+    "id": "career_path_276",
+    "category": "career_path",
+    "question": "Metz -> Monaco -> Arsenal -> Manchester City -> Real Madrid -> Tottenham -> Crystal Palace -> Istanbul Basaksehir -> Kayserispor -> Olimpia",
+    "options": [
+      "Emmanuel Adebayor",
+      "Didier Drogba",
+      "Nwankwo Kanu",
+      "Samuel Eto'o"
+    ],
+    "answer": "Emmanuel Adebayor"
+  },
+  {
+    "id": "career_path_277",
+    "category": "career_path",
+    "question": "Borussia Neunkirchen -> Eintracht Frankfurt -> Fenerbahce -> Paris Saint-Germain -> Bolton Wanderers -> Qatar SC -> Hull City",
+    "options": [
+      "Jay-Jay Okocha",
+      "Nwankwo Kanu",
+      "John Obi Mikel",
+      "Obafemi Martins"
+    ],
+    "answer": "Jay-Jay Okocha"
+  },
+  {
+    "id": "career_path_278",
+    "category": "career_path",
+    "question": "Iwuanyanwu Nationale -> Ajax -> Inter -> Arsenal -> West Bromwich Albion -> Portsmouth",
+    "options": [
+      "Nwankwo Kanu",
+      "Jay-Jay Okocha",
+      "Obafemi Martins",
+      "John Obi Mikel"
+    ],
+    "answer": "Nwankwo Kanu"
+  },
+  {
+    "id": "career_path_279",
+    "category": "career_path",
+    "question": "Inter -> Newcastle United -> Wolfsburg -> Rubin Kazan -> Birmingham City -> Levante -> Seattle Sounders -> Shanghai Shenhua -> Wuhan",
+    "options": [
+      "Obafemi Martins",
+      "Nwankwo Kanu",
+      "Jay-Jay Okocha",
+      "Yakubu"
+    ],
+    "answer": "Obafemi Martins"
+  },
+  {
+    "id": "career_path_280",
+    "category": "career_path",
+    "question": "Heerenveen -> Twente -> Ajax -> Chelsea -> Galatasaray",
+    "options": [
+      "Hakim Ziyech",
+      "Riyad Mahrez",
+      "Sofyan Amrabat",
+      "Noussair Mazraoui"
+    ],
+    "answer": "Hakim Ziyech"
+  },
+  {
+    "id": "career_path_281",
+    "category": "career_path",
+    "question": "Real Madrid -> Inter -> Paris Saint-Germain",
+    "options": [
+      "Achraf Hakimi",
+      "Joao Cancelo",
+      "Dani Alves",
+      "Raphael Varane"
+    ],
+    "answer": "Achraf Hakimi"
+  },
+  {
+    "id": "career_path_282",
+    "category": "career_path",
+    "question": "Malaga -> Leganes -> Sevilla -> Fenerbahce",
+    "options": [
+      "Youssef En-Nesyri",
+      "Hakim Ziyech",
+      "Sofyan Amrabat",
+      "Munir El Haddadi"
+    ],
+    "answer": "Youssef En-Nesyri"
+  },
+  {
+    "id": "career_path_283",
+    "category": "career_path",
+    "question": "Bellmare Hiratsuka -> Perugia -> Roma -> Parma -> Bologna -> Fiorentina",
+    "options": [
+      "Hidetoshi Nakata",
+      "Keisuke Honda",
+      "Shinji Kagawa",
+      "Park Ji-sung"
+    ],
+    "answer": "Hidetoshi Nakata"
+  },
+  {
+    "id": "career_path_284",
+    "category": "career_path",
+    "question": "Nagoya Grampus -> VVV-Venlo -> CSKA Moscow -> Milan -> Pachuca -> Melbourne Victory -> Vitesse -> Botafogo -> Portimonense -> Suduva",
+    "options": [
+      "Keisuke Honda",
+      "Hidetoshi Nakata",
+      "Shinji Kagawa",
+      "Takumi Minamino"
+    ],
+    "answer": "Keisuke Honda"
+  },
+  {
+    "id": "career_path_285",
+    "category": "career_path",
+    "question": "Kyoto Purple Sanga -> PSV -> Manchester United -> Queens Park Rangers",
+    "options": [
+      "Park Ji-sung",
+      "Shinji Kagawa",
+      "Son Heung-min",
+      "Hidetoshi Nakata"
+    ],
+    "answer": "Park Ji-sung"
+  },
+  {
+    "id": "career_path_286",
+    "category": "career_path",
+    "question": "Darmstadt -> Eintracht Frankfurt -> Bayer Leverkusen",
+    "options": [
+      "Cha Bum-kun",
+      "Park Ji-sung",
+      "Son Heung-min",
+      "Hidetoshi Nakata"
+    ],
+    "answer": "Cha Bum-kun"
+  },
+  {
+    "id": "career_path_287",
+    "category": "career_path",
+    "question": "Borussia Dortmund -> Chelsea -> Milan",
+    "options": [
+      "Christian Pulisic",
+      "Jadon Sancho",
+      "Gio Reyna",
+      "Weston McKennie"
+    ],
+    "answer": "Christian Pulisic"
+  },
+  {
+    "id": "career_path_288",
+    "category": "career_path",
+    "question": "New England Revolution -> Fulham -> Tottenham -> Seattle Sounders",
+    "options": [
+      "Clint Dempsey",
+      "Landon Donovan",
+      "Tim Howard",
+      "Christian Pulisic"
+    ],
+    "answer": "Clint Dempsey"
+  },
+  {
+    "id": "career_path_289",
+    "category": "career_path",
+    "question": "Bayer Leverkusen -> San Jose Earthquakes -> LA Galaxy -> Everton -> Leon",
+    "options": [
+      "Landon Donovan",
+      "Clint Dempsey",
+      "Tim Howard",
+      "Brad Friedel"
+    ],
+    "answer": "Landon Donovan"
+  },
+  {
+    "id": "career_path_290",
+    "category": "career_path",
+    "question": "MetroStars -> Manchester United -> Everton -> Colorado Rapids",
+    "options": [
+      "Tim Howard",
+      "Brad Friedel",
+      "Kasey Keller",
+      "Clint Dempsey"
+    ],
+    "answer": "Tim Howard"
+  },
+  {
+    "id": "career_path_291",
+    "category": "career_path",
+    "question": "UNAM -> Atletico Madrid -> Real Madrid -> America -> Rayo Vallecano -> Atlante -> Dallas Burn -> Atletico Celaya",
+    "options": [
+      "Hugo Sanchez",
+      "Rafael Marquez",
+      "Javier Hernandez",
+      "Cuauhtemoc Blanco"
+    ],
+    "answer": "Hugo Sanchez"
+  },
+  {
+    "id": "career_path_292",
+    "category": "career_path",
+    "question": "Atlas -> Monaco -> Barcelona -> New York Red Bulls -> Leon -> Verona -> Atlas",
+    "options": [
+      "Rafael Marquez",
+      "Hugo Sanchez",
+      "Javier Hernandez",
+      "Andres Guardado"
+    ],
+    "answer": "Rafael Marquez"
+  },
+  {
+    "id": "career_path_293",
+    "category": "career_path",
+    "question": "Guadalajara -> Manchester United -> Real Madrid -> Bayer Leverkusen -> West Ham United -> Sevilla -> LA Galaxy -> Guadalajara",
+    "options": [
+      "Javier Hernandez",
+      "Rafael Marquez",
+      "Hugo Sanchez",
+      "Andres Guardado"
+    ],
+    "answer": "Javier Hernandez"
+  },
+  {
+    "id": "career_path_294",
+    "category": "career_path",
+    "question": "Atlas -> Deportivo La Coruna -> Valencia -> Bayer Leverkusen -> PSV -> Real Betis -> Leon",
+    "options": [
+      "Andres Guardado",
+      "Rafael Marquez",
+      "Javier Hernandez",
+      "Cuauhtemoc Blanco"
+    ],
+    "answer": "Andres Guardado"
+  },
+  {
+    "id": "career_path_295",
+    "category": "career_path",
+    "question": "America -> Valladolid -> Veracruz -> Chicago Fire -> Irapuato -> Puebla",
+    "options": [
+      "Cuauhtemoc Blanco",
+      "Hugo Sanchez",
+      "Javier Hernandez",
+      "Rafael Marquez"
+    ],
+    "answer": "Cuauhtemoc Blanco"
+  },
+  {
+    "id": "career_path_296",
+    "category": "career_path",
+    "question": "Envigado -> Banfield -> Porto -> Monaco -> Real Madrid -> Everton -> Al Rayyan -> Olympiacos -> Sao Paulo -> Rayo Vallecano",
+    "options": [
+      "James Rodriguez",
+      "Juan Cuadrado",
+      "Radamel Falcao",
+      "Jackson Martinez"
+    ],
+    "answer": "James Rodriguez"
+  },
+  {
+    "id": "career_path_297",
+    "category": "career_path",
+    "question": "Independiente Medellin -> Udinese -> Fiorentina -> Chelsea -> Juventus -> Inter -> Atalanta",
+    "options": [
+      "Juan Cuadrado",
+      "James Rodriguez",
+      "Luis Muriel",
+      "Radamel Falcao"
+    ],
+    "answer": "Juan Cuadrado"
+  },
+  {
+    "id": "career_path_298",
+    "category": "career_path",
+    "question": "Wanderers -> River Plate -> Racing Paris -> Marseille -> Cagliari -> Torino -> River Plate",
+    "options": [
+      "Enzo Francescoli",
+      "Diego Forlan",
+      "Edinson Cavani",
+      "Diego Godin"
+    ],
+    "answer": "Enzo Francescoli"
+  },
+  {
+    "id": "career_path_299",
+    "category": "career_path",
+    "question": "Defensor Sporting -> Cagliari -> Espanyol -> Malaga -> Sevilla -> Portsmouth",
+    "options": [
+      "Dario Silva",
+      "Diego Forlan",
+      "Edinson Cavani",
+      "Enzo Francescoli"
+    ],
+    "answer": "Dario Silva"
+  },
+  {
+    "id": "career_path_300",
+    "category": "career_path",
+    "question": "Galatasaray -> Atletico Madrid -> Barcelona -> Istanbul Basaksehir -> Galatasaray",
+    "options": [
+      "Arda Turan",
+      "Hakan Calhanoglu",
+      "Nuri Sahin",
+      "Emre Belozoglu"
+    ],
+    "answer": "Arda Turan"
+  },
+  {
+    "id": "career_path_301",
+    "category": "career_path",
+    "question": "Karlsruher SC -> Hamburg -> Bayer Leverkusen -> Milan -> Inter",
+    "options": [
+      "Hakan Calhanoglu",
+      "Arda Turan",
+      "Nuri Sahin",
+      "Mesut Ozil"
+    ],
+    "answer": "Hakan Calhanoglu"
+  },
+  {
+    "id": "career_path_302",
+    "category": "career_path",
+    "question": "Borussia Dortmund -> Real Madrid -> Liverpool -> Borussia Dortmund -> Werder Bremen -> Antalyaspor",
+    "options": [
+      "Nuri Sahin",
+      "Hakan Calhanoglu",
+      "Ilkay Gundogan",
+      "Emre Can"
+    ],
+    "answer": "Nuri Sahin"
+  },
+  {
+    "id": "career_path_303",
+    "category": "career_path",
+    "question": "Red Star Belgrade -> Spartak Moscow -> Manchester United -> Inter",
+    "options": [
+      "Nemanja Vidic",
+      "Dejan Stankovic",
+      "Sinisa Mihajlovic",
+      "Branislav Ivanovic"
+    ],
+    "answer": "Nemanja Vidic"
+  },
+  {
+    "id": "career_path_304",
+    "category": "career_path",
+    "question": "Kolubara -> Kosice -> Chelsea -> Benfica -> Chelsea -> Manchester United -> Roma -> Lyon",
+    "options": [
+      "Nemanja Matic",
+      "Nemanja Vidic",
+      "Dejan Stankovic",
+      "Branislav Ivanovic"
+    ],
+    "answer": "Nemanja Matic"
+  },
+  {
+    "id": "career_path_305",
+    "category": "career_path",
+    "question": "Red Star Belgrade -> Lazio -> Inter",
+    "options": [
+      "Dejan Stankovic",
+      "Nemanja Vidic",
+      "Sinisa Mihajlovic",
+      "Dejan Savicevic"
+    ],
+    "answer": "Dejan Stankovic"
   }
 ];

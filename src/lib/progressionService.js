@@ -1,4 +1,5 @@
 import { LEVELS } from "../data/levelConfig";
+import { safeLocalStorage as localStorage } from "./safeStorage";
 
 const XP_EVENTS_KEY = "ballKnowledgeXpEvents";
 const PROGRESSION_KEY = "ballKnowledgeProgression";

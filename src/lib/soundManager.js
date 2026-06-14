@@ -2,6 +2,7 @@ import buttonTapSound from "../assets/button-tap.mp3";
 import coinSound from "../assets/coin.mp3";
 import correctSound from "../assets/correct.mp3";
 import levelUpSound from "../assets/level-up.mp3";
+import { safeLocalStorage as localStorage } from "./safeStorage";
 
 const SOUND_STORAGE_KEY = "ballKnowledgeSoundEnabled";
 
@@ -20,13 +21,13 @@ const lastPlayedAt = new Map();
 export function isSoundEnabled() {
   if (typeof window === "undefined") return true;
 
-  return window.localStorage.getItem(SOUND_STORAGE_KEY) !== "false";
+  return localStorage.getItem(SOUND_STORAGE_KEY) !== "false";
 }
 
 export function setSoundEnabled(enabled) {
   if (typeof window === "undefined") return;
 
-  window.localStorage.setItem(SOUND_STORAGE_KEY, enabled ? "true" : "false");
+  localStorage.setItem(SOUND_STORAGE_KEY, enabled ? "true" : "false");
 }
 
 function getBaseAudio(name) {

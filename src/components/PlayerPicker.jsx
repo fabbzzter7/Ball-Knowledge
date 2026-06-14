@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
+import BKIcon from "./BKIcon";
 import {
   fetchPlayerById,
   normalizePlayerSearch,
@@ -188,6 +189,14 @@ export default function PlayerPicker({
 
       window.clearTimeout(slowLoadingTimeout);
       const nextResults = players.filter((player) => !excludedIds.has(player.id));
+      if (
+        import.meta.env?.DEV ||
+        (typeof document !== "undefined" &&
+          (document.body.classList.contains("capacitor-ios") ||
+            document.body.classList.contains("capacitor-ios-debug")))
+      ) {
+        console.log("[ios-search]", normalizedQuery, nextResults.length);
+      }
       cacheRef.current.set(normalizedQuery, players);
       setResults(nextResults);
       setSearchError(error ? "Could not search players" : "");
@@ -339,7 +348,7 @@ export default function PlayerPicker({
             {selectedPlayer.image_url ? (
               <img src={selectedPlayer.image_url} alt="" />
             ) : (
-              <span>{selectedPlayer.position_group === "Goalkeeper" ? "🧤" : "⚽"}</span>
+              <BKIcon name="profile" size={28} />
             )}
           </div>
 

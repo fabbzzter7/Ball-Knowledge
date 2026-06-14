@@ -3,7 +3,7 @@ import { STARTER_PLAYERS } from "../data/starterPlayers";
 import { LEGEND_PLAYERS } from "../data/legendsPlayers";
 
 const PLAYER_SELECT =
-  "id,name,full_name,search_name,aliases,nationality,position,position_group,birth_year,active_from,active_to,is_retired,clubs,main_clubs,national_team,image_url,difficulty,popularity_score,source,source_id";
+  "id,name,search_name,aliases,nationality,position,position_group,birth_year,active_from,active_to,is_retired,clubs,main_clubs,national_team,image_url,difficulty,popularity_score,source,source_id";
 
 export function normalizePlayerSearch(text = "") {
   return String(text)
@@ -21,8 +21,12 @@ export function normalizePlayerSearch(text = "") {
 export const normalizePlayerName = normalizePlayerSearch;
 
 function normalizePlayer(player = {}) {
+  const displayName = player.name || player.full_name || player.search_name || "";
+
   return {
     ...player,
+    name: displayName,
+    full_name: player.full_name || displayName,
     aliases: Array.isArray(player.aliases) ? player.aliases : [],
     clubs: Array.isArray(player.clubs) ? player.clubs : [],
     main_clubs: Array.isArray(player.main_clubs) ? player.main_clubs : [],
@@ -720,7 +724,7 @@ export async function searchPlayers(query, limit = 8) {
     const { data: directMatches, error: directError } = await supabase
       .from("players")
       .select(PLAYER_SELECT)
-      .or(`name.ilike.${wildcard},full_name.ilike.${wildcard},search_name.ilike.${wildcard}`)
+      .or(`name.ilike.${wildcard},search_name.ilike.${wildcard}`)
       .order("popularity_score", { ascending: false, nullsFirst: false })
       .limit(candidateLimit);
 

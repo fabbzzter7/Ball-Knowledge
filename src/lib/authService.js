@@ -22,12 +22,16 @@ export function getUsernameError(username = "") {
 export async function getCurrentSession(supabase) {
   if (!supabase?.auth) return { session: null, user: null, error: null };
 
-  const { data, error } = await supabase.auth.getSession();
-  return {
-    session: data?.session || null,
-    user: data?.session?.user || null,
-    error,
-  };
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    return {
+      session: data?.session || null,
+      user: data?.session?.user || null,
+      error,
+    };
+  } catch (error) {
+    return { session: null, user: null, error };
+  }
 }
 
 export async function signInWithEmail(supabase, { email, password }) {

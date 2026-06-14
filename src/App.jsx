@@ -1,10 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, RotateCcw, CheckCircle2, XCircle, Trash2, X } from "lucide-react";
+import {
+  CheckCircle2,
+  RotateCcw,
+  Trophy,
+  X,
+  XCircle,
+  Trash2,
+} from "lucide-react";
 import { ANSWER_ALIASES, LAST_WORD_BLACKLIST } from "./answerAliases";
 import PlayerAvatar, { getAvatarConfig } from "./components/PlayerAvatar";
 import GuessInput from "./components/GuessInput";
 import PlayerPicker from "./components/PlayerPicker";
+import BKIcon from "./components/BKIcon";
+import LevelIcon from "./components/LevelIcon";
 
 import { QUESTIONS } from "./QUESTIONS";
 import { CAREER_QUESTIONS } from "./CAREER_QUESTIONS";
@@ -56,6 +65,7 @@ import {
   maxStat,
   persistLocalProgression,
 } from "./lib/progressionService";
+import { safeLocalStorage as localStorage } from "./lib/safeStorage";
 import {
   getMultiplayerQuestionsByIds,
   pickMultiplayerQuestionIds,
@@ -100,6 +110,7 @@ import quizBg from "./assets/quiz-bg.png";
 
 const HARD_TIME_LIMIT = 15;
 const MULTIPLAYER_TIME_LIMIT = 8;
+const MULTIPLAYER_CAREER_TIME_LIMIT = 15;
 const MULTIPLAYER_TIMEOUT_VALUE = "__time_up__";
 const DAILY_SCAN_STEP_MS = 210;
 const STREAK_TARGETS = [5, 10, 20, 30, 50];
@@ -198,7 +209,7 @@ const MULTIPLAYER_CATEGORIES = [
 const LEAGUE_FORMATS = {
   custom: {
     label: "Custom",
-    icon: "🎛️",
+    icon: "custom",
     quizCount: 5,
     top10Count: 1,
     whoamiCount: 0,
@@ -207,7 +218,7 @@ const LEAGUE_FORMATS = {
   },
   classic: {
     label: "Classic",
-    icon: "⚽",
+    icon: "classic",
     quizCount: 10,
     top10Count: 0,
     whoamiCount: 0,
@@ -216,7 +227,7 @@ const LEAGUE_FORMATS = {
   },
   daily_mix: {
     label: "Daily Mix",
-    icon: "🏆",
+    icon: "dailyMix",
     quizCount: 5,
     top10Count: 1,
     whoamiCount: 1,
@@ -226,7 +237,7 @@ const LEAGUE_FORMATS = {
   },
   party_mode: {
     label: "Party Mode",
-    icon: "⚡",
+    icon: "partyMode",
     quizCount: 3,
     top10Count: 2,
     whoamiCount: 2,
@@ -654,9 +665,36 @@ const screenTransition = {
 
 function ScreenTransition({ children, className = "screen-transition" }) {
   return (
-    <motion.div className={className} {...screenTransition}>
+    <motion.div className={`${className} app-page-content`} {...screenTransition}>
       {children}
     </motion.div>
+  );
+}
+
+function CareerPathQuestionView({ question, className = "" }) {
+  const clubs = getCareerPathClubs(question);
+
+  return (
+    <div className={`career-journey-card ${className}`}>
+      <div className="career-journey-kicker">Guess the player</div>
+      <div className="career-journey-path">
+        {clubs.map((club, index) => (
+          <React.Fragment key={`${club}-${index}`}>
+            <motion.div
+              className={`career-club-pill club-${getClubThemeClass(club)}`}
+              initial={{ opacity: 0, y: 12, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ delay: index * 0.045, duration: 0.2 }}
+            >
+              {club}
+            </motion.div>
+            {index < clubs.length - 1 && (
+              <div className="career-path-arrow">→</div>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -817,11 +855,17 @@ function getCategoryLabel(categoryId) {
   );
 }
 
+function getMultiplayerQuestionTimeLimit(categoryId) {
+  return categoryId === "career_path"
+    ? MULTIPLAYER_CAREER_TIME_LIMIT
+    : MULTIPLAYER_TIME_LIMIT;
+}
+
 function getCurrentPlayerSlot(match, playerId, username) {
   if (!match) return null;
 
-  if (match.player1_id && match.player1_id === playerId) return "player1";
-  if (match.player2_id && match.player2_id === playerId) return "player2";
+  if (match.player1_id && String(match.player1_id) === String(playerId)) return "player1";
+  if (match.player2_id && String(match.player2_id) === String(playerId)) return "player2";
   if (match.player1_username === username) return "player1";
   if (match.player2_username === username) return "player2";
 
@@ -832,20 +876,22 @@ function getOpponentName(match, playerId, username) {
   const playerSlot = getCurrentPlayerSlot(match, playerId, username);
 
   if (playerSlot === "player1") {
-    return match?.player2_username || "Waiting opponent";
+    return match?.player2_username || "your opponent";
   }
 
   if (playerSlot === "player2") {
-    return match?.player1_username || "Opponent";
+    return match?.player1_username || "your opponent";
   }
 
-  return match?.player2_username || match?.player1_username || "Opponent";
+  return match?.player2_username || match?.player1_username || "your opponent";
 }
 
 function isCurrentPlayersTurn(match, playerId, username) {
   if (!match) return false;
 
-  if (match.current_turn_id) return match.current_turn_id === playerId;
+  if (match.current_turn_id) {
+    return String(match.current_turn_id) === String(playerId);
+  }
 
   return match.current_turn === username;
 }
@@ -862,7 +908,9 @@ function getMatchActionLabel(match, latestRound, playerSlot, isPlayerTurn) {
   if (!match) return "Open match";
 
   if (match.is_public && match.phase === "waiting_for_opponent") {
-    return "Waiting for random opponent";
+    return match.player2_id
+      ? "Waiting for your opponent"
+      : "Waiting for random opponent";
   }
 
   if (match.phase === "waiting_for_opponent" || match.status === "waiting") {
@@ -916,7 +964,7 @@ function getMatchActionKind(match, latestRound, playerSlot, isPlayerTurn) {
 
 function getMatchCtaLabel(actionKind, match) {
   if (match?.is_public && match.phase === "waiting_for_opponent") {
-    return "View Saved Score";
+    return match.player2_id ? "Open Match" : "View Saved Score";
   }
 
   if (actionKind === "your-turn" && match?.phase === "choose_category") {
@@ -1079,7 +1127,7 @@ export default function FootballQuizMVP() {
   const [profileLookup, setProfileLookup] = useState({});
   const [soundOn, setSoundOn] = useState(isSoundEnabled);
   const [avatarEmoji, setAvatarEmoji] = useState(() => {
-    return localStorage.getItem("ballKnowledgeAvatarEmoji") || "⚽";
+    return localStorage.getItem("ballKnowledgeAvatarEmoji") || "profile";
   });
   const [favoriteCountry, setFavoriteCountry] = useState(() => {
     return localStorage.getItem("ballKnowledgeFavoriteCountry") || "Argentina";
@@ -1098,15 +1146,16 @@ export default function FootballQuizMVP() {
 
   useEffect(() => {
     if (!import.meta.env?.DEV) return undefined;
+    if (document.body.classList.contains("capacitor-ios")) return undefined;
 
     let cancelled = false;
-    const contentWarnings = auditDailyListChallenges();
+    const runStartupAudits = async () => {
+      const contentWarnings = auditDailyListChallenges();
 
-    if (contentWarnings.length) {
-      console.warn("Daily/Top 10 content audit warnings", contentWarnings);
-    }
+      if (contentWarnings.length) {
+        console.warn("Daily/Top 10 content audit warnings", contentWarnings);
+      }
 
-    async function checkPlayerSearchCoverage() {
       await buildPlayerSearchIndex();
       const missing = [];
       const targets = [
@@ -1159,12 +1208,17 @@ export default function FootballQuizMVP() {
       if (!cancelled && missing.length) {
         console.warn("Player-answer content missing from shared search index", missing);
       }
-    }
+    };
 
-    checkPlayerSearchCoverage();
+    const auditTimer = window.setTimeout(() => {
+      runStartupAudits().catch((error) => {
+        console.warn("Startup content audits failed", error);
+      });
+    }, 1500);
 
     return () => {
       cancelled = true;
+      window.clearTimeout(auditTimer);
     };
   }, []);
 
@@ -1329,7 +1383,7 @@ export default function FootballQuizMVP() {
     ),
   };
   const displayName = profile?.display_name || profile?.username || username;
-  const profileAvatarEmoji = profile?.avatar_icon || profile?.avatar_emoji || avatarEmoji || "⚽";
+  const profileAvatarEmoji = profile?.avatar_icon || profile?.avatar_emoji || avatarEmoji || "profile";
   const profileAvatar = getAvatarConfig({
     ...(profile || {}),
     avatar_icon: profile?.avatar_icon || profileAvatarEmoji,
@@ -1376,6 +1430,28 @@ export default function FootballQuizMVP() {
   ? "mode-menu"
   : "home";
 
+  useEffect(() => {
+    const iosLayoutDebug =
+      document.body.classList.contains("capacitor-ios") ||
+      document.body.classList.contains("capacitor-ios-debug");
+
+    if (
+      !import.meta.env?.DEV &&
+      !iosLayoutDebug
+    ) {
+      return;
+    }
+
+    const pageName = leagueChallengeOpen
+      ? `league-challenge:${leagueChallengePhase}`
+      : gameStarted
+      ? gameMode
+      : currentHomeViewKey;
+
+    console.log("[ios-page]", pageName);
+    console.log("[ios-layout]", "mounted", pageName);
+  }, [currentHomeViewKey, gameMode, gameStarted, leagueChallengeOpen, leagueChallengePhase]);
+
 const isHomeScreen =
   !gameStarted &&
   !profileOpen &&
@@ -1386,14 +1462,16 @@ const isHomeScreen =
   const hasBothMultiplayerPlayers =
     Boolean(activeMatch?.player1_username) && Boolean(activeMatch?.player2_username);
   const isMultiplayerTurn = isCurrentPlayersTurn(activeMatch, playerId, username);
+  const isH2HCreatorOpeningRound =
+    activeMatch &&
+    !activeMatch.is_public &&
+    !activeMatch.player2_id &&
+    activeMatch.phase === "choose_category" &&
+    getCurrentPlayerSlot(activeMatch, playerId, username) === "player1";
   const canChooseMultiplayerCategory =
-    hasBothMultiplayerPlayers &&
+    (hasBothMultiplayerPlayers || isH2HCreatorOpeningRound) &&
     (activeMatch?.phase === "choose_category" ||
-      (activeMatch?.phase === "round_finished" && nextCategoryPickerOpen)) &&
-    isMultiplayerTurn;
-  const canOpenNextCategoryPicker =
-    hasBothMultiplayerPlayers &&
-    activeMatch?.phase === "round_finished" &&
+      activeMatch?.phase === "round_finished") &&
     isMultiplayerTurn;
   const multiplayerPlayerSlot = getCurrentPlayerSlot(
     activeMatch,
@@ -1404,6 +1482,13 @@ const isHomeScreen =
     activeRound,
     multiplayerPlayerSlot
   );
+  const isH2HWaitingAfterCreatorRound =
+    activeMatch &&
+    !activeMatch.is_public &&
+    !activeMatch.player2_id &&
+    multiplayerPlayerSlot === "player1" &&
+    activeMatch.phase === "round_active" &&
+    hasPlayedActiveRound;
   const activeRoundQuestionIds = activeRound?.question_ids || [];
   const activeRoundQuestions = useMemo(
     () => getMultiplayerQuestionsByIds(activeRoundQuestionIds).map(withShuffledOptions),
@@ -1411,6 +1496,92 @@ const isHomeScreen =
   );
   const currentMultiplayerRoundQuestion =
     activeRoundQuestions[multiplayerRoundIndex];
+  const nextCategoryChooserName =
+    activeMatch?.current_turn ||
+    (isMultiplayerTurn ? username : getOpponentName(activeMatch, playerId, username));
+  const nextCategoryWaitingName =
+    nextCategoryChooserName && nextCategoryChooserName !== "Opponent"
+      ? nextCategoryChooserName
+      : "your opponent";
+  const activeOpponentName = getOpponentName(activeMatch, playerId, username);
+  const activeOpponentLabel =
+    activeOpponentName && activeOpponentName !== "your opponent"
+      ? activeOpponentName
+      : "your opponent";
+
+  useEffect(() => {
+    const shouldLog =
+      import.meta.env?.DEV ||
+      document.body.classList.contains("capacitor-ios") ||
+      document.body.classList.contains("capacitor-ios-debug");
+
+    if (!shouldLog || !activeMatch?.id || activeMatch.phase !== "round_finished") {
+      return;
+    }
+
+    console.log("[mp-next-category]", {
+      currentUserId: playerId,
+      nextChooserId: activeMatch.current_turn_id,
+      isCurrentUserChooser: isMultiplayerTurn,
+      matchId: activeMatch.id,
+      roundNumber: activeMatch.round_number || activeRound?.round_number,
+      phase: activeMatch.phase,
+      status: activeMatch.status,
+    });
+  }, [
+    activeMatch?.id,
+    activeMatch?.current_turn_id,
+    activeMatch?.phase,
+    activeMatch?.round_number,
+    activeMatch?.status,
+    activeRound?.round_number,
+    isMultiplayerTurn,
+    playerId,
+  ]);
+
+  useEffect(() => {
+    const shouldLog =
+      import.meta.env?.DEV ||
+      document.body.classList.contains("capacitor-ios") ||
+      document.body.classList.contains("capacitor-ios-debug");
+
+    if (!shouldLog || !activeMatch?.id || !activeMatch.is_public) {
+      return;
+    }
+
+    const playerSlot = getCurrentPlayerSlot(activeMatch, playerId, username);
+    const opponentSlot = playerSlot === "player1" ? "player2" : "player1";
+
+    console.log("[play-now-match-flow]", {
+      matchId: activeMatch.id,
+      mode: activeMatch.mode,
+      currentUserId: playerId,
+      player1Id: activeMatch.player1_id,
+      player2Id: activeMatch.player2_id,
+      opponentId:
+        opponentSlot === "player1" ? activeMatch.player1_id : activeMatch.player2_id,
+      opponentName: getOpponentName(activeMatch, playerId, username),
+      roundNumber: activeMatch.round_number || activeRound?.round_number,
+      phase: activeMatch.phase,
+      status: activeMatch.status,
+      nextChooserId: activeMatch.current_turn_id,
+      isCurrentUserChooser: isMultiplayerTurn,
+    });
+  }, [
+    activeMatch?.id,
+    activeMatch?.mode,
+    activeMatch?.player1_id,
+    activeMatch?.player2_id,
+    activeMatch?.round_number,
+    activeMatch?.phase,
+    activeMatch?.status,
+    activeMatch?.current_turn_id,
+    activeMatch?.is_public,
+    activeRound?.round_number,
+    isMultiplayerTurn,
+    playerId,
+    username,
+  ]);
   const activeLeague = leagueDashboard?.league || null;
   const activeLeagueDay = leagueDashboard?.leagueDay || null;
   const activeLeagueSubmission = leagueDashboard?.currentSubmission || null;
@@ -1477,8 +1648,6 @@ const isHomeScreen =
       ? `Day ${activeLeagueDay.day_number} / ${activeLeague.duration_days}`
       : `Day ${activeLeagueDay.day_number}`
     : "Day";
-  const careerPathClubs =
-    gameMode === "career" && current ? getCareerPathClubs(current.question) : [];
   const connectionsSolvedIndexes = connectionsSolved.map((group) => group.index);
   const connectionsGameComplete = connectionsSolved.length === 4;
   const connectionsGameOver =
@@ -1524,8 +1693,9 @@ const isHomeScreen =
   useEffect(() => {
     if (!multiplayerRoundOpen || !currentMultiplayerRoundQuestion) return;
 
-    setMultiplayerTimeLeft(MULTIPLAYER_TIME_LIMIT);
+    setMultiplayerTimeLeft(getMultiplayerQuestionTimeLimit(activeRound?.category));
   }, [
+    activeRound?.category,
     currentMultiplayerRoundQuestion,
     multiplayerRoundIndex,
     multiplayerRoundOpen,
@@ -1551,7 +1721,7 @@ const isHomeScreen =
         } else {
           setMultiplayerRoundIndex((value) => value + 1);
           setMultiplayerRoundSelected(null);
-          setMultiplayerTimeLeft(MULTIPLAYER_TIME_LIMIT);
+          setMultiplayerTimeLeft(getMultiplayerQuestionTimeLimit(activeRound?.category));
         }
       }, 950);
 
@@ -1565,6 +1735,7 @@ const isHomeScreen =
     return () => clearTimeout(timer);
   }, [
     activeRoundQuestions.length,
+    activeRound?.category,
     currentMultiplayerRoundQuestion,
     multiplayerRoundDone,
     multiplayerRoundIndex,
@@ -1995,7 +2166,11 @@ const isHomeScreen =
 
   useEffect(() => {
     const handleButtonHaptic = (event) => {
-      if (event.target.closest("button") && "vibrate" in navigator) {
+      if (
+        event.target.closest("button") &&
+        typeof navigator !== "undefined" &&
+        "vibrate" in navigator
+      ) {
         navigator.vibrate(10);
       }
     };
@@ -2109,11 +2284,11 @@ const isHomeScreen =
     setNameInput(profileUsername);
     localStorage.setItem("ballKnowledgeUsername", profileUsername);
     setAvatarEmoji(
-      onlineProfile.avatar_icon || onlineProfile.avatar_emoji || avatarEmoji || "⚽"
+      onlineProfile.avatar_icon || onlineProfile.avatar_emoji || avatarEmoji || "profile"
     );
     localStorage.setItem(
       "ballKnowledgeAvatarEmoji",
-      onlineProfile.avatar_icon || onlineProfile.avatar_emoji || avatarEmoji || "⚽"
+      onlineProfile.avatar_icon || onlineProfile.avatar_emoji || avatarEmoji || "profile"
     );
     setFavoriteCountry(onlineProfile.favorite_country || favoriteCountry || "Argentina");
     setFavoriteFlag(onlineProfile.favorite_flag || favoriteFlag || "🇦🇷");
@@ -2463,10 +2638,10 @@ const isHomeScreen =
     if (existingProfile) {
       setProfile(existingProfile);
       hydrateProgressionFromProfile(existingProfile);
-      setAvatarEmoji(existingProfile.avatar_icon || existingProfile.avatar_emoji || "⚽");
+      setAvatarEmoji(existingProfile.avatar_icon || existingProfile.avatar_emoji || "profile");
       localStorage.setItem(
         "ballKnowledgeAvatarEmoji",
-        existingProfile.avatar_icon || existingProfile.avatar_emoji || "⚽"
+        existingProfile.avatar_icon || existingProfile.avatar_emoji || "profile"
       );
       setFavoriteCountry(existingProfile.favorite_country || favoriteCountry || "Argentina");
       setFavoriteFlag(existingProfile.favorite_flag || favoriteFlag || "🇦🇷");
@@ -2509,10 +2684,10 @@ const isHomeScreen =
 
     setProfile(createdProfile);
     hydrateProgressionFromProfile(createdProfile);
-    setAvatarEmoji(createdProfile.avatar_icon || createdProfile.avatar_emoji || "⚽");
+    setAvatarEmoji(createdProfile.avatar_icon || createdProfile.avatar_emoji || "profile");
     localStorage.setItem(
       "ballKnowledgeAvatarEmoji",
-      createdProfile.avatar_icon || createdProfile.avatar_emoji || "⚽"
+      createdProfile.avatar_icon || createdProfile.avatar_emoji || "profile"
     );
     setFavoriteCountry(createdProfile.favorite_country || favoriteCountry || "Argentina");
     setFavoriteFlag(createdProfile.favorite_flag || favoriteFlag || "🇦🇷");
@@ -2685,7 +2860,7 @@ const isHomeScreen =
       return;
     }
 
-    const medals = ["🥇", "🥈", "🥉"];
+    const medals = ["1", "2", "3"];
     setLeaderboardRows(
       (data || [])
         .filter((row) => (Number(row.best_score) || 0) > 0)
@@ -2724,7 +2899,6 @@ const isHomeScreen =
             username: row.display_name || row.username || "Player",
             levelId,
             levelName: level.name,
-            levelEmoji: level.emoji,
             xpTotal: Number(row.xp_total) || 0,
             rank: index + 1,
             medal: medals[index] || null,
@@ -2757,8 +2931,8 @@ const isHomeScreen =
         id,
         username: fallbackUsername,
         display_name: fallbackUsername,
-        avatar_emoji: "⚽",
-        avatar_icon: "⚽",
+        avatar_emoji: "profile",
+        avatar_icon: "profile",
         avatar_style: "classic",
         avatar_color: "green",
         avatar_bg: "dark",
@@ -3719,6 +3893,31 @@ const startConnectionsGame = (difficulty = null) => {
     setMultiplayerNotice("");
   };
 
+  const getMultiplayerAuthPlayerId = (actionLabel) => {
+    const authPlayerId = effectiveAuthUser?.id;
+
+    if (authPlayerId) {
+      return authPlayerId;
+    }
+
+    setMultiplayerNotice("");
+    setMultiplayerError(`Create an account to ${actionLabel}.`);
+    return null;
+  };
+
+  const getMultiplayerPermissionErrorMessage = (error, fallback) => {
+    const message = error?.message || "";
+
+    if (
+      error?.code === "42501" ||
+      /row-level security|permission|forbidden|not authorized/i.test(message)
+    ) {
+      return "Match permissions are not ready yet. Run the Supabase matches RLS SQL, then try again.";
+    }
+
+    return fallback;
+  };
+
   const loadMatchById = async (matchId) => {
     const { data: match, error: matchError } = await supabase
       .from("matches")
@@ -3750,16 +3949,21 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
+    const matchPlayerId = effectiveAuthUser?.id;
+    if (!matchPlayerId) {
+      setActiveGames([]);
+      if (!silent) {
+        setMultiplayerError("Create an account to view active matches.");
+      }
+      return;
+    }
+
     if (!silent) {
       setActiveGamesLoading(true);
       setMultiplayerError("");
     }
 
-    const playerFilters = [`player_id.eq.${playerId}`];
-
-    if (username) {
-      playerFilters.push(`username.eq.${username}`);
-    }
+    const playerFilters = [`player_id.eq.${matchPlayerId}`];
 
     const { data: players, error: playersError } = await supabase
       .from("match_players")
@@ -3822,16 +4026,21 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
+    const matchPlayerId = effectiveAuthUser?.id;
+    if (!matchPlayerId) {
+      setPlayNowGames([]);
+      if (!silent) {
+        setMultiplayerError("Create an account to view Play Now games.");
+      }
+      return;
+    }
+
     if (!silent) {
       setPlayNowGamesLoading(true);
       setMultiplayerError("");
     }
 
-    const playerFilters = [`player_id.eq.${playerId}`];
-
-    if (username) {
-      playerFilters.push(`username.eq.${username}`);
-    }
+    const playerFilters = [`player_id.eq.${matchPlayerId}`];
 
     const { data: players, error: playersError } = await supabase
       .from("match_players")
@@ -3957,6 +4166,17 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
+    if (activeMatch?.is_public && ["joined", "created"].includes(multiplayerStep)) {
+      setMultiplayerStep("play-now-active-games");
+      setActiveMatch(null);
+      setActiveRound(null);
+      setMatchRounds([]);
+      setNextCategoryPickerOpen(false);
+      setMultiplayerError("");
+      loadPlayNowGames({ silent: true });
+      return;
+    }
+
     if (["active-games", "created", "join", "joined"].includes(multiplayerStep)) {
       setMultiplayerStep("h2h-menu");
       setActiveMatch(null);
@@ -4001,9 +4221,9 @@ const startConnectionsGame = (difficulty = null) => {
     setMultiplayerRoomCode(match.room_code);
     setMultiplayerMode(match.mode || "general");
     if (match.is_public && match.phase === "waiting_for_opponent") {
-      setMultiplayerStep("play-now-waiting");
+      setMultiplayerStep(match.player2_id ? "joined" : "play-now-waiting");
     } else {
-      setMultiplayerStep(match.status === "waiting" ? "created" : "joined");
+      setMultiplayerStep(!match.player2_id ? "created" : "joined");
     }
   };
 
@@ -4048,7 +4268,9 @@ const startConnectionsGame = (difficulty = null) => {
     }
 
     setMultiplayerStep(
-      match.phase === "waiting_for_opponent" ? "play-now-waiting" : "joined"
+      match.phase === "waiting_for_opponent" && !match.player2_id
+        ? "play-now-waiting"
+        : "joined"
     );
   };
 
@@ -5163,12 +5385,15 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
+    const matchPlayerId = getMultiplayerAuthPlayerId("start Play Now matches");
+    if (!matchPlayerId) return;
+
     setMultiplayerLoading(true);
     setMultiplayerError("");
     setMultiplayerNotice("Searching for opponent...");
 
     const { match, round, created, joined, error } = await findOrCreatePublicMatch(supabase, {
-      playerId,
+      playerId: matchPlayerId,
       username,
       categoryId,
     });
@@ -5176,7 +5401,10 @@ const startConnectionsGame = (difficulty = null) => {
     setMultiplayerLoading(false);
 
     if (error || !match) {
-      setMultiplayerError("Could not start matchmaking");
+      console.error("Could not start matchmaking", error);
+      setMultiplayerError(
+        getMultiplayerPermissionErrorMessage(error, "Could not start matchmaking")
+      );
       return;
     }
 
@@ -5321,9 +5549,11 @@ const startConnectionsGame = (difficulty = null) => {
     setMatchRounds(rounds || []);
     setNextCategoryPickerOpen(false);
     setMultiplayerRoomCode(data.room_code);
-    if (data.is_public && data.phase === "waiting_for_opponent") {
+    if (data.is_public && data.phase === "waiting_for_opponent" && !data.player2_id) {
       setMultiplayerStep("play-now-waiting");
     } else if (data.status === "ready") {
+      setMultiplayerStep("joined");
+    } else if (data.is_public && data.player2_id) {
       setMultiplayerStep("joined");
     }
   };
@@ -5338,6 +5568,9 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
+    const matchPlayerId = getMultiplayerAuthPlayerId("create H2H matches");
+    if (!matchPlayerId) return;
+
     setMultiplayerLoading(true);
     setMultiplayerError("");
 
@@ -5349,11 +5582,11 @@ const startConnectionsGame = (difficulty = null) => {
         mode: multiplayerMode,
         created_by: username,
         current_turn: username,
-        current_turn_id: playerId,
+        current_turn_id: matchPlayerId,
         player1_username: username,
-        player1_id: playerId,
-        status: "waiting",
-        phase: "waiting_for_opponent",
+        player1_id: matchPlayerId,
+        status: "active",
+        phase: "choose_category",
         round_number: 0,
         updated_at: new Date().toISOString(),
       })
@@ -5361,22 +5594,28 @@ const startConnectionsGame = (difficulty = null) => {
       .single();
 
     if (matchError || !match) {
+      console.error("Could not create match", matchError);
       setMultiplayerLoading(false);
-      setMultiplayerError("Could not create match");
+      setMultiplayerError(
+        getMultiplayerPermissionErrorMessage(matchError, "Could not create match")
+      );
       return;
     }
 
     const { error: playerError } = await supabase.from("match_players").insert({
       match_id: match.id,
       username,
-      player_id: playerId,
+      player_id: matchPlayerId,
       player_slot: "player1",
     });
 
     setMultiplayerLoading(false);
 
     if (playerError) {
-      setMultiplayerError("Match created, but player join failed");
+      console.error("Match created, but player join failed", playerError);
+      setMultiplayerError(
+        getMultiplayerPermissionErrorMessage(playerError, "Match created, but player join failed")
+      );
       return;
     }
 
@@ -5400,6 +5639,9 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
+    const matchPlayerId = getMultiplayerAuthPlayerId("join H2H matches");
+    if (!matchPlayerId) return;
+
     setMultiplayerLoading(true);
     setMultiplayerError("");
 
@@ -5411,8 +5653,11 @@ const startConnectionsGame = (difficulty = null) => {
       .maybeSingle();
 
     if (lookupError) {
+      console.error("Could not join room", lookupError);
       setMultiplayerLoading(false);
-      setMultiplayerError("Could not join room");
+      setMultiplayerError(
+        getMultiplayerPermissionErrorMessage(lookupError, "Could not join room")
+      );
       return;
     }
 
@@ -5423,7 +5668,7 @@ const startConnectionsGame = (difficulty = null) => {
     }
 
     if (
-      match.player1_id === playerId ||
+      match.player1_id === matchPlayerId ||
       (!match.player1_id && match.player1_username === username)
     ) {
       setMultiplayerLoading(false);
@@ -5433,7 +5678,7 @@ const startConnectionsGame = (difficulty = null) => {
 
     if (
       match.player2_id &&
-      match.player2_id === playerId
+      match.player2_id === matchPlayerId
     ) {
       setMultiplayerLoading(false);
       await openExistingMatch(match.id);
@@ -5442,7 +5687,7 @@ const startConnectionsGame = (difficulty = null) => {
 
     if (
       match.player2_id &&
-      match.player2_id !== playerId
+      match.player2_id !== matchPlayerId
     ) {
       setMultiplayerLoading(false);
       setMultiplayerError("Room already full");
@@ -5459,15 +5704,16 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
+    const shouldKeepActiveRound = match.phase === "round_active";
     const { data: updatedMatch, error: updateError } = await supabase
       .from("matches")
       .update({
         player2_username: username,
-        player2_id: playerId,
-        status: "ready",
-        phase: "choose_category",
-        current_turn: match.player1_username,
-        current_turn_id: match.player1_id || null,
+        player2_id: matchPlayerId,
+        status: shouldKeepActiveRound ? "active" : "ready",
+        phase: shouldKeepActiveRound ? "round_active" : "choose_category",
+        current_turn: shouldKeepActiveRound ? username : match.player1_username,
+        current_turn_id: shouldKeepActiveRound ? matchPlayerId : match.player1_id || null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", match.id)
@@ -5475,31 +5721,54 @@ const startConnectionsGame = (difficulty = null) => {
       .single();
 
     if (updateError || !updatedMatch) {
+      console.error("Could not update room", updateError);
       setMultiplayerLoading(false);
-      setMultiplayerError("Could not update room");
+      setMultiplayerError(
+        getMultiplayerPermissionErrorMessage(updateError, "Could not update room")
+      );
       return;
     }
 
     const { error: playerError } = await supabase.from("match_players").insert({
       match_id: updatedMatch.id,
       username,
-      player_id: playerId,
+      player_id: matchPlayerId,
       player_slot: "player2",
     });
 
     setMultiplayerLoading(false);
 
     if (playerError) {
-      setMultiplayerError("Joined room, but player save failed");
+      console.error("Joined room, but player save failed", playerError);
+      setMultiplayerError(
+        getMultiplayerPermissionErrorMessage(playerError, "Joined room, but player save failed")
+      );
       return;
     }
 
+    const { rounds, error: roundLoadError } = await loadMatchById(updatedMatch.id);
+    const latestRound = rounds?.[0] || null;
+
     setActiveMatch(updatedMatch);
-    setActiveRound(null);
-    setMatchRounds([]);
+    setActiveRound(latestRound);
+    setMatchRounds(rounds || []);
     setNextCategoryPickerOpen(false);
     setMultiplayerRoomCode(updatedMatch.room_code);
-    setMultiplayerMode(updatedMatch.mode || multiplayerMode);
+    setMultiplayerMode(updatedMatch.mode || latestRound?.category || multiplayerMode);
+
+    if (roundLoadError) {
+      console.error("Joined room, but round load failed", roundLoadError);
+    }
+
+    if (
+      latestRound &&
+      updatedMatch.phase === "round_active" &&
+      !hasPlayerFinishedRound(latestRound, "player2")
+    ) {
+      openMultiplayerRoundFor(updatedMatch, latestRound);
+      return;
+    }
+
     setMultiplayerStep("joined");
   };
 
@@ -5622,7 +5891,7 @@ const startConnectionsGame = (difficulty = null) => {
     ]);
     setNextCategoryPickerOpen(false);
     setMultiplayerMode(data.mode || category.mode);
-    setMultiplayerStep("joined");
+    openMultiplayerRoundFor(data, round);
   };
 
   const startMockMultiplayerMatch = () => {
@@ -5646,7 +5915,7 @@ const startConnectionsGame = (difficulty = null) => {
     setMultiplayerRoundIndex(0);
     setMultiplayerRoundSelected(null);
     setMultiplayerRoundScore(0);
-    setMultiplayerTimeLeft(MULTIPLAYER_TIME_LIMIT);
+    setMultiplayerTimeLeft(getMultiplayerQuestionTimeLimit(activeRound?.category));
     setMultiplayerRoundDone(false);
     setIsSubmittingRound(false);
     setMultiplayerRoundOpen(true);
@@ -5690,7 +5959,7 @@ const startConnectionsGame = (difficulty = null) => {
     setMultiplayerRoundIndex(0);
     setMultiplayerRoundSelected(null);
     setMultiplayerRoundScore(0);
-    setMultiplayerTimeLeft(MULTIPLAYER_TIME_LIMIT);
+    setMultiplayerTimeLeft(getMultiplayerQuestionTimeLimit(round.category));
     setMultiplayerRoundDone(false);
     setIsSubmittingRound(false);
     setMultiplayerRoundOpen(true);
@@ -5724,7 +5993,7 @@ const startConnectionsGame = (difficulty = null) => {
       } else {
         setMultiplayerRoundIndex((value) => value + 1);
         setMultiplayerRoundSelected(null);
-        setMultiplayerTimeLeft(MULTIPLAYER_TIME_LIMIT);
+        setMultiplayerTimeLeft(getMultiplayerQuestionTimeLimit(activeRound?.category));
       }
     }, 850);
   };
@@ -5806,21 +6075,14 @@ const startConnectionsGame = (difficulty = null) => {
       // Next chooser rule: the player who submits second chooses the next
       // category, which keeps async play moving without requiring both players
       // to be online together.
-      matchPatch = isPublicPlayNowMatch
-        ? {
-            ...matchPatch,
-            status: "completed",
-            phase: "round_finished",
-            matchmaking_status: "completed",
-            current_turn: null,
-            current_turn_id: null,
-          }
-        : {
-            ...matchPatch,
-            phase: "round_finished",
-            current_turn: username,
-            current_turn_id: playerId,
-          };
+      matchPatch = {
+        ...matchPatch,
+        status: "active",
+        phase: "round_finished",
+        matchmaking_status: isPublicPlayNowMatch ? "matched" : activeMatch.matchmaking_status,
+        current_turn: username,
+        current_turn_id: playerId,
+      };
 
       if (winner === activeMatch.player1_username) {
         matchPatch.player1_wins = (activeMatch.player1_wins || 0) + 1;
@@ -5849,12 +6111,29 @@ const startConnectionsGame = (difficulty = null) => {
           label: "H2H win",
         });
       }
-    } else if (isPublicPlayNowMatch) {
+    } else if (isPublicPlayNowMatch && !activeMatch.player2_id) {
       matchPatch = {
         ...matchPatch,
         status: "waiting_for_opponent",
         phase: "waiting_for_opponent",
         matchmaking_status: "waiting_for_opponent",
+        current_turn: null,
+        current_turn_id: null,
+      };
+    } else if (isPublicPlayNowMatch) {
+      matchPatch = {
+        ...matchPatch,
+        status: "active",
+        phase: "round_active",
+        matchmaking_status: "matched",
+        current_turn: null,
+        current_turn_id: null,
+      };
+    } else if (multiplayerPlayerSlot === "player1" && !activeMatch.player2_id) {
+      matchPatch = {
+        ...matchPatch,
+        status: "waiting",
+        phase: "round_active",
         current_turn: null,
         current_turn_id: null,
       };
@@ -5895,7 +6174,13 @@ const startConnectionsGame = (difficulty = null) => {
       loadPlayNowGames({ silent: true });
     }
     setMultiplayerStep(
-      isPublicPlayNowMatch && !otherPlayerFinished ? "play-now-waiting" : "joined"
+      isPublicPlayNowMatch && !otherPlayerFinished && !updatedMatch.player2_id
+        ? "play-now-waiting"
+        : !isPublicPlayNowMatch &&
+          multiplayerPlayerSlot === "player1" &&
+          !updatedMatch.player2_id
+        ? "created"
+        : "joined"
     );
   };
 
@@ -6461,12 +6746,12 @@ const startConnectionsGame = (difficulty = null) => {
             exit={{ scale: 0.92, y: 18, opacity: 0 }}
             transition={{ type: "spring", stiffness: 170, damping: 15 }}
           >
-            <div className="coin-shop-coin">🪙</div>
+            <div className="coin-shop-coin"><BKIcon name="coins" size={58} /></div>
             <h2 className="coin-shop-title">Coin Shop</h2>
 
             <div className="coin-shop-balance">
               <span>Current coins</span>
-              <strong>🪙 {coins}</strong>
+              <strong><BKIcon name="coins" size={22} /> {coins}</strong>
             </div>
 
             <div className="coin-shop-options">
@@ -6519,7 +6804,7 @@ const startConnectionsGame = (difficulty = null) => {
           exit={{ opacity: 0, y: -14, scale: 0.96 }}
           transition={{ duration: 0.22 }}
         >
-          <span>🪙</span>
+          <span><BKIcon name="coins" size={24} /></span>
           <div>
             <strong>+{coinRewardToast.amount} coins</strong>
             <small>{coinRewardToast.title}</small>
@@ -6654,7 +6939,7 @@ const startConnectionsGame = (difficulty = null) => {
             onClick={(event) => event.stopPropagation()}
           >
             <div className="daily-reward-top">
-              <div className="daily-reward-fire">🔥</div>
+              <div className="daily-reward-fire"><BKIcon name="dailyStreak" size={48} /></div>
 
               <div>
                 <div className="daily-reward-title">Daily Streak</div>
@@ -6666,7 +6951,10 @@ const startConnectionsGame = (difficulty = null) => {
 
             <div className="daily-reward-earned">
               <span>{dailyPlayed ? "Today completed" : "Today waiting"}</span>
-              <strong>{dailyPlayed ? "✅ Reward locked in" : "🎯 Play Daily Challenge"}</strong>
+              <strong>
+                <BKIcon name={dailyPlayed ? "dailyStreak" : "dailyChallenge"} size={22} />
+                {dailyPlayed ? "Reward locked in" : "Play Daily Challenge"}
+              </strong>
             </div>
 
             <div className="daily-reward-road">
@@ -6695,7 +6983,10 @@ const startConnectionsGame = (difficulty = null) => {
                     transition={{ delay: day.dayInRoad * 0.035, duration: 0.22 }}
                   >
                     <div className="daily-reward-ball">
-                      {reached ? "✅" : currentDay ? "🔥" : "⚽"}
+                      <BKIcon
+                        name={reached ? "dailyStreak" : currentDay ? "dailyChallenge" : "singlePlayer"}
+                        size={26}
+                      />
                     </div>
 
                     <div className="daily-reward-day-label">
@@ -6757,7 +7048,9 @@ const startConnectionsGame = (difficulty = null) => {
             </button>
 
             <div className="level-progress-hero">
-              <div className="level-progress-icon">{playerLevel.emoji}</div>
+              <div className="level-progress-icon">
+                <LevelIcon levelId={playerLevel.id} size={64} />
+              </div>
               <div>
                 <div className="level-progress-label">
                   Level {playerLevel.levelNumber}
@@ -6779,7 +7072,7 @@ const startConnectionsGame = (difficulty = null) => {
                 <>
                   <strong>{levelObjectiveSummary} ready</strong>
                   <span>
-                    Next: {playerLevel.next.emoji} {playerLevel.next.name}
+                    Next: {playerLevel.next.name}
                   </span>
                 </>
               ) : (
@@ -6857,7 +7150,9 @@ const startConnectionsGame = (difficulty = null) => {
           >
             <div className="objective-progress-kicker">Run Progress</div>
             <div className="level-progress-hero">
-              <div className="level-progress-icon">{playerLevel.emoji}</div>
+              <div className="level-progress-icon">
+                <LevelIcon levelId={playerLevel.id} size={64} />
+              </div>
               <div>
                 <div className="level-progress-label">
                   {getModeLabel(gameMode)} • Level {playerLevel.levelNumber}
@@ -6877,7 +7172,7 @@ const startConnectionsGame = (difficulty = null) => {
               <strong>{xpProgressLabel}</strong>
               <span>
                 {playerLevel.next
-                  ? `Next: ${playerLevel.next.emoji} ${playerLevel.next.name}`
+                  ? `Next: ${playerLevel.next.name}`
                   : "Legend status reached"}
               </span>
             </div>
@@ -6974,7 +7269,7 @@ const startConnectionsGame = (difficulty = null) => {
           >
             <div className="objective-progress-kicker">Victory</div>
             <div className="level-progress-hero">
-              <div className="level-progress-icon">🧩</div>
+              <div className="level-progress-icon"><BKIcon name="connections" size={56} /></div>
               <div>
                 <div className="level-progress-label">
                   {connectionsRewardModal.mode}
@@ -6990,7 +7285,7 @@ const startConnectionsGame = (difficulty = null) => {
             <div className="reward-summary-grid">
               <div>
                 <span>Coins</span>
-                <strong>+{connectionsRewardModal.coins}</strong>
+                <strong><BKIcon name="coins" size={22} /> +{connectionsRewardModal.coins}</strong>
               </div>
               <div>
                 <span>XP</span>
@@ -7008,7 +7303,7 @@ const startConnectionsGame = (difficulty = null) => {
               <strong>{xpProgressLabel}</strong>
               <span>
                 {playerLevel.next
-                  ? `Next: ${playerLevel.next.emoji} ${playerLevel.next.name}`
+                  ? `Next: ${playerLevel.next.name}`
                   : "Legend status reached"}
               </span>
             </div>
@@ -7237,19 +7532,36 @@ const startConnectionsGame = (difficulty = null) => {
 
     let mounted = true;
 
-    getCurrentSession(supabase).then(async ({ session, user }) => {
-      if (!mounted) return;
+    getCurrentSession(supabase)
+      .then(async ({ session, user, error }) => {
+        if (!mounted) return;
 
-      setAuthSession(session);
-      setAuthUser(user);
+        if (error) {
+          console.warn("Could not load current auth session", error);
+          setAuthSession(null);
+          setAuthUser(null);
+          setGuestMode(false);
+          return;
+        }
 
-      if (user) {
-        prepareAuthenticatedIdentity(user);
-        await ensureProfileForAuthUser(user);
-      }
+        setAuthSession(session);
+        setAuthUser(user);
 
-      if (mounted) setAuthLoading(false);
-    });
+        if (user) {
+          prepareAuthenticatedIdentity(user);
+          await ensureProfileForAuthUser(user);
+        }
+      })
+      .catch((error) => {
+        console.warn("Supabase startup failed", error);
+        if (!mounted) return;
+        setAuthSession(null);
+        setAuthUser(null);
+        setGuestMode(false);
+      })
+      .finally(() => {
+        if (mounted) setAuthLoading(false);
+      });
 
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user || null;
@@ -7467,7 +7779,7 @@ const startConnectionsGame = (difficulty = null) => {
       exit={{ opacity: 0, scale: 0.94, y: 16 }}
       transition={{ type: "spring", stiffness: 160, damping: 16 }}
     >
-      <div className="auth-orb">⚽</div>
+      <div className="auth-orb"><BKIcon name="profile" size={46} /></div>
       <div className="auth-kicker">Ball Knowledge Club</div>
       <h1>Create your club identity</h1>
       <p>
@@ -7619,7 +7931,7 @@ const startConnectionsGame = (difficulty = null) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 160, damping: 13 }}
           >
-            <div className="name-ball">⚽</div>
+            <div className="name-ball"><BKIcon name="profile" size={58} /></div>
 
             <h1 className="name-title">Choose your player name</h1>
 
@@ -7717,7 +8029,7 @@ const startConnectionsGame = (difficulty = null) => {
         <ScreenTransition className="league-challenge-screen">
           {leagueChallengePhase === "intro" && (
             <div className="league-challenge-card">
-              <div className="league-kicker">🏆 Daily League</div>
+              <div className="league-kicker"><BKIcon name="league" size={22} /> Daily League</div>
               <h1>{leagueDayLabel} Challenge</h1>
               <p>
                 Max {leagueSettings.maxDailyPoints} points: {leagueDailyStructureText}.
@@ -7733,7 +8045,7 @@ const startConnectionsGame = (difficulty = null) => {
                   Question {leagueQuizIndex + 1}/{leagueSettings.quizCount}
                 </span>
                 <strong className={leagueTimeLeft <= 3 ? "danger" : ""}>
-                  ⏱ {leagueTimeLeft}s
+                  {leagueTimeLeft}s
                 </strong>
                 <span>
                   {leagueQuizScore}/{leagueSettings.quizCount}
@@ -7790,7 +8102,7 @@ const startConnectionsGame = (difficulty = null) => {
                         index >= leagueTop10Lives ? "league-life-used" : ""
                       }
                     >
-                      ❤️
+                      <BKIcon name="lives" size={18} />
                     </span>
                   ))}
                 </span>
@@ -7849,7 +8161,7 @@ const startConnectionsGame = (difficulty = null) => {
                       } ${isRevealTarget ? "reveal-target" : ""}`}
                     >
                       <span>#{index + 1}</span>
-                      <strong>{found ? formatAnswerWithValue(answer) : "?????"}</strong>
+                      <strong>{found ? formatAnswerWithValue(answer) : <BKIcon name="questionMark" size={24} />}</strong>
                     </div>
                   );
                 })}
@@ -7955,7 +8267,7 @@ const startConnectionsGame = (difficulty = null) => {
                 animate={leagueWhoAmIShake ? { x: [0, -7, 7, -4, 4, 0] } : { x: 0 }}
                 transition={{ duration: 0.28 }}
               >
-                <div className="whoami-mystery-icon">?</div>
+                <div className="whoami-mystery-icon"><BKIcon name="questionMark" size={34} /></div>
                 <div className="whoami-clue-progress">
                   <span>Clue {leagueWhoAmIClueIndex + 1} / 10</span>
                   <strong>Worth {leagueWhoAmIPointsAvailable} points</strong>
@@ -8032,7 +8344,7 @@ const startConnectionsGame = (difficulty = null) => {
               </div>
 
               <div className="find-player-mystery-card">
-                <div className="whoami-mystery-icon">?</div>
+                <div className="whoami-mystery-icon"><BKIcon name="questionMark" size={34} /></div>
                 <div>
                   <span>Guesses: {leagueFindPlayerGuesses.length}</span>
                   <strong>{formatElapsedTime(leagueFindPlayerElapsed)}</strong>
@@ -8112,7 +8424,7 @@ const startConnectionsGame = (difficulty = null) => {
 
           {leagueChallengePhase === "complete" && leagueResult && (
             <div className="league-challenge-card league-complete-card">
-              <div className="league-kicker">✅ Day Complete</div>
+              <div className="league-kicker"><BKIcon name="dailyStreak" size={22} /> Day Complete</div>
               <h1>
                 {leagueResult.totalPoints}/{leagueSettings.maxDailyPoints} points
               </h1>
@@ -8201,9 +8513,16 @@ const startConnectionsGame = (difficulty = null) => {
             Score {multiplayerRoundScore}/5
           </div>
 
-          <h1 className="question-title quiz-question-card neonGlassCard">
-            {currentMultiplayerRoundQuestion.question}
-          </h1>
+          {activeRound?.category === "career_path" ? (
+            <CareerPathQuestionView
+              question={currentMultiplayerRoundQuestion.question}
+              className="multiplayer-career-path-card"
+            />
+          ) : (
+            <h1 className="question-title quiz-question-card neonGlassCard">
+              {currentMultiplayerRoundQuestion.question}
+            </h1>
+          )}
 
           {multiplayerRoundSelected === MULTIPLAYER_TIMEOUT_VALUE && (
             <div className="multiplayer-timeup-card">Time's up!</div>
@@ -8255,25 +8574,25 @@ const startConnectionsGame = (difficulty = null) => {
       {
         label: "Easy",
         subtitle: "Warm-up groups",
-        emoji: "🟢",
+        icon: "connections",
         className: "easy",
       },
       {
         label: "Medium",
         subtitle: "Real football knowledge",
-        emoji: "🔵",
+        icon: "connections",
         className: "medium",
       },
       {
         label: "Hard",
         subtitle: "For ball knowledge people",
-        emoji: "🟣",
+        icon: "connections",
         className: "hard",
       },
       {
         label: "Very Hard",
         subtitle: "Only for football nerds",
-        emoji: "🔥",
+        icon: "dailyStreak",
         className: "very-hard",
       },
     ];
@@ -8319,7 +8638,7 @@ const startConnectionsGame = (difficulty = null) => {
                   onClick={() => startConnectionsGame(difficulty.label)}
                 >
                   <div className="difficulty-card-top">
-                    <span className="difficulty-emoji">{difficulty.emoji}</span>
+                    <span className="difficulty-emoji"><BKIcon name={difficulty.icon} size={28} /></span>
                     <span className="difficulty-count">
                       {
                         CONNECTIONS_PUZZLES.filter(
@@ -8375,7 +8694,7 @@ const startConnectionsGame = (difficulty = null) => {
                 transition={{ duration: 0.35 }}
               >
                 <div className="daily-reward-top">
-                <div className="daily-reward-fire">🔥</div>
+                <div className="daily-reward-fire"><BKIcon name="dailyStreak" size={48} /></div>
 
                 <div>
                   <div className="daily-reward-title">Daily Reward</div>
@@ -8396,17 +8715,17 @@ const startConnectionsGame = (difficulty = null) => {
                 }}
                 transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
               >
-                🎁
+                <BKIcon name="dailyChallenge" size={58} />
               </motion.div>
 
               <div className="daily-reward-earned">
                 <span>Today you earned</span>
-                <strong>🪙 +{lastDailyResult.coins}</strong>
+                <strong><BKIcon name="coins" size={22} /> +{lastDailyResult.coins}</strong>
               </div>
 
               {lastDailyResult.streakBonus > 0 && (
                 <div className="daily-reward-bonus">
-                  🔥 Streak bonus +{lastDailyResult.streakBonus}
+                  <BKIcon name="dailyStreak" size={20} /> Streak bonus +{lastDailyResult.streakBonus}
                 </div>
               )}
 
@@ -8451,7 +8770,10 @@ const startConnectionsGame = (difficulty = null) => {
                       }}
                     >
                       <div className="daily-reward-ball">
-                        {currentDay ? "🔥" : reached ? "✅" : "⚽"}
+                        <BKIcon
+                          name={currentDay ? "dailyStreak" : reached ? "dailyChallenge" : "singlePlayer"}
+                          size={26}
+                        />
                       </div>
 
                       <div className="daily-reward-day-label">
@@ -8507,7 +8829,7 @@ const startConnectionsGame = (difficulty = null) => {
           animate={{ scale: 1, rotate: 180 }}
           transition={{ duration: 0.55, ease: "easeOut" }}
         >
-          ✨
+          <BKIcon name="rankings" size={54} />
         </motion.div>
 
         <motion.div
@@ -8526,7 +8848,7 @@ const startConnectionsGame = (difficulty = null) => {
             animate={{ scale: [1, 0.88, 1], x: [-4, 0, -4] }}
             transition={{ duration: 0.7, repeat: 1 }}
           >
-            {levelUpPopup.oldLevel.emoji}
+            <LevelIcon levelId={levelUpPopup.oldLevel.id} size={76} />
           </motion.div>
 
           {levelUpPopup.unlockedLevels.map((level, index) => (
@@ -8562,7 +8884,7 @@ const startConnectionsGame = (difficulty = null) => {
                   ease: "easeOut",
                 }}
               >
-                {level.emoji}
+                <LevelIcon levelId={level.id} size={76} />
               </motion.div>
             </React.Fragment>
           ))}
@@ -8586,7 +8908,11 @@ const startConnectionsGame = (difficulty = null) => {
           {levelUpPopup.levelsGained > 1
             ? `${levelUpPopup.levelsGained} new ranks unlocked`
             : "New rank unlocked"}
-          {levelUpPopup.coins ? ` • +${levelUpPopup.coins} coins` : ""}
+          {levelUpPopup.coins ? (
+            <span className="level-up-coin-bonus">
+              <BKIcon name="coins" size={20} /> +{levelUpPopup.coins} coins
+            </span>
+          ) : null}
         </motion.div>
 
         <motion.div
@@ -8692,7 +9018,7 @@ const startConnectionsGame = (difficulty = null) => {
 
               <div className="profile-stats-grid">
                 <div className="profile-stat-card">
-                  <span>🔥</span>
+                  <span><BKIcon name="dailyStreak" size={24} /></span>
                   <strong>{highScore}</strong>
                   <small>Best score</small>
                 </div>
@@ -8701,7 +9027,7 @@ const startConnectionsGame = (difficulty = null) => {
                   className="profile-stat-card profile-stat-button"
                   onClick={openCoinShop}
                 >
-                  <span>🪙</span>
+                  <span><BKIcon name="coins" size={24} /></span>
                   <strong>{coins}</strong>
                   <small>Coins</small>
                 </button>
@@ -8710,37 +9036,37 @@ const startConnectionsGame = (difficulty = null) => {
                   className="profile-stat-card profile-stat-button"
                   onClick={openDailyRewardMeter}
                 >
-                  <span>📅</span>
+                  <span><BKIcon name="dailyChallenge" size={24} /></span>
                   <strong>{dailyStreak}</strong>
                   <small>Daily streak</small>
                 </button>
 
                 <div className="profile-stat-card">
-                  <span>🏆</span>
+                  <span><LevelIcon levelId={playerLevel.id} size={26} /></span>
                   <strong>{playerLevel.levelNumber}</strong>
                   <small>Level</small>
                 </div>
 
                 <div className="profile-stat-card">
-                  <span>⚔️</span>
+                  <span><BKIcon name="h2h" size={24} /></span>
                   <strong>{profileStats.multiplayerWins}</strong>
                   <small>Wins</small>
                 </div>
 
                 <div className="profile-stat-card">
-                  <span>💥</span>
+                  <span><BKIcon name="questionMark" size={24} /></span>
                   <strong>{profileStats.multiplayerLosses}</strong>
                   <small>Losses</small>
                 </div>
 
                 <div className="profile-stat-card">
-                  <span>🤝</span>
+                  <span><BKIcon name="multiplayer" size={24} /></span>
                   <strong>{profileStats.multiplayerDraws}</strong>
                   <small>Draws</small>
                 </div>
 
                 <div className="profile-stat-card">
-                  <span>🎮</span>
+                  <span><BKIcon name="activeMatches" size={24} /></span>
                   <strong>{activeGames.length}</strong>
                   <small>Active</small>
                 </div>
@@ -8892,7 +9218,7 @@ const startConnectionsGame = (difficulty = null) => {
                       </div>
 
                       <div className="leaderboard-score level-score">
-                        <span>{row.levelEmoji}</span>
+                        <span><LevelIcon levelId={row.levelId} size={26} /></span>
                         <strong>{row.xpTotal.toLocaleString()}</strong>
                         <small>XP</small>
                       </div>
@@ -8927,7 +9253,9 @@ const startConnectionsGame = (difficulty = null) => {
                 <button onClick={goBackMultiplayer}>← Back</button>
               </div>
 
-              <div className="multiplayer-badge">⚔️ Arena</div>
+              <div className="multiplayer-badge">
+                <BKIcon name="multiplayer" size={22} /> Arena
+              </div>
               <h1 className="multiplayer-title">Arena</h1>
 
               {multiplayerError && (
@@ -8945,7 +9273,7 @@ const startConnectionsGame = (difficulty = null) => {
                     onClick={openPlayNowLobby}
                     disabled={multiplayerLoading}
                   >
-                    <span>⚡</span>
+                    <span><BKIcon name="playNow" size={48} /></span>
                     <strong>Play Now</strong>
                     <small>Random async matches</small>
                   </button>
@@ -8954,7 +9282,7 @@ const startConnectionsGame = (difficulty = null) => {
                     className="arena-hub-card h2h"
                     onClick={() => openArenaSection("h2h-menu")}
                   >
-                    <span>⚔️</span>
+                    <span><BKIcon name="h2h" size={48} /></span>
                     <strong>H2H</strong>
                     <small>Async 1v1 battles</small>
                   </button>
@@ -8963,7 +9291,7 @@ const startConnectionsGame = (difficulty = null) => {
                     className="arena-hub-card league"
                     onClick={() => openArenaSection("league-menu")}
                   >
-                    <span>🏆</span>
+                    <span><BKIcon name="league" size={48} /></span>
                     <strong>League</strong>
                     <small>Daily points with friends</small>
                   </button>
@@ -8990,7 +9318,7 @@ const startConnectionsGame = (difficulty = null) => {
                       onClick={openCurrentRandomMatches}
                       disabled={playNowGamesLoading}
                     >
-                      <span>🎮</span>
+                      <span><BKIcon name="activeRandomMatches" size={42} /></span>
                       <strong>
                         {playNowGamesLoading
                           ? "Loading..."
@@ -9005,7 +9333,7 @@ const startConnectionsGame = (difficulty = null) => {
                       onClick={() => startPlayNow(playNowCategory)}
                       disabled={multiplayerLoading}
                     >
-                      <span>⚡</span>
+                      <span><BKIcon name="startNewRandomMatch" size={42} /></span>
                       <strong>
                         {multiplayerLoading
                           ? "Finding..."
@@ -9077,12 +9405,23 @@ const startConnectionsGame = (difficulty = null) => {
                             playerSlot === "player2"
                               ? latestRound?.player1_score ?? 0
                               : latestRound?.player2_score ?? 0;
-                          const isCompleted =
-                            match.status === "completed" ||
-                            latestRound?.status === "finished";
+                          const opponentName = getOpponentName(match, playerId, username);
+                          const opponentLabel =
+                            opponentName && opponentName !== "your opponent"
+                              ? opponentName
+                              : match.player2_id
+                              ? "your opponent"
+                              : "random opponent";
+                          const isCompleted = match.status === "completed";
+                          const isChoosingNext = match.phase === "round_finished";
+                          const isCurrentChooser = isCurrentPlayersTurn(
+                            match,
+                            playerId,
+                            username
+                          );
                           const category = latestRound?.category || match.selected_category;
                           let statusText = "Ready to play";
-                          let detailText = "Opponent is waiting";
+                          let detailText = `${opponentLabel} is waiting`;
                           let ctaText = "Play now";
 
                           if (isCompleted) {
@@ -9095,14 +9434,22 @@ const startConnectionsGame = (difficulty = null) => {
                                 : "You lost";
                             detailText = `${userScore} - ${opponentScore}`;
                             ctaText = "View Result";
+                          } else if (isChoosingNext && isCurrentChooser) {
+                            statusText = "Choose next category";
+                            detailText = `Continue vs ${opponentLabel}`;
+                            ctaText = "Choose Category";
+                          } else if (isChoosingNext) {
+                            statusText = `Waiting for ${opponentLabel}`;
+                            detailText = `Waiting for ${opponentLabel} to choose the next category`;
+                            ctaText = "Waiting";
                           } else if (userFinished && !opponentFinished) {
-                            statusText = "Waiting for opponent";
+                            statusText = `Waiting for ${opponentLabel}`;
                             detailText = "Your score is saved";
                             ctaText = "Waiting";
                           } else if (!userFinished) {
                             statusText =
                               playerSlot === "player2"
-                                ? "Opponent is waiting"
+                                ? `${opponentLabel} is waiting`
                                 : "Ready to play";
                             detailText = getCategoryLabel(category);
                             ctaText = "Continue";
@@ -9119,9 +9466,9 @@ const startConnectionsGame = (difficulty = null) => {
                                 <div className="active-game-player">
                                   <PlayerAvatar profile={opponentProfile} size="small" />
                                   <strong>
-                                    {match.player2_username
-                                      ? getOpponentName(match, playerId, username)
-                                      : "Random opponent"}
+                                    {opponentLabel === "random opponent"
+                                      ? "Searching random opponent"
+                                      : opponentLabel}
                                   </strong>
                                 </div>
                                 <span>{match.room_code}</span>
@@ -9160,10 +9507,7 @@ const startConnectionsGame = (difficulty = null) => {
                                 <button
                                   className="open-match-button"
                                   onClick={() => openPlayNowGame(match.id)}
-                                  disabled={
-                                    multiplayerLoading ||
-                                    (!isCompleted && userFinished && !opponentFinished)
-                                  }
+                                  disabled={multiplayerLoading}
                                 >
                                   {ctaText}
                                 </button>
@@ -9184,7 +9528,7 @@ const startConnectionsGame = (difficulty = null) => {
                     onClick={loadMyLeagues}
                     disabled={leagueLoading}
                   >
-                    <span>📊</span>
+                    <span><BKIcon name="myLeagues" size={42} /></span>
                     <strong>My Leagues</strong>
                   </button>
 
@@ -9196,7 +9540,7 @@ const startConnectionsGame = (difficulty = null) => {
                       setMultiplayerStep("create-league");
                     }}
                   >
-                    <span>🏆</span>
+                    <span><BKIcon name="createLeague" size={42} /></span>
                     <strong>Create League</strong>
                   </button>
 
@@ -9207,7 +9551,7 @@ const startConnectionsGame = (difficulty = null) => {
                       setMultiplayerStep("join-league");
                     }}
                   >
-                    <span>👥</span>
+                    <span><BKIcon name="joinLeague" size={42} /></span>
                     <strong>Join League</strong>
                   </button>
                 </div>
@@ -9220,7 +9564,7 @@ const startConnectionsGame = (difficulty = null) => {
                     onClick={openActiveGames}
                     disabled={activeGamesLoading}
                   >
-                    <span>🎮</span>
+                    <span><BKIcon name="activeMatches" size={42} /></span>
                     <strong>
                       {activeGamesLoading ? "Loading..." : "Active Matches"}
                     </strong>
@@ -9231,7 +9575,7 @@ const startConnectionsGame = (difficulty = null) => {
                     onClick={createMultiplayerMatch}
                     disabled={multiplayerLoading}
                   >
-                    <span>⚔️</span>
+                    <span><BKIcon name="createMatch" size={42} /></span>
                     <strong>{multiplayerLoading ? "Creating..." : "Create Match"}</strong>
                   </button>
 
@@ -9242,7 +9586,7 @@ const startConnectionsGame = (difficulty = null) => {
                       setMultiplayerStep("join");
                     }}
                   >
-                    <span>🔑</span>
+                    <span><BKIcon name="joinMatch" size={42} /></span>
                     <strong>Join Match</strong>
                   </button>
                 </div>
@@ -9368,7 +9712,9 @@ const startConnectionsGame = (difficulty = null) => {
 
               {multiplayerStep === "create-league" && (
                 <div className="league-form-card">
-                  <div className="league-kicker">🏆 Create League</div>
+                  <div className="league-kicker">
+                    <BKIcon name="createLeague" size={22} /> Create League
+                  </div>
                   <h2>Start a Daily League</h2>
                   <input
                     value={leagueNameInput}
@@ -9392,7 +9738,7 @@ const startConnectionsGame = (difficulty = null) => {
                           }`}
                           onClick={() => setLeagueFormatInput(format)}
                         >
-                          <b>{config.icon}</b>
+                          <b><BKIcon name={config.icon} size={34} /></b>
                           <span>{config.label}</span>
                           <small>{config.description}</small>
                         </button>
@@ -9576,7 +9922,9 @@ const startConnectionsGame = (difficulty = null) => {
 
               {multiplayerStep === "join-league" && (
                 <div className="league-form-card">
-                  <div className="league-kicker">👥 Join League</div>
+                  <div className="league-kicker">
+                    <BKIcon name="joinLeague" size={22} /> Join League
+                  </div>
                   <h2>Enter League Code</h2>
                   <input
                     value={leagueCodeInput}
@@ -9643,7 +9991,9 @@ const startConnectionsGame = (difficulty = null) => {
                 <div className="league-dashboard">
                   <div className="league-dashboard-hero">
                     <div>
-                      <div className="league-kicker">🏆 League</div>
+                      <div className="league-kicker">
+                        <BKIcon name="league" size={22} /> League
+                      </div>
                       <h2>{leagueDashboard.league.name}</h2>
                     </div>
                     <div className="league-dashboard-actions">
@@ -9708,7 +10058,7 @@ const startConnectionsGame = (difficulty = null) => {
                         key={member.id}
                       >
                         <div className="league-rank">
-                          {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1}
+                          {index + 1}
                         </div>
                         <PlayerAvatar
                           profile={getSocialProfile(member.player_id, member.username)}
@@ -9815,7 +10165,7 @@ const startConnectionsGame = (difficulty = null) => {
                     <span className="waiting-opponent-profile">
                       <PlayerAvatar
                         profile={{
-                          avatar_icon: "⏳",
+                          avatar_icon: "profile",
                           avatar_style: "mystery",
                           avatar_color: "purple",
                           avatar_bg: "night",
@@ -9823,7 +10173,7 @@ const startConnectionsGame = (difficulty = null) => {
                         size="small"
                         hideFlag
                       />
-                      Waiting opponent
+	                      Searching random opponent
                     </span>
                   </div>
                   {activeRound && (
@@ -9858,7 +10208,16 @@ const startConnectionsGame = (difficulty = null) => {
 
               {multiplayerStep === "created" && (
                 <div className="multiplayer-room-card">
-                  <div className="room-status">Match created</div>
+                  <div className="room-status">
+                    {isH2HWaitingAfterCreatorRound
+                      ? "Your round is complete"
+                      : "Match created"}
+                  </div>
+                  {isH2HWaitingAfterCreatorRound && (
+                    <p>
+                      Share room code {multiplayerRoomCode} and wait for your opponent.
+                    </p>
+                  )}
                   <div className="room-code">Room code: {multiplayerRoomCode}</div>
                   <div className="multiplayer-player-list">
                     <span>
@@ -9880,14 +10239,18 @@ const startConnectionsGame = (difficulty = null) => {
                   </div>
                   {activeMatch?.status === "ready" ? (
                     <div className="opponent-found">Opponent found</div>
-                  ) : (
+                  ) : isH2HWaitingAfterCreatorRound ? (
                     <>
                       <div className="waiting-pulse">
                         <span />
                         <span />
                         <span />
                       </div>
-                      <p>Waiting for opponent...</p>
+                      <p>Your score is saved. Waiting for opponent to play.</p>
+                    </>
+                  ) : (
+                    <>
+                      <p>Choose a category and play your first round now.</p>
                     </>
                   )}
                   {hasBothMultiplayerPlayers &&
@@ -9933,7 +10296,11 @@ const startConnectionsGame = (difficulty = null) => {
                         {getCategoryLabel(activeRound.category)}
                       </strong>
                       {hasPlayedActiveRound ? (
-                        <span>Waiting for opponent to play this round</span>
+                        <span>
+                          {isH2HWaitingAfterCreatorRound
+                            ? `Share ${multiplayerRoomCode}. Waiting for opponent to join and play.`
+                            : "Waiting for opponent to play this round"}
+                        </span>
                       ) : (
                         <>
                           <span>Your 5-question round is ready</span>
@@ -9969,22 +10336,15 @@ const startConnectionsGame = (difficulty = null) => {
                         {activeMatch.player2_wins || 0}
                       </p>
                       <p>
-                        Next: {activeMatch.current_turn} chooses a category
+                        Next:{" "}
+                        {isMultiplayerTurn
+                          ? "you choose the next category"
+                          : `${nextCategoryWaitingName} chooses the next category`}
                       </p>
-                      {canOpenNextCategoryPicker ? (
-                        <button
-                          onClick={() => {
-                            playClickSound();
-                            setNextCategoryPickerOpen(true);
-                          }}
-                        >
-                          Choose Next Category
-                        </button>
+                      {canChooseMultiplayerCategory ? (
+                        <p>Pick the next category above.</p>
                       ) : (
-                        <p>
-                          Waiting for {activeMatch.current_turn} to choose the
-                          next category
-                        </p>
+                        <p>Waiting for {nextCategoryWaitingName} to choose the next category</p>
                       )}
                     </div>
                   )}
@@ -10039,9 +10399,19 @@ const startConnectionsGame = (difficulty = null) => {
 
               {multiplayerStep === "joined" && (
                 <div className="multiplayer-room-card joined">
-                  <div className="room-status">Joined room</div>
-                  <div className="room-code">Room code: {multiplayerRoomCode}</div>
-                  <div className="opponent-found">Opponent found</div>
+                  <div className="room-status">
+                    {activeMatch?.is_public ? "Play Now Match" : "Joined room"}
+                  </div>
+                  {activeMatch?.is_public ? (
+                    <div className="room-code">Random match vs {activeOpponentLabel}</div>
+                  ) : (
+                    <div className="room-code">Room code: {multiplayerRoomCode}</div>
+                  )}
+                  <div className="opponent-found">
+                    {activeMatch?.is_public
+                      ? `Opponent: ${activeOpponentLabel}`
+                      : "Opponent found"}
+                  </div>
                   {activeMatch && (
                     <div className="multiplayer-player-list">
                       <span>
@@ -10061,11 +10431,11 @@ const startConnectionsGame = (difficulty = null) => {
                     </div>
                   )}
                   {activeMatch?.phase === "choose_category" && (
-                    <div className="category-turn-note">
-                      {canChooseMultiplayerCategory
-                        ? "Your turn to choose a category"
-                        : `${activeMatch.current_turn} chooses first`}
-                    </div>
+	                    <div className="category-turn-note">
+	                      {canChooseMultiplayerCategory
+	                        ? "Your turn to choose a category"
+	                        : `${nextCategoryWaitingName} chooses first`}
+	                    </div>
                   )}
                   {canChooseMultiplayerCategory && (
                     <div className="multiplayer-category-grid">
@@ -10101,9 +10471,9 @@ const startConnectionsGame = (difficulty = null) => {
                         Round {activeRound.round_number} •{" "}
                         {getCategoryLabel(activeRound.category)}
                       </strong>
-                      {hasPlayedActiveRound ? (
-                        <span>Waiting for opponent to play this round</span>
-                      ) : (
+	                      {hasPlayedActiveRound ? (
+	                        <span>Waiting for {activeOpponentLabel} to play this round</span>
+	                      ) : (
                         <>
                           <span>Your 5-question round is ready</span>
                           <button onClick={startActiveMultiplayerRound}>
@@ -10137,23 +10507,16 @@ const startConnectionsGame = (difficulty = null) => {
                         Match wins: {activeMatch.player1_wins || 0} -{" "}
                         {activeMatch.player2_wins || 0}
                       </p>
-                      <p>
-                        Next: {activeMatch.current_turn} chooses a category
-                      </p>
-                      {canOpenNextCategoryPicker ? (
-                        <button
-                          onClick={() => {
-                            playClickSound();
-                            setNextCategoryPickerOpen(true);
-                          }}
-                        >
-                          Choose Next Category
-                        </button>
+	                      <p>
+	                        Next:{" "}
+	                        {isMultiplayerTurn
+	                          ? "you choose the next category"
+	                          : `${nextCategoryWaitingName} chooses the next category`}
+	                      </p>
+                      {canChooseMultiplayerCategory ? (
+                        <p>Pick the next category above.</p>
                       ) : (
-                        <p>
-                          Waiting for {activeMatch.current_turn} to choose the
-                          next category
-                        </p>
+                        <p>Waiting for {nextCategoryWaitingName} to choose the next category</p>
                       )}
                     </div>
                   )}
@@ -10225,25 +10588,27 @@ const startConnectionsGame = (difficulty = null) => {
             >
               <div className="home-progress-top">
                 <button
+                  type="button"
                   className="home-stat-pill home-streak-pill stat-clickable"
                   onClick={(event) => {
                     event.stopPropagation();
                     openDailyRewardMeter();
                   }}
                 >
-                  <span>🔥</span>
+                  <span><BKIcon name="dailyStreak" size={24} /></span>
                   <strong>{dailyStreak}</strong>
                   <small>Daily streak</small>
                 </button>
 
                 <button
+                  type="button"
                   className="home-stat-pill home-coins-pill coin-clickable"
                   onClick={(event) => {
                     event.stopPropagation();
                     openCoinShop();
                   }}
                 >
-                  <span>🪙</span>
+                  <span><BKIcon name="coins" size={24} /></span>
                   <strong>{coins}</strong>
                   <small>Coins</small>
                 </button>
@@ -10251,7 +10616,9 @@ const startConnectionsGame = (difficulty = null) => {
 
               <div className="home-level-box">
                 <div className="home-level-left">
-                    <div className="home-level-emoji">{playerLevel.emoji}</div>
+                    <div className="home-level-emoji">
+                      <LevelIcon levelId={playerLevel.id} size={48} />
+                    </div>
 
                   <div>
                     <div className="profile-level-meta">
@@ -10288,7 +10655,9 @@ const startConnectionsGame = (difficulty = null) => {
                 setModeMenuOpen(true);
               }}
             >
-              <span className="main-menu-icon">⚽</span>
+              <span className="main-menu-icon app-icon">
+                <BKIcon name="singlePlayer" size={42} />
+              </span>
               <span className="main-menu-copy">
                 <strong>SINGLE PLAYER</strong>
                 <small>Train your ball knowledge</small>
@@ -10299,7 +10668,9 @@ const startConnectionsGame = (difficulty = null) => {
               className="multiplayer-main-button home-action-card home-action-multiplayer"
               onClick={openMultiplayer}
             >
-              <span className="main-menu-icon">⚔️</span>
+              <span className="main-menu-icon app-icon">
+                <BKIcon name="multiplayer" size={42} />
+              </span>
               <span className="main-menu-copy">
                 <strong>MULTIPLAYER</strong>
                 <small>Battle friends & rivals</small>
@@ -10316,7 +10687,9 @@ const startConnectionsGame = (difficulty = null) => {
               }}
               disabled={dailyPlayed}
             >
-              <span className="main-menu-icon">{dailyPlayed ? "✅" : "🔥"}</span>
+              <span className="main-menu-icon app-icon">
+                <BKIcon name="dailyChallenge" size={42} />
+              </span>
               <span className="main-menu-copy">
                 <strong>{dailyPlayed ? "DAILY DONE" : "DAILY CHALLENGE"}</strong>
                 <small>{dailyPlayed ? "Come back tomorrow" : "Come back every day"}</small>
@@ -10355,7 +10728,9 @@ const startConnectionsGame = (difficulty = null) => {
                   setLeaderboardOpen(true);
                 }}
               >
-                <span className="main-menu-icon">🏆</span>
+                <span className="main-menu-icon app-icon">
+                  <BKIcon name="rankings" size={42} />
+                </span>
                 <span className="main-menu-copy">
                   <strong>RANKINGS</strong>
                   <small>Climb the leaderboard</small>
@@ -10385,7 +10760,9 @@ const startConnectionsGame = (difficulty = null) => {
                 startGame("general");
               }}
             >
-              <span className="mode-card-icon">🧠</span>
+              <span className="mode-card-icon app-icon">
+                <BKIcon name="generalKnowledge" size={40} />
+              </span>
               <span>
                 <strong>General Knowledge</strong>
                 <small>Classic football quiz</small>
@@ -10399,7 +10776,9 @@ const startConnectionsGame = (difficulty = null) => {
                 startGame("career");
               }}
             >
-              <span className="mode-card-icon">✈️</span>
+              <span className="mode-card-icon app-icon">
+                <BKIcon name="careerPath" size={40} />
+              </span>
               <span>
                 <strong>Career Path</strong>
                 <small>Guess the player journey</small>
@@ -10413,7 +10792,9 @@ const startConnectionsGame = (difficulty = null) => {
                 startGame("world-cup");
               }}
             >
-              <span className="mode-card-icon">🏆</span>
+              <span className="mode-card-icon app-icon">
+                <BKIcon name="worldCup" size={40} />
+              </span>
               <span>
                 <strong>World Cup</strong>
                 <small>Tournament history</small>
@@ -10424,7 +10805,9 @@ const startConnectionsGame = (difficulty = null) => {
               className="mode-button mode-card connections-mode-button"
               onClick={openConnectionsDifficultyPicker}
             >
-              <span className="mode-card-icon">🧩</span>
+              <span className="mode-card-icon app-icon">
+                <BKIcon name="connections" size={40} />
+              </span>
               <span>
                 <strong>Connections</strong>
                 <small>Find the 4 groups</small>
@@ -10435,7 +10818,9 @@ const startConnectionsGame = (difficulty = null) => {
               className="mode-button mode-card mode-whoami"
               onClick={() => startWhoAmIGame(getDailyDateKey())}
             >
-              <span className="mode-card-icon">🕵️</span>
+              <span className="mode-card-icon app-icon">
+                <BKIcon name="whoAmI" size={40} />
+              </span>
               <span>
                 <strong>Who Am I?</strong>
                 <small>Guess the player from clues</small>
@@ -10446,7 +10831,9 @@ const startConnectionsGame = (difficulty = null) => {
               className="mode-button mode-card mode-find-player"
               onClick={() => startFindPlayerGame(getDailyDateKey())}
             >
-              <span className="mode-card-icon">🎯</span>
+              <span className="mode-card-icon app-icon">
+                <BKIcon name="findThePlayer" size={40} />
+              </span>
               <span>
                 <strong>Find the Player</strong>
                 <small>Guess by distance clues</small>
@@ -10546,7 +10933,7 @@ const startConnectionsGame = (difficulty = null) => {
                 animate={{ scale: [1, 1.04, 1], rotate: [0, -1, 1, 0] }}
                 transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
               >
-                ?
+                <BKIcon name="whoAmI" size={64} />
               </motion.div>
               <div>
                 <span>Clue {whoAmIClueIndex + 1} / 10</span>
@@ -10682,7 +11069,9 @@ const startConnectionsGame = (difficulty = null) => {
 
             {findPlayerStatus === "loading" && (
               <div className="find-player-mystery-card">
-                <div className="whoami-mystery-icon">?</div>
+                <div className="whoami-mystery-icon">
+                  <BKIcon name="findThePlayer" size={34} />
+                </div>
                 <strong>Loading today’s player...</strong>
               </div>
             )}
@@ -10709,7 +11098,9 @@ const startConnectionsGame = (difficulty = null) => {
                 </div>
 
                 <div className="find-player-mystery-card">
-                  <div className="whoami-mystery-icon">?</div>
+                  <div className="whoami-mystery-icon">
+                    <BKIcon name="findThePlayer" size={34} />
+                  </div>
                   <div>
                     <span>Hidden footballer</span>
                     <strong>
@@ -10866,7 +11257,7 @@ const startConnectionsGame = (difficulty = null) => {
                         index < connectionsMistakes ? "mistake-used" : ""
                       }
                     >
-                      ❤️
+                      <BKIcon name="lives" size={16} />
                     </span>
                   ))}
                 </strong>
@@ -11101,9 +11492,9 @@ const startConnectionsGame = (difficulty = null) => {
               exit={{ opacity: 0, scale: 1.1 }}
               transition={{ duration: 0.25 }}
             >
-              <div className="wrong-title">❌ {wrongPopup.message || "WRONG"}</div>
+              <div className="wrong-title">{wrongPopup.message || "WRONG"}</div>
               <div className="wrong-answer">{wrongPopup.answer}</div>
-              <div className="wrong-life">-1 LIFE ❤️</div>
+              <div className="wrong-life">-1 LIFE <BKIcon name="lives" size={18} /></div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -11116,7 +11507,9 @@ const startConnectionsGame = (difficulty = null) => {
               </div>
 
           <div className="daily-question-card">
-            <h2 className="daily-list-label">🔥 DAILY CHALLENGE</h2>
+            <h2 className="daily-list-label">
+              <BKIcon name="dailyChallenge" size={34} /> DAILY CHALLENGE
+            </h2>
 
             <h1 className="daily-list-title">{todayChallenge.label}</h1>
 
@@ -11171,7 +11564,7 @@ const startConnectionsGame = (difficulty = null) => {
 	                  transition={{ duration: 0.45 }}
                 >
                   <span className="pyramid-rank">#{rank}</span>
-                  <span>{isFound ? formatAnswerWithValue(answer) : "?????"}</span>
+                  <span>{isFound ? formatAnswerWithValue(answer) : <BKIcon name="questionMark" size={28} />}</span>
                 </motion.div>
               );
             })}
@@ -11249,11 +11642,11 @@ const startConnectionsGame = (difficulty = null) => {
               <div className="daily-result-subtitle">players found</div>
 
               <div className="daily-result-coins">
-                🪙 +{lastDailyResult?.coins || dailyCoinsEarned} coins
+                <BKIcon name="coins" size={24} /> +{lastDailyResult?.coins || dailyCoinsEarned} coins
               </div>
 
               <div className="daily-result-streak">
-                🔥 Streak: {lastDailyResult?.streak || dailyStreak} days
+                <BKIcon name="dailyStreak" size={24} /> Streak: {lastDailyResult?.streak || dailyStreak} days
               </div>
 
               {(lastDailyResult?.streakBonus || streakRewardEarned) > 0 && (
@@ -11295,14 +11688,14 @@ const startConnectionsGame = (difficulty = null) => {
 
               <div className="versus-card">
                 <div>
-                  <span>👤 You</span>
+                  <span><BKIcon name="profile" size={22} /> You</span>
                   <strong>{score}</strong>
                 </div>
 
                 <div className="versus-divider">VS</div>
 
                 <div>
-                  <span>⚔️ Opponent</span>
+                  <span><BKIcon name="multiplayer" size={22} /> Opponent</span>
                   <strong>{opponentScore}</strong>
                 </div>
               </div>
@@ -11313,8 +11706,8 @@ const startConnectionsGame = (difficulty = null) => {
             <>
               {!showingGeneralXp ? (
                 <>
-                  <p>🔥 Final Score: {score}</p>
-                  <p>🏆 Best Score: {highScore}</p>
+                  <p><BKIcon name="dailyStreak" size={22} /> Final Score: {score}</p>
+                  <p><BKIcon name="rankings" size={22} /> Best Score: {highScore}</p>
                   {score > runStartHighScore && (
                     <div className="general-run-highscore compact">
                       <strong>New Highscore!</strong>
@@ -11336,7 +11729,9 @@ const startConnectionsGame = (difficulty = null) => {
                   transition={{ delay: 0.12, duration: 0.24 }}
                 >
                   <div className="level-progress-hero inline">
-                    <div className="level-progress-icon">{playerLevel.emoji}</div>
+                    <div className="level-progress-icon">
+                      <LevelIcon levelId={playerLevel.id} size={64} />
+                    </div>
                     <div>
                       <div className="level-progress-label">
                         Level {playerLevel.levelNumber}
@@ -11419,7 +11814,7 @@ const startConnectionsGame = (difficulty = null) => {
 
           {!showingGeneralXp && !isDaily && !isMockMultiplayer && reviveCost && coins >= reviveCost && (
             <button className="play-again-button" onClick={revive}>
-              ❤️ Buy extra life — {reviveCost} coins
+              <BKIcon name="lives" size={22} /> Buy extra life — {reviveCost} coins
             </button>
           )}
 
@@ -11505,8 +11900,8 @@ const startConnectionsGame = (difficulty = null) => {
             exit={{ opacity: 0, scale: 0.8, y: -30 }}
             transition={{ duration: 0.35 }}
           >
-            <div className="reward-title">🔥 {rewardPopup.streak} STREAK</div>
-            <div className="reward-coins">+{rewardPopup.coins} COINS</div>
+            <div className="reward-title"><BKIcon name="dailyStreak" size={34} /> {rewardPopup.streak} STREAK</div>
+            <div className="reward-coins"><BKIcon name="coins" size={28} /> +{rewardPopup.coins} COINS</div>
 
             <button
               className="collect-button"
@@ -11530,9 +11925,9 @@ const startConnectionsGame = (difficulty = null) => {
             exit={{ opacity: 0, scale: 1.1 }}
             transition={{ duration: 0.25 }}
           >
-              <div className="wrong-title">❌ {wrongPopup.message || "WRONG"}</div>
+              <div className="wrong-title">{wrongPopup.message || "WRONG"}</div>
             <div className="wrong-answer">Correct: {wrongPopup.answer}</div>
-            <div className="wrong-life">-1 LIFE ❤️</div>
+            <div className="wrong-life">-1 LIFE <BKIcon name="lives" size={18} /></div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -11540,17 +11935,17 @@ const startConnectionsGame = (difficulty = null) => {
       <div className="hud-row neon-stats-grid">
         <div className="hud-card statCard">
           <span className="hud-label">SCORE</span>
-          <span className="hud-value">🔥 {score}</span>
+          <span className="hud-value"><BKIcon name="dailyStreak" size={22} /> {score}</span>
         </div>
 
         <div className="hud-card statCard">
           <span className="hud-label">BEST</span>
-          <span className="hud-value">🏆 {highScore}</span>
+          <span className="hud-value"><BKIcon name="rankings" size={22} /> {highScore}</span>
         </div>
 
-        <button className="hud-card hud-button statCard" onClick={openCoinShop}>
+        <button className="hud-card hud-button statCard" type="button" onClick={openCoinShop}>
           <span className="hud-label">COINS</span>
-          <span className="hud-value">🪙 {coins}</span>
+          <span className="hud-value"><BKIcon name="coins" size={22} /> {coins}</span>
         </button>
 
         <div className="hud-card statCard">
@@ -11559,9 +11954,13 @@ const startConnectionsGame = (difficulty = null) => {
           </span>
           <span className="hud-value">
             {gameMode === "general" && !isMockMultiplayer
-              ? `⚡ x${streak}`
+              ? (
+                  <>
+                    <BKIcon name="dailyStreak" size={20} /> x{streak}
+                  </>
+                )
               : Array.from({ length: lives }).map((_, i) => (
-                  <span key={i}>❤️</span>
+                  <BKIcon key={i} name="lives" size={20} />
                 ))}
           </span>
         </div>
@@ -11585,7 +11984,7 @@ const startConnectionsGame = (difficulty = null) => {
             <span>{xpProgressLabel}</span>
             <span>
               {playerLevel.next
-                ? `Next: ${playerLevel.next.emoji} ${playerLevel.next.name}`
+                ? `Next: ${playerLevel.next.name}`
                 : "Max level"}
             </span>
           </div>
@@ -11601,7 +12000,7 @@ const startConnectionsGame = (difficulty = null) => {
           >
             <div className="streak-meter-top">
               <div className="streak-left">
-                <span className="streak-fire">🔥</span>
+                <span className="streak-fire"><BKIcon name="dailyStreak" size={24} /></span>
                 <span className="streak-title">COMBO x{streak}</span>
               </div>
 
@@ -11634,31 +12033,12 @@ const startConnectionsGame = (difficulty = null) => {
                 current.difficulty === "Very Hard" ? "very-hard" : ""
               } ${timeLeft <= 3 ? "danger" : ""}`}
             >
-              ⏱ {timeLeft}s
+              {timeLeft}s
             </div>
           )}
 
           {gameMode === "career" ? (
-            <div className="career-journey-card">
-              <div className="career-journey-kicker">Guess the player</div>
-              <div className="career-journey-path">
-                {careerPathClubs.map((club, index) => (
-                  <React.Fragment key={`${club}-${index}`}>
-                    <motion.div
-                      className={`career-club-pill club-${getClubThemeClass(club)}`}
-                      initial={{ opacity: 0, y: 12, scale: 0.94 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ delay: index * 0.045, duration: 0.2 }}
-                    >
-                      {club}
-                    </motion.div>
-                    {index < careerPathClubs.length - 1 && (
-                      <div className="career-path-arrow">→</div>
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
+            <CareerPathQuestionView question={current.question} />
           ) : (
             <h1
               className={`question-title quiz-question-card ${
@@ -11702,9 +12082,9 @@ const startConnectionsGame = (difficulty = null) => {
                   }`}
                 >
                   {isCorrectAnswer(selected, current.answer) ? (
-                    <>✅ CORRECT! {current.answer}</>
+                    <>CORRECT! {current.answer}</>
                   ) : (
-                    <>❌ Correct answer: {current.answer}</>
+                    <>Correct answer: {current.answer}</>
                   )}
                 </div>
               )}

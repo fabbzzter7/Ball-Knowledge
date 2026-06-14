@@ -1,6 +1,8 @@
+import BKIcon from "./BKIcon";
+
 const DEFAULT_AVATAR = {
-  avatar_icon: "⚽",
-  avatar_emoji: "⚽",
+  avatar_icon: "profile",
+  avatar_emoji: "profile",
   avatar_style: "classic",
   avatar_color: "green",
   avatar_bg: "dark",
@@ -42,6 +44,7 @@ export default function PlayerAvatar({
 }) {
   const avatar = getAvatarConfig(profile);
   const Component = button ? "button" : "div";
+  const useProfileIcon = !avatar.icon || ["profile", "⚽", "⏳"].includes(avatar.icon);
 
   return (
     <Component
@@ -62,7 +65,9 @@ export default function PlayerAvatar({
     >
       <span className="player-avatar-shine" />
       <span className="player-avatar-accent" />
-      <span className="player-avatar-icon">{avatar.icon}</span>
+      <span className="player-avatar-icon">
+        {useProfileIcon ? <BKIcon name="profile" size={size === "large" ? 42 : size === "small" ? 22 : 30} /> : avatar.icon}
+      </span>
       {!hideFlag && avatar.flag && (
         <span className="player-avatar-flag" aria-label={avatar.country}>
           {avatar.flag}

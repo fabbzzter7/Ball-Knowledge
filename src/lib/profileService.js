@@ -1,4 +1,6 @@
-const DEFAULT_AVATAR_EMOJI = "⚽";
+import { safeLocalStorage as localStorage } from "./safeStorage";
+
+const DEFAULT_AVATAR_EMOJI = "profile";
 const DEFAULT_AVATAR_STYLE = "classic";
 const DEFAULT_AVATAR_COLOR = "green";
 const DEFAULT_AVATAR_BG = "dark";
@@ -8,7 +10,7 @@ export const PROFILE_SELECT =
   "id,username,display_name,avatar_emoji,best_score,coins,daily_streak,multiplayer_wins,multiplayer_losses,multiplayer_draws,multiplayer_matches,created_at,updated_at,xp_total,level_id,level_up_claimed_ids,progression_stats,username_normalized,favorite_country,favorite_flag,avatar_icon,avatar_style,avatar_color,avatar_bg";
 
 function createLocalPlayerId() {
-  if (window.crypto?.randomUUID) {
+  if (typeof window !== "undefined" && window.crypto?.randomUUID) {
     return window.crypto.randomUUID();
   }
 
@@ -90,8 +92,8 @@ export function mergeLocalProgressIntoProfile(profile = {}, local = {}) {
     xp_total: Math.max(Number(profile.xp_total) || 0, Number(local.xpTotal) || 0),
     level_id: Math.max(Number(profile.level_id) || 1, Number(local.levelId) || 1),
     progression_stats: nextStats,
-    avatar_emoji: profile.avatar_emoji || profile.avatar_icon || "⚽",
-    avatar_icon: profile.avatar_icon || profile.avatar_emoji || "⚽",
+    avatar_emoji: profile.avatar_emoji || profile.avatar_icon || DEFAULT_AVATAR_EMOJI,
+    avatar_icon: profile.avatar_icon || profile.avatar_emoji || DEFAULT_AVATAR_EMOJI,
     avatar_style: profile.avatar_style || "classic",
     avatar_color: profile.avatar_color || "green",
     avatar_bg: profile.avatar_bg || "dark",

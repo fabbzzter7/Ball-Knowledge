@@ -61,6 +61,31 @@
   --app-error: #ff4f64;
 }
 
+.boot-error-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  background: #02080b;
+  color: #ffffff;
+  text-align: center;
+}
+
+.boot-error-screen h1 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.boot-error-screen pre {
+  max-width: min(680px, 100%);
+  overflow: auto;
+  white-space: pre-wrap;
+  color: #ffd2d2;
+}
+
 body,
 #root {
   background:
@@ -1083,7 +1108,7 @@ body,
 
 .reward-overlay::after,
 .daily-reward-popup::after {
-  content: "🪙 ✨ 🪙 ✨ 🪙";
+  content: "";
   position: absolute;
   left: 50%;
   top: 44%;
@@ -1430,7 +1455,7 @@ body,
 }
 
 .coin-reward-toast::after {
-  content: "✨ 🪙 ✨";
+  content: "";
   position: absolute;
   right: 12px;
   top: -16px;
@@ -2049,11 +2074,72 @@ button {
   border-radius: 22px;
   display: grid;
   place-items: center;
-  background: rgba(255,255,255,0.22);
+  background: transparent;
   font-size: 34px;
-  box-shadow:
-    inset 0 2px 0 rgba(255,255,255,0.42),
-    0 8px 18px rgba(0,0,0,0.16);
+  box-shadow: none;
+  overflow: visible;
+}
+
+.bk-icon {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  flex: 0 0 auto;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+.bk-icon-fallback {
+  color: rgba(236, 255, 246, 0.92);
+  filter: drop-shadow(0 8px 14px rgba(0,0,0,0.24));
+}
+
+.app-icon,
+.main-menu-icon,
+.mode-card-icon,
+.whoami-mystery-icon,
+.level-progress-icon,
+.daily-reward-fire,
+.daily-reward-main-ball,
+.coin-shop-coin,
+.difficulty-emoji {
+  display: grid;
+  place-items: center;
+}
+
+.hud-value,
+.reward-title,
+.daily-result-coins,
+.daily-result-streak,
+.daily-reward-earned strong,
+.daily-reward-bonus,
+.coin-shop-balance strong,
+.league-kicker,
+.multiplayer-badge,
+.play-again-button,
+.profile-stat-card span,
+.reward-summary-grid strong,
+.level-up-coin-bonus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.main-menu-icon .bk-icon,
+.mode-card-icon .bk-icon,
+.home-stat-pill .bk-icon {
+  filter: drop-shadow(0 8px 14px rgba(0,0,0,0.2));
+}
+
+.home-action-card .main-menu-icon {
+  width: 54px;
+  height: 54px;
+  padding: 4px;
 }
 
 .main-menu-copy {
@@ -10378,6 +10464,10 @@ button {
     inset 0 3px 0 rgba(255,255,255,0.68);
 }
 
+.level-up-coin-bonus {
+  margin-left: 8px;
+}
+
 .level-up-arrow {
   font-size: 46px;
   font-weight: 1000;
@@ -12560,7 +12650,7 @@ button {
 
   .daily-reward-popup::after,
   .reward-overlay::after {
-    content: "🪙 ✨ 🪙 ✨ 🪙";
+    content: "";
   position: absolute;
   left: 50%;
   top: 44%;
@@ -18796,6 +18886,16 @@ button,
     inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
 }
 
+.multiplayer-career-path-card {
+  width: 100% !important;
+  max-width: 680px !important;
+  margin: 8px auto 18px !important;
+}
+
+.multiplayer-round-card .multiplayer-career-path-card .career-journey-path {
+  justify-content: center !important;
+}
+
 @media (max-width: 520px) {
   .league-dashboard-actions {
     width: 100%;
@@ -18829,5 +18929,855 @@ button,
     min-width: 24px !important;
     height: 24px !important;
     font-size: 15px !important;
+  }
+}
+
+/* Capacitor iOS layout safety: notch, dynamic viewport, and keyboard scrolling. */
+html,
+body,
+#root {
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+body.capacitor-ios,
+body.capacitor-ios #root {
+  width: 100%;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+}
+
+body.capacitor-ios {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  -webkit-text-size-adjust: 100%;
+}
+
+body.capacitor-ios .boot-error-screen,
+body.capacitor-ios .fullscreen-bg,
+body.capacitor-ios .home-landing-bg,
+body.capacitor-ios .main-menu,
+body.capacitor-ios .multiplayer-screen,
+body.capacitor-ios .profile-screen,
+body.capacitor-ios .leaderboard-screen,
+body.capacitor-ios .name-screen,
+body.capacitor-ios .whoami-screen,
+body.capacitor-ios .daily-list-wrapper,
+body.capacitor-ios .league-challenge-screen,
+body.capacitor-ios .connections-screen {
+  min-height: 100dvh !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.capacitor-ios input,
+body.capacitor-ios textarea,
+body.capacitor-ios select,
+body.capacitor-ios .auth-form input,
+body.capacitor-ios .name-input,
+body.capacitor-ios .daily-list-input,
+body.capacitor-ios .career-input,
+body.capacitor-ios .player-picker-input,
+body.capacitor-ios .league-form-card input,
+body.capacitor-ios .multiplayer-join-card input,
+body.capacitor-ios .whoami-answer-row input {
+  font-size: 16px !important;
+}
+
+body.capacitor-ios .auth-screen {
+  display: block !important;
+  place-items: unset !important;
+  min-height: 100dvh !important;
+  height: auto !important;
+  padding:
+    24px
+    max(16px, env(safe-area-inset-right))
+    96px
+    max(16px, env(safe-area-inset-left)) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.capacitor-ios.keyboard-open .auth-screen {
+  padding-bottom: 180px !important;
+}
+
+body.capacitor-ios .auth-card {
+  width: min(460px, 100%) !important;
+  max-width: 100%;
+  margin: 0 auto !important;
+  overflow: visible;
+}
+
+body.capacitor-ios .auth-loading-card {
+  width: fit-content;
+  max-width: calc(100vw - 32px);
+  margin: calc(30dvh - env(safe-area-inset-top)) auto 0;
+}
+
+body.capacitor-ios .auth-prompt-overlay {
+  display: block !important;
+  padding:
+    24px
+    max(16px, env(safe-area-inset-right))
+    96px
+    max(16px, env(safe-area-inset-left)) !important;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.capacitor-ios .auth-prompt-overlay .auth-card {
+  margin-top: 68px !important;
+}
+
+body.capacitor-ios.keyboard-open .auth-prompt-overlay {
+  padding-bottom: 180px !important;
+}
+
+@supports not (height: 100dvh) {
+  body.capacitor-ios,
+  body.capacitor-ios #root,
+  body.capacitor-ios .fullscreen-bg,
+  body.capacitor-ios .auth-screen {
+    min-height: 100vh !important;
+  }
+}
+
+@media (max-width: 520px) {
+  body.capacitor-ios .auth-screen {
+    padding-top: 34px !important;
+  }
+
+  body.capacitor-ios .auth-card {
+    padding: 18px !important;
+    border-radius: 24px !important;
+  }
+
+  body.capacitor-ios .auth-orb {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 9px;
+  }
+
+  body.capacitor-ios .auth-card h1 {
+    font-size: clamp(1.72rem, 9vw, 2.32rem) !important;
+    letter-spacing: -0.04em !important;
+  }
+
+  body.capacitor-ios .auth-card p {
+    margin-bottom: 14px !important;
+  }
+}
+
+/* Capacitor iOS usability pass: all game pages must scroll past notch/keyboard. */
+body.capacitor-ios {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+body.capacitor-ios .fullscreen-bg,
+body.capacitor-ios .daily-list-bg,
+body.capacitor-ios .profile-screen,
+body.capacitor-ios .leaderboard-screen,
+body.capacitor-ios .multiplayer-screen,
+body.capacitor-ios .name-screen,
+body.capacitor-ios .whoami-screen,
+body.capacitor-ios .find-player-screen,
+body.capacitor-ios .connections-screen,
+body.capacitor-ios .connections-difficulty-screen,
+body.capacitor-ios .league-challenge-screen,
+body.capacitor-ios .daily-list-wrapper,
+body.capacitor-ios .screen-transition {
+  min-height: 100dvh !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.capacitor-ios .fullscreen-bg,
+body.capacitor-ios .daily-list-bg,
+body.capacitor-ios .profile-screen,
+body.capacitor-ios .leaderboard-screen,
+body.capacitor-ios .multiplayer-screen,
+body.capacitor-ios .name-screen,
+body.capacitor-ios .whoami-screen,
+body.capacitor-ios .connections-screen,
+body.capacitor-ios .connections-difficulty-screen,
+body.capacitor-ios .league-challenge-screen {
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  padding:
+    calc(env(safe-area-inset-top) + 12px)
+    max(12px, env(safe-area-inset-right))
+    calc(env(safe-area-inset-bottom) + 18px)
+    max(12px, env(safe-area-inset-left)) !important;
+}
+
+body.capacitor-ios.keyboard-open .fullscreen-bg,
+body.capacitor-ios.keyboard-open .daily-list-bg,
+body.capacitor-ios.keyboard-open .profile-screen,
+body.capacitor-ios.keyboard-open .leaderboard-screen,
+body.capacitor-ios.keyboard-open .multiplayer-screen,
+body.capacitor-ios.keyboard-open .whoami-screen,
+body.capacitor-ios.keyboard-open .connections-screen,
+body.capacitor-ios.keyboard-open .league-challenge-screen {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 180px) !important;
+}
+
+body.capacitor-ios .auth-screen {
+  padding:
+    calc(env(safe-area-inset-top) + 24px)
+    max(16px, env(safe-area-inset-right))
+    calc(env(safe-area-inset-bottom) + 96px)
+    max(16px, env(safe-area-inset-left)) !important;
+}
+
+body.capacitor-ios.keyboard-open .auth-screen {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 180px) !important;
+}
+
+body.capacitor-ios .profile-card,
+body.capacitor-ios .leaderboard-card,
+body.capacitor-ios .multiplayer-card,
+body.capacitor-ios .active-games-panel,
+body.capacitor-ios .active-games-page,
+body.capacitor-ios .league-form-card,
+body.capacitor-ios .league-dashboard,
+body.capacitor-ios .league-challenge-card,
+body.capacitor-ios .connections-card,
+body.capacitor-ios .connections-difficulty-panel,
+body.capacitor-ios .whoami-card,
+body.capacitor-ios .find-player-card,
+body.capacitor-ios .daily-question-card,
+body.capacitor-ios .pyramid-list,
+body.capacitor-ios .daily-input-row,
+body.capacitor-ios .guess-input-row,
+body.capacitor-ios .player-picker {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+body.capacitor-ios .daily-list-wrapper {
+  width: min(1040px, calc(100vw - 24px)) !important;
+  margin: 64px auto 0 !important;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 140px) !important;
+  text-align: center;
+}
+
+body.capacitor-ios .daily-date-card,
+body.capacitor-ios .daily-question-card {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+body.capacitor-ios .daily-list-title {
+  font-size: clamp(2.2rem, 12vw, 4.4rem) !important;
+  letter-spacing: -0.04em !important;
+}
+
+body.capacitor-ios .daily-list-label {
+  font-size: clamp(1.25rem, 7vw, 2.1rem) !important;
+}
+
+body.capacitor-ios .daily-list-question {
+  font-size: clamp(1.05rem, 5vw, 1.75rem) !important;
+  margin-bottom: 16px !important;
+}
+
+body.capacitor-ios .daily-list-stats {
+  gap: 8px !important;
+  margin-bottom: 16px !important;
+  font-size: clamp(0.9rem, 4.5vw, 1.35rem) !important;
+}
+
+body.capacitor-ios .pyramid-list {
+  margin-bottom: 18px !important;
+}
+
+body.capacitor-ios .daily-input-row {
+  position: relative;
+  z-index: 2500;
+  flex-wrap: wrap;
+  gap: 10px !important;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+}
+
+body.capacitor-ios .daily-input-row .player-picker,
+body.capacitor-ios .career-answer-box .player-picker,
+body.capacitor-ios .whoami-answer-row .player-picker,
+body.capacitor-ios .league-input-row .player-picker {
+  flex: 1 1 min(360px, 100%);
+  min-width: 0;
+  position: relative;
+  z-index: 2600;
+}
+
+body.capacitor-ios .player-picker-results {
+  position: absolute !important;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 8px);
+  top: auto !important;
+  z-index: 2147482000 !important;
+  max-height: min(310px, 42dvh) !important;
+  touch-action: pan-y;
+}
+
+body.capacitor-ios .player-picker-option {
+  min-height: 54px;
+  touch-action: manipulation;
+}
+
+body.capacitor-ios .leaderboard-screen,
+body.capacitor-ios .multiplayer-screen,
+body.capacitor-ios .profile-screen {
+  padding-top: calc(env(safe-area-inset-top) + 62px) !important;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 110px) !important;
+}
+
+body.capacitor-ios .leaderboard-card,
+body.capacitor-ios .multiplayer-card,
+body.capacitor-ios .profile-card {
+  width: min(720px, calc(100vw - 24px)) !important;
+  margin: 0 auto !important;
+}
+
+body.capacitor-ios .leaderboard-list,
+body.capacitor-ios .active-games-list,
+body.capacitor-ios .league-leaderboard,
+body.capacitor-ios .league-results-list {
+  overflow: visible !important;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 56px) !important;
+}
+
+body.capacitor-ios .home-button,
+body.capacitor-ios .mode-back-button,
+body.capacitor-ios .profile-top-back-button,
+body.capacitor-ios .profile-back-button,
+body.capacitor-ios .leaderboard-back-button,
+body.capacitor-ios .connections-back-button,
+body.capacitor-ios .multiplayer-back-button,
+body.capacitor-ios .multiplayer-round-back,
+body.capacitor-ios .premium-back-button,
+body.capacitor-ios .premiumBackButton {
+  position: fixed !important;
+  top: calc(env(safe-area-inset-top) + 8px) !important;
+  left: max(12px, env(safe-area-inset-left)) !important;
+  right: auto !important;
+  z-index: 2147482500 !important;
+  pointer-events: auto !important;
+  transform: none !important;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+body.capacitor-ios .leaderboard-topbar,
+body.capacitor-ios .multiplayer-topbar {
+  position: sticky !important;
+  top: calc(env(safe-area-inset-top) + 8px) !important;
+  z-index: 2147482400 !important;
+  pointer-events: none;
+  overflow: visible !important;
+}
+
+body.capacitor-ios .leaderboard-topbar .leaderboard-back-button,
+body.capacitor-ios .multiplayer-topbar button {
+  position: fixed !important;
+  top: calc(env(safe-area-inset-top) + 8px) !important;
+  left: max(12px, env(safe-area-inset-left)) !important;
+  pointer-events: auto !important;
+}
+
+body.capacitor-ios .hud-row {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  width: min(720px, calc(100vw - 24px)) !important;
+  margin: 56px auto 12px !important;
+}
+
+@media (max-width: 520px) {
+  body.capacitor-ios .daily-list-wrapper {
+    margin-top: 58px !important;
+  }
+
+  body.capacitor-ios .daily-input-row {
+    align-items: stretch;
+  }
+
+  body.capacitor-ios .daily-input-row .daily-submit-button,
+  body.capacitor-ios .daily-input-row .career-submit-button {
+    flex: 1 1 100%;
+  }
+}
+
+/* Shared app shell primitives for Capacitor/iPhone pages. */
+.app-page,
+.app-scroll-page,
+.app-page-content {
+  box-sizing: border-box;
+}
+
+.app-safe-header {
+  position: relative;
+  z-index: 5;
+}
+
+.app-back-button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+body.capacitor-ios .app-page,
+body.capacitor-ios .app-scroll-page,
+body.capacitor-ios .app-page-content {
+  width: 100%;
+  min-height: 100dvh;
+  height: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.capacitor-ios .app-scroll-page,
+body.capacitor-ios .app-page-content {
+  overflow-y: visible;
+}
+
+/* Final iPhone/Capacitor polish pass across all mode shells and subpages. */
+body.capacitor-ios .fullscreen-bg,
+body.capacitor-ios .home-landing-bg,
+body.capacitor-ios .main-menu,
+body.capacitor-ios .mode-menu,
+body.capacitor-ios .name-screen,
+body.capacitor-ios .profile-screen,
+body.capacitor-ios .leaderboard-screen,
+body.capacitor-ios .multiplayer-screen,
+body.capacitor-ios .whoami-screen,
+body.capacitor-ios .find-player-screen,
+body.capacitor-ios .connections-screen,
+body.capacitor-ios .connections-difficulty-screen,
+body.capacitor-ios .league-challenge-screen,
+body.capacitor-ios .daily-list-bg,
+body.capacitor-ios .daily-list-wrapper {
+  min-height: 100dvh !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain;
+}
+
+body.capacitor-ios .fullscreen-bg,
+body.capacitor-ios .home-landing-bg,
+body.capacitor-ios .main-menu,
+body.capacitor-ios .mode-menu,
+body.capacitor-ios .name-screen,
+body.capacitor-ios .profile-screen,
+body.capacitor-ios .leaderboard-screen,
+body.capacitor-ios .multiplayer-screen,
+body.capacitor-ios .whoami-screen,
+body.capacitor-ios .connections-screen,
+body.capacitor-ios .connections-difficulty-screen,
+body.capacitor-ios .league-challenge-screen {
+  padding:
+    calc(env(safe-area-inset-top) + 58px)
+    max(12px, env(safe-area-inset-right))
+    calc(env(safe-area-inset-bottom) + 90px)
+    max(12px, env(safe-area-inset-left)) !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+}
+
+body.capacitor-ios .auth-screen {
+  padding-top: calc(env(safe-area-inset-top) + 22px) !important;
+}
+
+body.capacitor-ios.keyboard-open .fullscreen-bg,
+body.capacitor-ios.keyboard-open .home-landing-bg,
+body.capacitor-ios.keyboard-open .main-menu,
+body.capacitor-ios.keyboard-open .mode-menu,
+body.capacitor-ios.keyboard-open .name-screen,
+body.capacitor-ios.keyboard-open .profile-screen,
+body.capacitor-ios.keyboard-open .leaderboard-screen,
+body.capacitor-ios.keyboard-open .multiplayer-screen,
+body.capacitor-ios.keyboard-open .whoami-screen,
+body.capacitor-ios.keyboard-open .connections-screen,
+body.capacitor-ios.keyboard-open .league-challenge-screen {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 190px) !important;
+}
+
+body.capacitor-ios .home-button,
+body.capacitor-ios .mode-back-button,
+body.capacitor-ios .profile-top-back-button,
+body.capacitor-ios .profile-back-button,
+body.capacitor-ios .leaderboard-back-button,
+body.capacitor-ios .connections-back-button,
+body.capacitor-ios .multiplayer-back-button,
+body.capacitor-ios .multiplayer-round-back,
+body.capacitor-ios .premium-back-button,
+body.capacitor-ios .premiumBackButton,
+body.capacitor-ios .app-back-button {
+  position: fixed !important;
+  top: calc(env(safe-area-inset-top) + 10px) !important;
+  left: max(12px, env(safe-area-inset-left)) !important;
+  right: auto !important;
+  z-index: 2147483000 !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  padding: 10px 16px !important;
+  border-radius: 999px !important;
+  pointer-events: auto !important;
+  touch-action: manipulation;
+  transform: none !important;
+}
+
+body.capacitor-ios .profile-card,
+body.capacitor-ios .leaderboard-card,
+body.capacitor-ios .multiplayer-card,
+body.capacitor-ios .active-games-panel,
+body.capacitor-ios .active-games-page,
+body.capacitor-ios .league-form-card,
+body.capacitor-ios .league-dashboard,
+body.capacitor-ios .league-challenge-card,
+body.capacitor-ios .connections-card,
+body.capacitor-ios .connections-difficulty-panel,
+body.capacitor-ios .whoami-card,
+body.capacitor-ios .find-player-card,
+body.capacitor-ios .daily-question-card,
+body.capacitor-ios .result-card,
+body.capacitor-ios .level-progress-card,
+body.capacitor-ios .level-up-card,
+body.capacitor-ios .avatar-picker-card,
+body.capacitor-ios .daily-reward-popup,
+body.capacitor-ios .coin-shop-card,
+body.capacitor-ios .match-delete-modal,
+body.capacitor-ios .league-leave-modal {
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+body.capacitor-ios .level-up-overlay,
+body.capacitor-ios .level-progress-overlay,
+body.capacitor-ios .avatar-picker-overlay,
+body.capacitor-ios .daily-reward-view-overlay,
+body.capacitor-ios .coin-shop-overlay,
+body.capacitor-ios .match-delete-overlay,
+body.capacitor-ios .league-leave-overlay,
+body.capacitor-ios .reward-overlay,
+body.capacitor-ios .wrong-overlay,
+body.capacitor-ios .rank-reveal-overlay {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding:
+    calc(env(safe-area-inset-top) + 18px)
+    max(12px, env(safe-area-inset-right))
+    calc(env(safe-area-inset-bottom) + 28px)
+    max(12px, env(safe-area-inset-left)) !important;
+}
+
+body.capacitor-ios .main-menu,
+body.capacitor-ios .mode-menu {
+  width: min(720px, calc(100vw - 24px)) !important;
+  margin: 0 auto !important;
+}
+
+body.capacitor-ios .home-action-card,
+body.capacitor-ios .main-menu-button,
+body.capacitor-ios .multiplayer-main-button,
+body.capacitor-ios .daily-main-button,
+body.capacitor-ios .mode-card {
+  min-height: 74px !important;
+}
+
+body.capacitor-ios .app-icon,
+body.capacitor-ios .main-menu-icon,
+body.capacitor-ios .mode-card-icon,
+body.capacitor-ios .whoami-mystery-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+body.capacitor-ios .hud-row {
+  margin-top: 0 !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+body.capacitor-ios .quiz-progress-card,
+body.capacitor-ios .combo-dock,
+body.capacitor-ios .question-title,
+body.capacitor-ios .quiz-question-card,
+body.capacitor-ios .career-journey-card,
+body.capacitor-ios .answers-grid,
+body.capacitor-ios .career-answer-box,
+body.capacitor-ios .quiz-xp-inline-slot {
+  width: min(720px, calc(100vw - 24px)) !important;
+  max-width: calc(100vw - 24px) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+body.capacitor-ios .question-title,
+body.capacitor-ios .quiz-question-card {
+  font-size: clamp(1.45rem, 7vw, 2.5rem) !important;
+  line-height: 1.04 !important;
+}
+
+body.capacitor-ios .answers-grid {
+  grid-template-columns: 1fr !important;
+  gap: 11px !important;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 52px);
+}
+
+body.capacitor-ios .answer-button,
+body.capacitor-ios .answers-grid .answer-button {
+  min-height: 58px !important;
+  padding: 12px 14px !important;
+}
+
+body.capacitor-ios .career-journey-path {
+  max-height: none !important;
+  overflow: visible !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+}
+
+body.capacitor-ios .career-club-pill {
+  min-width: min(170px, calc(50vw - 34px)) !important;
+  max-width: calc(50vw - 24px) !important;
+}
+
+body.capacitor-ios .daily-list-wrapper,
+body.capacitor-ios .whoami-card,
+body.capacitor-ios .find-player-card,
+body.capacitor-ios .connections-card,
+body.capacitor-ios .connections-difficulty-panel,
+body.capacitor-ios .leaderboard-card,
+body.capacitor-ios .multiplayer-card,
+body.capacitor-ios .profile-card,
+body.capacitor-ios .league-dashboard,
+body.capacitor-ios .league-form-card,
+body.capacitor-ios .league-challenge-card,
+body.capacitor-ios .result-card {
+  width: min(760px, calc(100vw - 24px)) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+body.capacitor-ios .daily-list-wrapper {
+  margin-top: 0 !important;
+}
+
+body.capacitor-ios .pyramid-slot {
+  width: min(100%, var(--slot-width, 100%)) !important;
+  min-width: 0;
+  font-size: clamp(0.84rem, 4vw, 1.15rem) !important;
+}
+
+body.capacitor-ios .daily-input-row,
+body.capacitor-ios .whoami-answer-row,
+body.capacitor-ios .find-player-input-row,
+body.capacitor-ios .league-input-row,
+body.capacitor-ios .career-answer-box {
+  position: relative;
+  z-index: 2147481000;
+  overflow: visible !important;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 28px) !important;
+}
+
+body.capacitor-ios .daily-input-row,
+body.capacitor-ios .whoami-answer-row,
+body.capacitor-ios .find-player-input-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: stretch !important;
+  gap: 10px !important;
+}
+
+body.capacitor-ios .find-player-input-row {
+  grid-template-columns: minmax(0, 1fr) auto auto !important;
+}
+
+body.capacitor-ios .daily-input-row .player-picker,
+body.capacitor-ios .whoami-answer-row .player-picker,
+body.capacitor-ios .find-player-input-row .player-picker,
+body.capacitor-ios .league-input-row .player-picker,
+body.capacitor-ios .career-answer-box .player-picker {
+  position: relative !important;
+  z-index: 2147481200 !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+body.capacitor-ios .player-picker-results {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: auto !important;
+  bottom: calc(100% + 8px) !important;
+  z-index: 2147482500 !important;
+  max-height: min(320px, 43dvh) !important;
+  transform: translateZ(0);
+}
+
+body.capacitor-ios.keyboard-open .player-picker-results {
+  max-height: min(260px, 34dvh) !important;
+}
+
+body.capacitor-ios .connections-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+body.capacitor-ios .connections-tile {
+  min-width: 0 !important;
+  min-height: 64px !important;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+body.capacitor-ios .leaderboard-list,
+body.capacitor-ios .active-games-list,
+body.capacitor-ios .league-leaderboard,
+body.capacitor-ios .league-results-list,
+body.capacitor-ios .avatar-picker-grid,
+body.capacitor-ios .avatar-token-grid {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+body.capacitor-ios .avatar-picker-overlay {
+  display: block !important;
+}
+
+body.capacitor-ios .avatar-picker-card {
+  margin: 0 auto !important;
+  width: min(480px, calc(100vw - 24px)) !important;
+}
+
+body.capacitor-ios .avatar-picker-top {
+  position: sticky;
+  top: calc(env(safe-area-inset-top) + 8px);
+  z-index: 5;
+  padding: 8px 0;
+}
+
+body.capacitor-ios .league-format-grid,
+body.capacitor-ios .league-duration-grid,
+body.capacitor-ios .league-custom-row > div,
+body.capacitor-ios .arena-section-grid,
+body.capacitor-ios .play-now-choice-grid,
+body.capacitor-ios .multiplayer-actions {
+  grid-template-columns: 1fr !important;
+}
+
+/* iOS performance: keep the neon style, drop expensive perpetual GPU effects. */
+body.capacitor-ios *,
+body.capacitor-ios *::before,
+body.capacitor-ios *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+}
+
+body.capacitor-ios .glass-panel::before,
+body.capacitor-ios .glass-card::before,
+body.capacitor-ios .home-progress-card::before,
+body.capacitor-ios .home-action-card::before,
+body.capacitor-ios .main-menu-button::before,
+body.capacitor-ios .mode-card::before,
+body.capacitor-ios .multiplayer-card::before,
+body.capacitor-ios .multiplayer-action-card::before,
+body.capacitor-ios .arena-hub-card::before,
+body.capacitor-ios .league-form-card::before,
+body.capacitor-ios .league-dashboard::before,
+body.capacitor-ios .league-card::before,
+body.capacitor-ios .league-daily-card::before,
+body.capacitor-ios .league-challenge-card::before,
+body.capacitor-ios .profile-card::before,
+body.capacitor-ios .level-progress-card::before,
+body.capacitor-ios .daily-question-card::after,
+body.capacitor-ios .quiz-question-card::after,
+body.capacitor-ios .home-stat-pill::after,
+body.capacitor-ios .home-level-box::after {
+  animation: none !important;
+  opacity: 0.22 !important;
+}
+
+body.capacitor-ios .glass-panel,
+body.capacitor-ios .glass-card,
+body.capacitor-ios .home-progress-card,
+body.capacitor-ios .home-action-card,
+body.capacitor-ios .main-menu-button,
+body.capacitor-ios .mode-card,
+body.capacitor-ios .multiplayer-card,
+body.capacitor-ios .profile-card,
+body.capacitor-ios .leaderboard-card,
+body.capacitor-ios .connections-card,
+body.capacitor-ios .league-form-card,
+body.capacitor-ios .league-dashboard,
+body.capacitor-ios .league-challenge-card,
+body.capacitor-ios .whoami-card,
+body.capacitor-ios .daily-question-card,
+body.capacitor-ios .avatar-picker-card {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+@media (max-width: 520px) {
+  body.capacitor-ios .main-title {
+    font-size: clamp(2.35rem, 13vw, 4.4rem) !important;
+  }
+
+  body.capacitor-ios .home-progress-card {
+    padding: 14px !important;
+  }
+
+  body.capacitor-ios .daily-list-stats,
+  body.capacitor-ios .whoami-hud,
+  body.capacitor-ios .league-score-strip {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  body.capacitor-ios .daily-input-row,
+  body.capacitor-ios .whoami-answer-row,
+  body.capacitor-ios .find-player-input-row,
+  body.capacitor-ios .career-answer-box {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.capacitor-ios .daily-input-row button,
+  body.capacitor-ios .whoami-answer-row button,
+  body.capacitor-ios .find-player-input-row button,
+  body.capacitor-ios .career-answer-box button {
+    width: 100% !important;
+  }
+
+  body.capacitor-ios .connections-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  body.capacitor-ios .leaderboard-row,
+  body.capacitor-ios .leaderboard-your-row {
+    grid-template-columns: 42px 38px minmax(0, 1fr) auto !important;
+    gap: 8px !important;
+    padding: 10px !important;
+  }
+
+  body.capacitor-ios .leaderboard-player strong {
+    font-size: 1rem !important;
   }
 }
