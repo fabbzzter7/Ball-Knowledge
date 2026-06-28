@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle2,
@@ -11,7 +11,7 @@ import {
 import { ANSWER_ALIASES, LAST_WORD_BLACKLIST } from "./answerAliases";
 import PlayerAvatar, { getAvatarConfig } from "./components/PlayerAvatar";
 import GuessInput from "./components/GuessInput";
-import PlayerPicker from "./components/PlayerPicker";
+import GameTopNav from "./components/GameTopNav";
 import BKIcon from "./components/BKIcon";
 import LevelIcon from "./components/LevelIcon";
 
@@ -35,7 +35,6 @@ import {
   syncLocalStatsToProfile,
   updateProfile,
 } from "./lib/profileService";
-import { buildPlayerSearchIndex, fetchFindPlayerPool, searchPlayers } from "./lib/playerService";
 import { isPlayerAnswerMatch } from "./lib/playerAnswer";
 import {
   findMatchingAnswer,
@@ -47,6 +46,10 @@ import {
   formatDisplayDate,
   getTodayDateKey,
 } from "./lib/dailyDateUtils";
+import {
+  selectDailyChallenge,
+  selectDailyWhoAmIQuestion,
+} from "./lib/dailyContentDiversity";
 import {
   buildPlayerDistanceRanking,
   getDistanceBarPercent,
@@ -108,10 +111,38 @@ import {
 import stadiumBg from "./assets/stadium-bg.png";
 import quizBg from "./assets/quiz-bg.png";
 
+const PlayerPicker = React.lazy(() => import("./components/PlayerPicker"));
+
+function loadPlayerService() {
+  return import("./lib/playerService");
+}
+
+async function searchPlayersLazy(query, limit) {
+  const { searchPlayers } = await loadPlayerService();
+  return searchPlayers(query, limit);
+}
+
+async function fetchFindPlayerPoolLazy() {
+  const { fetchFindPlayerPool } = await loadPlayerService();
+  return fetchFindPlayerPool();
+}
+
+function preloadPlayerSearchLazy() {
+  loadPlayerService()
+    .then(({ preloadPlayerSearchIndex }) => preloadPlayerSearchIndex?.())
+    .catch(() => {});
+}
+
+async function filterSearchablePlayerGuessQuestionsLazy(questions, context) {
+  const { filterSearchablePlayerGuessQuestions } = await loadPlayerService();
+  return filterSearchablePlayerGuessQuestions(questions, context);
+}
+
 const HARD_TIME_LIMIT = 15;
 const MULTIPLAYER_TIME_LIMIT = 8;
 const MULTIPLAYER_CAREER_TIME_LIMIT = 15;
 const MULTIPLAYER_TIMEOUT_VALUE = "__time_up__";
+const TOP_10_REQUIRED_ANSWER_COUNT = 10;
 const DAILY_SCAN_STEP_MS = 210;
 const STREAK_TARGETS = [5, 10, 20, 30, 50];
 const AVATAR_ICON_OPTIONS = [
@@ -432,7 +463,7 @@ function getDailyWhoAmIQuestion(dateKey) {
     ? WHO_AM_I_QUESTIONS.filter((question) => question?.id && question?.answer)
     : [];
 
-  return questions[getSeededIndex(`daily-whoami:${dateKey}`, questions.length)] || null;
+  return selectDailyWhoAmIQuestion(questions, dateKey) || null;
 }
 
 function saveDailyModeResult(mode, dateKey, puzzleId, result) {
@@ -464,6 +495,19 @@ function getDailyModeResult(mode, dateKey, puzzleId) {
   }
 }
 
+function isDateKeyBeforeToday(dateKey) {
+  return String(dateKey || "") < getDailyDateKey();
+}
+
+function isDateKeyAfterToday(dateKey) {
+  return String(dateKey || "") > getDailyDateKey();
+}
+
+function hasMissedDailyStreakDay(lastPlayedDate, today = getDailyDateKey()) {
+  if (!lastPlayedDate) return false;
+  return addDaysToDateKey(lastPlayedDate, 1) < today;
+}
+
 function getDailyDateKey() {
   return getTodayDateKey();
 }
@@ -490,34 +534,20 @@ function getTodayChallenge() {
     };
   }
 
-  const today = new Date();
-  const startDate = new Date(2026, 0, 1);
-  const todayDate = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  );
+  return selectDailyChallenge(validChallenges, getDailyDateKey()) || validChallenges[0];
+}
 
-  const oneDay = 1000 * 60 * 60 * 24;
-  const daysPassed = Math.floor((todayDate - startDate) / oneDay);
-  const index = daysPassed % validChallenges.length;
-
-  return validChallenges[index] || validChallenges[0];
+function getRawChallengeAnswers(challenge) {
+  return Array.isArray(challenge?.answers) ? challenge.answers : [];
 }
 
 function getChallengeAnswers(challenge) {
-  return Array.isArray(challenge?.answers) ? challenge.answers : [];
+  return getRawChallengeAnswers(challenge).slice(0, TOP_10_REQUIRED_ANSWER_COUNT);
 }
 
 function getChallengeTargetCount(challenge) {
   const answerCount = getChallengeAnswers(challenge).length;
-  const targetCount = Number(challenge?.targetCount);
-
-  if (Number.isFinite(targetCount) && targetCount > 0) {
-    return Math.min(answerCount, Math.floor(targetCount));
-  }
-
-  return answerCount;
+  return Math.min(answerCount, TOP_10_REQUIRED_ANSWER_COUNT);
 }
 
 function getChallengeRuleHint(challenge) {
@@ -525,11 +555,39 @@ function getChallengeRuleHint(challenge) {
   const targetCount = getChallengeTargetCount(challenge);
 
   if (!answerCount) return "";
-  if (targetCount < answerCount) {
-    return `Any ${targetCount} accepted from ${answerCount} valid answers. Any order accepted.`;
+  if (targetCount < TOP_10_REQUIRED_ANSWER_COUNT) {
+    return `Find ${targetCount}. Any order accepted.`;
   }
 
   return "Any order accepted.";
+}
+
+function getFindPlayerClues(player = {}) {
+  if (!player) return [];
+
+  const mainClub =
+    (Array.isArray(player.main_clubs) && player.main_clubs[0]) ||
+    (Array.isArray(player.clubs) && player.clubs[0]) ||
+    "";
+  const birthYear = Number(player.birth_year) || null;
+  const era = birthYear
+    ? birthYear < 1980
+      ? "classic/legend era"
+      : birthYear < 1990
+      ? "2000s into 2010s era"
+      : birthYear < 2000
+      ? "modern Champions League era"
+      : "new generation era"
+    : "";
+
+  return [
+    player.nationality ? `Nationality: ${player.nationality}` : "",
+    player.position_group || player.position
+      ? `Position: ${player.position_group || player.position}`
+      : "",
+    mainClub ? `Known club: ${mainClub}` : "",
+    era ? `Era: ${era}` : "",
+  ].filter(Boolean);
 }
 
 const REQUIRED_PLAYER_SEARCH_NAMES = [
@@ -861,6 +919,57 @@ function getMultiplayerQuestionTimeLimit(categoryId) {
     : MULTIPLAYER_TIME_LIMIT;
 }
 
+function getLeagueScoreValue(source, snakeKey, camelKey = snakeKey) {
+  return Number(source?.[snakeKey] ?? source?.[camelKey]) || 0;
+}
+
+function getLeagueDailyTotal(source) {
+  return getLeagueScoreValue(source, "total_points", "totalPoints");
+}
+
+function getLeagueScoreItems(source, settings, top10MaxPoints, whoamiMaxPoints, findMaxPoints) {
+  if (!source) return [];
+
+  return [
+    settings.quizCount > 0
+      ? {
+          key: "quick",
+          label: "Quick",
+          value: getLeagueScoreValue(source, "quiz_score", "quizScore"),
+          max: settings.quizCount,
+          display: `${getLeagueScoreValue(source, "quiz_score", "quizScore")}/${settings.quizCount}`,
+        }
+      : null,
+    settings.top10Count > 0
+      ? {
+          key: "top10",
+          label: "Top 10",
+          value: getLeagueScoreValue(source, "top10_score", "top10Score"),
+          max: top10MaxPoints,
+          display: `${getLeagueScoreValue(source, "top10_score", "top10Score")} pts`,
+        }
+      : null,
+    settings.whoamiCount > 0
+      ? {
+          key: "whoami",
+          label: "Who Am I",
+          value: getLeagueScoreValue(source, "whoami_score", "whoamiScore"),
+          max: whoamiMaxPoints,
+          display: `${getLeagueScoreValue(source, "whoami_score", "whoamiScore")} pts`,
+        }
+      : null,
+    settings.findPlayerCount > 0
+      ? {
+          key: "find",
+          label: "Find",
+          value: getLeagueScoreValue(source, "find_player_score", "findPlayerScore"),
+          max: findMaxPoints,
+          display: `${getLeagueScoreValue(source, "find_player_score", "findPlayerScore")} pts`,
+        }
+      : null,
+  ].filter(Boolean);
+}
+
 function getCurrentPlayerSlot(match, playerId, username) {
   if (!match) return null;
 
@@ -1081,6 +1190,8 @@ export default function FootballQuizMVP() {
   const [leagueFindPlayerStartedAt, setLeagueFindPlayerStartedAt] = useState(null);
   const [leagueFindPlayerElapsed, setLeagueFindPlayerElapsed] = useState(0);
   const [leagueFindPlayerFeedback, setLeagueFindPlayerFeedback] = useState("");
+  const [leagueFindPlayerClueCount, setLeagueFindPlayerClueCount] = useState(0);
+  const leagueFindPlayerSubmittingRef = useRef(false);
   const [leagueResult, setLeagueResult] = useState(null);
   const [isMockMultiplayer, setIsMockMultiplayer] = useState(false);
   const [mockOpponentScore, setMockOpponentScore] = useState(null);
@@ -1156,7 +1267,6 @@ export default function FootballQuizMVP() {
         console.warn("Daily/Top 10 content audit warnings", contentWarnings);
       }
 
-      await buildPlayerSearchIndex();
       const missing = [];
       const targets = [
         ...CAREER_QUESTIONS.map((question) => ({
@@ -1186,7 +1296,7 @@ export default function FootballQuizMVP() {
       for (const target of targets) {
         const answerLabel = getAnswerLabel(target.answer);
         if (!answerLabel) continue;
-        const { players } = await searchPlayers(answerLabel, 8);
+        const { players } = await searchPlayersLazy(answerLabel, 8);
         const found = players.some((player) =>
           isPlayerAnswerCorrect({
             selectedPlayer: player,
@@ -1195,7 +1305,7 @@ export default function FootballQuizMVP() {
         );
 
         if (!found) {
-          const { players: closeMatches } = await searchPlayers(answerLabel.split(" ").at(-1), 4);
+          const { players: closeMatches } = await searchPlayersLazy(answerLabel.split(" ").at(-1), 4);
           missing.push({
             mode: target.mode,
             id: target.id,
@@ -1343,6 +1453,8 @@ export default function FootballQuizMVP() {
   const [findPlayerStartedAt, setFindPlayerStartedAt] = useState(null);
   const [findPlayerElapsed, setFindPlayerElapsed] = useState(0);
   const [findPlayerDate, setFindPlayerDate] = useState(getDailyDateKey);
+  const [findPlayerClueCount, setFindPlayerClueCount] = useState(0);
+  const findPlayerSubmittingRef = useRef(false);
 
   const current = questions[questionIndex];
   const currentWhoAmI = whoAmIQuestions[whoAmIIndex];
@@ -1432,13 +1544,10 @@ export default function FootballQuizMVP() {
 
   useEffect(() => {
     const iosLayoutDebug =
-      document.body.classList.contains("capacitor-ios") ||
+      import.meta.env?.DEV ||
       document.body.classList.contains("capacitor-ios-debug");
 
-    if (
-      !import.meta.env?.DEV &&
-      !iosLayoutDebug
-    ) {
+    if (!iosLayoutDebug) {
       return;
     }
 
@@ -1451,6 +1560,16 @@ export default function FootballQuizMVP() {
     console.log("[ios-page]", pageName);
     console.log("[ios-layout]", "mounted", pageName);
   }, [currentHomeViewKey, gameMode, gameStarted, leagueChallengeOpen, leagueChallengePhase]);
+
+  useEffect(() => {
+    const playerHeavyMode =
+      gameStarted &&
+      ["who-am-i", "find-player", "career", "daily-list"].includes(gameMode);
+
+    if (playerHeavyMode || leagueChallengeOpen) {
+      preloadPlayerSearchLazy();
+    }
+  }, [gameMode, gameStarted, leagueChallengeOpen]);
 
 const isHomeScreen =
   !gameStarted &&
@@ -1512,7 +1631,6 @@ const isHomeScreen =
   useEffect(() => {
     const shouldLog =
       import.meta.env?.DEV ||
-      document.body.classList.contains("capacitor-ios") ||
       document.body.classList.contains("capacitor-ios-debug");
 
     if (!shouldLog || !activeMatch?.id || activeMatch.phase !== "round_finished") {
@@ -1542,7 +1660,6 @@ const isHomeScreen =
   useEffect(() => {
     const shouldLog =
       import.meta.env?.DEV ||
-      document.body.classList.contains("capacitor-ios") ||
       document.body.classList.contains("capacitor-ios-debug");
 
     if (!shouldLog || !activeMatch?.id || !activeMatch.is_public) {
@@ -1621,6 +1738,14 @@ const isHomeScreen =
   const leagueFindPlayerRanking = useMemo(
     () => buildPlayerDistanceRanking(currentLeagueFindPlayerTarget, findPlayerPool),
     [currentLeagueFindPlayerTarget, findPlayerPool]
+  );
+  const findPlayerClues = useMemo(
+    () => getFindPlayerClues(findPlayerTarget),
+    [findPlayerTarget]
+  );
+  const leagueFindPlayerClues = useMemo(
+    () => getFindPlayerClues(currentLeagueFindPlayerTarget),
+    [currentLeagueFindPlayerTarget]
   );
   const leagueDayExpired =
     Boolean(activeLeague?.duration_days) &&
@@ -2192,7 +2317,7 @@ const isHomeScreen =
 
   useEffect(() => {
     const timerActive =
-      isTimedQuestion && !selected && !rewardPopup && !wrongPopup && !objectiveProgressUpdate;
+      isTimedQuestion && !selected && !rewardPopup && !objectiveProgressUpdate;
 
     if (!timerActive) return;
 
@@ -2303,15 +2428,46 @@ const isHomeScreen =
     setHighScore((score) => Math.max(score, Number(onlineProfile.best_score) || 0));
     setCoins((value) => Math.max(value, Number(onlineProfile.coins) || 0));
     const onlineStreak = Number(onlineProfile.daily_streak) || 0;
+    const onlineProgressionStats = onlineProfile.progression_stats || {};
     const onlineActivityAt = Number(
-      onlineProfile.progression_stats?.lastDailyActivityAt || 0
+      onlineProgressionStats.lastDailyActivityAt || 0
     );
+    const onlineLastDailyPlayedDate =
+      onlineProgressionStats.lastDailyPlayedDate || "";
+    const onlineDailyListCompletion =
+      onlineProgressionStats.dailyCompletions?.daily_list?.[getDailyDateKey()];
     const storedActivityAt =
       onlineActivityAt || Number(localStorage.getItem(DAILY_STREAK_ACTIVITY_KEY)) || 0;
-    const expired = isDailyStreakExpired(storedActivityAt);
+    const storedLastDailyPlayedDate =
+      onlineLastDailyPlayedDate ||
+      localStorage.getItem("footballQuizLastDailyPlayedDate") ||
+      "";
+    const expired =
+      hasMissedDailyStreakDay(storedLastDailyPlayedDate) ||
+      isDailyStreakExpired(storedActivityAt);
     const hydratedStreak = expired ? 0 : onlineStreak;
 
     setDailyStreak((value) => (expired ? 0 : Math.max(value, hydratedStreak)));
+    if (storedLastDailyPlayedDate) {
+      setLastDailyPlayedDate(storedLastDailyPlayedDate);
+      localStorage.setItem("footballQuizLastDailyPlayedDate", storedLastDailyPlayedDate);
+    }
+    if (onlineDailyListCompletion) {
+      setDailyPlayed(true);
+      localStorage.setItem("ballKnowledgeDailyDate", getDailyDateKey());
+      localStorage.setItem(
+        "ballKnowledgeDailyResult",
+        JSON.stringify({
+          date: getDailyDateKey(),
+          title: onlineDailyListCompletion.title || "Daily Challenge",
+          found: Number(onlineDailyListCompletion.found) || 0,
+          total: Number(onlineDailyListCompletion.total) || 0,
+          coins: Number(onlineDailyListCompletion.coins) || 0,
+          streak: hydratedStreak,
+          restoredFromProfile: true,
+        })
+      );
+    }
     if (storedActivityAt) {
       setLastDailyActivityAt(storedActivityAt);
       localStorage.setItem(DAILY_STREAK_ACTIVITY_KEY, String(storedActivityAt));
@@ -3264,20 +3420,29 @@ const isHomeScreen =
     const today = getDailyDateKey();
     const yesterday = getYesterdayDateKey();
     const now = Date.now();
-    const expired = isDailyStreakExpired(lastDailyActivityAt, now);
+    const expired =
+      hasMissedDailyStreakDay(lastDailyPlayedDate, today) ||
+      isDailyStreakExpired(lastDailyActivityAt, now);
     const baseStreak = expired ? 0 : dailyStreak;
     const baseLastDailyPlayedDate = expired ? "" : lastDailyPlayedDate;
     const previousStreak = baseStreak;
 
     let newStreak = 1;
+    let reward = 0;
 
     if (baseLastDailyPlayedDate === yesterday) {
       newStreak = baseStreak + 1;
     } else if (baseLastDailyPlayedDate === today) {
       newStreak = baseStreak;
+      setStreakRewardEarned(0);
+      return {
+        previousStreak,
+        newStreak,
+        reward: 0,
+      };
     }
 
-    const reward = getStreakReward(newStreak);
+    reward = getStreakReward(newStreak);
 
     setDailyStreak(newStreak);
     setLastDailyPlayedDate(today);
@@ -3348,6 +3513,47 @@ const isHomeScreen =
 
     setDailyPlayed(true);
     setLastDailyResult(result);
+
+    if (effectiveAuthUser && isSupabaseConfigured && supabase) {
+      const today = getDailyDateKey();
+      const nextProgressionStats = {
+        ...(profile?.progression_stats || {}),
+        ...(progressionStats || {}),
+        dailyCompletions: {
+          ...((profile?.progression_stats || {}).dailyCompletions || {}),
+          daily_list: {
+            ...(((profile?.progression_stats || {}).dailyCompletions || {}).daily_list || {}),
+            [today]: {
+              puzzleId: todayChallenge.id,
+              title: todayChallenge.label,
+              found,
+              total: dailyTargetCount,
+              coins: earned,
+              completedAt: new Date().toISOString(),
+            },
+          },
+        },
+        lastDailyPlayedDate: today,
+        lastDailyActivityAt: Date.now(),
+      };
+
+      updateProfile(supabase, effectiveAuthUser.id, {
+        daily_streak: streakInfo?.newStreak || dailyStreak,
+        progression_stats: nextProgressionStats,
+      }).then(({ profile: updatedProfile, error }) => {
+        if (error) {
+          console.warn("Could not save daily completion", error);
+          return;
+        }
+        if (updatedProfile) {
+          setProfile((currentProfile) => ({
+            ...(currentProfile || {}),
+            daily_streak: updatedProfile.daily_streak,
+            progression_stats: updatedProfile.progression_stats,
+          }));
+        }
+      });
+    }
   };
 
   const resetConnectionsGame = (difficulty = null) => {
@@ -3408,9 +3614,47 @@ const startConnectionsGame = (difficulty = null) => {
     setWhoAmIFeedback(null);
     setWhoAmIShake(0);
     setWhoAmIGameOver(false);
+
+    if (dailyQuestion) {
+      filterSearchablePlayerGuessQuestionsLazy([dailyQuestion], "daily-whoami")
+        .then(async (searchableQuestions) => {
+          if (searchableQuestions.length) return;
+
+          const fallbackQuestions = await filterSearchablePlayerGuessQuestionsLazy(
+            WHO_AM_I_QUESTIONS.filter(
+              (question) =>
+                question?.id &&
+                question?.answer &&
+                Array.isArray(question.clues) &&
+                question.clues.length > 0
+            ),
+            "daily-whoami-fallback"
+          );
+          const fallbackQuestion =
+            fallbackQuestions[
+              getSeededIndex(`daily-whoami-fallback:${dateKey}`, fallbackQuestions.length)
+            ];
+
+          if (fallbackQuestion) {
+            setWhoAmIQuestions([fallbackQuestion]);
+            setWhoAmIIndex(0);
+            setWhoAmIClueIndex(0);
+            setWhoAmIInput("");
+            setWhoAmISelectedPlayer(null);
+          }
+        })
+        .catch((error) => {
+          if (import.meta.env?.DEV) {
+            console.warn("Could not validate Daily Who Am I searchability", error);
+          }
+        });
+    }
   };
 
   const startWhoAmIGame = (dateKey = whoAmIDate) => {
+    if (isDateKeyAfterToday(dateKey)) return;
+
+    preloadPlayerSearchLazy();
     playClickSound();
     setShowDailyCompletePopup(false);
     setLeaderboardOpen(false);
@@ -3454,33 +3698,47 @@ const startConnectionsGame = (difficulty = null) => {
       const clueNumber = whoAmIClueIndex + 1;
       const earlyBonus = clueNumber <= 3 ? 50 : clueNumber <= 6 ? 25 : 0;
       const rewardKeyBase = `whoami_daily:${whoAmIDate}:${currentWhoAmI.id}`;
+      const rewardEligible = !isDateKeyBeforeToday(whoAmIDate);
+      const previousResult = getDailyModeResult(
+        "whoami_daily",
+        whoAmIDate,
+        currentWhoAmI.id
+      );
+      const solvedBefore = Boolean(previousResult?.solved);
       setWhoAmIScore((value) => value + points);
       setWhoAmIStreak((value) => value + 1);
-      const solvedXpAwarded = awardXp({
-        key: `${rewardKeyBase}:solved`,
-        amount: 50,
-        label: "Who Am I solved",
-      });
+      const solvedXpAwarded =
+        rewardEligible &&
+        !solvedBefore &&
+        awardXp({
+          key: `${rewardKeyBase}:solved`,
+          amount: 50,
+          label: "Who Am I solved",
+        });
       if (solvedXpAwarded) {
         updateProgressionStats((stats) => addStat(stats, "whoami_solved", 1));
       }
-      if (earlyBonus > 0) {
+      if (rewardEligible && !solvedBefore && earlyBonus > 0) {
         awardXp({
           key: `${rewardKeyBase}:early-${clueNumber}`,
           amount: earlyBonus,
           label: "Early clue bonus",
         });
       }
-      awardOneTimeCoins({
-        key: `${rewardKeyBase}:coins`,
-        amount: 50,
-        title: "Who Am I solved",
-      });
+      if (rewardEligible && !solvedBefore) {
+        awardOneTimeCoins({
+          key: `${rewardKeyBase}:coins`,
+          amount: 50,
+          title: "Who Am I solved",
+        });
+      }
       saveDailyModeResult("whoami_daily", whoAmIDate, currentWhoAmI.id, {
         solved: true,
         gaveUp: false,
         cluesUsed: clueNumber,
         xpAwarded: solvedXpAwarded,
+        replay: solvedBefore,
+        rewardEligible,
       });
       setWhoAmIFeedback({
         type: "correct",
@@ -3532,7 +3790,7 @@ const startConnectionsGame = (difficulty = null) => {
   const loadFindPlayerPool = async () => {
     if (findPlayerPool.length) return findPlayerPool;
 
-    const { players, error } = await fetchFindPlayerPool();
+    const { players, error } = await fetchFindPlayerPoolLazy();
     if (error || !players.length) {
       console.error("Could not load Find the Player pool", error);
       throw new Error("Could not load player data");
@@ -3543,6 +3801,9 @@ const startConnectionsGame = (difficulty = null) => {
   };
 
   const startFindPlayerGame = async (dateKey = findPlayerDate) => {
+    if (isDateKeyAfterToday(dateKey)) return;
+
+    preloadPlayerSearchLazy();
     playClickSound();
     setShowDailyCompletePopup(false);
     setLeaderboardOpen(false);
@@ -3559,6 +3820,7 @@ const startConnectionsGame = (difficulty = null) => {
     setFindPlayerError("");
     setFindPlayerSelected(null);
     setFindPlayerGuesses([]);
+    setFindPlayerClueCount(0);
     setFindPlayerElapsed(0);
     setFindPlayerStartedAt(null);
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -3591,25 +3853,33 @@ const startConnectionsGame = (difficulty = null) => {
     startFindPlayerGame(nextKey);
   };
 
-  const submitFindPlayerGuess = () => {
+  const submitFindPlayerGuess = (playerOverride = null) => {
+    const guessedPlayer = playerOverride || findPlayerSelected;
+
     if (
       findPlayerStatus !== "playing" ||
-      !findPlayerSelected ||
+      !guessedPlayer ||
       !findPlayerTarget
     ) {
       return;
     }
 
-    if (findPlayerGuesses.some((guess) => guess.player.id === findPlayerSelected.id)) {
+    if (findPlayerSubmittingRef.current) return;
+    findPlayerSubmittingRef.current = true;
+    window.setTimeout(() => {
+      findPlayerSubmittingRef.current = false;
+    }, 300);
+
+    if (findPlayerGuesses.some((guess) => guess.player.id === guessedPlayer.id)) {
       setFindPlayerError("You already guessed that player");
       return;
     }
 
     const result =
-      findPlayerRanking.byId.get(findPlayerSelected.id) ||
-      rankGuessAgainstTarget(findPlayerSelected, findPlayerTarget, findPlayerPool);
+      findPlayerRanking.byId.get(guessedPlayer.id) ||
+      rankGuessAgainstTarget(guessedPlayer, findPlayerTarget, findPlayerPool);
     const nextGuess = {
-      player: findPlayerSelected,
+      player: guessedPlayer,
       distance: result.distance,
       rank: result.rank,
       poolSize: result.poolSize || findPlayerRanking.poolSize,
@@ -3622,7 +3892,7 @@ const startConnectionsGame = (difficulty = null) => {
       nextGuess,
       ...findPlayerGuesses.map((guess) => ({ ...guess, latest: false })),
     ].sort((a, b) => (a.rank || 999999) - (b.rank || 999999));
-    const isCorrect = result.distance === 0 || findPlayerSelected.id === findPlayerTarget.id;
+    const isCorrect = result.distance === 0 || guessedPlayer.id === findPlayerTarget.id;
 
     setFindPlayerGuesses(nextGuesses);
     setFindPlayerSelected(null);
@@ -3636,15 +3906,16 @@ const startConnectionsGame = (difficulty = null) => {
         findPlayerTarget.id
       );
       const solvedBefore = Boolean(previousResult?.solved);
+      const rewardEligible = !isDateKeyBeforeToday(findPlayerDate);
       setFindPlayerStatus("won");
 
-      if (solvedBefore) {
+      if (solvedBefore && rewardEligible) {
         awardXp({
           key: `${rewardKeyBase}:replay`,
           amount: 10,
           label: "Replay solve",
         });
-      } else {
+      } else if (rewardEligible) {
         const solvedXpAwarded = awardXp({
           key: `${rewardKeyBase}:solved`,
           amount: 100,
@@ -3677,8 +3948,9 @@ const startConnectionsGame = (difficulty = null) => {
         gaveUp: false,
         attempts: nextGuesses.length,
         time_seconds: findPlayerElapsed,
-        xpAwarded: !solvedBefore,
+        xpAwarded: rewardEligible && !solvedBefore,
         replay: solvedBefore,
+        rewardEligible,
       });
       playCorrectSound();
       return;
@@ -3826,6 +4098,8 @@ const startConnectionsGame = (difficulty = null) => {
   };
 
   const startGame = (mode, options = {}) => {
+    if (mode === "career") preloadPlayerSearchLazy();
+
     const nextRunId = Date.now();
     const startingHighScore = highScore;
     const startingProgression = getProgressionView({
@@ -4808,6 +5082,7 @@ const startConnectionsGame = (difficulty = null) => {
       setLeagueFindPlayerIndex(0);
       setLeagueFindPlayerSelected(null);
       setLeagueFindPlayerGuesses([]);
+      setLeagueFindPlayerClueCount(0);
       setLeagueFindPlayerScore(0);
       setLeagueFindPlayerAttemptTotal(0);
       setLeagueFindPlayerStartedAt(null);
@@ -4852,6 +5127,7 @@ const startConnectionsGame = (difficulty = null) => {
       });
     }
     if (leagueSettings.findPlayerCount > 0 && !leagueQuizQuestions.length && leagueSettings.top10Count <= 0 && leagueSettings.whoamiCount <= 0) {
+      setLeagueFindPlayerClueCount(0);
       setLeagueFindPlayerStartedAt(Date.now());
     }
   };
@@ -4886,6 +5162,7 @@ const startConnectionsGame = (difficulty = null) => {
     if (leagueSettings.findPlayerCount > 0) {
       setLeagueTop10TotalScore(nextTotalTop10Score);
       setLeagueChallengePhase("find-player");
+      setLeagueFindPlayerClueCount(0);
       setLeagueFindPlayerStartedAt(Date.now());
       return;
     }
@@ -4919,6 +5196,7 @@ const startConnectionsGame = (difficulty = null) => {
           setLeagueChallengePhase("whoami");
         } else if (leagueSettings.findPlayerCount > 0) {
           setLeagueChallengePhase("find-player");
+          setLeagueFindPlayerClueCount(0);
           setLeagueFindPlayerStartedAt(Date.now());
         } else {
           completeLeagueChallenge({ top10Score: 0, whoamiScore: 0, findPlayerScore: 0 });
@@ -5056,6 +5334,7 @@ const startConnectionsGame = (difficulty = null) => {
       if (leagueWhoAmIIndex >= leagueWhoAmIQuestions.length - 1) {
         if (leagueSettings.findPlayerCount > 0) {
           setLeagueChallengePhase("find-player");
+          setLeagueFindPlayerClueCount(0);
           setLeagueFindPlayerStartedAt(Date.now());
           return;
         }
@@ -5139,19 +5418,28 @@ const startConnectionsGame = (difficulty = null) => {
     moveToNextLeagueWhoAmI(leagueWhoAmIScore);
   };
 
-  const submitLeagueFindPlayerGuess = () => {
+  const submitLeagueFindPlayerGuess = (playerOverride = null) => {
+    const guessedPlayer = playerOverride || leagueFindPlayerSelected;
+
     if (
       leagueChallengePhase !== "find-player" ||
       !currentLeagueFindPlayerTarget ||
-      !leagueFindPlayerSelected ||
+      !guessedPlayer ||
+      leagueFindPlayerFeedback.startsWith("Correct") ||
       leagueFindPlayerFeedback.startsWith("Answer:")
     ) {
       return;
     }
 
+    if (leagueFindPlayerSubmittingRef.current) return;
+    leagueFindPlayerSubmittingRef.current = true;
+    window.setTimeout(() => {
+      leagueFindPlayerSubmittingRef.current = false;
+    }, 300);
+
     if (
       leagueFindPlayerGuesses.some(
-        (guess) => guess.player.id === leagueFindPlayerSelected.id
+        (guess) => guess.player.id === guessedPlayer.id
       )
     ) {
       setLeagueFindPlayerFeedback("Already guessed");
@@ -5159,14 +5447,14 @@ const startConnectionsGame = (difficulty = null) => {
     }
 
     const result =
-      leagueFindPlayerRanking.byId.get(leagueFindPlayerSelected.id) ||
+      leagueFindPlayerRanking.byId.get(guessedPlayer.id) ||
       rankGuessAgainstTarget(
-        leagueFindPlayerSelected,
+        guessedPlayer,
         currentLeagueFindPlayerTarget,
         findPlayerPool
       );
     const nextGuess = {
-      player: leagueFindPlayerSelected,
+      player: guessedPlayer,
       distance: result.distance,
       rank: result.rank,
       poolSize: result.poolSize || leagueFindPlayerRanking.poolSize,
@@ -5181,7 +5469,7 @@ const startConnectionsGame = (difficulty = null) => {
     ].sort((a, b) => (a.rank || 999999) - (b.rank || 999999));
     const solved =
       result.distance === 0 ||
-      leagueFindPlayerSelected.id === currentLeagueFindPlayerTarget.id;
+      guessedPlayer.id === currentLeagueFindPlayerTarget.id;
     const attempts = nextGuesses.length;
     const sectionDone = solved;
     const earned = sectionDone ? getFindPlayerPoints(attempts, solved) : 0;
@@ -5220,6 +5508,7 @@ const startConnectionsGame = (difficulty = null) => {
       setLeagueFindPlayerGuesses([]);
       setLeagueFindPlayerSelected(null);
       setLeagueFindPlayerFeedback("");
+      setLeagueFindPlayerClueCount(0);
     }, 950);
   };
 
@@ -5254,6 +5543,7 @@ const startConnectionsGame = (difficulty = null) => {
       setLeagueFindPlayerGuesses([]);
       setLeagueFindPlayerSelected(null);
       setLeagueFindPlayerFeedback("");
+      setLeagueFindPlayerClueCount(0);
     }, 1100);
   };
 
@@ -5448,6 +5738,9 @@ const startConnectionsGame = (difficulty = null) => {
 
     const removeMatchLocally = (notice) => {
       setActiveGames((games) =>
+        games.filter(({ match }) => match.id !== matchId)
+      );
+      setPlayNowGames((games) =>
         games.filter(({ match }) => match.id !== matchId)
       );
 
@@ -6187,6 +6480,7 @@ const startConnectionsGame = (difficulty = null) => {
   const startDailyChallenge = () => {
     if (dailyPlayed) return;
 
+    if (isDailyPlayerChallenge) preloadPlayerSearchLazy();
     setShowDailyCompletePopup(false);
     setLeaderboardOpen(false);
     setProfileOpen(false);
@@ -6331,16 +6625,11 @@ const startConnectionsGame = (difficulty = null) => {
     return 0;
   };
 
-  const handleWrongAnswer = (correctAnswer, message = "Wrong") => {
+  const handleWrongAnswer = (correctAnswer) => {
     setStreak(0);
 
     const newLives = Math.max(lives - 1, 0);
     setLives(newLives);
-
-    setWrongPopup({
-      answer: correctAnswer,
-      message,
-    });
 
     playWrongSound();
 
@@ -6351,19 +6640,17 @@ const startConnectionsGame = (difficulty = null) => {
       }
 
       setTimeout(() => {
-        setWrongPopup(null);
         setFinished(true);
       }, 1500);
     } else {
       setTimeout(() => {
-        setWrongPopup(null);
         nextQuestion();
       }, 1200);
     }
   };
 
   const chooseAnswer = (option) => {
-    if (selected || rewardPopup || wrongPopup || objectiveProgressUpdate) return;
+    if (selected || rewardPopup || objectiveProgressUpdate) return;
 
     setSelected(option);
 
@@ -6491,6 +6778,11 @@ const startConnectionsGame = (difficulty = null) => {
   };
 
   const finishDaily = (found, earned) => {
+    if (dailyPlayed || localStorage.getItem("ballKnowledgeDailyDate") === getDailyDateKey()) {
+      setFinished(true);
+      return;
+    }
+
     const streakInfo = awardDailyStreakBonus();
     const totalEarned = earned + streakInfo.reward;
 
@@ -7771,6 +8063,49 @@ const startConnectionsGame = (difficulty = null) => {
     setModeMenuOpen(false);
   };
 
+  const leagueActiveAttempt = activeLeagueDay ? readLeagueAttempt(activeLeagueDay.id) : null;
+  const leagueDashboardRows = (leagueDashboard?.members || []).map((member, index) => {
+    const submission = (leagueDashboard?.submissions || []).find(
+      (item) => item.player_id === member.player_id
+    );
+    const isCurrentUser = member.player_id === playerId;
+    const attempt =
+      isCurrentUser &&
+      leagueActiveAttempt?.leagueDayId === activeLeagueDay?.id &&
+      leagueActiveAttempt?.status === "in_progress"
+        ? leagueActiveAttempt
+        : null;
+    const scoreSource = submission || attempt;
+    const status = submission ? "completed" : attempt ? "in-progress" : "not-played";
+    const totalToday = getLeagueDailyTotal(scoreSource);
+    const scoreItems = getLeagueScoreItems(
+      scoreSource,
+      leagueSettings,
+      leagueTop10MaxPoints,
+      leagueWhoAmIMaxPoints,
+      leagueFindPlayerMaxPoints
+    );
+
+    return {
+      member,
+      rank: index + 1,
+      submission,
+      attempt,
+      scoreSource,
+      status,
+      statusLabel:
+        status === "completed"
+          ? "Completed"
+          : status === "in-progress"
+          ? "In progress"
+          : "Not played yet",
+      totalToday,
+      scoreItems,
+      isCurrentUser,
+      isLeader: index === 0 && (Number(member.total_points) || 0) > 0,
+    };
+  });
+
   const authCard = (
     <motion.div
       className="auth-card"
@@ -7968,9 +8303,11 @@ const startConnectionsGame = (difficulty = null) => {
           backgroundImage: `linear-gradient(rgba(255,255,255,0.05), rgba(0,0,0,0.58)), url(${stadiumBg})`,
         }}
       >
-        <button className="multiplayer-round-back" onClick={closeLeagueChallenge}>
-          ← League
-        </button>
+        <GameTopNav
+          className="multiplayer-round-back"
+          label="League"
+          onClick={closeLeagueChallenge}
+        />
 
         <AnimatePresence>
           {leagueLeaveConfirmOpen && (
@@ -8039,7 +8376,7 @@ const startConnectionsGame = (difficulty = null) => {
           )}
 
           {leagueChallengePhase === "quiz" && currentLeagueQuizQuestion && (
-            <div className="league-challenge-card">
+            <div className="league-challenge-card league-quiz-card">
               <div className="league-quiz-top">
                 <span>
                   Question {leagueQuizIndex + 1}/{leagueSettings.quizCount}
@@ -8052,9 +8389,11 @@ const startConnectionsGame = (difficulty = null) => {
                 </span>
               </div>
 
-              <h2>{currentLeagueQuizQuestion.question}</h2>
+              <h1 className="question-title quiz-question-card neonGlassCard league-question-card">
+                {currentLeagueQuizQuestion.question}
+              </h1>
 
-              <div className="league-answer-grid">
+              <div className="answers-grid neonAnswerGrid league-answer-grid">
                 {currentLeagueQuizQuestion.options.map((option) => {
                   const isCorrect = option === currentLeagueQuizQuestion.answer;
                   const isChosen = leagueQuizSelected === option;
@@ -8064,13 +8403,15 @@ const startConnectionsGame = (difficulty = null) => {
                   return (
                     <button
                       key={option}
-                      className={`${showCorrect ? "correct" : ""} ${
-                        showWrong ? "wrong" : ""
+                      className={`answer-button neonAnswerButton ${
+                        showCorrect ? "correct" : showWrong ? "wrong" : ""
                       }`}
                       disabled={Boolean(leagueQuizSelected)}
                       onClick={() => chooseLeagueQuizAnswer(option)}
                     >
-                      {option}
+                      <span>{option}</span>
+                      {showCorrect && <CheckCircle2 size={28} />}
+                      {showWrong && <XCircle size={28} />}
                     </button>
                   );
                 })}
@@ -8111,36 +8452,6 @@ const startConnectionsGame = (difficulty = null) => {
                   {leagueSettings.maxDailyPoints}
                 </strong>
               </div>
-
-              <AnimatePresence>
-                {leagueTop10Reveal && (
-                  <motion.div
-                    className={`league-rank-reveal ${leagueTop10Reveal.type}`}
-                    initial={{ opacity: 0, scale: 0.9, y: 8 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.96, y: -8 }}
-                    transition={{ duration: 0.18 }}
-                  >
-                    <span>
-                      {leagueTop10Reveal.type === "correct"
-                        ? "FOUND"
-                        : leagueTop10Reveal.type === "wrong"
-                        ? "NOT FOUND"
-                        : leagueTop10Reveal.type === "already"
-                        ? "ALREADY FOUND"
-                        : "SCANNING"}
-                    </span>
-                    <strong>
-                      {leagueTop10Reveal.displayRank > 0
-                        ? `#${leagueTop10Reveal.displayRank}`
-                        : "OUT"}
-                    </strong>
-                    {leagueTop10Reveal.type === "correct" && (
-                      <em>{formatAnswerWithValue(leagueTop10Reveal.answer)}</em>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
               <div className="league-top10-list">
                 {getChallengeAnswers(leagueTop10Challenge).map((answer, index) => {
@@ -8354,28 +8665,56 @@ const startConnectionsGame = (difficulty = null) => {
                 </div>
               </div>
 
-              <div className="find-player-input-row">
-                <PlayerPicker
-                  value={leagueFindPlayerSelected}
-                  onSelect={setLeagueFindPlayerSelected}
-                  placeholder="Search exact player..."
-                  compact
-                  maxSuggestions={5}
+              <div className="find-player-clue-panel">
+                <div className="find-player-clue-list">
+                  {leagueFindPlayerClues.slice(0, leagueFindPlayerClueCount).map((clue) => (
+                    <span key={clue}>{clue}</span>
+                  ))}
+                  {leagueFindPlayerClueCount === 0 && (
+                    <small>Optional clue ready</small>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setLeagueFindPlayerClueCount((count) =>
+                      Math.min(count + 1, leagueFindPlayerClues.length)
+                    )
+                  }
                   disabled={
+                    leagueFindPlayerClueCount >= leagueFindPlayerClues.length ||
                     leagueFindPlayerFeedback.startsWith("Correct") ||
                     leagueFindPlayerFeedback.startsWith("Answer:")
                   }
-                />
-                <button
-                  className="daily-submit-button"
-                  onClick={submitLeagueFindPlayerGuess}
-                  disabled={
-                    !leagueFindPlayerSelected ||
-                    leagueFindPlayerFeedback.startsWith("Answer:")
+                >
+                  Reveal clue
+                </button>
+              </div>
+
+              <div className="find-player-input-row">
+                <React.Suspense
+                  fallback={
+                    <input
+                      className="player-picker-input"
+                      placeholder="Loading player search..."
+                      disabled
+                    />
                   }
                 >
-                  Guess
-                </button>
+                  <PlayerPicker
+                    value={leagueFindPlayerSelected}
+                    onSelect={setLeagueFindPlayerSelected}
+                    onSubmit={submitLeagueFindPlayerGuess}
+                    autoSubmitOnSelect
+                    placeholder="Search exact player..."
+                    compact
+                    maxSuggestions={5}
+                    disabled={
+                      leagueFindPlayerFeedback.startsWith("Correct") ||
+                      leagueFindPlayerFeedback.startsWith("Answer:")
+                    }
+                  />
+                </React.Suspense>
                 <button
                   className="find-player-give-up-button"
                   onClick={giveUpLeagueFindPlayer}
@@ -8482,13 +8821,12 @@ const startConnectionsGame = (difficulty = null) => {
           backgroundImage: `linear-gradient(rgba(255,255,255,0.04), rgba(0,0,0,0.58)), url(${quizBg})`,
         }}
       >
-        <button
+        <GameTopNav
           className="multiplayer-round-back"
+          label="Save & Exit"
           onClick={() => submitMultiplayerRoundScore(multiplayerRoundScore)}
           disabled={isSubmittingRound || multiplayerLoading}
-        >
-          Save & Exit
-        </button>
+        />
 
         <div className="multiplayer-round-card">
           <div className={`difficulty-pill ${getCategoryClass(activeRound?.category)}`}>
@@ -8610,8 +8948,9 @@ const startConnectionsGame = (difficulty = null) => {
         {xpToastOverlay}
 
         <ScreenTransition className="connections-difficulty-screen">
-          <button
+          <GameTopNav
             className="connections-back-button"
+            label="Back"
             onClick={() => {
               playClickSound();
               setConnectionsDifficultyPickerOpen(false);
@@ -8619,9 +8958,7 @@ const startConnectionsGame = (difficulty = null) => {
               setGameMode("general");
               setGameStarted(false);
             }}
-          >
-            Back
-          </button>
+          />
 
           <div className="connections-difficulty-panel">
             <div className="connections-difficulty-hero">
@@ -9250,7 +9587,7 @@ const startConnectionsGame = (difficulty = null) => {
               transition={{ type: "spring", stiffness: 160, damping: 14 }}
             >
               <div className="multiplayer-topbar">
-                <button onClick={goBackMultiplayer}>← Back</button>
+                <GameTopNav label="Back" onClick={goBackMultiplayer} />
               </div>
 
               <div className="multiplayer-badge">
@@ -9510,6 +9847,16 @@ const startConnectionsGame = (difficulty = null) => {
                                   disabled={multiplayerLoading}
                                 >
                                   {ctaText}
+                                </button>
+
+                                <button
+                                  className="delete-match-button leave-play-now-button"
+                                  onClick={() => requestDeleteMatch(match)}
+                                  disabled={Boolean(deletingMatchId)}
+                                  aria-label="Leave random match"
+                                >
+                                  <Trash2 size={16} />
+                                  <span>Leave</span>
                                 </button>
                               </div>
                             </div>
@@ -9990,7 +10337,7 @@ const startConnectionsGame = (difficulty = null) => {
               {multiplayerStep === "league-dashboard" && leagueDashboard && (
                 <div className="league-dashboard">
                   <div className="league-dashboard-hero">
-                    <div>
+                    <div className="league-dashboard-title-block">
                       <div className="league-kicker">
                         <BKIcon name="league" size={22} /> League
                       </div>
@@ -10026,7 +10373,12 @@ const startConnectionsGame = (difficulty = null) => {
                       !activeLeagueSubmission && !leagueDayExpired ? "pulse" : ""
                     } ${leagueDayExpired ? "finished" : ""}`}
                   >
-                    <strong>Today's Challenge</strong>
+                    <div className="league-daily-card-top">
+                      <strong>Today's Challenge</strong>
+                      <span className="league-daily-max">
+                        Max {leagueSettings.maxDailyPoints} pts
+                      </span>
+                    </div>
                     {leagueDayExpired ? (
                       <>
                         <span>League finished</span>
@@ -10038,6 +10390,20 @@ const startConnectionsGame = (difficulty = null) => {
                           Today's score: {activeLeagueSubmission.total_points}/
                           {leagueSettings.maxDailyPoints}
                         </span>
+                        <div className="league-daily-mini-stats">
+                          {getLeagueScoreItems(
+                            activeLeagueSubmission,
+                            leagueSettings,
+                            leagueTop10MaxPoints,
+                            leagueWhoAmIMaxPoints,
+                            leagueFindPlayerMaxPoints
+                          ).map((item) => (
+                            <span key={item.key}>
+                              <em>{item.label}</em>
+                              <b>{item.display}</b>
+                            </span>
+                          ))}
+                        </div>
                         <small>Come back tomorrow</small>
                       </>
                     ) : (
@@ -10051,66 +10417,92 @@ const startConnectionsGame = (difficulty = null) => {
                   </div>
 
                   <div className="league-section-title">Leaderboard</div>
-                  <div className="league-leaderboard">
-                    {leagueDashboard.members.map((member, index) => (
+                  <div className="league-leaderboard premium-league-table">
+                    {leagueDashboardRows.map((row) => (
                       <div
-                        className={`league-row ${member.player_id === playerId ? "current-user" : ""}`}
-                        key={member.id}
+                        className={`league-row premium-league-row ${
+                          row.isCurrentUser ? "current-user" : ""
+                        } ${row.isLeader ? "league-leader" : ""}`}
+                        key={row.member.id}
                       >
                         <div className="league-rank">
-                          {index + 1}
+                          <span>#{row.rank}</span>
                         </div>
-                        <PlayerAvatar
-                          profile={getSocialProfile(member.player_id, member.username)}
-                          size="small"
-                        />
-                        <div>
-                          <strong>{member.username}</strong>
-                          <small>{member.days_played || 0} days played</small>
+                        <div className="league-player-cell">
+                          <PlayerAvatar
+                            profile={getSocialProfile(row.member.player_id, row.member.username)}
+                            size="small"
+                          />
+                          <div className="league-player-copy">
+                            <strong>{row.member.username}</strong>
+                            <small>{row.member.days_played || 0} days played</small>
+                          </div>
                         </div>
-                        <b>{member.total_points || 0}</b>
+                        <div className={`league-status-pill ${row.status}`}>
+                          {row.statusLabel}
+                        </div>
+                        <div className="league-score-pill-grid">
+                          {row.scoreItems.length > 0 ? (
+                            row.scoreItems.map((item) => (
+                              <span className="league-score-pill" key={item.key}>
+                                <em>{item.label}</em>
+                                <b>{item.display}</b>
+                              </span>
+                            ))
+                          ) : (
+                            <span className="league-score-pill muted">
+                              <em>Today</em>
+                              <b>-</b>
+                            </span>
+                          )}
+                        </div>
+                        <div className="league-total-stack">
+                          <span>Today</span>
+                          <strong>{row.totalToday}</strong>
+                        </div>
+                        <div className="league-total-stack overall">
+                          <span>Total</span>
+                          <strong>{row.member.total_points || 0}</strong>
+                        </div>
                       </div>
                     ))}
                   </div>
 
                   <div className="league-section-title">Today</div>
-                  <div className="league-results-list">
-                    {leagueDashboard.members.map((member) => {
-                      const submission = leagueDashboard.submissions.find(
-                        (item) => item.player_id === member.player_id
-                      );
-
-                      return (
-                        <div className="league-result-row" key={member.id}>
-                          <div className="league-result-player">
-                            <PlayerAvatar
-                              profile={getSocialProfile(member.player_id, member.username)}
-                              size="small"
-                            />
-                            <strong>{member.username}</strong>
+                  <div className="league-results-list premium-today-list">
+                    {leagueDashboardRows.map((row) => (
+                      <div className={`league-result-row premium-today-row ${row.status}`} key={row.member.id}>
+                        <div className="league-result-player">
+                          <PlayerAvatar
+                            profile={getSocialProfile(row.member.player_id, row.member.username)}
+                            size="small"
+                          />
+                          <div className="league-player-copy">
+                            <strong>{row.member.username}</strong>
+                            <small>{row.statusLabel}</small>
                           </div>
-                          {submission ? (
-                            <span>
-                              {leagueSettings.quizCount > 0
-                                ? `Quiz ${submission.quiz_score}/${leagueSettings.quizCount} • `
-                                : ""}
-                              {leagueSettings.top10Count > 0
-                                ? `Top 10 ${submission.top10_score}/${leagueTop10MaxPoints} • `
-                                : ""}
-                              {leagueSettings.whoamiCount > 0
-                                ? `Who Am I ${submission.whoami_score || 0}/${leagueSettings.whoamiCount * 10} • `
-                                : ""}
-                              {leagueSettings.findPlayerCount > 0
-                                ? `Find ${submission.find_player_score || 0}/${leagueSettings.findPlayerCount * 10} • `
-                                : ""}
-                              <b>{submission.total_points} pts</b>
-                            </span>
-                          ) : (
-                            <span>Not played yet</span>
-                          )}
                         </div>
-                      );
-                    })}
+                        <div className="league-today-score-grid">
+                          {row.scoreItems.length > 0 ? (
+                            row.scoreItems.map((item) => (
+                              <span className="league-score-pill" key={item.key}>
+                                <em>{item.label}</em>
+                                <b>{item.display}</b>
+                              </span>
+                            ))
+                          ) : (
+                            <span className="league-score-pill muted">
+                              <em>Score</em>
+                              <b>-</b>
+                            </span>
+                          )}
+                          <span className="league-score-pill total">
+                            <em>Total today</em>
+                            <b>{row.totalToday}/{leagueSettings.maxDailyPoints}</b>
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
                   {leagueExitConfirmOpen && (
@@ -10200,9 +10592,12 @@ const startConnectionsGame = (difficulty = null) => {
                   <button onClick={refreshMultiplayerMatch} disabled={multiplayerLoading}>
                     {multiplayerLoading ? "Checking..." : "Check Now"}
                   </button>
-                  <button className="multiplayer-back-button" onClick={goBackMultiplayer}>
-                    Back home
-                  </button>
+                  <GameTopNav
+                    className="multiplayer-back-button"
+                    label="Home"
+                    variant="home"
+                    onClick={goBackMultiplayer}
+                  />
                 </div>
               )}
 
@@ -10550,8 +10945,16 @@ const startConnectionsGame = (difficulty = null) => {
               {matchDeleteCandidate && (
                 <div className="match-delete-overlay">
                   <div className="match-delete-modal">
-                    <strong>Delete this match?</strong>
-                    <span>This removes it from your Active Matches.</span>
+                    <strong>
+                      {matchDeleteCandidate.is_public
+                        ? "Leave this random match?"
+                        : "Delete this match?"}
+                    </strong>
+                    <span>
+                      {matchDeleteCandidate.is_public
+                        ? "This removes the Play Now match from Active Games."
+                        : "This removes it from your Active Matches."}
+                    </span>
                     <div>
                       <button onClick={cancelDeleteMatch}>Cancel</button>
                       <button
@@ -10560,7 +10963,11 @@ const startConnectionsGame = (difficulty = null) => {
                         disabled={deletingMatchId === matchDeleteCandidate.id}
                       >
                         {deletingMatchId === matchDeleteCandidate.id
-                          ? "Deleting..."
+                          ? matchDeleteCandidate.is_public
+                            ? "Leaving..."
+                            : "Deleting..."
+                          : matchDeleteCandidate.is_public
+                          ? "Leave"
                           : "Delete"}
                       </button>
                     </div>
@@ -10840,15 +11247,14 @@ const startConnectionsGame = (difficulty = null) => {
               </span>
             </button>
 
-            <button
+            <GameTopNav
               className="mode-back-button"
+              label="Back"
               onClick={() => {
                 playClickSound();
                 setModeMenuOpen(false);
               }}
-            >
-              Back
-            </button>
+            />
           </div>
         )}
           </ScreenTransition>
@@ -10873,8 +11279,9 @@ const startConnectionsGame = (difficulty = null) => {
         {coinRewardToastOverlay}
         {xpToastOverlay}
         <ScreenTransition className="whoami-screen">
-          <button
+          <GameTopNav
             className="connections-back-button whoami-back-button premiumBackButton"
+            label="Back"
             onClick={() => {
               playClickSound();
               setGameStarted(false);
@@ -10882,9 +11289,7 @@ const startConnectionsGame = (difficulty = null) => {
               setGameMode("general");
               setWhoAmIFeedback(null);
             }}
-          >
-            Back
-          </button>
+          />
 
           <motion.div
             className={`whoami-card ${whoAmIShake ? "shake" : ""}`}
@@ -11029,17 +11434,16 @@ const startConnectionsGame = (difficulty = null) => {
         {coinRewardToastOverlay}
         {xpToastOverlay}
         <ScreenTransition className="whoami-screen find-player-screen">
-          <button
+          <GameTopNav
             className="connections-back-button whoami-back-button"
+            label="Back"
             onClick={() => {
               playClickSound();
               setGameStarted(false);
               setModeMenuOpen(true);
               setGameMode("general");
             }}
-          >
-            Back
-          </button>
+          />
 
           <motion.div className="whoami-card find-player-card">
             <div className="whoami-top">
@@ -11121,22 +11525,52 @@ const startConnectionsGame = (difficulty = null) => {
                   </div>
                 </div>
 
+                <div className="find-player-clue-panel">
+                  <div className="find-player-clue-list">
+                    {findPlayerClues.slice(0, findPlayerClueCount).map((clue) => (
+                      <span key={clue}>{clue}</span>
+                    ))}
+                    {findPlayerClueCount === 0 && (
+                      <small>Optional clue ready</small>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFindPlayerClueCount((count) =>
+                        Math.min(count + 1, findPlayerClues.length)
+                      )
+                    }
+                    disabled={
+                      findPlayerClueCount >= findPlayerClues.length ||
+                      findPlayerStatus !== "playing"
+                    }
+                  >
+                    Reveal clue
+                  </button>
+                </div>
+
                 {findPlayerStatus === "playing" && (
                   <div className="find-player-input-row">
-                    <PlayerPicker
-                      value={findPlayerSelected}
-                      onSelect={setFindPlayerSelected}
-                      placeholder="Search exact player..."
-                      compact
-                      maxSuggestions={5}
-                    />
-                    <button
-                      className="daily-submit-button"
-                      disabled={!findPlayerSelected}
-                      onClick={submitFindPlayerGuess}
+                    <React.Suspense
+                      fallback={
+                        <input
+                          className="player-picker-input"
+                          placeholder="Loading player search..."
+                          disabled
+                        />
+                      }
                     >
-                      Guess
-                    </button>
+                      <PlayerPicker
+                        value={findPlayerSelected}
+                        onSelect={setFindPlayerSelected}
+                        onSubmit={submitFindPlayerGuess}
+                        autoSubmitOnSelect
+                        placeholder="Search exact player..."
+                        compact
+                        maxSuggestions={5}
+                      />
+                    </React.Suspense>
                     <button
                       className="find-player-give-up-button"
                       type="button"
@@ -11210,7 +11644,7 @@ const startConnectionsGame = (difficulty = null) => {
 
     return (
       <div
-        className="fullscreen-bg"
+        className="fullscreen-bg connections-game-bg"
         style={{
           backgroundImage: `linear-gradient(rgba(255,255,255,0.05), rgba(0,0,0,0.48)), url(${stadiumBg})`,
         }}
@@ -11221,8 +11655,9 @@ const startConnectionsGame = (difficulty = null) => {
         {!connectionsRewardModal && xpToastOverlay}
         {connectionsRewardOverlay}
         <ScreenTransition className="connections-screen">
-          <button
+          <GameTopNav
             className="connections-back-button"
+            label="Back"
             onClick={() => {
               playClickSound();
               setGameStarted(false);
@@ -11230,9 +11665,7 @@ const startConnectionsGame = (difficulty = null) => {
               setGameMode("general");
               setConnectionsFeedback(null);
             }}
-          >
-            Back
-          </button>
+          />
 
           <div className="connections-card">
             <div className="connections-header">
@@ -11283,25 +11716,27 @@ const startConnectionsGame = (difficulty = null) => {
               </AnimatePresence>
             </div>
 
-            <AnimatePresence mode="wait">
-              {connectionsFeedback && (
-                <motion.div
-                  key={`${connectionsFeedback.type}-${connectionsShake}`}
-                  className={`connections-feedback ${connectionsFeedback.type}`}
-                  initial={{ opacity: 0, y: 10, scale: 0.96 }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                    scale: 1,
-                    x: connectionsFeedback.type === "wrong" ? [0, -8, 8, -5, 5, 0] : 0,
-                  }}
-                  exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                  transition={{ duration: 0.25 }}
-                >
-                  {connectionsFeedback.text}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div className="connections-feedback-slot">
+              <AnimatePresence mode="wait">
+                {connectionsFeedback && (
+                  <motion.div
+                    key={`${connectionsFeedback.type}-${connectionsShake}`}
+                    className={`connections-feedback ${connectionsFeedback.type}`}
+                    initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      scale: 1,
+                      x: connectionsFeedback.type === "wrong" ? [0, -5, 5, -3, 3, 0] : 0,
+                    }}
+                    exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    {connectionsFeedback.text}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {!connectionsGameComplete && !connectionsGameOver && (
               <motion.div
@@ -11421,7 +11856,7 @@ const startConnectionsGame = (difficulty = null) => {
   if (gameMode === "daily-list" && !finished) {
     return (
       <div
-        className="fullscreen-bg"
+        className="fullscreen-bg daily-game-bg"
         style={{
           backgroundImage: `linear-gradient(rgba(255,255,255,0.03), rgba(0,0,0,0.58)), url(${quizBg})`,
         }}
@@ -11429,9 +11864,12 @@ const startConnectionsGame = (difficulty = null) => {
         {coinShopModal}
         {dailyRewardMeterModal}
         {xpToastOverlay}
-        <button className="home-button premiumBackButton" onClick={restart}>
-          ← Home
-        </button>
+      <GameTopNav
+        className="home-button premiumBackButton"
+        label="Home"
+        variant="home"
+        onClick={restart}
+      />
 
         {dailyChallengeUnavailable ? (
           <div className="daily-list-wrapper">
@@ -11479,22 +11917,6 @@ const startConnectionsGame = (difficulty = null) => {
                   {formatAnswerWithValue(dailyReveal.answer)}
                 </div>
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-            <AnimatePresence>
-          {wrongPopup && (
-            <motion.div
-              className="wrong-overlay"
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.1 }}
-              transition={{ duration: 0.25 }}
-            >
-              <div className="wrong-title">{wrongPopup.message || "WRONG"}</div>
-              <div className="wrong-answer">{wrongPopup.answer}</div>
-              <div className="wrong-life">-1 LIFE <BKIcon name="lives" size={18} /></div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -11881,15 +12303,15 @@ const startConnectionsGame = (difficulty = null) => {
       {dailyRewardMeterModal}
       {xpToastOverlay}
       {objectiveProgressModal}
-      <button
+      <GameTopNav
         className="home-button"
+        label="Home"
+        variant="home"
         onClick={() => {
           playClickSound();
           restart();
         }}
-      >
-        ← Home
-      </button>
+      />
 
       <AnimatePresence>
         {rewardPopup && (
@@ -11912,22 +12334,6 @@ const startConnectionsGame = (difficulty = null) => {
             >
               COLLECT
             </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {wrongPopup && (
-          <motion.div
-            className="wrong-overlay"
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.1 }}
-            transition={{ duration: 0.25 }}
-          >
-              <div className="wrong-title">{wrongPopup.message || "WRONG"}</div>
-            <div className="wrong-answer">Correct: {wrongPopup.answer}</div>
-            <div className="wrong-life">-1 LIFE <BKIcon name="lives" size={18} /></div>
           </motion.div>
         )}
       </AnimatePresence>

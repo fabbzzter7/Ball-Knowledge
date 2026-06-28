@@ -9,8 +9,27 @@ import {
   getTodayKey,
   hasLeagueTop10ChallengeId,
 } from "./leagueChallengeUtils";
-import { fetchFindPlayerPool } from "./playerService";
 import { pickDailyFindPlayerTargets } from "./playerDistance";
+
+async function fetchFindPlayerPoolLazy() {
+  const { fetchFindPlayerPool } = await import("./playerService");
+  return fetchFindPlayerPool();
+}
+
+async function getSearchableLeagueWhoAmIQuestionIds(seed, count) {
+  const { filterSearchablePlayerGuessQuestions } = await import("./playerService");
+  const candidateIds = buildLeagueWhoAmIQuestionIds(
+    seed,
+    Math.max(count * 4, count + 12)
+  );
+  const candidates = getLeagueWhoAmIQuestionsByIds(candidateIds);
+  const searchableQuestions = await filterSearchablePlayerGuessQuestions(
+    candidates,
+    "league-whoami"
+  );
+
+  return searchableQuestions.slice(0, count).map((question) => question.id);
+}
 
 export function generateLeagueCode() {
   return `LG-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -307,13 +326,13 @@ export async function getOrCreateLeagueDay(supabase, league) {
   const settings = getLeagueSettingsSummary(league);
   const seed = `${league.id}:${dayKey}`;
   const quizQuestionIds = buildLeagueDailyQuestionIds(seed, settings.quizCount);
-  const whoamiQuestionIds = buildLeagueWhoAmIQuestionIds(
-    seed,
-    settings.whoamiCount
-  );
+  const whoamiQuestionIds =
+    settings.whoamiCount > 0
+      ? await getSearchableLeagueWhoAmIQuestionIds(seed, settings.whoamiCount)
+      : [];
   let findPlayerTargetIds = [];
   if (settings.findPlayerCount > 0) {
-    const { players, error: playerPoolError } = await fetchFindPlayerPool();
+    const { players, error: playerPoolError } = await fetchFindPlayerPoolLazy();
     if (playerPoolError || players.length < settings.findPlayerCount) {
       return {
         leagueDay: null,
@@ -344,7 +363,15 @@ export async function getOrCreateLeagueDay(supabase, league) {
     const savedWhoAmIIds = toArrayField(existingDay.whoami_question_ids);
     const savedFindPlayerIds = toArrayField(existingDay.find_player_target_ids);
     const savedQuizQuestions = getLeagueQuestionsByIds(savedQuizIds);
-    const savedWhoAmIQuestions = getLeagueWhoAmIQuestionsByIds(savedWhoAmIIds);
+    const savedWhoAmIQuestions = settings.whoamiCount > 0
+      ? await (async () => {
+          const { filterSearchablePlayerGuessQuestions } = await import("./playerService");
+          return filterSearchablePlayerGuessQuestions(
+            getLeagueWhoAmIQuestionsByIds(savedWhoAmIIds),
+            "saved-league-whoami"
+          );
+        })()
+      : [];
     const findPlayerIdSet = new Set(findPlayerTargetIds);
     const needsQuizIds =
       settings.quizCount > 0 &&

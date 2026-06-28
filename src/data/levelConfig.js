@@ -40,7 +40,7 @@ export const LEVELS = [
     color: "yellow",
     objectives: [
       { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 25 },
-      { type: "xp", label: "XP earned", statKey: "xp_total", required: 5000 },
+      { type: "xp", label: "XP earned", statKey: "xp_total", required: 4500 },
       { type: "find_player", label: "Find the Player solved", statKey: "find_player_solved", required: 1 },
       { type: "daily", label: "Daily Challenges completed", statKey: "daily_challenges_completed", required: 3 },
     ],
@@ -52,7 +52,7 @@ export const LEVELS = [
     color: "yellow",
     objectives: [
       { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 35 },
-      { type: "xp", label: "XP earned", statKey: "xp_total", required: 9000 },
+      { type: "xp", label: "XP earned", statKey: "xp_total", required: 8000 },
       { type: "connections", label: "Connections completed", statKey: "connections_completed", required: 3 },
       { type: "whoami", label: "Who Am I solved", statKey: "whoami_solved", required: 5 },
     ],
@@ -64,7 +64,7 @@ export const LEVELS = [
     color: "blue",
     objectives: [
       { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 40 },
-      { type: "xp", label: "XP earned", statKey: "xp_total", required: 15000 },
+      { type: "xp", label: "XP earned", statKey: "xp_total", required: 12000 },
       { type: "daily", label: "Daily Challenges completed", statKey: "daily_challenges_completed", required: 7 },
       { type: "find_player", label: "Find the Player solved", statKey: "find_player_solved", required: 5 },
     ],
@@ -76,7 +76,7 @@ export const LEVELS = [
     color: "blue",
     objectives: [
       { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 50 },
-      { type: "xp", label: "XP earned", statKey: "xp_total", required: 24000 },
+      { type: "xp", label: "XP earned", statKey: "xp_total", required: 17000 },
       { type: "league", label: "League days completed", statKey: "league_days_completed", required: 3 },
       { type: "h2h", label: "H2H wins", statKey: "h2h_wins", required: 3 },
     ],
@@ -88,7 +88,7 @@ export const LEVELS = [
     color: "purple",
     objectives: [
       { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 60 },
-      { type: "xp", label: "XP earned", statKey: "xp_total", required: 38000 },
+      { type: "xp", label: "XP earned", statKey: "xp_total", required: 30000 },
       { type: "connections", label: "Connections completed", statKey: "connections_completed", required: 10 },
       { type: "whoami", label: "Who Am I solved", statKey: "whoami_solved", required: 15 },
     ],
@@ -100,7 +100,7 @@ export const LEVELS = [
     color: "purple",
     objectives: [
       { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 70 },
-      { type: "xp", label: "XP earned", statKey: "xp_total", required: 56000 },
+      { type: "xp", label: "XP earned", statKey: "xp_total", required: 50000 },
       { type: "daily", label: "Daily Challenges completed", statKey: "daily_challenges_completed", required: 20 },
       { type: "league", label: "League days completed", statKey: "league_days_completed", required: 8 },
     ],
@@ -112,7 +112,7 @@ export const LEVELS = [
     color: "orange",
     objectives: [
       { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 90 },
-      { type: "xp", label: "XP earned", statKey: "xp_total", required: 80000 },
+      { type: "xp", label: "XP earned", statKey: "xp_total", required: 75000 },
       { type: "find_player", label: "Find the Player solved", statKey: "find_player_solved", required: 20 },
       { type: "h2h", label: "H2H wins", statKey: "h2h_wins", required: 10 },
     ],
@@ -124,7 +124,7 @@ export const LEVELS = [
     color: "orange",
     objectives: [
       { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 100 },
-      { type: "xp", label: "XP earned", statKey: "xp_total", required: 112000 },
+      { type: "xp", label: "XP earned", statKey: "xp_total", required: 100000 },
       { type: "connections", label: "Connections completed", statKey: "connections_completed", required: 25 },
       { type: "daily", label: "Daily Challenges completed", statKey: "daily_challenges_completed", required: 35 },
     ],

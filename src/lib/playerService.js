@@ -31,81 +31,8 @@ function normalizePlayer(player = {}) {
     clubs: Array.isArray(player.clubs) ? player.clubs : [],
     main_clubs: Array.isArray(player.main_clubs) ? player.main_clubs : [],
     popularity_score: Number(player.popularity_score) || 0,
+    relevance_score: Number(player.relevance_score) || Number(player.popularity_score) || 0,
   };
-}
-
-function parseCsvRow(row = "") {
-  const cells = [];
-  let current = "";
-  let quoted = false;
-
-  for (let index = 0; index < row.length; index += 1) {
-    const char = row[index];
-    const next = row[index + 1];
-
-    if (char === '"' && quoted && next === '"') {
-      current += '"';
-      index += 1;
-    } else if (char === '"') {
-      quoted = !quoted;
-    } else if (char === "," && !quoted) {
-      cells.push(current);
-      current = "";
-    } else {
-      current += char;
-    }
-  }
-
-  cells.push(current);
-  return cells.map((cell) => cell.trim());
-}
-
-function slugifyPlayerId(value = "") {
-  return normalizePlayerSearch(value).replace(/\s+/g, "_");
-}
-
-function parseFifaCsvPlayers(csvText = "") {
-  const rows = String(csvText).split(/\r?\n/).filter(Boolean);
-  const [headerRow, ...dataRows] = rows;
-  if (!headerRow || dataRows.length === 0) return [];
-
-  const headers = parseCsvRow(headerRow);
-  const indexByHeader = new Map(headers.map((header, index) => [header, index]));
-  const getCell = (row, header) => row[indexByHeader.get(header)] || "";
-
-  return dataRows
-    .map(parseCsvRow)
-    .map((row) => {
-      const shortName = getCell(row, "name");
-      const fullName = getCell(row, "full_name");
-      const displayName = fullName || shortName;
-      if (!displayName) return null;
-
-      const birthYear = Number(String(getCell(row, "birth_date")).split("/").at(-1)) || null;
-      const positions = getCell(row, "positions")
-        .split(",")
-        .map((position) => position.trim())
-        .filter(Boolean);
-      const overall = Number(getCell(row, "overall_rating")) || 0;
-
-      return {
-        id: `fifa_${slugifyPlayerId(displayName || shortName)}`,
-        name: displayName,
-        full_name: fullName || displayName,
-        search_name: normalizePlayerSearch(displayName),
-        aliases: uniqueByNormalized([shortName, fullName, displayName]),
-        nationality: getCell(row, "nationality"),
-        position: positions[0] || "",
-        position_group: positions[0] || "",
-        birth_year: birthYear,
-        clubs: [],
-        main_clubs: [],
-        national_team: getCell(row, "national_team") || getCell(row, "nationality"),
-        popularity_score: overall ? overall * 10 : 0,
-        source: "fifa_csv",
-      };
-    })
-    .filter(Boolean);
 }
 
 const IMPORTANT_FALLBACK_PLAYERS = [
@@ -365,8 +292,41 @@ const IMPORTANT_FALLBACK_PLAYERS = [
     source: "manual_cult_seed_2026",
     source_id: "emmanuel_emenike",
   },
+  {
+    id: "essam_el_hadary",
+    name: "Essam El Hadary",
+    full_name: "Essam El-Hadary",
+    search_name: "essam el hadary",
+    aliases: [
+      "El Hadary",
+      "El-Hadary",
+      "Hadary",
+      "Essam",
+      "Essam El Hadary",
+      "Essam El-Hadary",
+    ],
+    nationality: "Egypt",
+    position: "Goalkeeper",
+    position_group: "Goalkeeper",
+    birth_year: 1973,
+    active_from: 1993,
+    active_to: 2020,
+    is_retired: true,
+    clubs: ["Al Ahly", "Sion", "Ismaily", "Zamalek", "Al Taawoun"],
+    main_clubs: ["Al Ahly", "Egypt"],
+    national_team: "Egypt",
+    difficulty: "Hard",
+    popularity_score: 760,
+    source: "manual_cult_seed_2026",
+    source_id: "essam_el_hadary",
+  },
 ];
 
+const ALWAYS_CURATED_PLAYER_IDS = new Set(
+  [...STARTER_PLAYERS, ...LEGEND_PLAYERS, ...IMPORTANT_FALLBACK_PLAYERS]
+    .map((player) => player?.id)
+    .filter(Boolean)
+);
 const BASE_LOCAL_PLAYER_INDEX = mergeDuplicatePlayers([
   ...STARTER_PLAYERS,
   ...LEGEND_PLAYERS,
@@ -374,24 +334,58 @@ const BASE_LOCAL_PLAYER_INDEX = mergeDuplicatePlayers([
 ]).map(normalizePlayer);
 let cachedSearchIndexPromise = null;
 let cachedLocalPlayerIndexPromise = null;
+let cachedCuratedCsvPlayersPromise = null;
+
+function isPlayerDebugEnabled() {
+  if (import.meta.env?.DEV) return true;
+  if (typeof document === "undefined") return false;
+  return document.body.classList.contains("capacitor-ios-debug");
+}
+
+function isCapacitorIosRuntime() {
+  if (typeof document === "undefined") return false;
+  return document.body.classList.contains("capacitor-ios");
+}
+
+async function loadCuratedCsvPlayers() {
+  if (cachedCuratedCsvPlayersPromise) return cachedCuratedCsvPlayersPromise;
+
+  if (isPlayerDebugEnabled()) console.time?.("[players] load curated csv chunk");
+  cachedCuratedCsvPlayersPromise = import("../data/curatedCsvPlayers")
+    .then((module) => {
+      const players = module.CURATED_CSV_PLAYERS || [];
+      if (isPlayerDebugEnabled()) console.log("[players] curated csv loaded", players.length);
+      return players;
+    })
+    .finally(() => {
+      if (isPlayerDebugEnabled()) console.timeEnd?.("[players] load curated csv chunk");
+    });
+
+  return cachedCuratedCsvPlayersPromise;
+}
 
 async function loadLocalPlayerIndex() {
   if (cachedLocalPlayerIndexPromise) return cachedLocalPlayerIndexPromise;
 
-  cachedLocalPlayerIndexPromise = (async () => {
-    try {
-      const csvModule = await import("../data/fifa_players.csv?raw");
-      const csvPlayers = parseFifaCsvPlayers(csvModule.default || "");
-
-      return mergeDuplicatePlayers([
+  if (isPlayerDebugEnabled()) console.time?.("[players] build active player index");
+  cachedLocalPlayerIndexPromise = loadCuratedCsvPlayers()
+    .then((curatedCsvPlayers) => {
+      const activePlayers = mergeDuplicatePlayers([
         ...BASE_LOCAL_PLAYER_INDEX,
-        ...csvPlayers,
+        ...curatedCsvPlayers,
       ]).map(normalizePlayer);
-    } catch (error) {
-      console.warn("Could not load imported CSV player index", error);
+      if (isPlayerDebugEnabled()) {
+        console.log("[players] active player index ready", activePlayers.length);
+      }
+      return activePlayers;
+    })
+    .catch((error) => {
+      console.warn("Could not load curated CSV player index", error);
       return BASE_LOCAL_PLAYER_INDEX;
-    }
-  })();
+    })
+    .finally(() => {
+      if (isPlayerDebugEnabled()) console.timeEnd?.("[players] build active player index");
+    });
 
   return cachedLocalPlayerIndexPromise;
 }
@@ -419,8 +413,44 @@ function getPlayerDedupeKey(player = {}) {
   return birthYear ? `${name}|${birthYear}` : name;
 }
 
+function getPlayerDedupeKeys(player = {}) {
+  const birthYear = Number(player.birth_year) || "";
+  const nationality = normalizePlayerSearch(player.nationality || player.national_team || "");
+  const names = uniqueByNormalized([
+    player.full_name,
+    player.name,
+    player.search_name,
+    ...(player.aliases || []),
+  ]);
+  const keys = new Set([getPlayerDedupeKey(player), player.id ? `id:${player.id}` : ""]);
+
+  names.forEach((name) => {
+    const normalized = normalizePlayerSearch(name);
+    if (!normalized) return;
+
+    if (birthYear) keys.add(`${normalized}|${birthYear}`);
+
+    const parts = normalized.split(" ").filter(Boolean);
+    if (parts.length >= 2) {
+      keys.add(normalized);
+      if (birthYear && nationality) {
+        keys.add(`surname:${parts.at(-1)}|${birthYear}|${nationality}`);
+      }
+    }
+  });
+
+  return [...keys].filter(Boolean);
+}
+
+function isManualPlayer(player = {}) {
+  return (
+    /^manual_/i.test(player.source || "") ||
+    ALWAYS_CURATED_PLAYER_IDS.has(player.id)
+  );
+}
+
 function getManualSourceScore(player = {}) {
-  return /^manual_(legend|modern|cult|retired|seed)/i.test(player.source || "") ? 1 : 0;
+  return isManualPlayer(player) ? 1 : 0;
 }
 
 function getDataRichness(player = {}) {
@@ -454,17 +484,22 @@ function pickBetterPlayer(current, incoming) {
 
 function mergeDuplicatePlayers(players = []) {
   const byActualPlayer = new Map();
+  const keyToPrimaryKey = new Map();
 
   players.filter(Boolean).forEach((rawPlayer) => {
     const player = normalizePlayer(rawPlayer);
-    const key = getPlayerDedupeKey(player) || player.id;
-    if (!key) return;
+    const dedupeKeys = getPlayerDedupeKeys(player);
+    const primaryKey =
+      dedupeKeys.map((key) => keyToPrimaryKey.get(key)).find(Boolean) ||
+      dedupeKeys[0] ||
+      player.id;
+    if (!primaryKey) return;
 
-    const existing = byActualPlayer.get(key);
+    const existing = byActualPlayer.get(primaryKey);
     const winner = pickBetterPlayer(existing, player);
     const loser = winner === player ? existing : player;
 
-    byActualPlayer.set(key, {
+    const mergedPlayer = {
       ...winner,
       aliases: uniqueByNormalized([
         winner?.name,
@@ -485,6 +520,15 @@ function mergeDuplicatePlayers(players = []) {
         Number(winner?.popularity_score) || 0,
         Number(loser?.popularity_score) || 0
       ),
+      relevance_score: Math.max(
+        Number(winner?.relevance_score) || 0,
+        Number(loser?.relevance_score) || 0
+      ),
+    };
+
+    byActualPlayer.set(primaryKey, mergedPlayer);
+    getPlayerDedupeKeys(mergedPlayer).forEach((key) => {
+      keyToPrimaryKey.set(key, primaryKey);
     });
   });
 
@@ -508,6 +552,17 @@ function getPlayerSearchFields(player = {}) {
     searchName: normalizePlayerSearch(player.search_name || player.full_name || player.name),
     searchable,
     aliases: aliases.flatMap(getSearchVariants).map(normalizePlayerSearch),
+  };
+}
+
+function createPlayerSearchRecord(player) {
+  return {
+    player,
+    fields: getPlayerSearchFields(player),
+    popularity: Number(player.popularity_score) || 0,
+    relevance: Number(player.relevance_score) || Number(player.popularity_score) || 0,
+    manualPriority: getManualSourceScore(player),
+    popularityBucket: getPopularityBucket(player),
   };
 }
 
@@ -539,10 +594,17 @@ function getPopularityBucket(player) {
   return 3;
 }
 
-function scorePlayerMatch(player, query) {
-  const fields = getPlayerSearchFields(player);
-  if (!query) return { rank: 100, popularity: Number(player.popularity_score) || 0 };
-  const popularity = Number(player.popularity_score) || 0;
+function scorePlayerSearchRecord(record, query) {
+  const { fields, popularity, relevance, manualPriority, popularityBucket } = record;
+  if (!query) {
+    return {
+      rank: 100,
+      popularity,
+      relevance,
+      manualPriority,
+      popularityBucket,
+    };
+  }
   const queryCompact = query.replace(/\s+/g, "");
   const searchableExact = fields.searchable.some((value) => value === query);
   const searchableStarts = fields.searchable.some(
@@ -574,19 +636,61 @@ function scorePlayerMatch(player, query) {
   return {
     rank,
     popularity,
-    popularityBucket: getPopularityBucket(player),
+    relevance,
+    manualPriority,
+    popularityBucket,
   };
 }
 
-function getEligibleFindPlayerFallbackPool(players = BASE_LOCAL_PLAYER_INDEX) {
-  return players.filter(
-    (player) =>
-      player.id &&
-      player.name &&
-      player.birth_year &&
-      (player.nationality || player.national_team) &&
-      (player.position_group || player.position)
+function hasFindPlayerProfile(player = {}) {
+  return (
+    player.id &&
+    player.name &&
+    player.birth_year &&
+    (player.nationality || player.national_team) &&
+    (player.position_group || player.position)
   );
+}
+
+function getFindThePlayerRecognitionScore(player = {}) {
+  const popularity = Number(player.popularity_score) || 0;
+  const relevance = Number(player.relevance_score) || 0;
+  const manualBonus = isManualPlayer(player) ? 420 : 0;
+  const nationalTeamBonus = player.national_team ? 120 : 0;
+  const clubBonus = Math.min(
+    90,
+    ((Array.isArray(player.main_clubs) ? player.main_clubs.length : 0) * 36) +
+      ((Array.isArray(player.clubs) ? player.clubs.length : 0) * 12)
+  );
+  const difficultyBonus =
+    player.difficulty === "Easy" ? 90 : player.difficulty === "Medium" ? 45 : 0;
+
+  return popularity + Math.round(relevance / 35) + manualBonus + nationalTeamBonus + clubBonus + difficultyBonus;
+}
+
+function isRecognizableFindThePlayerCandidate(player = {}) {
+  if (!hasFindPlayerProfile(player)) return false;
+
+  const popularity = Number(player.popularity_score) || 0;
+  const relevance = Number(player.relevance_score) || 0;
+
+  if (isManualPlayer(player) && popularity >= 650) return true;
+  if (popularity >= 850) return true;
+  if (popularity >= 800 && player.national_team) return true;
+  if (relevance >= 11800) return true;
+
+  return false;
+}
+
+export function getFindThePlayerPool(players = BASE_LOCAL_PLAYER_INDEX) {
+  return mergeDuplicatePlayers(players)
+    .map(normalizePlayer)
+    .filter(isRecognizableFindThePlayerCandidate)
+    .sort(
+      (a, b) =>
+        getFindThePlayerRecognitionScore(b) - getFindThePlayerRecognitionScore(a) ||
+        String(a.name).localeCompare(String(b.name))
+    );
 }
 
 async function loadSearchPlayerIndex() {
@@ -594,30 +698,7 @@ async function loadSearchPlayerIndex() {
 
   cachedSearchIndexPromise = (async () => {
     const localPlayerIndex = await loadLocalPlayerIndex();
-
-    if (!isSupabaseConfigured || !supabase) return localPlayerIndex;
-
-    const batchSize = 1000;
-    const allPlayers = [];
-
-    for (let from = 0; ; from += batchSize) {
-      const to = from + batchSize - 1;
-      const { data, error } = await supabase
-        .from("players")
-        .select(PLAYER_SELECT)
-        .order("popularity_score", { ascending: false, nullsFirst: false })
-        .range(from, to);
-
-      if (error) {
-        console.error("Could not build player search index", error);
-        return localPlayerIndex;
-      }
-
-      allPlayers.push(...(data || []));
-      if (!data || data.length < batchSize) break;
-    }
-
-    return mergeDuplicatePlayers([...allPlayers, ...localPlayerIndex]).map(normalizePlayer);
+    return localPlayerIndex.map(createPlayerSearchRecord);
   })();
 
   return cachedSearchIndexPromise;
@@ -627,24 +708,105 @@ export async function buildPlayerSearchIndex() {
   return loadSearchPlayerIndex();
 }
 
-function sortAndLimitPlayers(players, query, limit) {
+function getQuestionAnswerCandidates(question = {}) {
+  return uniqueByNormalized([
+    question.answer,
+    ...(Array.isArray(question.acceptedAnswers) ? question.acceptedAnswers : []),
+    ...(Array.isArray(question.aliases) ? question.aliases : []),
+  ]);
+}
+
+function doesSearchRecordMatchQuestion(record, question = {}) {
+  const candidates = getQuestionAnswerCandidates(question)
+    .flatMap(getSearchVariants)
+    .map(normalizePlayerSearch)
+    .filter(Boolean);
+
+  if (!candidates.length) return false;
+
+  const searchableValues = new Set([
+    record.fields.name,
+    record.fields.searchName,
+    ...record.fields.searchable,
+    ...record.fields.aliases,
+  ]);
+
+  return candidates.some((candidate) => searchableValues.has(candidate));
+}
+
+export async function isPlayerGuessQuestionSearchable(question) {
+  if (!question?.answer) return false;
+
+  const searchIndex = await loadSearchPlayerIndex();
+  const candidates = getQuestionAnswerCandidates(question);
+
+  return candidates.some((candidate) =>
+    sortAndLimitSearchRecords(searchIndex, candidate, 12).some((player) => {
+      const record = createPlayerSearchRecord(player);
+      return doesSearchRecordMatchQuestion(record, question);
+    })
+  );
+}
+
+export async function filterSearchablePlayerGuessQuestions(
+  questions = [],
+  context = "player-guess"
+) {
+  if (!Array.isArray(questions) || !questions.length) return [];
+
+  const results = await Promise.all(
+    questions.map(async (question) => ({
+      question,
+      searchable: await isPlayerGuessQuestionSearchable(question),
+    }))
+  );
+  const missing = results
+    .filter(({ searchable }) => !searchable)
+    .map(({ question }) => `${question.id || "unknown"}:${question.answer || "unknown"}`);
+
+  if (missing.length && isPlayerDebugEnabled()) {
+    console.warn(`[players] excluded unsearchable ${context} targets`, missing);
+  }
+
+  return results
+    .filter(({ searchable }) => searchable)
+    .map(({ question }) => question);
+}
+
+export function preloadPlayerSearchIndex() {
+  loadSearchPlayerIndex().catch((error) => {
+    console.warn("Could not preload player search index", error);
+  });
+}
+
+function sortAndLimitSearchRecords(records, query, limit) {
   const normalizedQuery = normalizePlayerSearch(query);
 
-  return mergeDuplicatePlayers(players)
-    .map((player) => ({
-      player,
-      score: scorePlayerMatch(player, normalizedQuery),
+  return records
+    .map((record) => ({
+      player: record.player,
+      score: scorePlayerSearchRecord(record, normalizedQuery),
     }))
     .filter(({ score }) => !normalizedQuery || score.rank < 99)
     .sort(
       (a, b) =>
         a.score.rank - b.score.rank ||
+        b.score.manualPriority - a.score.manualPriority ||
         a.score.popularityBucket - b.score.popularityBucket ||
+        b.score.relevance - a.score.relevance ||
         b.score.popularity - a.score.popularity ||
         a.player.name.localeCompare(b.player.name)
     )
     .slice(0, limit)
     .map(({ player }) => player);
+}
+
+function sortAndLimitPlayers(players, query, limit) {
+  return sortAndLimitSearchRecords(
+    mergeDuplicatePlayers(players).map(createPlayerSearchRecord),
+    query,
+    limit
+  );
 }
 
 export async function fetchPlayers(limit = 30) {
@@ -666,44 +828,19 @@ export async function fetchPlayers(limit = 30) {
 
 export async function fetchFindPlayerPool() {
   const localPlayerIndex = await loadLocalPlayerIndex();
-  const fallbackPool = getEligibleFindPlayerFallbackPool(localPlayerIndex);
-  if (!isSupabaseConfigured || !supabase) {
-    return { players: fallbackPool, error: null };
-  }
+  const fallbackPool = getFindThePlayerPool(localPlayerIndex);
+  return { players: fallbackPool, error: null };
+}
 
-  const batchSize = 1000;
-  const allPlayers = [];
+export async function getActivePlayerPoolSummary() {
+  const activePlayers = await loadLocalPlayerIndex();
+  const curatedCsvPlayers = await loadCuratedCsvPlayers();
 
-  for (let from = 0; ; from += batchSize) {
-    const to = from + batchSize - 1;
-    const { data, error } = await supabase
-      .from("players")
-      .select(PLAYER_SELECT)
-      .not("birth_year", "is", null)
-      .order("popularity_score", { ascending: false, nullsFirst: false })
-      .range(from, to);
-
-    if (error) {
-      console.error("Could not fetch Find the Player pool", error);
-      return { players: fallbackPool, error: null };
-    }
-
-    allPlayers.push(...(data || []));
-
-    if (!data || data.length < batchSize) break;
-  }
-
-  const players = allPlayers
-    .map(normalizePlayer)
-    .filter(
-      (player) =>
-        player.id &&
-        player.name &&
-        (player.nationality || player.national_team) &&
-        (player.position_group || player.position)
-    );
-
-  return { players: players.length ? players : fallbackPool, error: null };
+  return {
+    manualPlayers: BASE_LOCAL_PLAYER_INDEX.length,
+    curatedCsvPlayers: curatedCsvPlayers.length,
+    activePlayers: activePlayers.length,
+  };
 }
 
 export async function searchPlayers(query, limit = 8) {
@@ -711,10 +848,36 @@ export async function searchPlayers(query, limit = 8) {
   if (!normalizedQuery || normalizedQuery.length < 2) {
     return { players: [], error: null };
   }
-  const searchIndex = await loadSearchPlayerIndex();
-  const localMatches = sortAndLimitPlayers(searchIndex, normalizedQuery, limit);
+  const priorityMatches = sortAndLimitPlayers(
+    BASE_LOCAL_PLAYER_INDEX,
+    normalizedQuery,
+    limit
+  );
+  if (
+    priorityMatches.some(
+      (player) =>
+        isManualPlayer(player) &&
+        Number(player.popularity_score) >= 900 &&
+        normalizePlayerSearch(
+          [player.name, player.full_name, player.search_name, ...(player.aliases || [])]
+            .filter(Boolean)
+            .join(" ")
+        ).includes(normalizedQuery)
+    )
+  ) {
+    preloadPlayerSearchIndex();
+    return { players: priorityMatches, error: null };
+  }
 
-  if (!isSupabaseConfigured || !supabase) {
+  const searchIndex = await loadSearchPlayerIndex();
+  const localMatches = sortAndLimitSearchRecords(searchIndex, normalizedQuery, limit);
+
+  if (
+    localMatches.length >= limit ||
+    isCapacitorIosRuntime() ||
+    !isSupabaseConfigured ||
+    !supabase
+  ) {
     return { players: localMatches, error: null };
   }
 
@@ -735,7 +898,7 @@ export async function searchPlayers(query, limit = 8) {
 
     const mergedMatches = mergeDuplicatePlayers([
       ...(directMatches || []),
-      ...searchIndex,
+      ...searchIndex.map((record) => record.player),
     ]);
 
     return {

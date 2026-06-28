@@ -3271,7 +3271,14 @@ export const WHO_AM_I_QUESTIONS = [
   {
     id: "whoami_253",
     answer: "Essam El Hadary",
-    acceptedAnswers: ["Essam El Hadary", "El Hadary", "Hadary"],
+    acceptedAnswers: [
+      "Essam El Hadary",
+      "Essam El-Hadary",
+      "El Hadary",
+      "El-Hadary",
+      "Hadary",
+      "Essam",
+    ],
     difficulty: "Hard",
     clues: [
       "I am from Egypt.",

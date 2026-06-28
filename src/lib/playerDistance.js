@@ -1,4 +1,5 @@
 import { normalizePlayerAnswer } from "./playerAnswer";
+import { selectDailyFindPlayerTargets as selectDiverseFindPlayerTargets } from "./dailyContentDiversity";
 
 function asArray(value) {
   if (Array.isArray(value)) return value.filter(Boolean);
@@ -235,19 +236,7 @@ export function hashDateSeed(seedText = "") {
 }
 
 export function pickDailyFindPlayerTargets(pool = [], seedText = "", count = 1) {
-  if (!pool.length || count <= 0) return [];
-
-  const picked = [];
-  let seed = hashDateSeed(seedText);
-  const available = [...pool].sort((a, b) => String(a.id).localeCompare(String(b.id)));
-
-  while (picked.length < count && available.length) {
-    seed = (seed * 1664525 + 1013904223) >>> 0;
-    const index = seed % available.length;
-    picked.push(available.splice(index, 1)[0]);
-  }
-
-  return picked;
+  return selectDiverseFindPlayerTargets(pool, seedText, count);
 }
 
 export function getFindPlayerPoints(attempts, solved) {

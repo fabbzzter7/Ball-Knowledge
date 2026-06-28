@@ -1,5 +1,6 @@
-import React from "react";
-import PlayerPicker from "./PlayerPicker";
+import React, { Suspense } from "react";
+
+const PlayerPicker = React.lazy(() => import("./PlayerPicker"));
 
 export default function GuessInput({
   answerType = "text",
@@ -25,22 +26,34 @@ export default function GuessInput({
   return (
     <div className={`guess-input-row ${isPlayerAnswer ? "player" : "text"} ${rowClassName}`}>
       {isPlayerAnswer ? (
-        <PlayerPicker
-          value={selectedPlayer}
-          onSelect={onSelectPlayer}
-          onSelectPlayer={onSelectPlayer}
-          inputValue={value}
-          onInputChange={onTextChange}
-          onChangeText={onTextChange}
-          onSubmit={onSubmit}
-          autoSubmitOnSelect={autoSubmitOnSelect}
-          showMeta={showMeta}
-          maxSuggestions={maxSuggestions}
-          placeholder={placeholder}
-          disabled={disabled}
-          compact
-          autoFocus={autoFocus}
-        />
+        <Suspense
+          fallback={
+            <input
+              value={value}
+              onChange={(event) => onTextChange?.(event.target.value)}
+              placeholder={placeholder}
+              className={inputClassName}
+              disabled
+            />
+          }
+        >
+          <PlayerPicker
+            value={selectedPlayer}
+            onSelect={onSelectPlayer}
+            onSelectPlayer={onSelectPlayer}
+            inputValue={value}
+            onInputChange={onTextChange}
+            onChangeText={onTextChange}
+            onSubmit={onSubmit}
+            autoSubmitOnSelect={autoSubmitOnSelect}
+            showMeta={showMeta}
+            maxSuggestions={maxSuggestions}
+            placeholder={placeholder}
+            disabled={disabled}
+            compact
+            autoFocus={autoFocus}
+          />
+        </Suspense>
       ) : (
         <input
           value={value}

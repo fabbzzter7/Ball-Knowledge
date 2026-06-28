@@ -1,13 +1,35 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 import BKIcon from "./BKIcon";
-import {
-  fetchPlayerById,
-  normalizePlayerSearch,
-  searchPlayers,
-} from "../lib/playerService";
 
 const EMPTY_EXCLUDED_IDS = [];
+
+function normalizePlayerSearch(text = "") {
+  return String(text)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[’‘`´']/g, "")
+    .replace(/\./g, " ")
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function loadPlayerService() {
+  return import("../lib/playerService");
+}
+
+async function fetchPlayerByIdLazy(id) {
+  const { fetchPlayerById } = await loadPlayerService();
+  return fetchPlayerById(id);
+}
+
+async function searchPlayersLazy(query, limit) {
+  const { searchPlayers } = await loadPlayerService();
+  return searchPlayers(query, limit);
+}
 
 function getClubPreview(player) {
   const clubs = player?.main_clubs?.length ? player.main_clubs : player?.clubs || [];
@@ -127,7 +149,7 @@ export default function PlayerPicker({
       return undefined;
     }
 
-    fetchPlayerById(value).then((player) => {
+    fetchPlayerByIdLazy(value).then((player) => {
       if (!cancelled) setSelectedPlayer(player);
     });
 
@@ -180,7 +202,7 @@ export default function PlayerPicker({
     }, 250);
 
     const timeout = window.setTimeout(async () => {
-      const { players, error } = await searchPlayers(
+      const { players, error } = await searchPlayersLazy(
         normalizedQuery,
         Math.max(8, maxSuggestions * 2)
       );
@@ -192,8 +214,7 @@ export default function PlayerPicker({
       if (
         import.meta.env?.DEV ||
         (typeof document !== "undefined" &&
-          (document.body.classList.contains("capacitor-ios") ||
-            document.body.classList.contains("capacitor-ios-debug")))
+          document.body.classList.contains("capacitor-ios-debug"))
       ) {
         console.log("[ios-search]", normalizedQuery, nextResults.length);
       }
@@ -203,7 +224,7 @@ export default function PlayerPicker({
       setLoading(false);
       setShowSlowLoading(false);
       setHasSearched(true);
-    }, 200);
+    }, 140);
 
     return () => {
       cancelled = true;
@@ -213,17 +234,20 @@ export default function PlayerPicker({
   }, [normalizedQuery, selectedPlayer, excludedIds]);
 
   const selectPlayer = (player) => {
-    setSelectedPlayer(player);
     updateQuery("");
     setResults([]);
     setHasSearched(false);
     setDropdownOpen(false);
     setSearchError("");
-    onSelect?.(player);
-    onSelectPlayer?.(player);
     if (autoSubmitOnSelect) {
       window.setTimeout(() => onSubmit?.(player), 0);
+      return;
     }
+
+    onSelect?.(player);
+    onSelectPlayer?.(player);
+
+    setSelectedPlayer(player);
   };
 
   const clearPlayer = () => {
@@ -299,7 +323,7 @@ export default function PlayerPicker({
   const shouldShowDropdown =
     dropdownOpen &&
     normalizedQuery.length >= 2 &&
-    (results.length > 0 || showSlowLoading || hasSearched || searchError);
+    (results.length > 0 || loading || showSlowLoading || hasSearched || searchError);
 
   const dropdownContent = shouldShowDropdown ? (
     <div
@@ -309,8 +333,10 @@ export default function PlayerPicker({
       onPointerUpCapture={handleDropdownPointerUp}
       onPointerCancelCapture={handleDropdownPointerUp}
     >
-      {showSlowLoading && results.length === 0 && (
-        <div className="player-picker-empty">Searching...</div>
+      {loading && results.length === 0 && (
+        <div className="player-picker-empty player-picker-loading-state">
+          Loading player search...
+        </div>
       )}
 
       {visibleResults.map((player) => (

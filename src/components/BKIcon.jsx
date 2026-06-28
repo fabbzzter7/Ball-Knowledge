@@ -12,11 +12,26 @@ const FALLBACK_ICON_BY_NAME = {
   coins: UserRound,
   dailyChallenge: Trophy,
   dailyStreak: Trophy,
+  generalKnowledge: Trophy,
+  careerPath: Trophy,
+  worldCup: Trophy,
+  connections: CircleHelp,
+  whoAmI: UserRound,
+  findThePlayer: UserRound,
   lives: Heart,
   multiplayer: UsersRound,
   profile: UserRound,
   rankings: Trophy,
   singlePlayer: UserRound,
+  playNow: UsersRound,
+  h2h: UsersRound,
+  league: Trophy,
+  activeMatches: UsersRound,
+  activeRandomMatches: UsersRound,
+  createMatch: UsersRound,
+  joinMatch: UsersRound,
+  myLeagues: Trophy,
+  joinLeague: Trophy,
 };
 
 export default function BKIcon({
@@ -68,6 +83,9 @@ export default function BKIcon({
       }}
       draggable="false"
       onError={() => setImageFailed(true)}
+      onLoad={(event) => {
+        if (event.currentTarget.naturalWidth === 0) setImageFailed(true);
+      }}
     />
   );
 }

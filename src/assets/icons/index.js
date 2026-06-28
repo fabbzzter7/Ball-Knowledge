@@ -4,7 +4,9 @@ import multiplayer from "./app/multiplayer_new.png";
 import dailyChallenge from "./app/daily_challenge_new.png";
 import rankings from "./app/ranking.png";
 import profile from "./app/profile.png";
+import coins from "./app/coins.png";
 import lives from "./app/lives.png";
+import dailyStreak from "./app/daily_streak.png";
 
 import generalKnowledge from "./app/general_knowledge.png";
 import careerPath from "./app/career_path.png";
@@ -48,10 +50,10 @@ export const BK_ICONS = {
   singlePlayer,
   multiplayer,
   dailyChallenge,
-  dailyStreak: level12LegendaryPundit,
+  dailyStreak,
   rankings,
   profile,
-  coins: profile,
+  coins,
   lives,
   generalKnowledge,
   careerPath,
