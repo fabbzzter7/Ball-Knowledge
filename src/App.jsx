@@ -11354,10 +11354,6 @@ const startConnectionsGame = async (difficulty = null) => {
     <span className="bk-matchday-mode-icon">
       <BKIcon name="singlePlayer" size={50} />
     </span>
-
-    <span className="bk-matchday-mode-arrow" aria-hidden="true">
-      ›
-    </span>
   </span>
 
   <span className="bk-matchday-mode-copy">

@@ -106,8 +106,8 @@
   --bk-app-screen-bg-image: none;
   position: relative;
   display: flex;
-  min-height: 100dvh;
-  height: 100dvh;
+  min-height: 100svh;
+  height: 100svh;
   width: 100%;
   overflow-x: hidden;
   background:
@@ -120,8 +120,8 @@
 }
 
 .bk-app-screen--scroll {
-  min-height: 100dvh;
-  height: 100dvh;
+  min-height: 100svh;
+  height: 100svh;
   overflow-y: auto;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
@@ -150,6 +150,7 @@
   position: relative;
   z-index: var(--bk-z-base);
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   gap: var(--bk-space-24);
   width: min(var(--bk-screen-max-width, 520px), 100%);
@@ -160,19 +161,20 @@
   padding:
     max(var(--bk-space-24), env(safe-area-inset-top))
     max(var(--bk-space-16), env(safe-area-inset-right))
-    max(var(--bk-space-24), env(safe-area-inset-bottom))
+    max(var(--bk-space-40), calc(env(safe-area-inset-bottom) + var(--bk-space-16)))
     max(var(--bk-space-16), env(safe-area-inset-left));
 }
 
 .bk-app-screen__content,
 .bk-app-screen__content > .screen-transition,
 .bk-app-screen__content > .app-page-content {
+  flex-shrink: 0;
   overflow: visible;
 }
 
 .bk-app-screen--center .bk-app-screen__content {
   justify-content: center;
-  min-height: 100dvh;
+  min-height: 100svh;
 }
 
 .bk-app-screen--wide {
@@ -563,7 +565,7 @@ button.bk-surface-card {
 .bk-home-root > .screen-transition {
   display: flex;
   width: 100%;
-  min-height: 100dvh;
+  min-height: 100svh;
 }
 
 .bk-home-screen {
@@ -1264,8 +1266,8 @@ button.bk-surface-card {
 .bk-auth-screen,
 .bk-v2-mode-screen {
   width: 100%;
-  min-height: 100dvh;
-  height: 100dvh;
+  min-height: 100svh;
+  height: 100svh;
 
   overflow-x: hidden;
   overflow-y: auto;

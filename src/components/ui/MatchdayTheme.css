@@ -485,7 +485,7 @@ body,
    ========================================================= */
 
 .bk-matchday-home-v3 {
-  min-height: 100dvh;
+  min-height: 100svh;
   color: #f8fffb;
 
   background:
@@ -1151,7 +1151,7 @@ body,
    ========================================================= */
 
 .bk-sp-hub {
-  min-height: 100dvh;
+  min-height: 100svh;
   padding: 0 16px 28px;
   color: #fff;
   background:
@@ -1578,8 +1578,8 @@ body,
 .bk-auth-screen,
 .bk-v2-mode-screen {
   width: 100%;
-  min-height: 100dvh;
-  height: 100dvh;
+  min-height: 100svh;
+  height: 100svh;
 
   overflow-x: hidden;
   overflow-y: auto;
@@ -1842,23 +1842,6 @@ body,
 
   width: 34px;
   height: 34px;
-}
-
-
-/* ARROW */
-
-.bk-matchday-mode-arrow {
-  display: grid;
-  place-items: center;
-
-  width: 28px;
-  height: 28px;
-
-  color: rgba(255,255,255,0.76);
-
-  font-size: 1.25rem;
-  font-weight: 700;
-  line-height: 1;
 }
 
 
