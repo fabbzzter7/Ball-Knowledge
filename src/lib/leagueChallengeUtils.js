@@ -1,6 +1,8 @@
 import { DAILY_LIST_CHALLENGES } from "../DAILY_LIST_CHALLENGES";
-import { WHO_AM_I_QUESTIONS } from "../WHO_AM_I_QUESTIONS";
-import { getMultiplayerQuestionsByCategory, getMultiplayerQuestionsByIds } from "../multiplayerQuestionBank";
+import {
+  getMultiplayerQuestionsByCategories,
+  getMultiplayerQuestionsByIds,
+} from "../multiplayerQuestionBank";
 
 const LEAGUE_QUIZ_CATEGORIES = ["general", "premier_league", "world_cup", "career_path"];
 
@@ -21,10 +23,10 @@ function shuffleWithSeed(items, seedText) {
   return next;
 }
 
-function getValidLeagueQuizQuestions() {
-  return LEAGUE_QUIZ_CATEGORIES.flatMap((category) =>
-    getMultiplayerQuestionsByCategory(category)
-  ).filter(
+async function getValidLeagueQuizQuestions() {
+  const questions = await getMultiplayerQuestionsByCategories(LEAGUE_QUIZ_CATEGORIES);
+
+  return questions.filter(
     (question) =>
       question &&
       typeof question === "object" &&
@@ -49,7 +51,9 @@ function getValidTop10Challenges() {
   );
 }
 
-function getValidWhoAmIQuestions() {
+async function getValidWhoAmIQuestions() {
+  const { WHO_AM_I_QUESTIONS } = await import("../WHO_AM_I_QUESTIONS");
+
   if (!Array.isArray(WHO_AM_I_QUESTIONS)) return [];
 
   return WHO_AM_I_QUESTIONS.filter(
@@ -103,10 +107,10 @@ export function getLeagueDayNumber(startDate, dayKey = getTodayKey()) {
   return Math.max(1, diff + 1);
 }
 
-export function buildLeagueDailyQuestionIds(seedText, count = 5) {
+export async function buildLeagueDailyQuestionIds(seedText, count = 5) {
   if (count <= 0) return [];
 
-  const questions = getValidLeagueQuizQuestions();
+  const questions = await getValidLeagueQuizQuestions();
   if (questions.length < count) return [];
 
   return shuffleWithSeed(questions, seedText)
@@ -115,10 +119,10 @@ export function buildLeagueDailyQuestionIds(seedText, count = 5) {
     .filter(Boolean);
 }
 
-export function buildLeagueWhoAmIQuestionIds(seedText, count = 0) {
+export async function buildLeagueWhoAmIQuestionIds(seedText, count = 0) {
   if (count <= 0) return [];
 
-  const questions = getValidWhoAmIQuestions();
+  const questions = await getValidWhoAmIQuestions();
   if (questions.length < count) return [];
 
   return shuffleWithSeed(questions, `${seedText}:whoami`)
@@ -157,10 +161,11 @@ export function getLeagueSettingsSummary(league = {}) {
   };
 }
 
-export function getLeagueQuestionsByIds(ids) {
+export async function getLeagueQuestionsByIds(ids) {
   if (!Array.isArray(ids)) return [];
 
-  return getMultiplayerQuestionsByIds(ids).filter(Boolean);
+  const questions = await getMultiplayerQuestionsByIds(ids);
+  return questions.filter(Boolean);
 }
 
 export function getLeagueTop10Challenge(seedText) {
@@ -186,11 +191,11 @@ export function hasLeagueTop10ChallengeId(id) {
   return getValidTop10Challenges().some((challenge) => challenge.id === id);
 }
 
-export function getLeagueWhoAmIQuestionsByIds(ids = []) {
+export async function getLeagueWhoAmIQuestionsByIds(ids = []) {
   if (!Array.isArray(ids)) return [];
 
   const questionsById = new Map(
-    getValidWhoAmIQuestions().map((question) => [question.id, question])
+    (await getValidWhoAmIQuestions()).map((question) => [question.id, question])
   );
 
   return ids

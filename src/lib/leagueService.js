@@ -9,20 +9,14 @@ import {
   getTodayKey,
   hasLeagueTop10ChallengeId,
 } from "./leagueChallengeUtils";
-import { pickDailyFindPlayerTargets } from "./playerDistance";
-
-async function fetchFindPlayerPoolLazy() {
-  const { fetchFindPlayerPool } = await import("./playerService");
-  return fetchFindPlayerPool();
-}
 
 async function getSearchableLeagueWhoAmIQuestionIds(seed, count) {
   const { filterSearchablePlayerGuessQuestions } = await import("./playerService");
-  const candidateIds = buildLeagueWhoAmIQuestionIds(
+  const candidateIds = await buildLeagueWhoAmIQuestionIds(
     seed,
     Math.max(count * 4, count + 12)
   );
-  const candidates = getLeagueWhoAmIQuestionsByIds(candidateIds);
+  const candidates = await getLeagueWhoAmIQuestionsByIds(candidateIds);
   const searchableQuestions = await filterSearchablePlayerGuessQuestions(
     candidates,
     "league-whoami"
@@ -66,9 +60,9 @@ export async function createLeague(supabase, { name, playerId, username, setting
   const quizCount = Number(settings.quizCount ?? 5);
   const top10Count = Number(settings.top10Count ?? 1);
   const whoamiCount = Number(settings.whoamiCount ?? 0);
-  const findPlayerCount = Number(settings.findPlayerCount ?? 0);
+  const findPlayerCount = 0;
   const maxDailyPoints =
-    quizCount + top10Count * 10 + whoamiCount * 10 + findPlayerCount * 10;
+    quizCount + top10Count * 10 + whoamiCount * 10;
   const baseInsert = {
     league_code: leagueCode,
     name: leagueName,
@@ -94,7 +88,7 @@ export async function createLeague(supabase, { name, playerId, username, setting
     .single();
 
   if (leagueError && isMissingSettingsColumnError(leagueError)) {
-    if (whoamiCount > 0 || findPlayerCount > 0) {
+    if (whoamiCount > 0) {
       return {
         league: null,
         error: new Error(
@@ -195,23 +189,22 @@ export async function fetchMyLeagues(supabase, playerId) {
   const leagueIds = [...new Set((memberships || []).map((member) => member.league_id))];
   if (!leagueIds.length) return { leagues: [], error: null };
 
-  const { data: leagues, error: leagueError } = await supabase
-    .from("leagues")
-    .select("*")
-    .in("id", leagueIds);
+  const todayKey = getTodayKey();
+  const [
+    { data: leagues, error: leagueError },
+    { data: allMembers },
+    { data: todaySubmissions },
+  ] = await Promise.all([
+    supabase.from("leagues").select("*").in("id", leagueIds),
+    supabase.from("league_members").select("*").in("league_id", leagueIds),
+    supabase
+      .from("league_submissions")
+      .select("league_id, player_id, total_points")
+      .in("league_id", leagueIds)
+      .gte("completed_at", `${todayKey}T00:00:00`),
+  ]);
 
   if (leagueError) return { leagues: [], error: leagueError };
-
-  const todayKey = getTodayKey();
-  const { data: allMembers } = await supabase
-    .from("league_members")
-    .select("*")
-    .in("league_id", leagueIds);
-  const { data: todaySubmissions } = await supabase
-    .from("league_submissions")
-    .select("league_id, player_id, total_points")
-    .in("league_id", leagueIds)
-    .gte("completed_at", `${todayKey}T00:00:00`);
 
   const rows = (leagues || []).map((league) => {
     const members = (allMembers || []).filter((member) => member.league_id === league.id);
@@ -323,35 +316,26 @@ export async function getOrCreateLeagueDay(supabase, league) {
     .eq("day_key", dayKey)
     .maybeSingle();
 
-  const settings = getLeagueSettingsSummary(league);
+  const rawSettings = getLeagueSettingsSummary(league);
+  const settings = {
+    ...rawSettings,
+    findPlayerCount: 0,
+    findPlayerScoringMode: "attempts",
+    maxDailyPoints:
+      rawSettings.quizCount + rawSettings.top10Count * 10 + rawSettings.whoamiCount * 10,
+  };
   const seed = `${league.id}:${dayKey}`;
-  const quizQuestionIds = buildLeagueDailyQuestionIds(seed, settings.quizCount);
+  const quizQuestionIds = await buildLeagueDailyQuestionIds(seed, settings.quizCount);
   const whoamiQuestionIds =
     settings.whoamiCount > 0
       ? await getSearchableLeagueWhoAmIQuestionIds(seed, settings.whoamiCount)
       : [];
-  let findPlayerTargetIds = [];
-  if (settings.findPlayerCount > 0) {
-    const { players, error: playerPoolError } = await fetchFindPlayerPoolLazy();
-    if (playerPoolError || players.length < settings.findPlayerCount) {
-      return {
-        leagueDay: null,
-        error: new Error("Not enough Find the Player targets available"),
-      };
-    }
-    findPlayerTargetIds = pickDailyFindPlayerTargets(
-      players,
-      `${seed}:find-player`,
-      settings.findPlayerCount
-    ).map((player) => player.id);
-  }
   const top10Challenge =
     settings.top10Count > 0 ? getLeagueTop10Challenge(seed) : null;
 
   if (
     quizQuestionIds.length !== settings.quizCount ||
     whoamiQuestionIds.length !== settings.whoamiCount ||
-    findPlayerTargetIds.length !== settings.findPlayerCount ||
     (settings.top10Count > 0 && !top10Challenge)
   ) {
     return { leagueDay: null, error: new Error("No valid league challenge available") };
@@ -361,18 +345,16 @@ export async function getOrCreateLeagueDay(supabase, league) {
   if (existingDay) {
     const savedQuizIds = toArrayField(existingDay.quiz_question_ids);
     const savedWhoAmIIds = toArrayField(existingDay.whoami_question_ids);
-    const savedFindPlayerIds = toArrayField(existingDay.find_player_target_ids);
-    const savedQuizQuestions = getLeagueQuestionsByIds(savedQuizIds);
+    const savedQuizQuestions = await getLeagueQuestionsByIds(savedQuizIds);
     const savedWhoAmIQuestions = settings.whoamiCount > 0
       ? await (async () => {
           const { filterSearchablePlayerGuessQuestions } = await import("./playerService");
           return filterSearchablePlayerGuessQuestions(
-            getLeagueWhoAmIQuestionsByIds(savedWhoAmIIds),
+            await getLeagueWhoAmIQuestionsByIds(savedWhoAmIIds),
             "saved-league-whoami"
           );
         })()
       : [];
-    const findPlayerIdSet = new Set(findPlayerTargetIds);
     const needsQuizIds =
       settings.quizCount > 0 &&
       (savedQuizIds.length !== settings.quizCount ||
@@ -381,22 +363,17 @@ export async function getOrCreateLeagueDay(supabase, league) {
       settings.whoamiCount > 0 &&
       (savedWhoAmIIds.length !== settings.whoamiCount ||
         savedWhoAmIQuestions.length !== settings.whoamiCount);
-    const needsFindPlayerIds =
-      settings.findPlayerCount > 0 &&
-      (savedFindPlayerIds.length !== settings.findPlayerCount ||
-        savedFindPlayerIds.some((id) => !findPlayerIdSet.has(id)));
     const needsTop10Id =
       settings.top10Count > 0 &&
       !hasLeagueTop10ChallengeId(existingDay.top10_challenge_id);
 
-    if (!needsQuizIds && !needsWhoAmIIds && !needsFindPlayerIds && !needsTop10Id) {
+    if (!needsQuizIds && !needsWhoAmIIds && !needsTop10Id) {
       return { leagueDay: existingDay, error: null };
     }
 
     const updatePayload = {};
     if (needsQuizIds) updatePayload.quiz_question_ids = quizQuestionIds;
     if (needsWhoAmIIds) updatePayload.whoami_question_ids = whoamiQuestionIds;
-    if (needsFindPlayerIds) updatePayload.find_player_target_ids = findPlayerTargetIds;
     if (needsTop10Id) updatePayload.top10_challenge_id = top10Challenge?.id || null;
 
     const { data: updatedDay, error: updateError } = await supabase
@@ -429,10 +406,6 @@ export async function getOrCreateLeagueDay(supabase, league) {
     top10_challenge_id: top10Challenge?.id || null,
     whoami_question_ids: whoamiQuestionIds,
   };
-  if (settings.findPlayerCount > 0) {
-    insertPayload.find_player_target_ids = findPlayerTargetIds;
-  }
-
   const { data: leagueDay, error } = await supabase
     .from("league_days")
     .insert(insertPayload)
@@ -442,7 +415,7 @@ export async function getOrCreateLeagueDay(supabase, league) {
   if (error) {
     if (
       isMissingSettingsColumnError(error) &&
-      (settings.whoamiCount > 0 || settings.findPlayerCount > 0)
+      settings.whoamiCount > 0
     ) {
       return {
         leagueDay: null,
@@ -521,12 +494,9 @@ export async function submitLeagueDailyResult(
     quizScore,
     top10Score,
     whoamiScore = 0,
-    findPlayerScore = 0,
-    findPlayerAttempts = null,
-    findPlayerTimeSeconds = null,
   }
 ) {
-  const totalPoints = quizScore + top10Score + whoamiScore + findPlayerScore;
+  const totalPoints = quizScore + top10Score + whoamiScore;
 
   const { data: existingSubmission, error: existingError } = await supabase
     .from("league_submissions")
@@ -550,9 +520,6 @@ export async function submitLeagueDailyResult(
       quiz_score: quizScore,
       top10_score: top10Score,
       whoami_score: whoamiScore,
-      find_player_score: findPlayerScore,
-      find_player_attempts: findPlayerAttempts,
-      find_player_time_seconds: findPlayerTimeSeconds,
       total_points: totalPoints,
     })
     .select()

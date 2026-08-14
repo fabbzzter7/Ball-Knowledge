@@ -1,0 +1,298 @@
+.mp-competitive-game {
+  --mp-accent: #7af5d4;
+  --mp-accent-2: #dfff61;
+  --mp-accent-soft: rgba(122, 245, 212, 0.16);
+  --mp-border: rgba(130, 230, 214, 0.2);
+}
+
+.mp-competitive-game--world-cup {
+  --mp-accent: #ffd86b;
+  --mp-accent-2: #73a7ff;
+  --mp-accent-soft: rgba(255, 216, 107, 0.17);
+  --mp-border: rgba(255, 216, 107, 0.24);
+}
+
+.mp-competitive-game--premier-league {
+  --mp-accent: #b98cff;
+  --mp-accent-2: #64b6ff;
+  --mp-accent-soft: rgba(185, 140, 255, 0.18);
+  --mp-border: rgba(185, 140, 255, 0.24);
+}
+
+.mp-competitive-game--career-path {
+  --mp-accent: #54d7ff;
+  --mp-accent-2: #55f0c0;
+  --mp-accent-soft: rgba(84, 215, 255, 0.16);
+  --mp-border: rgba(84, 215, 255, 0.22);
+}
+
+.mp-competitive-game.gk-game::before {
+  background:
+    radial-gradient(circle at 24% 0%, var(--mp-accent-soft), transparent 34%),
+    radial-gradient(circle at 100% 18%, rgba(101, 170, 255, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(2, 14, 22, 0.2), rgba(0, 0, 0, 0.42));
+}
+
+.mp-round-shell {
+  gap: 11px;
+}
+
+.mp-round-topbar .gk-mode-meta strong {
+  color: #f8fdff;
+}
+
+.mp-save-exit-button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.mp-competitive-hud {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 8px;
+}
+
+.mp-competitor-card,
+.mp-round-center {
+  min-width: 0;
+  border: 1px solid var(--mp-border);
+  background:
+    radial-gradient(circle at 18% 0%, var(--mp-accent-soft), transparent 44%),
+    linear-gradient(180deg, rgba(17, 38, 50, 0.9), rgba(8, 22, 31, 0.96));
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.mp-competitor-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 58px;
+  padding: 8px;
+  border-radius: 18px;
+}
+
+.mp-competitor-card span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mp-competitor-card small,
+.mp-round-meta-row span,
+.mp-career-answer-card > div span,
+.mp-round-complete-card span,
+.mp-round-complete-card small {
+  color: rgba(203, 233, 243, 0.62);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mp-competitor-card strong {
+  overflow: hidden;
+  color: #f8fdff;
+  font-size: 0.78rem;
+  font-weight: 850;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mp-competitor-card b {
+  color: var(--mp-accent);
+  font-size: 1.28rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.mp-competitor-card.is-you {
+  border-color: color-mix(in srgb, var(--mp-accent) 35%, transparent);
+}
+
+.mp-round-center {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+  min-width: 54px;
+  padding: 8px 9px;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.mp-round-center span {
+  color: rgba(203, 233, 243, 0.58);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.mp-round-center strong {
+  color: #f8fdff;
+  font-size: 0.92rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.mp-round-meta-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.mp-round-timer {
+  display: grid;
+  place-items: center;
+  min-width: 52px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--mp-accent) 38%, transparent);
+  border-radius: 999px;
+  background: rgba(8, 28, 36, 0.8);
+  color: var(--mp-accent);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
+}
+
+.mp-round-timer strong {
+  font-size: 0.92rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.mp-round-timer.danger {
+  border-color: rgba(255, 139, 139, 0.52);
+  color: #ffb0b0;
+}
+
+.mp-question-stage {
+  gap: 10px;
+}
+
+.mp-competitive-game .gk-question-card {
+  border-color: var(--mp-border);
+  background:
+    radial-gradient(circle at 100% 0%, var(--mp-accent-soft), transparent 34%),
+    radial-gradient(circle at 0% 100%, rgba(101, 170, 255, 0.1), transparent 30%),
+    linear-gradient(145deg, rgba(14, 42, 57, 0.97), rgba(5, 18, 29, 0.98));
+}
+
+.mp-competitive-game .gk-question-kicker {
+  color: var(--mp-accent);
+}
+
+.mp-competitive-game .gk-question-kicker span {
+  background: var(--mp-accent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--mp-accent) 55%, transparent);
+}
+
+.mp-competitive-game .gk-answer-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mp-career-answer-card {
+  display: grid;
+  gap: 10px;
+}
+
+.mp-career-answer-card > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mp-career-answer-card > div strong {
+  color: var(--mp-accent);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.mp-round-feedback,
+.mp-round-state-card,
+.mp-round-complete-card {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--mp-border);
+  border-radius: 18px;
+  background: rgba(6, 20, 31, 0.78);
+  color: rgba(238, 248, 246, 0.9);
+  text-align: center;
+}
+
+.mp-round-state-card {
+  min-height: 240px;
+  align-content: center;
+}
+
+.mp-round-state-card strong,
+.mp-round-complete-card strong {
+  color: #f8fdff;
+  font-size: 1.18rem;
+  font-weight: 940;
+}
+
+.mp-round-complete-card strong {
+  color: var(--mp-accent);
+  font-size: 1.72rem;
+}
+
+.mp-round-feedback.wrong {
+  border-color: rgba(255, 177, 103, 0.34);
+  color: #ffd5aa;
+}
+
+@media (max-width: 390px) {
+  .mp-round-shell {
+    gap: 8px;
+  }
+
+  .mp-competitive-hud {
+    gap: 6px;
+  }
+
+  .mp-competitor-card {
+    grid-template-columns: auto minmax(0, 1fr);
+    min-height: 52px;
+    padding: 7px;
+    border-radius: 15px;
+  }
+
+  .mp-competitor-card b {
+    grid-column: 1 / -1;
+    justify-self: end;
+    margin-top: -4px;
+    font-size: 1.06rem;
+  }
+
+  .mp-round-center {
+    min-width: 45px;
+    padding-inline: 6px;
+    border-radius: 14px;
+  }
+
+  .mp-competitor-card strong {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-height: 760px) {
+  .mp-competitive-hud {
+    gap: 6px;
+  }
+
+  .mp-competitor-card {
+    min-height: 50px;
+  }
+
+  .mp-round-meta-row {
+    margin-top: -2px;
+  }
+}

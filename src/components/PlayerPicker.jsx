@@ -132,6 +132,11 @@ export default function PlayerPicker({
   }, [visibleResults]);
   const normalizedQuery = normalizePlayerSearch(currentQuery);
   const updateQuery = (nextQuery) => {
+    if (!disabled && normalizePlayerSearch(nextQuery).length >= 2) {
+      window.clearTimeout(blurTimeoutRef.current);
+      setDropdownOpen(true);
+    }
+
     if (isQueryControlled) {
       onInputChange?.(nextQuery);
       onChangeText?.(nextQuery);
@@ -240,7 +245,12 @@ export default function PlayerPicker({
     setDropdownOpen(false);
     setSearchError("");
     if (autoSubmitOnSelect) {
-      window.setTimeout(() => onSubmit?.(player), 0);
+      window.setTimeout(() => {
+        onSubmit?.(player);
+        setSelectedPlayer(null);
+        setDropdownOpen(true);
+        inputRef.current?.focus();
+      }, 0);
       return;
     }
 

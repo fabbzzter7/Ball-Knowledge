@@ -96,19 +96,6 @@ function getEraFromYears(years = []) {
   return "modern";
 }
 
-function getEraFromPlayer(player = {}) {
-  const birthYear = Number(player.birth_year);
-  const activeFrom = Number(player.active_from);
-  const activeTo = Number(player.active_to);
-  const referenceYear = activeFrom || (birthYear ? birthYear + 22 : activeTo);
-  if (!referenceYear) return "";
-  if (referenceYear < 1990) return "classic";
-  if (referenceYear < 2000) return "nineties";
-  if (referenceYear < 2012) return "two_thousands";
-  if (referenceYear < 2020) return "twenty_tens";
-  return "modern";
-}
-
 function getGenerationFromQuestionText(text) {
   const era = getEraFromYears(getYears(text));
   if (era) return era;
@@ -169,30 +156,6 @@ function profileFromWhoAmI(question = {}) {
       normalizedText(text).includes("striker") || normalizedText(text).includes("attacker") || normalizedText(text).includes("forward") ? "fw" : "",
     ]),
     type: question.difficulty || "",
-  };
-}
-
-function profileFromPlayer(player = {}) {
-  return {
-    id: player.id,
-    countries: unique([
-      normalizedText(player.nationality),
-      normalizedText(player.national_team),
-    ]),
-    clubs: unique([...(player.main_clubs || []), ...(player.clubs || [])].map(normalizedText)),
-    leagues: unique([...(player.leagues || []), player.primary_league].map(normalizedText)),
-    eras: unique([getEraFromPlayer(player)]),
-    positionGroups: unique([
-      normalizedText(player.position_group || player.position || "").includes("goalkeeper") ? "gk" : "",
-      normalizedText(player.position_group || player.position || "").includes("def") ? "def" : "",
-      normalizedText(player.position_group || player.position || "").includes("mid") ? "mid" : "",
-      normalizedText(player.position_group || player.position || "").includes("forward") ||
-      normalizedText(player.position_group || player.position || "").includes("wing") ||
-      normalizedText(player.position_group || player.position || "").includes("striker")
-        ? "fw"
-        : normalizedText(player.position_group || player.position || ""),
-    ]),
-    type: Number(player.popularity_score) >= 82 ? "star" : Number(player.popularity_score) >= 62 ? "known" : "cult",
   };
 }
 
@@ -277,45 +240,4 @@ export function selectDailyWhoAmIQuestion(questions = [], dateKey) {
     profileFromWhoAmI,
     { exactRecentWindow: 30, historyDays: 30, positionPenalty: 10, typePenalty: 18 }
   );
-}
-
-export function selectDailyFindPlayerTargets(pool = [], seedText = "", count = 1) {
-  if (!pool.length || count <= 0) return [];
-
-  const dateKey = String(seedText).match(/\d{4}-\d{2}-\d{2}/)?.[0] || seedText || "today";
-  const candidates = pool
-    .filter(Boolean)
-    .map((player) => ({ item: player, profile: profileFromPlayer(player) }))
-    .filter(({ profile }) => profile.id);
-  const picked = [];
-  const pickedProfiles = [];
-
-  for (let index = 0; index < count; index += 1) {
-    const recentProfiles = [];
-    for (let day = 1; day <= 21; day += 1) {
-      const historyDate = addDaysToDateKey(dateKey, -day);
-      const historical = pickSingleWithoutHistory(
-        candidates,
-        `${historyDate}:${index}`,
-        "daily-find-player",
-        recentProfiles,
-        { exactRecentWindow: 14, historyDays: 21, positionPenalty: 20, typePenalty: 12 }
-      );
-      if (historical?.profile) recentProfiles.unshift(historical.profile);
-    }
-
-    const next = pickSingleWithoutHistory(
-      candidates.filter((candidate) => !picked.some((player) => player.id === candidate.item.id)),
-      `${dateKey}:${index}:${seedText}`,
-      "daily-find-player",
-      [...pickedProfiles, ...recentProfiles],
-      { exactRecentWindow: 14, historyDays: 21, positionPenalty: 34, typePenalty: 16 }
-    );
-
-    if (!next?.item) break;
-    picked.push(next.item);
-    pickedProfiles.unshift(next.profile);
-  }
-
-  return picked;
 }

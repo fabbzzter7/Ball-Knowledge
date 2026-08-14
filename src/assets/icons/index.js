@@ -13,7 +13,6 @@ import careerPath from "./app/career_path.png";
 import worldCup from "./app/world_cup.png";
 import connections from "./app/connections.png";
 import whoAmI from "./app/who_am_i.png";
-import findThePlayer from "./app/find_the_player.png";
 
 import playNow from "./app/play_now.png";
 import h2h from "./app/h2h.png";
@@ -60,7 +59,6 @@ export const BK_ICONS = {
   worldCup,
   connections,
   whoAmI,
-  findThePlayer,
   playNow,
   h2h,
   league,

@@ -642,57 +642,6 @@ function scorePlayerSearchRecord(record, query) {
   };
 }
 
-function hasFindPlayerProfile(player = {}) {
-  return (
-    player.id &&
-    player.name &&
-    player.birth_year &&
-    (player.nationality || player.national_team) &&
-    (player.position_group || player.position)
-  );
-}
-
-function getFindThePlayerRecognitionScore(player = {}) {
-  const popularity = Number(player.popularity_score) || 0;
-  const relevance = Number(player.relevance_score) || 0;
-  const manualBonus = isManualPlayer(player) ? 420 : 0;
-  const nationalTeamBonus = player.national_team ? 120 : 0;
-  const clubBonus = Math.min(
-    90,
-    ((Array.isArray(player.main_clubs) ? player.main_clubs.length : 0) * 36) +
-      ((Array.isArray(player.clubs) ? player.clubs.length : 0) * 12)
-  );
-  const difficultyBonus =
-    player.difficulty === "Easy" ? 90 : player.difficulty === "Medium" ? 45 : 0;
-
-  return popularity + Math.round(relevance / 35) + manualBonus + nationalTeamBonus + clubBonus + difficultyBonus;
-}
-
-function isRecognizableFindThePlayerCandidate(player = {}) {
-  if (!hasFindPlayerProfile(player)) return false;
-
-  const popularity = Number(player.popularity_score) || 0;
-  const relevance = Number(player.relevance_score) || 0;
-
-  if (isManualPlayer(player) && popularity >= 650) return true;
-  if (popularity >= 850) return true;
-  if (popularity >= 800 && player.national_team) return true;
-  if (relevance >= 11800) return true;
-
-  return false;
-}
-
-export function getFindThePlayerPool(players = BASE_LOCAL_PLAYER_INDEX) {
-  return mergeDuplicatePlayers(players)
-    .map(normalizePlayer)
-    .filter(isRecognizableFindThePlayerCandidate)
-    .sort(
-      (a, b) =>
-        getFindThePlayerRecognitionScore(b) - getFindThePlayerRecognitionScore(a) ||
-        String(a.name).localeCompare(String(b.name))
-    );
-}
-
 async function loadSearchPlayerIndex() {
   if (cachedSearchIndexPromise) return cachedSearchIndexPromise;
 
@@ -824,12 +773,6 @@ export async function fetchPlayers(limit = 30) {
   }
 
   return (data || []).map(normalizePlayer);
-}
-
-export async function fetchFindPlayerPool() {
-  const localPlayerIndex = await loadLocalPlayerIndex();
-  const fallbackPool = getFindThePlayerPool(localPlayerIndex);
-  return { players: fallbackPool, error: null };
 }
 
 export async function getActivePlayerPoolSummary() {

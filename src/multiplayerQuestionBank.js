@@ -1,24 +1,33 @@
-import { QUESTIONS } from "./QUESTIONS";
-import { CAREER_PATH_MULTI_QUESTIONS } from "./careerpathmulti";
-import { PREMIER_LEAGUE_QUESTIONS } from "./premierleague";
-import { WORLDCUP_MULTI_QUESTIONS } from "./worldcupmulti";
-
-const CATEGORY_BANKS = {
-  general: QUESTIONS.map((question, index) => ({
-    ...question,
-    id: question.id || `general_${index + 1}`,
-    category: "general",
-  })),
-  world_cup: WORLDCUP_MULTI_QUESTIONS,
-  premier_league: PREMIER_LEAGUE_QUESTIONS,
-  career_path: CAREER_PATH_MULTI_QUESTIONS,
-};
-
 const CATEGORY_ALIASES = {
   "world-cup": "world_cup",
   legends: "general",
   clubs: "general",
 };
+
+const categoryLoaders = {
+  async general() {
+    const { QUESTIONS } = await import("./QUESTIONS");
+    return QUESTIONS.map((question, index) => ({
+      ...question,
+      id: question.id || `general_${index + 1}`,
+      category: "general",
+    }));
+  },
+  async world_cup() {
+    const { WORLDCUP_MULTI_QUESTIONS } = await import("./worldcupmulti");
+    return WORLDCUP_MULTI_QUESTIONS;
+  },
+  async premier_league() {
+    const { PREMIER_LEAGUE_QUESTIONS } = await import("./premierleague");
+    return PREMIER_LEAGUE_QUESTIONS;
+  },
+  async career_path() {
+    const { CAREER_PATH_MULTI_QUESTIONS } = await import("./careerpathmulti");
+    return CAREER_PATH_MULTI_QUESTIONS;
+  },
+};
+
+const categoryCache = new Map();
 
 function normalizeCategory(category) {
   return CATEGORY_ALIASES[category] || category;
@@ -36,6 +45,13 @@ function isValidMultiplayerQuestion(question) {
   );
 }
 
+function withMultiplayerId(question, normalizedCategory) {
+  return {
+    ...question,
+    multiplayerId: `${normalizedCategory}:${question.id}`,
+  };
+}
+
 function shuffle(array) {
   const next = [...array];
 
@@ -47,19 +63,35 @@ function shuffle(array) {
   return next;
 }
 
-export function getMultiplayerQuestionsByCategory(category) {
+export async function getMultiplayerQuestionsByCategory(category) {
   const normalizedCategory = normalizeCategory(category);
+  const loader = categoryLoaders[normalizedCategory];
+  if (!loader) return [];
 
-  return (CATEGORY_BANKS[normalizedCategory] || [])
-    .filter(isValidMultiplayerQuestion)
-    .map((question) => ({
-      ...question,
-      multiplayerId: `${normalizedCategory}:${question.id}`,
-    }));
+  if (!categoryCache.has(normalizedCategory)) {
+    categoryCache.set(
+      normalizedCategory,
+      loader().then((questions) =>
+        (questions || [])
+          .filter(isValidMultiplayerQuestion)
+          .map((question) => withMultiplayerId(question, normalizedCategory))
+      )
+    );
+  }
+
+  return categoryCache.get(normalizedCategory);
 }
 
-export function pickMultiplayerQuestionIds(category, count = 5) {
-  const questions = getMultiplayerQuestionsByCategory(category);
+export async function getMultiplayerQuestionsByCategories(categories) {
+  const banks = await Promise.all(
+    categories.map((category) => getMultiplayerQuestionsByCategory(category))
+  );
+
+  return banks.flat();
+}
+
+export async function pickMultiplayerQuestionIds(category, count = 5) {
+  const questions = await getMultiplayerQuestionsByCategory(category);
 
   if (questions.length < count) {
     return [];
@@ -70,23 +102,46 @@ export function pickMultiplayerQuestionIds(category, count = 5) {
     .map((question) => question.multiplayerId);
 }
 
-export function getMultiplayerQuestionsByIds(ids) {
-  return ids
-    .map((storedId) => {
-      const [category, ...idParts] = String(storedId).split(":");
-      const id = idParts.join(":");
-      const questions = getMultiplayerQuestionsByCategory(category);
+export async function getMultiplayerQuestionsByIds(ids) {
+  const groupedIds = new Map();
+
+  ids.forEach((storedId, index) => {
+    const [category, ...idParts] = String(storedId).split(":");
+    const normalizedCategory = normalizeCategory(category);
+    const id = idParts.join(":");
+    const existing = groupedIds.get(normalizedCategory) || [];
+    existing.push({ id, index });
+    groupedIds.set(normalizedCategory, existing);
+  });
+
+  const loadedGroups = await Promise.all(
+    [...groupedIds.entries()].map(async ([category, entries]) => ({
+      category,
+      entries,
+      questions: await getMultiplayerQuestionsByCategory(category),
+    }))
+  );
+
+  const questionsByOriginalIndex = new Map();
+
+  loadedGroups.forEach(({ entries, questions }) => {
+    entries.forEach(({ id, index }) => {
       const directMatch = questions.find((question) => question.id === id);
 
-      if (directMatch) return directMatch;
+      if (directMatch) {
+        questionsByOriginalIndex.set(index, directMatch);
+        return;
+      }
 
       const legacyIndex = Number(id);
 
-      if (Number.isInteger(legacyIndex)) {
-        return questions[legacyIndex] || null;
+      if (Number.isInteger(legacyIndex) && questions[legacyIndex]) {
+        questionsByOriginalIndex.set(index, questions[legacyIndex]);
       }
+    });
+  });
 
-      return null;
-    })
+  return ids
+    .map((_, index) => questionsByOriginalIndex.get(index))
     .filter(Boolean);
 }

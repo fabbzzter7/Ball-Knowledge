@@ -32,6 +32,9 @@ export function getDefaultProfile({
   playerId,
   username,
   avatarEmoji = DEFAULT_AVATAR_EMOJI,
+  avatarStyle = DEFAULT_AVATAR_STYLE,
+  avatarColor = DEFAULT_AVATAR_COLOR,
+  avatarBg = DEFAULT_AVATAR_BG,
   favoriteCountry = DEFAULT_FAVORITE_COUNTRY,
   favoriteFlag = DEFAULT_FAVORITE_FLAG,
   highScore = 0,
@@ -47,9 +50,9 @@ export function getDefaultProfile({
     display_name: safeUsername,
     avatar_emoji: avatarEmoji || DEFAULT_AVATAR_EMOJI,
     avatar_icon: avatarEmoji || DEFAULT_AVATAR_EMOJI,
-    avatar_style: DEFAULT_AVATAR_STYLE,
-    avatar_color: DEFAULT_AVATAR_COLOR,
-    avatar_bg: DEFAULT_AVATAR_BG,
+    avatar_style: avatarStyle || DEFAULT_AVATAR_STYLE,
+    avatar_color: avatarColor || DEFAULT_AVATAR_COLOR,
+    avatar_bg: avatarBg || DEFAULT_AVATAR_BG,
     favorite_country: favoriteCountry || DEFAULT_FAVORITE_COUNTRY,
     favorite_flag: favoriteFlag || DEFAULT_FAVORITE_FLAG,
     best_score: highScore,
@@ -77,6 +80,7 @@ export function getDefaultProfile({
 }
 
 export function mergeLocalProgressIntoProfile(profile = {}, local = {}) {
+  const localAvatar = local.avatar || {};
   const nextStats = {
     ...(profile.progression_stats || {}),
     ...(local.progressionStats || {}),
@@ -92,14 +96,31 @@ export function mergeLocalProgressIntoProfile(profile = {}, local = {}) {
     xp_total: Math.max(Number(profile.xp_total) || 0, Number(local.xpTotal) || 0),
     level_id: Math.max(Number(profile.level_id) || 1, Number(local.levelId) || 1),
     progression_stats: nextStats,
-    avatar_emoji: profile.avatar_emoji || profile.avatar_icon || DEFAULT_AVATAR_EMOJI,
-    avatar_icon: profile.avatar_icon || profile.avatar_emoji || DEFAULT_AVATAR_EMOJI,
-    avatar_style: profile.avatar_style || "classic",
-    avatar_color: profile.avatar_color || "green",
-    avatar_bg: profile.avatar_bg || "dark",
+    avatar_emoji:
+      profile.avatar_emoji ||
+      profile.avatar_icon ||
+      localAvatar.icon ||
+      local.avatarEmoji ||
+      DEFAULT_AVATAR_EMOJI,
+    avatar_icon:
+      profile.avatar_icon ||
+      profile.avatar_emoji ||
+      localAvatar.icon ||
+      local.avatarEmoji ||
+      DEFAULT_AVATAR_EMOJI,
+    avatar_style: profile.avatar_style || localAvatar.style || DEFAULT_AVATAR_STYLE,
+    avatar_color: profile.avatar_color || localAvatar.color || DEFAULT_AVATAR_COLOR,
+    avatar_bg: profile.avatar_bg || localAvatar.bg || DEFAULT_AVATAR_BG,
     favorite_country:
-      profile.favorite_country || local.favoriteCountry || DEFAULT_FAVORITE_COUNTRY,
-    favorite_flag: profile.favorite_flag || local.favoriteFlag || DEFAULT_FAVORITE_FLAG,
+      profile.favorite_country ||
+      localAvatar.country ||
+      local.favoriteCountry ||
+      DEFAULT_FAVORITE_COUNTRY,
+    favorite_flag:
+      profile.favorite_flag ||
+      localAvatar.flag ||
+      local.favoriteFlag ||
+      DEFAULT_FAVORITE_FLAG,
   };
 }
 

@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   CheckCircle2,
+  Coins,
+  Flame,
   RotateCcw,
   Trophy,
-  X,
   XCircle,
   Trash2,
 } from "lucide-react";
@@ -14,16 +15,24 @@ import GuessInput from "./components/GuessInput";
 import GameTopNav from "./components/GameTopNav";
 import BKIcon from "./components/BKIcon";
 import LevelIcon from "./components/LevelIcon";
+import AppScreen from "./components/ui/AppScreen";
+import AuthNotice from "./components/ui/AuthNotice";
+import BackButton from "./components/ui/BackButton";
+import Button from "./components/ui/Button";
+import EmptyState from "./components/ui/EmptyState";
+import FormField from "./components/ui/FormField";
+import Modal from "./components/ui/Modal";
+import ProgressBar from "./components/ui/ProgressBar";
+import ScreenHeader from "./components/ui/ScreenHeader";
+import SegmentedControl from "./components/ui/SegmentedControl";
+import StatGrid from "./components/ui/StatGrid";
+import StatusBadge from "./components/ui/StatusBadge";
+import SurfaceCard from "./components/ui/SurfaceCard";
 
-import { QUESTIONS } from "./QUESTIONS";
-import { CAREER_QUESTIONS } from "./CAREER_QUESTIONS";
 import {
   DAILY_LIST_CHALLENGES,
   auditDailyListChallenges,
 } from "./DAILY_LIST_CHALLENGES";
-import { WORLD_CUP_QUESTIONS } from "./WORLD_CUP_QUESTIONS";
-import { CONNECTIONS_PUZZLES } from "./CONNECTIONS_PUZZLES";
-import { WHO_AM_I_QUESTIONS } from "./WHO_AM_I_QUESTIONS";
 import { isSupabaseConfigured, supabase } from "./lib/supabaseClient";
 import {
   createProfile,
@@ -51,15 +60,6 @@ import {
   selectDailyWhoAmIQuestion,
 } from "./lib/dailyContentDiversity";
 import {
-  buildPlayerDistanceRanking,
-  getDistanceBarPercent,
-  getDistanceColor,
-  getDistanceLabel,
-  getFindPlayerPoints,
-  pickDailyFindPlayerTargets,
-  rankGuessAgainstTarget,
-} from "./lib/playerDistance";
-import {
   addStat,
   createXpEvent,
   getLevelById,
@@ -70,7 +70,6 @@ import {
 } from "./lib/progressionService";
 import { safeLocalStorage as localStorage } from "./lib/safeStorage";
 import {
-  getMultiplayerQuestionsByIds,
   pickMultiplayerQuestionIds,
 } from "./multiplayerQuestionBank";
 import {
@@ -89,13 +88,22 @@ import {
   getLeagueTop10ChallengeById,
   getLeagueWhoAmIQuestionsByIds,
 } from "./lib/leagueChallengeUtils";
-import { findOrCreatePublicMatch } from "./lib/matchmakingService";
 import {
+  findOrCreatePublicMatch,
+  getPrivateJoinErrorMessage,
+  joinPrivateMatchByRoomCode,
+  normalizeRoomCode,
+} from "./lib/matchmakingService";
+import {
+  getFriendlyAuthErrorMessage,
   getCurrentSession,
+  isAnonymousAuthUser,
   normalizeUsername,
+  signInAnonymously,
   signInWithEmail,
   signOut,
   signUpWithEmailUsername,
+  upgradeAnonymousUserWithEmail,
 } from "./lib/authService";
 import {
   isSoundEnabled,
@@ -107,11 +115,1053 @@ import {
   playWrongSound,
   setSoundEnabled,
 } from "./lib/soundManager";
+import {
+  GENERAL_KNOWLEDGE_RECENT_HISTORY_KEY,
+  GENERAL_KNOWLEDGE_RECENT_HISTORY_LIMIT,
+  auditGeneralKnowledgeQuestionBank,
+  buildGeneralKnowledgeQuestions,
+  getGeneralKnowledgeQuestionKey,
+} from "./features/generalKnowledge/questionSequencer";
+import AnswerGrid from "./features/generalKnowledge/AnswerGrid";
+import QuestionCard from "./features/generalKnowledge/QuestionCard";
+import QuizTimer from "./features/generalKnowledge/QuizTimer";
+import "./features/generalKnowledge/GeneralKnowledgeGame.css";
+import "./features/singlePlayer/top10/Top10Game.css";
+import "./features/gameplay/GameplayShell.css";
 
 import stadiumBg from "./assets/stadium-bg.png";
 import quizBg from "./assets/quiz-bg.png";
 
-const PlayerPicker = React.lazy(() => import("./components/PlayerPicker"));
+const GeneralKnowledgeGame = React.lazy(() => import("./features/generalKnowledge/GeneralKnowledgeGame"));
+const WorldCupGame = React.lazy(() => import("./features/singlePlayer/worldCup/WorldCupGame"));
+const CareerPathGame = React.lazy(() => import("./features/singlePlayer/careerPath/CareerPathGame"));
+const WhoAmIGame = React.lazy(() => import("./features/singlePlayer/whoAmI/WhoAmIGame"));
+const ConnectionsGame = React.lazy(() => import("./features/singlePlayer/connections/ConnectionsGame"));
+const Top10Game = React.lazy(() => import("./features/singlePlayer/top10/Top10Game"));
+const ActiveMatchRound = React.lazy(() => import("./features/multiplayer/ActiveMatchRound"));
+
+function SinglePlayerFeatureFallback() {
+  return <div className="fullscreen-bg" />;
+}
+
+const STARTUP_MIN_DISPLAY_MS = 1650;
+
+function StartupExperience({ isWorking = true }) {
+  return (
+    <div
+      className="fullscreen-bg startup-screen"
+    >
+      <motion.div
+        className="startup-shell"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <div className="startup-copy" aria-live="polite">
+          <motion.h1
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.64, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+          >
+            Ball Knowledge
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.42, delay: 0.34, ease: [0.22, 1, 0.36, 1] }}
+          >
+            Prove you know the game
+          </motion.p>
+        </div>
+
+        <motion.div
+          className="startup-loading-slot"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isWorking ? 1 : 0 }}
+          transition={{ duration: 0.24, delay: isWorking ? 0.58 : 0 }}
+        >
+          {isWorking && (
+            <div
+              className="startup-loading"
+              aria-label="Ball Knowledge is starting"
+            >
+              <div className="startup-loading-line" />
+            </div>
+          )}
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+}
+
+function ArenaOptionCard({
+  tone = "primary",
+  icon,
+  iconSize = 30,
+  eyebrow,
+  title,
+  description,
+  onClick,
+  disabled = false,
+}) {
+  return (
+    <button
+      type="button"
+      className={`bk-mp-option bk-mp-option--${tone}`}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      <span className="bk-mp-option__icon">
+        <BKIcon name={icon} size={iconSize} />
+      </span>
+
+      <span className="bk-mp-option__copy">
+        <small>{eyebrow}</small>
+        <strong>{title}</strong>
+        <span>{description}</span>
+      </span>
+
+      <span className="bk-mp-option__arrow">›</span>
+    </button>
+  );
+}
+
+const MULTIPLAYER_CATEGORY_PRESENTATION = {
+  general: {
+    tone: "general",
+    icon: "generalKnowledge",
+    eyebrow: "Classic",
+    description: "Four football knowledge questions.",
+  },
+  world_cup: {
+    tone: "world-cup",
+    icon: "worldCup",
+    eyebrow: "Trophy",
+    description: "International history and glory.",
+  },
+  premier_league: {
+    tone: "premier-league",
+    icon: "rankings",
+    eyebrow: "League",
+    description: "English football knowledge.",
+  },
+  career_path: {
+    tone: "career-path",
+    icon: "careerPath",
+    eyebrow: "Journey",
+    description: "Follow the clubs. Name the player.",
+  },
+};
+
+function getMultiplayerCategoryPresentation(categoryId) {
+  return (
+    MULTIPLAYER_CATEGORY_PRESENTATION[categoryId] ||
+    MULTIPLAYER_CATEGORY_PRESENTATION.general
+  );
+}
+
+function MultiplayerCategoryGrid({
+  categories,
+  onSelect,
+  disabled = false,
+  className = "",
+}) {
+  return (
+    <div className={["bk-battle-category-grid", className].filter(Boolean).join(" ")}>
+      {categories.map((category) => {
+        const categoryPresentation = getMultiplayerCategoryPresentation(category.id);
+
+        return (
+          <button
+            type="button"
+            key={category.id}
+            className={`bk-battle-category-card bk-battle-category-card--${categoryPresentation.tone}`}
+            disabled={!category.available || disabled}
+            onClick={() => onSelect(category)}
+          >
+            <span className="bk-battle-category-card__icon">
+              <BKIcon name={categoryPresentation.icon} size={34} />
+            </span>
+            <span className="bk-battle-category-card__copy">
+              <small>{categoryPresentation.eyebrow}</small>
+              <strong>{category.label}</strong>
+              <span>
+                {category.available
+                  ? categoryPresentation.description
+                  : "Coming soon"}
+              </span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function getMatchSlotData(match, slot, profiles, currentUsername = "") {
+  const prefix = slot === "player2" ? "player2" : "player1";
+  const fallbackName =
+    match?.[`${prefix}_username`] ||
+    (slot === "player1" ? currentUsername : "") ||
+    "Waiting...";
+
+  return {
+    slot,
+    id: match?.[`${prefix}_id`] || "",
+    name: fallbackName,
+    profile: profiles?.[slot],
+    wins: Number(match?.[`${prefix}_wins`]) || 0,
+  };
+}
+
+function getMatchPerspective(match, currentPlayerSlot, profiles, currentUsername = "") {
+  const safeSlot =
+    currentPlayerSlot === "player2"
+      ? "player2"
+      : currentPlayerSlot === "player1"
+      ? "player1"
+      : "player1";
+  const rivalSlot = safeSlot === "player1" ? "player2" : "player1";
+
+  return {
+    you: getMatchSlotData(match, safeSlot, profiles, currentUsername),
+    rival: getMatchSlotData(match, rivalSlot, profiles, currentUsername),
+  };
+}
+
+function getRoundWinnerSlot(round, match) {
+  if (!round?.winner || round.winner === "draw") return round?.winner || null;
+  if (round.winner === match?.player1_username) return "player1";
+  if (round.winner === match?.player2_username) return "player2";
+  return null;
+}
+
+function getRoundOutcomeText(round, match, perspective) {
+  const winnerSlot = getRoundWinnerSlot(round, match);
+  if (winnerSlot === "draw") return "Draw";
+  if (winnerSlot === perspective.you.slot) return "You won the round";
+  if (winnerSlot === perspective.rival.slot) return "Rival won the round";
+  return round?.status === "finished" ? "Round complete" : "Waiting";
+}
+
+function getRoundScoreForSlot(round, slot) {
+  return slot === "player2"
+    ? round?.player2_score ?? 0
+    : round?.player1_score ?? 0;
+}
+
+function MultiplayerMatchScoreboard({
+  activeMatch,
+  activeRound,
+  playerOneProfile,
+  playerTwoProfile,
+  currentPlayerSlot,
+  currentUsername,
+  hasBothPlayers,
+}) {
+  const profiles = { player1: playerOneProfile, player2: playerTwoProfile };
+  const perspective = getMatchPerspective(
+    activeMatch,
+    currentPlayerSlot,
+    profiles,
+    currentUsername
+  );
+  const roundLabel = activeRound?.round_number
+    ? `Round ${activeRound.round_number}`
+    : activeMatch?.phase === "round_finished"
+    ? `Round ${activeMatch.round_number || 1} complete`
+    : activeMatch?.round_number
+    ? `Round ${activeMatch.round_number}`
+    : "Opening round";
+  const categoryLabel = activeRound?.category
+    ? getCategoryLabel(activeRound.category)
+    : activeMatch?.selected_category
+    ? getCategoryLabel(activeMatch.selected_category)
+    : "Choose category";
+
+  return (
+    <section className="bk-match-scoreboard" aria-label="Match score">
+      <div className="bk-match-scoreboard__player">
+        <PlayerAvatar profile={perspective.you.profile} size="medium" />
+        <span>
+          <small>You</small>
+          <strong>{perspective.you.name || "You"}</strong>
+        </span>
+      </div>
+
+      <div className="bk-match-scoreboard__score" aria-label="Overall round wins">
+        <small>Match score</small>
+        <strong>
+          {perspective.you.wins}<span>–</span>{perspective.rival.wins}
+        </strong>
+        <em>{roundLabel}</em>
+      </div>
+
+      <div className={`bk-match-scoreboard__player ${hasBothPlayers ? "" : "is-waiting"}`}>
+        <PlayerAvatar
+          profile={perspective.rival.profile}
+          size="medium"
+          hideFlag={!hasBothPlayers}
+        />
+        <span>
+          <small>Rival</small>
+          <strong>{hasBothPlayers ? perspective.rival.name : "Waiting..."}</strong>
+        </span>
+      </div>
+
+      <div className="bk-match-scoreboard__round">
+        <span>{categoryLabel}</span>
+      </div>
+    </section>
+  );
+}
+
+function MultiplayerRoundStatus({
+  activeMatch,
+  activeRound,
+  hasBothPlayers,
+  hasPlayedActiveRound,
+  isMultiplayerTurn,
+  nextCategoryWaitingName,
+  activeOpponentLabel,
+}) {
+  let title = "Waiting for rival";
+  let detail = "Share the room code to start the battle.";
+
+  if (activeMatch?.is_public && activeMatch.phase === "waiting_for_opponent") {
+    title = "Score saved";
+    detail = "Waiting for a random rival to finish the same round.";
+  } else if (!hasBothPlayers && !activeMatch?.is_public) {
+    title = "Waiting for rival";
+    detail = "Your room is ready. Share the code when you want to play.";
+  } else if (activeMatch?.phase === "choose_category") {
+    title = isMultiplayerTurn ? "Your turn" : "Rival choosing";
+    detail = isMultiplayerTurn
+      ? "Choose the next category."
+      : `Waiting for ${nextCategoryWaitingName} to choose.`;
+  } else if (activeMatch?.phase === "round_active" && activeRound) {
+    title = hasPlayedActiveRound ? "Round submitted" : "Your turn";
+    detail = hasPlayedActiveRound
+      ? `Waiting for ${activeOpponentLabel} to play this round.`
+      : "Your five-question round is ready.";
+  } else if (activeMatch?.phase === "round_finished" && activeRound) {
+    title = "Round complete";
+    detail = "The match score has been updated.";
+  } else if (activeMatch?.status === "ready") {
+    title = "Rival joined";
+    detail = "The private battle is ready.";
+  }
+
+  return (
+    <section className="bk-match-status-card">
+      <span>{activeRound ? getCategoryLabel(activeRound.category) : "Match state"}</span>
+      <strong>{title}</strong>
+      <p>{detail}</p>
+    </section>
+  );
+}
+
+function MultiplayerRoundResult({
+  activeMatch,
+  activeRound,
+  currentPlayerSlot,
+  playerOneProfile,
+  playerTwoProfile,
+  currentUsername,
+  isMultiplayerTurn,
+  nextCategoryWaitingName,
+}) {
+  if (!activeMatch || !activeRound || activeMatch.phase !== "round_finished") return null;
+
+  const perspective = getMatchPerspective(
+    activeMatch,
+    currentPlayerSlot,
+    { player1: playerOneProfile, player2: playerTwoProfile },
+    currentUsername
+  );
+  const youRoundScore = getRoundScoreForSlot(activeRound, perspective.you.slot);
+  const rivalRoundScore = getRoundScoreForSlot(activeRound, perspective.rival.slot);
+
+  return (
+    <SurfaceCard variant="selected" className="bk-match-result-card">
+      <span>Round {activeRound.round_number} complete</span>
+      <strong>{youRoundScore}<em>–</em>{rivalRoundScore}</strong>
+      <p>{getRoundOutcomeText(activeRound, activeMatch, perspective)}</p>
+      <small>
+        Match score {perspective.you.wins}–{perspective.rival.wins}
+      </small>
+      <small>
+        {isMultiplayerTurn
+          ? "Next: you choose the category."
+          : `Next: waiting for ${nextCategoryWaitingName}.`}
+      </small>
+    </SurfaceCard>
+  );
+}
+
+function MultiplayerRoundHistory({
+  activeMatch,
+  activeRound,
+  matchRounds,
+  currentPlayerSlot,
+  playerOneProfile,
+  playerTwoProfile,
+  currentUsername,
+}) {
+  const previousRounds = (matchRounds || []).filter((round) => (
+    round.id !== activeRound?.id && round.status === "finished"
+  ));
+
+  if (!activeMatch || !previousRounds.length) return null;
+
+  const perspective = getMatchPerspective(
+    activeMatch,
+    currentPlayerSlot,
+    { player1: playerOneProfile, player2: playerTwoProfile },
+    currentUsername
+  );
+
+  return (
+    <SurfaceCard className="bk-battle-history">
+      <strong>Previous rounds</strong>
+      {previousRounds.slice(0, 5).map((round) => {
+        const youScore = getRoundScoreForSlot(round, perspective.you.slot);
+        const rivalScore = getRoundScoreForSlot(round, perspective.rival.slot);
+        const outcome = getRoundOutcomeText(round, activeMatch, perspective);
+
+        return (
+          <span key={round.id} className="bk-round-history-row">
+            <small>R{round.round_number}</small>
+            <strong>{getCategoryLabel(round.category)}</strong>
+            <b>{youScore}–{rivalScore}</b>
+            <em>{outcome}</em>
+          </span>
+        );
+      })}
+    </SurfaceCard>
+  );
+}
+
+function LeagueContextHeader({
+  leagueName,
+  dayLabel,
+  modeLabel,
+  metaLabel = "Score",
+  metaValue,
+}) {
+  return (
+    <header className="league-play-context">
+      <div>
+        <span>League</span>
+        <strong>{leagueName}</strong>
+      </div>
+      <div>
+        <span>{dayLabel}</span>
+        <strong>{modeLabel}</strong>
+      </div>
+      <div>
+        <span>{metaLabel}</span>
+        <strong>{metaValue}</strong>
+      </div>
+    </header>
+  );
+}
+
+function LeagueProgressStrip({ items }) {
+  return (
+    <div className="league-modern-score-strip" aria-label="League challenge score">
+      {items.filter(Boolean).map((item) => (
+        <span key={item.label}>
+          <em>{item.label}</em>
+          <strong>{item.value}</strong>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function LeagueTop10Board({
+  answers,
+  foundAnswers,
+  reveal,
+  isRevealing,
+  getAnswerKey,
+  formatAnswerWithValue,
+  revealAll = false,
+}) {
+  return (
+    <section className="dc-board league-modern-top10-board" aria-label="League Top 10 answers">
+      <div className="dc-slot-list">
+        {answers.map((answer, index) => {
+          const rank = index + 1;
+          const found = foundAnswers.includes(answer);
+          const isScanning = reveal?.phase === "scan" && reveal.displayRank === rank;
+          const isRevealTarget = reveal?.type === "correct" && reveal.rank === rank;
+
+          return (
+            <motion.div
+              key={getAnswerKey(answer, index)}
+              className={`dc-slot ${found ? "found" : ""} ${
+                isScanning || isRevealing ? "scanning" : ""
+              } ${isRevealTarget ? "reveal-target" : ""} ${
+                revealAll && !found ? "missed" : ""
+              }`}
+              initial={revealAll ? { opacity: 0, y: 10 } : false}
+              animate={revealAll ? { opacity: 1, y: 0 } : {}}
+              transition={revealAll ? { delay: index * 0.035 } : undefined}
+            >
+              <span className="dc-slot-rank">#{rank}</span>
+              <span className="dc-slot-answer">
+                {found || revealAll ? (
+                  <strong>{formatAnswerWithValue(answer)}</strong>
+                ) : (
+                  <em>Awaiting answer</em>
+                )}
+              </span>
+              <span className="dc-slot-state">
+                {revealAll ? (
+                  <em>{found ? "Found" : "Missed"}</em>
+                ) : found ? (
+                  <BKIcon name="dailyChallenge" size={18} />
+                ) : (
+                  <BKIcon name="questionMark" size={15} />
+                )}
+              </span>
+            </motion.div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function LeagueDashboardHero({
+  league,
+  dayLabel,
+  memberCount,
+  statusLabel,
+  statusTone,
+  onLeave,
+  loading,
+}) {
+  return (
+    <section className="bk-league-hero-v2" aria-labelledby="league-dashboard-title">
+      <div className="bk-league-hero-v2__identity">
+        <p className="bk-type-label">
+          <BKIcon name="league" size={20} /> League
+        </p>
+        <h2 id="league-dashboard-title">{league.name}</h2>
+        <div className="bk-league-hero-v2__meta">
+          <span>{dayLabel}</span>
+          <span>{memberCount} players</span>
+          <span>{league.league_code}</span>
+        </div>
+      </div>
+      <div className="bk-league-hero-v2__actions">
+        <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onLeave}
+          disabled={loading}
+        >
+          Leave
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+function LeagueModeProgress({ item }) {
+  return (
+    <span className={`bk-league-mode-progress bk-league-mode-progress--${item.key}`}>
+      <em>{item.label}</em>
+      <strong>{item.display}</strong>
+    </span>
+  );
+}
+
+function LeagueTodayChallengeCard({
+  expired,
+  submission,
+  settings,
+  scoreItems,
+  structureText,
+  loading,
+  onPlay,
+}) {
+  const total = submission?.total_points ?? 0;
+
+  return (
+    <section
+      className={`bk-league-today-card ${
+        !expired && !submission ? "is-playable" : "is-complete"
+      }`}
+      aria-labelledby="league-today-title"
+    >
+      <div className="bk-league-today-card__top">
+        <div>
+          <p className="bk-type-label">Today's Challenge</p>
+          <h3 id="league-today-title">
+            {expired ? "League finished" : submission ? "Today complete" : "Ready to play"}
+          </h3>
+        </div>
+        <div className="bk-league-today-card__score">
+          <span>Today</span>
+          <strong>
+            {submission ? total : 0}/{settings.maxDailyPoints}
+          </strong>
+        </div>
+      </div>
+
+      <div className="bk-league-today-progress" aria-label="Today's mode scores">
+        {submission ? (
+          scoreItems.map((item) => <LeagueModeProgress item={item} key={item.key} />)
+        ) : (
+          <>
+            {settings.quizCount > 0 && (
+              <LeagueModeProgress
+                item={{
+                  key: "quiz",
+                  label: "Quick",
+                  display: `0/${settings.quizCount}`,
+                }}
+              />
+            )}
+            {settings.top10Count > 0 && (
+              <LeagueModeProgress
+                item={{ key: "top10", label: "Top 10", display: "0 pts" }}
+              />
+            )}
+            {settings.whoamiCount > 0 && (
+              <LeagueModeProgress
+                item={{ key: "whoami", label: "Who Am I", display: "0 pts" }}
+              />
+            )}
+          </>
+        )}
+      </div>
+
+      <div className="bk-league-today-card__footer">
+        <span>{expired ? "Final standings are locked in" : structureText}</span>
+        {!expired && !submission && (
+          <Button onClick={onPlay} disabled={loading}>
+            {loading ? "Loading..." : "Play Today's Challenge"}
+          </Button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function LeagueStandingRow({ row, compact = false }) {
+  const statusTone =
+    row.status === "completed" ? "success" : row.status === "in-progress" ? "info" : "warning";
+
+  return (
+    <div
+      className={`bk-league-standing-row ${compact ? "is-compact" : ""} ${
+        row.isCurrentUser ? "is-current" : ""
+      } ${row.isLeader ? "is-leader" : ""}`}
+    >
+      <div className="bk-league-standing-rank">
+        {row.rank === 1 ? <Trophy size={15} /> : null}
+        <span>#{row.rank}</span>
+      </div>
+      <div className="bk-league-standing-player">
+        <PlayerAvatar profile={row.profile} size="small" />
+        <div>
+          <strong>{row.member.username}</strong>
+          <small>
+            {row.isCurrentUser ? "You" : `${row.member.days_played || 0} days played`}
+          </small>
+        </div>
+      </div>
+      <div className="bk-league-standing-metrics" aria-label={`${row.member.username} scores`}>
+        <span>
+          <em>Today</em>
+          <b>{row.totalToday}</b>
+        </span>
+        <span>
+          <em>Total</em>
+          <b>{row.member.total_points || 0}</b>
+        </span>
+      </div>
+      <StatusBadge tone={statusTone}>{row.statusLabel}</StatusBadge>
+    </div>
+  );
+}
+
+function LeagueStandings({ rows }) {
+  const topRows = rows.slice(0, Math.min(rows.length, 3));
+  const lowerRows = rows.slice(topRows.length);
+  const showRivalry = rows.length === 2;
+
+  if (rows.length === 0) {
+    return (
+      <section className="bk-league-standings-v2">
+        <div className="bk-league-section-head">
+          <p className="bk-type-label">Standings</p>
+          <h3>League table</h3>
+        </div>
+        <EmptyState icon={<BKIcon name="league" size={26} />} title="No players yet">
+          Invite players with the league code.
+        </EmptyState>
+      </section>
+    );
+  }
+
+  return (
+    <section className="bk-league-standings-v2" aria-labelledby="league-standings-title">
+      <div className="bk-league-section-head">
+        <p className="bk-type-label">Standings</p>
+        <h3 id="league-standings-title">
+          {showRivalry ? "Head to head table" : "League table"}
+        </h3>
+      </div>
+
+      <div className={`bk-league-top-table ${showRivalry ? "is-rivalry" : ""}`}>
+        {topRows.map((row) => (
+          <LeagueStandingRow row={row} key={row.member.id} />
+        ))}
+      </div>
+
+      {lowerRows.length > 0 && (
+        <div className="bk-league-compact-table">
+          {lowerRows.map((row) => (
+            <LeagueStandingRow row={row} compact key={row.member.id} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function PrivateBattleLobby({
+  roomCode,
+  activeMatch,
+  activeRound,
+  matchRounds,
+  canChooseCategory,
+  categories,
+  multiplayerLoading,
+  copyStatus,
+  isWaitingAfterCreatorRound,
+  hasBothPlayers,
+  hasPlayedActiveRound,
+  isMultiplayerTurn,
+  nextCategoryWaitingName,
+  playerOneProfile,
+  playerTwoProfile,
+  currentPlayerSlot,
+  currentUsername,
+  onCopyCode,
+  onSelectCategory,
+  onStartRound,
+  onRefresh,
+}) {
+  const waitingForRival = !hasBothPlayers;
+  const roomCodeHero = (
+    <section
+      className={`bk-room-code-hero ${hasBothPlayers ? "is-secondary" : ""}`}
+      aria-label="Private room code"
+    >
+      <span>Private room</span>
+      <strong>{roomCode || "Room code"}</strong>
+      <p>Share this code with your rival.</p>
+      {roomCode && (
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onCopyCode}
+          disabled={multiplayerLoading}
+        >
+          {copyStatus || "Copy Code"}
+        </Button>
+      )}
+    </section>
+  );
+
+  return (
+    <section className="bk-private-battle">
+      <header className="bk-private-battle__header">
+        <span>H2H Arena</span>
+        <h2>Private Battle</h2>
+        <p>
+          {isWaitingAfterCreatorRound
+            ? "Your score is saved. Share the room and wait for your rival."
+            : "Share the room, pick the opening category, and start the duel."}
+        </p>
+      </header>
+
+      {waitingForRival && roomCodeHero}
+
+      <MultiplayerMatchScoreboard
+        activeMatch={activeMatch}
+        activeRound={activeRound}
+        playerOneProfile={playerOneProfile}
+        playerTwoProfile={playerTwoProfile}
+        currentPlayerSlot={currentPlayerSlot}
+        currentUsername={currentUsername}
+        hasBothPlayers={hasBothPlayers}
+      />
+
+      {!waitingForRival && roomCodeHero}
+
+      <div className="bk-battle-status-row">
+        <span className={`bk-battle-status-dot ${waitingForRival ? "is-waiting" : ""}`} />
+        <strong>
+          {activeMatch?.status === "ready"
+            ? "Rival joined"
+            : isWaitingAfterCreatorRound
+            ? "Waiting for rival"
+            : waitingForRival
+            ? "Waiting for rival"
+            : "Battle ready"}
+        </strong>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onRefresh}
+          disabled={multiplayerLoading}
+        >
+          {multiplayerLoading ? "Checking..." : "Check for rival"}
+        </Button>
+      </div>
+
+      <MultiplayerRoundStatus
+        activeMatch={activeMatch}
+        activeRound={activeRound}
+        hasBothPlayers={hasBothPlayers}
+        hasPlayedActiveRound={hasPlayedActiveRound}
+        isMultiplayerTurn={isMultiplayerTurn}
+        nextCategoryWaitingName={nextCategoryWaitingName}
+        activeOpponentLabel="rival"
+      />
+
+      {canChooseCategory && (
+        <section className="bk-battle-section">
+          <div className="bk-battle-section__top">
+            <span>Choose category</span>
+            <strong>{activeRound ? "Next round" : "Opening round"}</strong>
+          </div>
+          <MultiplayerCategoryGrid
+            categories={categories}
+            onSelect={onSelectCategory}
+            disabled={multiplayerLoading}
+          />
+        </section>
+      )}
+
+      {activeMatch?.phase === "category_selected" && (
+        <SurfaceCard variant="selected" className="bk-battle-state-card">
+          <strong>Category selected: {getCategoryLabel(activeMatch.selected_category)}</strong>
+          <span>Round {activeMatch.round_number || 1} is ready.</span>
+        </SurfaceCard>
+      )}
+
+      {activeMatch?.phase === "round_active" && activeRound && (
+        <SurfaceCard variant="selected" className="bk-battle-state-card">
+          <strong>
+            Round {activeRound.round_number} · {getCategoryLabel(activeRound.category)}
+          </strong>
+          {hasPlayedActiveRound ? (
+            <span>
+              {isWaitingAfterCreatorRound
+                ? `Share ${roomCode}. Waiting for rival to join and play.`
+                : "Waiting for rival to play this round."}
+            </span>
+          ) : (
+            <>
+              <span>Your 5-question round is ready.</span>
+              <Button onClick={onStartRound} disabled={multiplayerLoading}>
+                Play Round
+              </Button>
+            </>
+          )}
+        </SurfaceCard>
+      )}
+
+      <MultiplayerRoundResult
+        activeMatch={activeMatch}
+        activeRound={activeRound}
+        currentPlayerSlot={currentPlayerSlot}
+        playerOneProfile={playerOneProfile}
+        playerTwoProfile={playerTwoProfile}
+        currentUsername={currentUsername}
+        isMultiplayerTurn={isMultiplayerTurn}
+        nextCategoryWaitingName={nextCategoryWaitingName}
+      />
+
+      <MultiplayerRoundHistory
+        activeMatch={activeMatch}
+        activeRound={activeRound}
+        matchRounds={matchRounds}
+        currentPlayerSlot={currentPlayerSlot}
+        playerOneProfile={playerOneProfile}
+        playerTwoProfile={playerTwoProfile}
+        currentUsername={currentUsername}
+      />
+    </section>
+  );
+}
+
+function getLeaderboardTone(rank) {
+  if (rank === 1) return "gold";
+  if (rank === 2) return "silver";
+  if (rank === 3) return "bronze";
+  return "standard";
+}
+
+function LeaderboardMetric({ type, row }) {
+  if (type === "levels") {
+    return (
+      <span className="bk-leaderboard-metric bk-leaderboard-metric--level">
+        <LevelIcon levelId={row.levelId} size={30} />
+        <span>
+          <strong>Level {row.levelId}</strong>
+          <small>{row.xpTotal.toLocaleString()} XP</small>
+        </span>
+      </span>
+    );
+  }
+
+  return (
+    <span className="bk-leaderboard-metric">
+      <strong>{Number(row.score || 0).toLocaleString()}</strong>
+      <small>Best score</small>
+    </span>
+  );
+}
+
+function LeaderboardPodiumCard({ row, type }) {
+  const tone = getLeaderboardTone(row.rank);
+
+  return (
+    <motion.div
+      className={`bk-leaderboard-podium-card bk-leaderboard-podium-card--${tone} ${
+        row.isCurrentUser ? "is-current" : ""
+      }`}
+      initial={{ opacity: 0, y: 18, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: row.rank * 0.045, duration: 0.24 }}
+    >
+      <span className="bk-leaderboard-crown">
+        <BKIcon name={row.rank === 1 ? "league" : "rankings"} size={34} />
+      </span>
+      <span className="bk-leaderboard-rank-label">#{row.rank}</span>
+      <PlayerAvatar profile={row} size={row.rank === 1 ? "large" : "medium"} />
+      <strong>{row.username}</strong>
+      <small>
+        {row.isCurrentUser ? "You" : row.favorite_flag || row.levelName || "Ball Knowledge"}
+      </small>
+      <LeaderboardMetric type={type} row={row} />
+    </motion.div>
+  );
+}
+
+function LeaderboardRow({ row, type, featured = false }) {
+  return (
+    <motion.div
+      className={`bk-leaderboard-row-v2 ${featured ? "is-featured" : ""} ${
+        row.isCurrentUser ? "is-current" : ""
+      }`}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: Math.min(row.rank, 12) * 0.025, duration: 0.2 }}
+    >
+      <span className={`bk-leaderboard-row-rank bk-leaderboard-row-rank--${getLeaderboardTone(row.rank)}`}>
+        {row.rank <= 3 ? `#${row.rank}` : row.rank}
+      </span>
+      <PlayerAvatar profile={row} size="small" />
+      <span className="bk-leaderboard-player-copy">
+        <strong>{row.username}</strong>
+        <small>
+          {row.isCurrentUser
+            ? "You"
+            : type === "levels"
+            ? row.levelName
+            : row.favorite_flag || "General Knowledge"}
+        </small>
+      </span>
+      <LeaderboardMetric type={type} row={row} />
+      {row.isCurrentUser && <em className="bk-leaderboard-you-badge">You</em>}
+    </motion.div>
+  );
+}
+
+function LeaderboardPodium({ rows, type }) {
+  const topThree = rows.slice(0, 3);
+  if (topThree.length < 3) return null;
+
+  const first = topThree[0];
+  const second = topThree[1];
+  const third = topThree[2];
+
+  return (
+    <div className="bk-leaderboard-podium" aria-label="Top three players">
+      <LeaderboardPodiumCard row={second} type={type} />
+      <LeaderboardPodiumCard row={first} type={type} />
+      <LeaderboardPodiumCard row={third} type={type} />
+    </div>
+  );
+}
+
+function LeaderboardLoadingState({ type = "general" }) {
+  return (
+    <div className="bk-leaderboard-board bk-leaderboard-board--state" aria-label="Loading leaderboard">
+      <div className="bk-leaderboard-board-top">
+        <StatusBadge tone={type === "levels" ? "info" : "success"}>
+          {type === "levels" ? "Level ranking" : "Best score ranking"}
+        </StatusBadge>
+        <span>Loading</span>
+      </div>
+
+      <div className="bk-leaderboard-loading">
+        <div className="bk-leaderboard-skeleton-podium">
+          <span />
+          <span />
+          <span />
+        </div>
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div className="bk-leaderboard-skeleton-row" key={index}>
+            <span />
+            <b />
+            <em />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LeaderboardEmptyState({ type = "general", message }) {
+  return (
+    <div className="bk-leaderboard-board bk-leaderboard-board--state">
+      <div className="bk-leaderboard-board-top">
+        <StatusBadge tone={type === "levels" ? "info" : "success"}>
+          {type === "levels" ? "Level ranking" : "Best score ranking"}
+        </StatusBadge>
+        <span>0 real players</span>
+      </div>
+
+      <div className="bk-leaderboard-empty-compact">
+        <div className="bk-leaderboard-empty-podium" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+        <strong>{type === "levels" ? "No levels yet" : "No rankings yet"}</strong>
+        <small>
+          {message ||
+            (type === "levels"
+              ? "Earn XP to appear on the levels leaderboard."
+              : "Play General Knowledge and be the first player on the board.")}
+        </small>
+      </div>
+    </div>
+  );
+}
 
 function loadPlayerService() {
   return import("./lib/playerService");
@@ -120,11 +1170,6 @@ function loadPlayerService() {
 async function searchPlayersLazy(query, limit) {
   const { searchPlayers } = await loadPlayerService();
   return searchPlayers(query, limit);
-}
-
-async function fetchFindPlayerPoolLazy() {
-  const { fetchFindPlayerPool } = await loadPlayerService();
-  return fetchFindPlayerPool();
 }
 
 function preloadPlayerSearchLazy() {
@@ -138,13 +1183,36 @@ async function filterSearchablePlayerGuessQuestionsLazy(questions, context) {
   return filterSearchablePlayerGuessQuestions(questions, context);
 }
 
+async function loadGeneralQuestions() {
+  const { QUESTIONS } = await import("./QUESTIONS");
+  return QUESTIONS;
+}
+
+async function loadCareerQuestions() {
+  const { CAREER_QUESTIONS } = await import("./CAREER_QUESTIONS");
+  return CAREER_QUESTIONS;
+}
+
+async function loadWorldCupQuestions() {
+  const { WORLD_CUP_QUESTIONS } = await import("./WORLD_CUP_QUESTIONS");
+  return WORLD_CUP_QUESTIONS;
+}
+
+async function loadConnectionsPuzzles() {
+  const { CONNECTIONS_PUZZLES } = await import("./CONNECTIONS_PUZZLES");
+  return CONNECTIONS_PUZZLES;
+}
+
+async function loadWhoAmIQuestions() {
+  const { WHO_AM_I_QUESTIONS } = await import("./WHO_AM_I_QUESTIONS");
+  return WHO_AM_I_QUESTIONS;
+}
+
 const HARD_TIME_LIMIT = 15;
 const MULTIPLAYER_TIME_LIMIT = 8;
 const MULTIPLAYER_CAREER_TIME_LIMIT = 15;
-const MULTIPLAYER_TIMEOUT_VALUE = "__time_up__";
 const TOP_10_REQUIRED_ANSWER_COUNT = 10;
 const DAILY_SCAN_STEP_MS = 210;
-const STREAK_TARGETS = [5, 10, 20, 30, 50];
 const AVATAR_ICON_OPTIONS = [
   "⚽",
   "🏆",
@@ -262,9 +1330,8 @@ const LEAGUE_FORMATS = {
     quizCount: 5,
     top10Count: 1,
     whoamiCount: 1,
-    findPlayerCount: 1,
-    findPlayerScoringMode: "attempts",
-    description: "5 quiz + Top 10 + mystery + find",
+    findPlayerCount: 0,
+    description: "5 quiz + Top 10 + mystery",
   },
   party_mode: {
     label: "Party Mode",
@@ -272,9 +1339,8 @@ const LEAGUE_FORMATS = {
     quizCount: 3,
     top10Count: 2,
     whoamiCount: 2,
-    findPlayerCount: 1,
-    findPlayerScoringMode: "attempts",
-    description: "More chaotic daily mix",
+    findPlayerCount: 0,
+    description: "More Top 10 and mystery rounds",
   },
 };
 
@@ -288,7 +1354,6 @@ const LEAGUE_DURATIONS = [
 const CUSTOM_QUIZ_COUNTS = [0, 5, 10, 15];
 const CUSTOM_TOP10_COUNTS = [0, 1, 2];
 const CUSTOM_WHOAMI_COUNTS = [0, 1, 3, 5];
-const CUSTOM_FIND_PLAYER_COUNTS = [0, 1, 2, 3];
 
 const CLUB_THEME_MAP = {
   "manchester united": "manchester-united",
@@ -326,6 +1391,50 @@ const DAILY_STREAK_REWARDS = [
 const DAILY_STREAK_RESET_HOURS = 30;
 const DAILY_STREAK_RESET_MS = DAILY_STREAK_RESET_HOURS * 60 * 60 * 1000;
 const DAILY_STREAK_ACTIVITY_KEY = "footballQuizLastDailyActivityAt";
+
+function readRecentGeneralQuestionKeys() {
+  try {
+    const parsed = JSON.parse(
+      localStorage.getItem(GENERAL_KNOWLEDGE_RECENT_HISTORY_KEY) || "[]"
+    );
+    return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentGeneralQuestionKeys(questionKeys) {
+  const uniqueNewest = new Map();
+
+  questionKeys.filter(Boolean).forEach((key) => {
+    if (uniqueNewest.has(key)) uniqueNewest.delete(key);
+    uniqueNewest.set(key, true);
+  });
+
+  const nextKeys = [...uniqueNewest.keys()].slice(
+    -GENERAL_KNOWLEDGE_RECENT_HISTORY_LIMIT
+  );
+  localStorage.setItem(
+    GENERAL_KNOWLEDGE_RECENT_HISTORY_KEY,
+    JSON.stringify(nextKeys)
+  );
+}
+
+function rememberGeneralQuestionsServed(questions, snapshot = {}) {
+  const currentIndex = Number(snapshot.questionIndex) || 0;
+  const seenCount = Math.min(questions.length, Math.max(0, currentIndex) + 1);
+  const servedKeys = questions
+    .slice(0, seenCount)
+    .map(getGeneralKnowledgeQuestionKey)
+    .filter(Boolean);
+
+  if (!servedKeys.length) return;
+
+  saveRecentGeneralQuestionKeys([
+    ...readRecentGeneralQuestionKeys(),
+    ...servedKeys,
+  ]);
+}
 
 function shuffle(array) {
   const newArray = [...array];
@@ -458,9 +1567,9 @@ function getSeededIndex(seedText, length) {
   return seed % length;
 }
 
-function getDailyWhoAmIQuestion(dateKey) {
-  const questions = Array.isArray(WHO_AM_I_QUESTIONS)
-    ? WHO_AM_I_QUESTIONS.filter((question) => question?.id && question?.answer)
+function getDailyWhoAmIQuestionFromBank(questionBank, dateKey) {
+  const questions = Array.isArray(questionBank)
+    ? questionBank.filter((question) => question?.id && question?.answer)
     : [];
 
   return selectDailyWhoAmIQuestion(questions, dateKey) || null;
@@ -562,34 +1671,6 @@ function getChallengeRuleHint(challenge) {
   return "Any order accepted.";
 }
 
-function getFindPlayerClues(player = {}) {
-  if (!player) return [];
-
-  const mainClub =
-    (Array.isArray(player.main_clubs) && player.main_clubs[0]) ||
-    (Array.isArray(player.clubs) && player.clubs[0]) ||
-    "";
-  const birthYear = Number(player.birth_year) || null;
-  const era = birthYear
-    ? birthYear < 1980
-      ? "classic/legend era"
-      : birthYear < 1990
-      ? "2000s into 2010s era"
-      : birthYear < 2000
-      ? "modern Champions League era"
-      : "new generation era"
-    : "";
-
-  return [
-    player.nationality ? `Nationality: ${player.nationality}` : "",
-    player.position_group || player.position
-      ? `Position: ${player.position_group || player.position}`
-      : "",
-    mainClub ? `Known club: ${mainClub}` : "",
-    era ? `Era: ${era}` : "",
-  ].filter(Boolean);
-}
-
 const REQUIRED_PLAYER_SEARCH_NAMES = [
   "Emmanuel Emenike",
   "Jamal Musiala",
@@ -638,55 +1719,80 @@ function getNextStreakRewardInfo(streak, todayCompleted = false) {
   };
 }
 
+function getDailyStreakHeroCopy(streak, todayCompleted) {
+  if (streak <= 0) {
+    return {
+      label: "Start your streak",
+      body: "Play Daily Challenge to begin today's reward road.",
+    };
+  }
+
+  if (todayCompleted) {
+    return {
+      label: "Today complete",
+      body: "Today's reward is locked in.",
+    };
+  }
+
+  return {
+    label: "Keep it alive",
+    body: "Play Daily Challenge to claim today's reward.",
+  };
+}
+
+function DailyRewardSlot({ day, reached, currentDay }) {
+  const prefersReducedMotion = useReducedMotion();
+  const isMilestone = day.dayInRoad === 7;
+  const stateLabel = reached ? "Claimed" : currentDay ? "Today" : "Upcoming";
+  const StateIcon = reached
+    ? CheckCircle2
+    : currentDay
+    ? Flame
+    : isMilestone
+    ? Trophy
+    : Coins;
+
+  return (
+    <motion.div
+      className={`bk-daily-streak-day ${reached ? "is-claimed" : ""} ${
+        currentDay ? "is-today" : ""
+      } ${isMilestone ? "is-milestone" : ""}`}
+      aria-label={`Day ${day.day}, ${stateLabel.toLowerCase()}, ${day.reward} coins`}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 10, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: prefersReducedMotion || !currentDay ? 1 : 1.02 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <span className="bk-daily-streak-day__icon" aria-hidden="true">
+        <StateIcon size={currentDay ? 23 : 20} />
+      </span>
+      <span className="bk-daily-streak-day__copy">
+        <strong>Day {day.day}</strong>
+        <small>{stateLabel}</small>
+      </span>
+      <span className="bk-daily-streak-day__reward">
+        <Coins size={13} aria-hidden="true" />
+        +{day.reward}
+      </span>
+    </motion.div>
+  );
+}
+
 function isDailyStreakExpired(lastActivityAt, now = Date.now()) {
   const timestamp = Number(lastActivityAt);
   if (!Number.isFinite(timestamp) || timestamp <= 0) return false;
   return now - timestamp > DAILY_STREAK_RESET_MS;
 }
 
-function getNextStreakTarget(streak) {
-  return (
-    STREAK_TARGETS.find((target) => streak < target) ??
-    STREAK_TARGETS[STREAK_TARGETS.length - 1]
-  );
-}
-
-function getPrevStreakTarget(streak) {
-  let prev = 0;
-
-  for (const target of STREAK_TARGETS) {
-    if (streak >= target) {
-      prev = target;
-    }
-  }
-
-  return prev;
-}
-
-function getStreakProgress(streak) {
-  const next = getNextStreakTarget(streak);
-  const prev = getPrevStreakTarget(streak);
-
-  if (streak >= STREAK_TARGETS[STREAK_TARGETS.length - 1]) {
-    return 100;
-  }
-
-  const range = next - prev;
-  const progress = streak - prev;
-
-  return Math.max(0, Math.min(100, (progress / range) * 100));
-}
-
-function buildGameQuestions(mode = "general") {
+function buildGameQuestionsFromBank(mode = "general", questionBank = []) {
   if (mode === "career") {
-    return shuffle(CAREER_QUESTIONS);
+    return shuffle(questionBank);
   }
 
   if (mode === "world-cup") {
-    const easy = WORLD_CUP_QUESTIONS.filter((q) => q.difficulty === "Easy");
-    const medium = WORLD_CUP_QUESTIONS.filter((q) => q.difficulty === "Medium");
-    const hard = WORLD_CUP_QUESTIONS.filter((q) => q.difficulty === "Hard");
-    const veryHard = WORLD_CUP_QUESTIONS.filter(
+    const easy = questionBank.filter((q) => q.difficulty === "Easy");
+    const medium = questionBank.filter((q) => q.difficulty === "Medium");
+    const hard = questionBank.filter((q) => q.difficulty === "Hard");
+    const veryHard = questionBank.filter(
       (q) => q.difficulty === "Very Hard"
     );
 
@@ -698,20 +1804,21 @@ function buildGameQuestions(mode = "general") {
     ].map(shuffleQuestionOptions);
   }
 
-  const easy = QUESTIONS.filter((q) => q.difficulty === "Easy");
-  const medium = QUESTIONS.filter((q) => q.difficulty === "Medium");
-  const hard = QUESTIONS.filter((q) => q.difficulty === "Hard");
-  const veryHard = QUESTIONS.filter((q) => q.difficulty === "Very Hard");
+  return buildGeneralKnowledgeQuestions(questionBank);
+}
 
-  const selectedQuestions = [
-    ...shuffle(easy).slice(0, 10),
-    ...shuffle(medium).slice(0, 20),
-    ...shuffle(hard).slice(0, 20),
-    ...shuffle(veryHard),
-    ...shuffle(hard).slice(20),
-  ];
+async function buildGameQuestions(mode = "general", options = {}) {
+  if (mode === "career") {
+    return buildGameQuestionsFromBank(mode, await loadCareerQuestions());
+  }
 
-  return selectedQuestions.map(shuffleQuestionOptions);
+  if (mode === "world-cup") {
+    return buildGameQuestionsFromBank(mode, await loadWorldCupQuestions());
+  }
+
+  return buildGeneralKnowledgeQuestions(await loadGeneralQuestions(), {
+    recentQuestionKeys: options.recentQuestionKeys || [],
+  });
 }
 
 const screenTransition = {
@@ -756,45 +1863,14 @@ function CareerPathQuestionView({ question, className = "" }) {
   );
 }
 
-function buildConnectionsTiles(puzzle) {
-  return shuffle(
-    puzzle.groups.flatMap((group, groupIndex) =>
-      group.items.map((item) => ({
-        id: `${puzzle.id}-${groupIndex}-${item}`,
-        item,
-        groupIndex,
-      }))
-    )
-  );
-}
-
-function getRandomConnectionsPuzzle(difficulty = null) {
+function getRandomConnectionsPuzzleFromBank(puzzleBank, difficulty = null) {
   const puzzles = difficulty
-    ? CONNECTIONS_PUZZLES.filter((puzzle) => puzzle.difficulty === difficulty)
-    : CONNECTIONS_PUZZLES;
+    ? puzzleBank.filter((puzzle) => puzzle.difficulty === difficulty)
+    : puzzleBank;
 
-  const safePuzzles = puzzles.length > 0 ? puzzles : CONNECTIONS_PUZZLES;
+  const safePuzzles = puzzles.length > 0 ? puzzles : puzzleBank;
 
   return safePuzzles[Math.floor(Math.random() * safePuzzles.length)];
-}
-
-function getWhoAmIAcceptedAnswers(question) {
-  const accepted = new Set([
-    normalizeAnswer(question.answer),
-    ...(question.acceptedAnswers || []).map(normalizeAnswer),
-  ]);
-  const words = normalizeAnswer(question.answer).split(" ");
-  const lastName = words.at(-1);
-
-  if (lastName && !["ronaldo"].includes(lastName)) {
-    accepted.add(lastName);
-  }
-
-  return accepted;
-}
-
-function isCorrectWhoAmIAnswer(input, question) {
-  return isPlayerAnswerMatch({ typedText: input, answer: question });
 }
 
 function isCorrectWhoAmIPlayerAnswer(player, question, typedText = "") {
@@ -841,43 +1917,32 @@ function withShuffledOptions(question) {
   return shuffleQuestionOptions(question);
 }
 
-function formatElapsedTime(seconds = 0) {
-  const totalSeconds = Math.max(0, Number(seconds) || 0);
-  const minutes = Math.floor(totalSeconds / 60);
-  const remainingSeconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
-}
-
 function getLeagueFormatConfig(
   format,
   customQuizCount,
   customTop10Count,
   customWhoAmICount,
-  customFindPlayerCount,
-  findPlayerScoringMode = "attempts"
 ) {
   if (format !== "custom") {
     const config = LEAGUE_FORMATS[format] || LEAGUE_FORMATS.custom;
     return {
       ...config,
-      findPlayerScoringMode: config.findPlayerScoringMode || findPlayerScoringMode,
+      findPlayerCount: 0,
+      findPlayerScoringMode: "attempts",
       maxDailyPoints:
         config.quizCount +
         config.top10Count * 10 +
-        config.whoamiCount * 10 +
-        (config.findPlayerCount || 0) * 10,
+        config.whoamiCount * 10,
     };
   }
 
   const quizCount = Number(customQuizCount);
   const top10Count = Number(customTop10Count);
   const whoamiCount = Number(customWhoAmICount);
-  const findPlayerCount = Number(customFindPlayerCount);
   const parts = [
     quizCount > 0 ? `${quizCount} quick questions` : "",
     top10Count > 0 ? `${top10Count} Top 10` : "",
     whoamiCount > 0 ? `${whoamiCount} Who Am I` : "",
-    findPlayerCount > 0 ? `${findPlayerCount} Find the Player` : "",
   ].filter(Boolean);
 
   return {
@@ -885,16 +1950,28 @@ function getLeagueFormatConfig(
     quizCount,
     top10Count,
     whoamiCount,
-    findPlayerCount,
-    findPlayerScoringMode,
+    findPlayerCount: 0,
+    findPlayerScoringMode: "attempts",
     maxDailyPoints:
-      quizCount + top10Count * 10 + whoamiCount * 10 + findPlayerCount * 10,
+      quizCount + top10Count * 10 + whoamiCount * 10,
     description: parts.join(" + ") || "Choose your daily structure",
   };
 }
 
-function createMockRoomCode() {
-  return `BK-${Math.floor(1000 + Math.random() * 9000)}`;
+function getSupportedLeagueSettings(settings = {}) {
+  const quizCount = Number(settings.quizCount) || 0;
+  const top10Count = Number(settings.top10Count) || 0;
+  const whoamiCount = Number(settings.whoamiCount) || 0;
+
+  return {
+    ...settings,
+    quizCount,
+    top10Count,
+    whoamiCount,
+    findPlayerCount: 0,
+    findPlayerScoringMode: "attempts",
+    maxDailyPoints: quizCount + top10Count * 10 + whoamiCount * 10,
+  };
 }
 
 function createMockOpponentScore(finalScore) {
@@ -927,7 +2004,7 @@ function getLeagueDailyTotal(source) {
   return getLeagueScoreValue(source, "total_points", "totalPoints");
 }
 
-function getLeagueScoreItems(source, settings, top10MaxPoints, whoamiMaxPoints, findMaxPoints) {
+function getLeagueScoreItems(source, settings, top10MaxPoints, whoamiMaxPoints) {
   if (!source) return [];
 
   return [
@@ -958,15 +2035,6 @@ function getLeagueScoreItems(source, settings, top10MaxPoints, whoamiMaxPoints, 
           display: `${getLeagueScoreValue(source, "whoami_score", "whoamiScore")} pts`,
         }
       : null,
-    settings.findPlayerCount > 0
-      ? {
-          key: "find",
-          label: "Find",
-          value: getLeagueScoreValue(source, "find_player_score", "findPlayerScore"),
-          max: findMaxPoints,
-          display: `${getLeagueScoreValue(source, "find_player_score", "findPlayerScore")} pts`,
-        }
-      : null,
   ].filter(Boolean);
 }
 
@@ -975,8 +2043,12 @@ function getCurrentPlayerSlot(match, playerId, username) {
 
   if (match.player1_id && String(match.player1_id) === String(playerId)) return "player1";
   if (match.player2_id && String(match.player2_id) === String(playerId)) return "player2";
-  if (match.player1_username === username) return "player1";
-  if (match.player2_username === username) return "player2";
+
+  const hasCanonicalPlayerIds = Boolean(match.player1_id || match.player2_id);
+  if (!hasCanonicalPlayerIds && username) {
+    if (match.player1_username === username) return "player1";
+    if (match.player2_username === username) return "player2";
+  }
 
   return null;
 }
@@ -1002,7 +2074,8 @@ function isCurrentPlayersTurn(match, playerId, username) {
     return String(match.current_turn_id) === String(playerId);
   }
 
-  return match.current_turn === username;
+  const hasCanonicalPlayerIds = Boolean(match.player1_id || match.player2_id);
+  return !hasCanonicalPlayerIds && match.current_turn === username;
 }
 
 function hasPlayerFinishedRound(round, playerSlot) {
@@ -1101,7 +2174,33 @@ function getCategoryClass(categoryId) {
   return "category-general";
 }
 
+function buildGeneralLeaderboardRow(row, index, playerId, rankOverride) {
+  return {
+    ...row,
+    username: row.display_name || row.username || "Player",
+    score: Number(row.best_score) || 0,
+    rank: rankOverride ?? index + 1,
+    isCurrentUser: row.id === playerId,
+  };
+}
+
+function buildLevelLeaderboardRow(row, index, playerId, rankOverride) {
+  const levelId = Math.max(1, Number(row.level_id) || 1);
+  const level = getLevelById(levelId);
+
+  return {
+    ...row,
+    username: row.display_name || row.username || "Player",
+    levelId,
+    levelName: level.name,
+    xpTotal: Number(row.xp_total) || 0,
+    rank: rankOverride ?? index + 1,
+    isCurrentUser: row.id === playerId,
+  };
+}
+
 export default function FootballQuizMVP() {
+  const prefersReducedMotion = useReducedMotion();
   const todayChallenge = getTodayChallenge();
   const dailyAnswers = getChallengeAnswers(todayChallenge);
   const dailyTargetCount = getChallengeTargetCount(todayChallenge);
@@ -1118,16 +2217,16 @@ export default function FootballQuizMVP() {
   const [activeMatch, setActiveMatch] = useState(null);
   const [activeRound, setActiveRound] = useState(null);
   const [matchRounds, setMatchRounds] = useState([]);
-  const [nextCategoryPickerOpen, setNextCategoryPickerOpen] = useState(false);
+  const [, setNextCategoryPickerOpen] = useState(false);
   const [multiplayerRoundOpen, setMultiplayerRoundOpen] = useState(false);
-  const [multiplayerRoundIndex, setMultiplayerRoundIndex] = useState(0);
-  const [multiplayerRoundSelected, setMultiplayerRoundSelected] = useState(null);
-  const [multiplayerRoundScore, setMultiplayerRoundScore] = useState(0);
-  const [multiplayerTimeLeft, setMultiplayerTimeLeft] = useState(
-    MULTIPLAYER_TIME_LIMIT
-  );
-  const [multiplayerRoundDone, setMultiplayerRoundDone] = useState(false);
   const [isSubmittingRound, setIsSubmittingRound] = useState(false);
+  const playNowRequestRef = useRef(false);
+  const createMatchRequestRef = useRef(false);
+  const joinMatchRequestRef = useRef(false);
+  const categoryRequestRef = useRef(false);
+  const submitRoundRequestRef = useRef(false);
+  const deleteMatchRequestRef = useRef(false);
+  const guestIdentityRequestRef = useRef(null);
   const [multiplayerRoomCode, setMultiplayerRoomCode] = useState("");
   const [joinRoomCode, setJoinRoomCode] = useState("");
   const [multiplayerLoading, setMultiplayerLoading] = useState(false);
@@ -1136,19 +2235,17 @@ export default function FootballQuizMVP() {
   const [activeGamesLoading, setActiveGamesLoading] = useState(false);
   const [playNowGames, setPlayNowGames] = useState([]);
   const [playNowGamesLoading, setPlayNowGamesLoading] = useState(false);
-  const [playNowCategory, setPlayNowCategory] = useState("general");
+  const [playNowCategory] = useState("general");
   const [matchDeleteCandidate, setMatchDeleteCandidate] = useState(null);
   const [deletingMatchId, setDeletingMatchId] = useState(null);
   const [multiplayerNotice, setMultiplayerNotice] = useState("");
+  const [roomCodeCopyStatus, setRoomCodeCopyStatus] = useState("");
   const [leagueNameInput, setLeagueNameInput] = useState("");
   const [leagueDurationInput, setLeagueDurationInput] = useState(null);
   const [leagueFormatInput, setLeagueFormatInput] = useState("custom");
   const [leagueCustomQuizCount, setLeagueCustomQuizCount] = useState(5);
   const [leagueCustomTop10Count, setLeagueCustomTop10Count] = useState(1);
   const [leagueCustomWhoAmICount, setLeagueCustomWhoAmICount] = useState(0);
-  const [leagueCustomFindPlayerCount, setLeagueCustomFindPlayerCount] = useState(0);
-  const [leagueFindPlayerScoringMode, setLeagueFindPlayerScoringMode] =
-    useState("attempts");
   const [leagueCodeInput, setLeagueCodeInput] = useState("");
   const [myLeagues, setMyLeagues] = useState([]);
   const [leagueDashboard, setLeagueDashboard] = useState(null);
@@ -1181,17 +2278,6 @@ export default function FootballQuizMVP() {
   const [leagueWhoAmIScore, setLeagueWhoAmIScore] = useState(0);
   const [leagueWhoAmIFeedback, setLeagueWhoAmIFeedback] = useState(null);
   const [leagueWhoAmIShake, setLeagueWhoAmIShake] = useState(0);
-  const [leagueFindPlayerTargets, setLeagueFindPlayerTargets] = useState([]);
-  const [leagueFindPlayerIndex, setLeagueFindPlayerIndex] = useState(0);
-  const [leagueFindPlayerSelected, setLeagueFindPlayerSelected] = useState(null);
-  const [leagueFindPlayerGuesses, setLeagueFindPlayerGuesses] = useState([]);
-  const [leagueFindPlayerScore, setLeagueFindPlayerScore] = useState(0);
-  const [leagueFindPlayerAttemptTotal, setLeagueFindPlayerAttemptTotal] = useState(0);
-  const [leagueFindPlayerStartedAt, setLeagueFindPlayerStartedAt] = useState(null);
-  const [leagueFindPlayerElapsed, setLeagueFindPlayerElapsed] = useState(0);
-  const [leagueFindPlayerFeedback, setLeagueFindPlayerFeedback] = useState("");
-  const [leagueFindPlayerClueCount, setLeagueFindPlayerClueCount] = useState(0);
-  const leagueFindPlayerSubmittingRef = useRef(false);
   const [leagueResult, setLeagueResult] = useState(null);
   const [isMockMultiplayer, setIsMockMultiplayer] = useState(false);
   const [mockOpponentScore, setMockOpponentScore] = useState(null);
@@ -1201,6 +2287,8 @@ export default function FootballQuizMVP() {
   const [xpToast, setXpToast] = useState(null);
   const [leaderboardRows, setLeaderboardRows] = useState([]);
   const [levelLeaderboardRows, setLevelLeaderboardRows] = useState([]);
+  const [currentLeaderboardRow, setCurrentLeaderboardRow] = useState(null);
+  const [currentLevelLeaderboardRow, setCurrentLevelLeaderboardRow] = useState(null);
   const [leaderboardTab, setLeaderboardTab] = useState("general");
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState("");
@@ -1208,6 +2296,8 @@ export default function FootballQuizMVP() {
   const [authSession, setAuthSession] = useState(null);
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
+  const [startupReleased, setStartupReleased] = useState(false);
+  const startupStartedAtRef = useRef(Date.now());
   const [authMode, setAuthMode] = useState("signup");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
@@ -1227,8 +2317,9 @@ export default function FootballQuizMVP() {
   const [guestPlayerId] = useState(getOrCreatePlayerId);
   const effectiveAuthUser = authUser || authSession?.user || null;
   const effectiveAuthUserId = effectiveAuthUser?.id || null;
+  const isAnonymousGuest = isAnonymousAuthUser(effectiveAuthUser);
   const playerId = effectiveAuthUser?.id || guestPlayerId;
-  const isGuest = !effectiveAuthUser;
+  const isGuest = !effectiveAuthUser || isAnonymousGuest || guestMode;
   const [profile, setProfile] = useState(null);
   const [profileStatus, setProfileStatus] = useState("local");
   const [profileError, setProfileError] = useState("");
@@ -1251,9 +2342,8 @@ export default function FootballQuizMVP() {
     return localStorage.getItem("ballKnowledgeUsername") || "";
   });
 
-  const [questions, setQuestions] = useState(() =>
-    buildGameQuestions("general")
-  );
+  const [questions, setQuestions] = useState([]);
+  const [modeLoading, setModeLoading] = useState(false);
 
   useEffect(() => {
     if (!import.meta.env?.DEV) return undefined;
@@ -1262,6 +2352,29 @@ export default function FootballQuizMVP() {
     let cancelled = false;
     const runStartupAudits = async () => {
       const contentWarnings = auditDailyListChallenges();
+      const [generalQuestions, careerQuestions, whoAmIQuestions] = await Promise.all([
+        loadGeneralQuestions(),
+        loadCareerQuestions(),
+        loadWhoAmIQuestions(),
+      ]);
+      const generalAudit = auditGeneralKnowledgeQuestionBank(generalQuestions);
+
+      if (
+        generalAudit.malformed.length ||
+        generalAudit.duplicateIds.length ||
+        generalAudit.exactDuplicateQuestions.length
+      ) {
+        console.info("General Knowledge question audit", {
+          total: generalAudit.total,
+          counts: generalAudit.counts,
+          malformed: generalAudit.malformed.length,
+          duplicateIds: generalAudit.duplicateIds.length,
+          exactDuplicateQuestions: generalAudit.exactDuplicateQuestions.length,
+          normalizedDuplicateQuestions:
+            generalAudit.normalizedDuplicateQuestions.length,
+          identicalQuestionAnswers: generalAudit.identicalQuestionAnswers.length,
+        });
+      }
 
       if (contentWarnings.length) {
         console.warn("Daily/Top 10 content audit warnings", contentWarnings);
@@ -1269,12 +2382,12 @@ export default function FootballQuizMVP() {
 
       const missing = [];
       const targets = [
-        ...CAREER_QUESTIONS.map((question) => ({
+        ...careerQuestions.map((question) => ({
           mode: "career",
           id: question.id || question.question,
           answer: question.answer,
         })),
-        ...WHO_AM_I_QUESTIONS.map((question) => ({
+        ...whoAmIQuestions.map((question) => ({
           mode: "who-am-i",
           id: question.id || question.answer,
           answer: question,
@@ -1357,6 +2470,12 @@ export default function FootballQuizMVP() {
     streak: 0,
     highscore: 0,
   });
+  const [generalGameSnapshot, setGeneralGameSnapshot] = useState(null);
+  const [generalResumeVersion, setGeneralResumeVersion] = useState(0);
+  const [worldCupGameSnapshot, setWorldCupGameSnapshot] = useState(null);
+  const [worldCupResumeVersion, setWorldCupResumeVersion] = useState(0);
+  const [careerGameSnapshot, setCareerGameSnapshot] = useState(null);
+  const [careerResumeVersion, setCareerResumeVersion] = useState(0);
   const [objectiveProgressUpdate, setObjectiveProgressUpdate] = useState(null);
   const [postGameStep, setPostGameStep] = useState("summary");
 
@@ -1390,12 +2509,8 @@ export default function FootballQuizMVP() {
   const [wrongPopup, setWrongPopup] = useState(null);
 
   const [foundAnswers, setFoundAnswers] = useState([]);
-  const [dailyInput, setDailyInput] = useState("");
-  const [dailySelectedPlayer, setDailySelectedPlayer] = useState(null);
   const [dailyCoinsEarned, setDailyCoinsEarned] = useState(0);
-  const [dailyReveal, setDailyReveal] = useState(null);
-  const [dailyCelebratedAnswer, setDailyCelebratedAnswer] = useState(null);
-  const [isRevealing, setIsRevealing] = useState(false);
+  const [top10ResumeVersion, setTop10ResumeVersion] = useState(0);
 
   const [dailyPlayed, setDailyPlayed] = useState(() => {
     return localStorage.getItem("ballKnowledgeDailyDate") === getDailyDateKey();
@@ -1423,47 +2538,16 @@ export default function FootballQuizMVP() {
   const [levelUpPopup, setLevelUpPopup] = useState(null);
   const [connectionsPuzzle, setConnectionsPuzzle] = useState(null);
   const [connectionsDifficultyPickerOpen, setConnectionsDifficultyPickerOpen] = useState(false);
-  const [connectionsTiles, setConnectionsTiles] = useState([]);
-  const [connectionsSelected, setConnectionsSelected] = useState([]);
-  const [connectionsSolved, setConnectionsSolved] = useState([]);
-  const [connectionsMistakes, setConnectionsMistakes] = useState(0);
-  const [connectionsFeedback, setConnectionsFeedback] = useState(null);
-  const [connectionsShake, setConnectionsShake] = useState(0);
-  const [connectionsRewardClaimed, setConnectionsRewardClaimed] =
-    useState(false);
+  const [connectionPuzzleCounts, setConnectionPuzzleCounts] = useState({});
   const [connectionsRewardModal, setConnectionsRewardModal] = useState(null);
-  const [whoAmIQuestions, setWhoAmIQuestions] = useState([]);
-  const [whoAmIIndex, setWhoAmIIndex] = useState(0);
-  const [whoAmIClueIndex, setWhoAmIClueIndex] = useState(0);
-  const [whoAmIInput, setWhoAmIInput] = useState("");
-  const [whoAmISelectedPlayer, setWhoAmISelectedPlayer] = useState(null);
-  const [whoAmIScore, setWhoAmIScore] = useState(0);
-  const [whoAmIStreak, setWhoAmIStreak] = useState(0);
-  const [whoAmILives, setWhoAmILives] = useState(3);
-  const [whoAmIFeedback, setWhoAmIFeedback] = useState(null);
-  const [whoAmIShake, setWhoAmIShake] = useState(0);
-  const [whoAmIGameOver, setWhoAmIGameOver] = useState(false);
+  const [connectionsResumeVersion, setConnectionsResumeVersion] = useState(0);
+  const [whoAmIQuestion, setWhoAmIQuestion] = useState(null);
+  const [whoAmIGameSnapshot, setWhoAmIGameSnapshot] = useState(null);
+  const [whoAmIResumeVersion, setWhoAmIResumeVersion] = useState(0);
   const [whoAmIDate, setWhoAmIDate] = useState(getDailyDateKey);
-  const [findPlayerPool, setFindPlayerPool] = useState([]);
-  const [findPlayerTarget, setFindPlayerTarget] = useState(null);
-  const [findPlayerSelected, setFindPlayerSelected] = useState(null);
-  const [findPlayerGuesses, setFindPlayerGuesses] = useState([]);
-  const [findPlayerStatus, setFindPlayerStatus] = useState("idle");
-  const [findPlayerError, setFindPlayerError] = useState("");
-  const [findPlayerStartedAt, setFindPlayerStartedAt] = useState(null);
-  const [findPlayerElapsed, setFindPlayerElapsed] = useState(0);
-  const [findPlayerDate, setFindPlayerDate] = useState(getDailyDateKey);
-  const [findPlayerClueCount, setFindPlayerClueCount] = useState(0);
-  const findPlayerSubmittingRef = useRef(false);
 
   const current = questions[questionIndex];
-  const currentWhoAmI = whoAmIQuestions[whoAmIIndex];
-  const currentQuestionNumber = questionIndex + 1;
   const currentRoundQuestionNumber = ((questionIndex % 10) + 1);
-  const currentQuestionProgress =
-    gameMode === "general" && !isMockMultiplayer
-      ? getStreakProgress(streak)
-      : Math.min(100, (currentRoundQuestionNumber / 10) * 100);
   const isDailyPlayerChallenge = isPlayerAnswerType(todayChallenge);
   const progressionView = useMemo(
     () =>
@@ -1564,7 +2648,7 @@ export default function FootballQuizMVP() {
   useEffect(() => {
     const playerHeavyMode =
       gameStarted &&
-      ["who-am-i", "find-player", "career", "daily-list"].includes(gameMode);
+      ["who-am-i", "career", "daily-list"].includes(gameMode);
 
     if (playerHeavyMode || leagueChallengeOpen) {
       preloadPlayerSearchLazy();
@@ -1608,13 +2692,6 @@ const isHomeScreen =
     multiplayerPlayerSlot === "player1" &&
     activeMatch.phase === "round_active" &&
     hasPlayedActiveRound;
-  const activeRoundQuestionIds = activeRound?.question_ids || [];
-  const activeRoundQuestions = useMemo(
-    () => getMultiplayerQuestionsByIds(activeRoundQuestionIds).map(withShuffledOptions),
-    [activeRoundQuestionIds]
-  );
-  const currentMultiplayerRoundQuestion =
-    activeRoundQuestions[multiplayerRoundIndex];
   const nextCategoryChooserName =
     activeMatch?.current_turn ||
     (isMultiplayerTurn ? username : getOpponentName(activeMatch, playerId, username));
@@ -1703,16 +2780,15 @@ const isHomeScreen =
   const activeLeagueDay = leagueDashboard?.leagueDay || null;
   const activeLeagueSubmission = leagueDashboard?.currentSubmission || null;
   const currentLeagueQuizQuestion = leagueQuizQuestions[leagueQuizIndex];
-  const leagueSettings = activeLeague
+  const rawLeagueSettings = activeLeague
     ? getLeagueSettingsSummary(activeLeague)
     : getLeagueFormatConfig(
         leagueFormatInput,
         leagueCustomQuizCount,
         leagueCustomTop10Count,
-        leagueCustomWhoAmICount,
-        leagueCustomFindPlayerCount,
-        leagueFindPlayerScoringMode
+        leagueCustomWhoAmICount
       );
+  const leagueSettings = getSupportedLeagueSettings(rawLeagueSettings);
   const leagueTop10Score = leagueTop10Found.length;
   const leagueTop10TargetCount = getChallengeTargetCount(leagueTop10Challenge);
   const leagueTop10MaxPoints =
@@ -1728,25 +2804,6 @@ const isHomeScreen =
     : [];
   const leagueWhoAmIPointsAvailable = Math.max(1, 10 - leagueWhoAmIClueIndex);
   const leagueWhoAmIMaxPoints = leagueSettings.whoamiCount * 10;
-  const leagueFindPlayerMaxPoints = (leagueSettings.findPlayerCount || 0) * 10;
-  const currentLeagueFindPlayerTarget =
-    leagueFindPlayerTargets[leagueFindPlayerIndex] || null;
-  const findPlayerRanking = useMemo(
-    () => buildPlayerDistanceRanking(findPlayerTarget, findPlayerPool),
-    [findPlayerTarget, findPlayerPool]
-  );
-  const leagueFindPlayerRanking = useMemo(
-    () => buildPlayerDistanceRanking(currentLeagueFindPlayerTarget, findPlayerPool),
-    [currentLeagueFindPlayerTarget, findPlayerPool]
-  );
-  const findPlayerClues = useMemo(
-    () => getFindPlayerClues(findPlayerTarget),
-    [findPlayerTarget]
-  );
-  const leagueFindPlayerClues = useMemo(
-    () => getFindPlayerClues(currentLeagueFindPlayerTarget),
-    [currentLeagueFindPlayerTarget]
-  );
   const leagueDayExpired =
     Boolean(activeLeague?.duration_days) &&
     Boolean(activeLeagueDay?.day_number) &&
@@ -1762,9 +2819,6 @@ const isHomeScreen =
       leagueSettings.whoamiCount > 0
         ? `${leagueSettings.whoamiCount} Who Am I`
         : "",
-      leagueSettings.findPlayerCount > 0
-        ? `${leagueSettings.findPlayerCount} Find the Player`
-        : "",
     ]
       .filter(Boolean)
       .join(" + ") || "Daily challenge";
@@ -1773,21 +2827,6 @@ const isHomeScreen =
       ? `Day ${activeLeagueDay.day_number} / ${activeLeague.duration_days}`
       : `Day ${activeLeagueDay.day_number}`
     : "Day";
-  const connectionsSolvedIndexes = connectionsSolved.map((group) => group.index);
-  const connectionsGameComplete = connectionsSolved.length === 4;
-  const connectionsGameOver =
-    gameMode === "connections" &&
-    gameStarted &&
-    connectionsMistakes >= 4 &&
-    !connectionsGameComplete;
-  const connectionsVisibleTiles = connectionsTiles.filter(
-    (tile) => !connectionsSolvedIndexes.includes(tile.groupIndex)
-  );
-  const connectionsMistakesLeft = Math.max(0, 4 - connectionsMistakes);
-  const visibleWhoAmIClues = currentWhoAmI
-    ? currentWhoAmI.clues.slice(0, whoAmIClueIndex + 1)
-    : [];
-  const whoAmIPointsAvailable = Math.max(1, 10 - whoAmIClueIndex);
   const socialProfileIds = useMemo(() => {
     const ids = new Set();
 
@@ -1814,91 +2853,6 @@ const isHomeScreen =
 
     return [...ids].filter(Boolean);
   }, [activeGames, playNowGames, activeMatch, leagueDashboard, leaderboardRows]);
-
-  useEffect(() => {
-    if (!multiplayerRoundOpen || !currentMultiplayerRoundQuestion) return;
-
-    setMultiplayerTimeLeft(getMultiplayerQuestionTimeLimit(activeRound?.category));
-  }, [
-    activeRound?.category,
-    currentMultiplayerRoundQuestion,
-    multiplayerRoundIndex,
-    multiplayerRoundOpen,
-  ]);
-
-  useEffect(() => {
-    if (
-      !multiplayerRoundOpen ||
-      multiplayerRoundDone ||
-      multiplayerRoundSelected ||
-      !currentMultiplayerRoundQuestion
-    ) {
-      return;
-    }
-
-    if (multiplayerTimeLeft <= 0) {
-      setMultiplayerRoundSelected(MULTIPLAYER_TIMEOUT_VALUE);
-
-      setTimeout(() => {
-        if (multiplayerRoundIndex >= activeRoundQuestions.length - 1) {
-          setMultiplayerRoundDone(true);
-          submitMultiplayerRoundScore(multiplayerRoundScore);
-        } else {
-          setMultiplayerRoundIndex((value) => value + 1);
-          setMultiplayerRoundSelected(null);
-          setMultiplayerTimeLeft(getMultiplayerQuestionTimeLimit(activeRound?.category));
-        }
-      }, 950);
-
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setMultiplayerTimeLeft((time) => time - 1);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [
-    activeRoundQuestions.length,
-    activeRound?.category,
-    currentMultiplayerRoundQuestion,
-    multiplayerRoundDone,
-    multiplayerRoundIndex,
-    multiplayerRoundOpen,
-    multiplayerRoundScore,
-    multiplayerRoundSelected,
-    multiplayerTimeLeft,
-  ]);
-
-  useEffect(() => {
-    if (gameMode !== "find-player" || findPlayerStatus !== "playing" || !findPlayerStartedAt) {
-      return undefined;
-    }
-
-    const timer = window.setInterval(() => {
-      setFindPlayerElapsed(Math.max(0, Math.floor((Date.now() - findPlayerStartedAt) / 1000)));
-    }, 1000);
-
-    return () => window.clearInterval(timer);
-  }, [findPlayerStartedAt, findPlayerStatus, gameMode]);
-
-  useEffect(() => {
-    if (
-      !leagueChallengeOpen ||
-      leagueChallengePhase !== "find-player" ||
-      !leagueFindPlayerStartedAt
-    ) {
-      return undefined;
-    }
-
-    const timer = window.setInterval(() => {
-      setLeagueFindPlayerElapsed(
-        Math.max(0, Math.floor((Date.now() - leagueFindPlayerStartedAt) / 1000))
-      );
-    }, 1000);
-
-    return () => window.clearInterval(timer);
-  }, [leagueChallengeOpen, leagueChallengePhase, leagueFindPlayerStartedAt]);
 
   useEffect(() => {
     if (
@@ -1940,10 +2894,6 @@ const isHomeScreen =
     leagueQuizScore,
     leagueTop10TotalWithCurrent,
     leagueWhoAmIScore,
-    leagueFindPlayerScore,
-    leagueFindPlayerAttemptTotal,
-    leagueFindPlayerGuesses.length,
-    leagueFindPlayerElapsed,
   ]);
 
   useEffect(() => {
@@ -1967,10 +2917,6 @@ const isHomeScreen =
     leagueQuizScore,
     leagueTop10TotalWithCurrent,
     leagueWhoAmIScore,
-    leagueFindPlayerScore,
-    leagueFindPlayerAttemptTotal,
-    leagueFindPlayerGuesses.length,
-    leagueFindPlayerElapsed,
   ]);
 
   useEffect(() => {
@@ -2117,23 +3063,6 @@ const isHomeScreen =
     coins,
     xpTotal,
     progressionStats,
-  ]);
-
-  useEffect(() => {
-    if (
-      gameMode === "connections" &&
-      gameStarted &&
-      connectionsGameComplete &&
-      !connectionsRewardClaimed
-    ) {
-      rewardConnectionsCompletion();
-      setConnectionsFeedback({ type: "complete", text: "+75 coins earned" });
-    }
-  }, [
-    gameMode,
-    gameStarted,
-    connectionsGameComplete,
-    connectionsRewardClaimed,
   ]);
 
   useEffect(() => {
@@ -2286,7 +3215,8 @@ const isHomeScreen =
   const isTimedQuestion =
     gameStarted &&
     !finished &&
-    (gameMode === "general" || gameMode === "world-cup") &&
+    gameMode === "world-cup" &&
+    isMockMultiplayer &&
     ["Hard", "Very Hard"].includes(current?.difficulty);
 
   useEffect(() => {
@@ -2345,29 +3275,17 @@ const isHomeScreen =
     playButtonTapSound();
   };
 
-  const showAuthPrompt = (message = "Create an account to save progress and compete.") => {
-    playClickSound();
-    setAuthPrompt(message);
-    setAuthMode("signup");
-    setAuthError("");
-    setAuthNotice("");
-  };
-
-  const requireAccount = (message) => {
-    if (!isGuest) return true;
-
-    showAuthPrompt(message);
-    return false;
-  };
-
-  const continueAsGuest = () => {
-    playClickSound();
+  const getGuestDisplayName = () => {
     const storedGuestName = localStorage.getItem("ballKnowledgeUsername");
-    const guestName =
+
+    return (
       username ||
       storedGuestName ||
-      `Guest-${String(guestPlayerId).replace(/[^a-zA-Z0-9]/g, "").slice(0, 5)}`;
+      `Guest-${String(guestPlayerId).replace(/[^a-zA-Z0-9]/g, "").slice(0, 8)}`
+    );
+  };
 
+  const activateLocalGuestIdentity = (guestName = getGuestDisplayName()) => {
     localStorage.setItem("ballKnowledgeGuestMode", "true");
     localStorage.setItem("ballKnowledgeUsername", guestName);
     setGuestMode(true);
@@ -2376,6 +3294,77 @@ const isHomeScreen =
     setAuthPrompt(null);
     setAuthError("");
     setAuthNotice("");
+  };
+
+  const ensureGuestBackendIdentity = async ({ silent = false } = {}) => {
+    if (effectiveAuthUser?.id) {
+      return effectiveAuthUser;
+    }
+
+    if (!isSupabaseConfigured || !supabase?.auth) {
+      if (!silent) {
+        setMultiplayerError("Online play is unavailable on this build.");
+      }
+      return null;
+    }
+
+    if (guestIdentityRequestRef.current) {
+      return guestIdentityRequestRef.current;
+    }
+
+    const guestName = getGuestDisplayName();
+    const request = (async () => {
+      const { session, user, error } = await signInAnonymously(supabase, {
+        username: guestName,
+      });
+
+      if (error || !user) {
+        if (!silent) {
+          setMultiplayerError(
+            getFriendlyAuthErrorMessage(error, "Could not start Guest online play")
+          );
+        }
+        return null;
+      }
+
+      setAuthSession(session || null);
+      setAuthUser(user);
+      activateLocalGuestIdentity(guestName);
+      await ensureProfileForAuthUser(user, guestName);
+      return user;
+    })();
+
+    guestIdentityRequestRef.current = request;
+
+    try {
+      return await request;
+    } finally {
+      guestIdentityRequestRef.current = null;
+    }
+  };
+
+  const continueAsGuest = async () => {
+    playClickSound();
+    const guestName = getGuestDisplayName();
+
+    activateLocalGuestIdentity(guestName);
+
+    if (!isSupabaseConfigured || !supabase?.auth) {
+      setAuthNotice("Guest mode is ready on this device. Online play is unavailable on this build.");
+      return;
+    }
+
+    setAuthSubmitting(true);
+    setAuthNotice("Starting Guest online play...");
+
+    const user = await ensureGuestBackendIdentity();
+    setAuthSubmitting(false);
+
+    if (user) {
+      setAuthNotice("Guest online play is ready");
+    } else {
+      setAuthNotice("Guest mode is ready on this device. Online play needs a connection.");
+    }
   };
 
   const resetAuthFormFeedback = () => {
@@ -2523,6 +3512,7 @@ const isHomeScreen =
         xpTotal,
         levelId: careerLevelId,
       progressionStats,
+      avatar: profileAvatar,
       avatarEmoji,
       favoriteCountry,
       favoriteFlag,
@@ -2542,6 +3532,9 @@ const isHomeScreen =
       playerId: user.id,
       username: preferredUsername,
       avatarEmoji,
+      avatarStyle: profileAvatar.style,
+      avatarColor: profileAvatar.color,
+      avatarBg: profileAvatar.bg,
       favoriteCountry,
       favoriteFlag,
       highScore,
@@ -2589,7 +3582,14 @@ const isHomeScreen =
     setAuthNotice("");
 
     const result =
-      authMode === "signup"
+      authMode === "signup" && isAnonymousGuest
+        ? await upgradeAnonymousUserWithEmail(supabase, {
+            email: authEmail,
+            password: authPassword,
+            username: authUsername,
+            userId: effectiveAuthUserId,
+          })
+        : authMode === "signup"
         ? await signUpWithEmailUsername(supabase, {
             email: authEmail,
             password: authPassword,
@@ -2608,7 +3608,7 @@ const isHomeScreen =
           message.includes("conflict") ||
           message.includes("already")
           ? "That username or email is already taken"
-          : result.error.message || "Could not authenticate"
+          : getFriendlyAuthErrorMessage(result.error)
       );
       return;
     }
@@ -2621,7 +3621,13 @@ const isHomeScreen =
       setAuthUser(nextUser);
       prepareAuthenticatedIdentity(nextUser, preferredUsername);
       await ensureProfileForAuthUser(nextUser, preferredUsername);
-      setAuthNotice(authMode === "signup" ? "Account created" : "Welcome back");
+      setAuthNotice(
+        authMode === "signup" && isAnonymousGuest
+          ? "Guest profile upgraded"
+          : authMode === "signup"
+          ? "Account created"
+          : "Welcome back"
+      );
     } else {
       setAuthNotice("Check your email to confirm your account, then log in.");
     }
@@ -2679,7 +3685,47 @@ const isHomeScreen =
     setLeaderboardOpen(false);
     setModeMenuOpen(false);
     setGameStarted(false);
-  };
+  };const openGuestSignup = () => {
+  playClickSound();
+
+  setAuthMode("signup");
+  setAuthEmail("");
+  setAuthPassword("");
+  setAuthUsername(
+    username && !username.startsWith("Guest-") ? username : ""
+  );
+  setAuthError("");
+  setAuthNotice("");
+
+  setGuestMode(false);
+  localStorage.removeItem("ballKnowledgeGuestMode");
+
+  setProfileOpen(false);
+  setLeaderboardOpen(false);
+  setMultiplayerOpen(false);
+  setModeMenuOpen(false);
+  setGameStarted(false);
+};
+
+const openGuestLogin = () => {
+  playClickSound();
+
+  setAuthMode("login");
+  setAuthEmail("");
+  setAuthPassword("");
+  setAuthUsername("");
+  setAuthError("");
+  setAuthNotice("");
+
+  setGuestMode(false);
+  localStorage.removeItem("ballKnowledgeGuestMode");
+
+  setProfileOpen(false);
+  setLeaderboardOpen(false);
+  setMultiplayerOpen(false);
+  setModeMenuOpen(false);
+  setGameStarted(false);
+};
 
   const toggleSound = () => {
     const nextValue = !soundOn;
@@ -2817,6 +3863,9 @@ const isHomeScreen =
       playerId,
       username: nextUsername,
       avatarEmoji,
+      avatarStyle: profileAvatar.style,
+      avatarColor: profileAvatar.color,
+      avatarBg: profileAvatar.bg,
       favoriteCountry,
       favoriteFlag,
       highScore,
@@ -2937,7 +3986,7 @@ const isHomeScreen =
 
     const updatedProfile = await updateOnlineProfile(updates);
 
-    if (!updatedProfile && !isGuest && isSupabaseConfigured && supabase) {
+    if (!updatedProfile && isSupabaseConfigured && supabase) {
       setProfile(previousProfile);
       setAvatarEmoji(previousAvatar.icon);
       setFavoriteCountry(previousAvatar.country);
@@ -2957,6 +4006,8 @@ const isHomeScreen =
     if (!isSupabaseConfigured || !supabase) {
       setLeaderboardRows([]);
       setLevelLeaderboardRows([]);
+      setCurrentLeaderboardRow(null);
+      setCurrentLevelLeaderboardRow(null);
       setLeaderboardError("Online leaderboard is unavailable");
       return;
     }
@@ -3012,55 +4063,49 @@ const isHomeScreen =
     if (error) {
       console.error("Could not load leaderboard profiles", error);
       setLeaderboardRows([]);
+      setCurrentLeaderboardRow(null);
       setLeaderboardError(getProfileErrorMessage(error));
       return;
     }
 
-    const medals = ["1", "2", "3"];
-    setLeaderboardRows(
-      (data || [])
-        .filter((row) => (Number(row.best_score) || 0) > 0)
-        .sort((a, b) => (Number(b.best_score) || 0) - (Number(a.best_score) || 0))
-        .slice(0, 10)
-        .map((row, index) => ({
-          ...row,
-          username: row.display_name || row.username || "Player",
-          score: row.best_score || 0,
-          rank: index + 1,
-          medal: medals[index] || null,
-          isCurrentUser: row.id === playerId,
-        }))
+    const generalRankedRows = (data || [])
+      .filter((row) => (Number(row.best_score) || 0) > 0)
+      .sort((a, b) => (Number(b.best_score) || 0) - (Number(a.best_score) || 0))
+      .map((row, index) => buildGeneralLeaderboardRow(row, index, playerId));
+    const visibleGeneralRows = generalRankedRows.slice(0, 10);
+    const currentGeneralRow = generalRankedRows.find((row) => row.isCurrentUser) || null;
+
+    setLeaderboardRows(visibleGeneralRows);
+    setCurrentLeaderboardRow(
+      currentGeneralRow &&
+        !visibleGeneralRows.some((row) => row.id === currentGeneralRow.id)
+        ? currentGeneralRow
+        : null
     );
 
     if (levelError) {
       console.error("Could not load highest levels leaderboard", levelError);
       setLevelLeaderboardRows([]);
+      setCurrentLevelLeaderboardRow(null);
     } else {
-      setLevelLeaderboardRows(
-        (levelData || [])
-          .sort((a, b) => {
-            const levelDiff = (Number(b.level_id) || 1) - (Number(a.level_id) || 1);
-            if (levelDiff !== 0) return levelDiff;
-            const xpDiff = (Number(b.xp_total) || 0) - (Number(a.xp_total) || 0);
-            if (xpDiff !== 0) return xpDiff;
-            return (Number(b.best_score) || 0) - (Number(a.best_score) || 0);
-          })
-          .slice(0, 10)
-          .map((row, index) => {
-          const levelId = Math.max(1, Number(row.level_id) || 1);
-          const level = getLevelById(levelId);
-
-          return {
-            ...row,
-            username: row.display_name || row.username || "Player",
-            levelId,
-            levelName: level.name,
-            xpTotal: Number(row.xp_total) || 0,
-            rank: index + 1,
-            medal: medals[index] || null,
-            isCurrentUser: row.id === playerId,
-          };
+      const levelRankedRows = (levelData || [])
+        .sort((a, b) => {
+          const levelDiff = (Number(b.level_id) || 1) - (Number(a.level_id) || 1);
+          if (levelDiff !== 0) return levelDiff;
+          const xpDiff = (Number(b.xp_total) || 0) - (Number(a.xp_total) || 0);
+          if (xpDiff !== 0) return xpDiff;
+          return (Number(b.best_score) || 0) - (Number(a.best_score) || 0);
         })
+        .map((row, index) => buildLevelLeaderboardRow(row, index, playerId));
+      const visibleLevelRows = levelRankedRows.slice(0, 10);
+      const currentLevelRow = levelRankedRows.find((row) => row.isCurrentUser) || null;
+
+      setLevelLeaderboardRows(visibleLevelRows);
+      setCurrentLevelLeaderboardRow(
+        currentLevelRow &&
+          !visibleLevelRows.some((row) => row.id === currentLevelRow.id)
+          ? currentLevelRow
+          : null
       );
     }
   };
@@ -3112,7 +4157,7 @@ const isHomeScreen =
     }
 
     const countedKey = "ballKnowledgeCountedMultiplayerRounds";
-    let countedRounds = [];
+    let countedRounds;
 
     try {
       countedRounds = JSON.parse(localStorage.getItem(countedKey) || "[]");
@@ -3308,7 +4353,7 @@ const isHomeScreen =
     if (!key || !amount) return false;
 
     const storageKey = "ballKnowledgeClaimedCoinRewards";
-    let claimedRewardList = [];
+    let claimedRewardList;
     try {
       claimedRewardList = JSON.parse(localStorage.getItem(storageKey) || "[]");
     } catch {
@@ -3428,7 +4473,7 @@ const isHomeScreen =
     const previousStreak = baseStreak;
 
     let newStreak = 1;
-    let reward = 0;
+    let reward;
 
     if (baseLastDailyPlayedDate === yesterday) {
       newStreak = baseStreak + 1;
@@ -3556,18 +4601,13 @@ const isHomeScreen =
     }
   };
 
-  const resetConnectionsGame = (difficulty = null) => {
-  const puzzle = getRandomConnectionsPuzzle(difficulty);
+const resetConnectionsGame = async (difficulty = null) => {
+  const connectionPuzzles = await loadConnectionsPuzzles();
+  const puzzle = getRandomConnectionsPuzzleFromBank(connectionPuzzles, difficulty);
 
   setConnectionsPuzzle(puzzle);
-  setConnectionsTiles(buildConnectionsTiles(puzzle));
-  setConnectionsSelected([]);
-  setConnectionsSolved([]);
-  setConnectionsMistakes(0);
-  setConnectionsFeedback(null);
-  setConnectionsShake(0);
-  setConnectionsRewardClaimed(false);
   setConnectionsRewardModal(null);
+  setConnectionsResumeVersion((version) => version + 1);
 };
 
   const openConnectionsDifficultyPicker = () => {
@@ -3584,8 +4624,9 @@ const isHomeScreen =
   setConnectionsDifficultyPickerOpen(true);
 };
 
-const startConnectionsGame = (difficulty = null) => {
+const startConnectionsGame = async (difficulty = null) => {
   playClickSound();
+  setModeLoading(true);
   setShowDailyCompletePopup(false);
   setLeaderboardOpen(false);
   setProfileOpen(false);
@@ -3597,65 +4638,57 @@ const startConnectionsGame = (difficulty = null) => {
   setGameMode("connections");
   setFinished(false);
   setGameStarted(true);
-  resetConnectionsGame(difficulty);
-  window.scrollTo({ top: 0, behavior: "instant" });
+  try {
+    await resetConnectionsGame(difficulty);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  } finally {
+    setModeLoading(false);
+  }
 };
 
-  const resetWhoAmIGame = (dateKey = whoAmIDate) => {
-    const dailyQuestion = getDailyWhoAmIQuestion(dateKey);
-    setWhoAmIQuestions(dailyQuestion ? [dailyQuestion] : []);
-    setWhoAmIIndex(0);
-    setWhoAmIClueIndex(0);
-    setWhoAmIInput("");
-    setWhoAmISelectedPlayer(null);
-    setWhoAmIScore(0);
-    setWhoAmIStreak(0);
-    setWhoAmILives(3);
-    setWhoAmIFeedback(null);
-    setWhoAmIShake(0);
-    setWhoAmIGameOver(false);
+  const loadWhoAmIDailyQuestion = async (dateKey = whoAmIDate) => {
+    const whoAmIQuestionBank = await loadWhoAmIQuestions();
+    const dailyQuestion = getDailyWhoAmIQuestionFromBank(whoAmIQuestionBank, dateKey);
 
-    if (dailyQuestion) {
-      filterSearchablePlayerGuessQuestionsLazy([dailyQuestion], "daily-whoami")
-        .then(async (searchableQuestions) => {
-          if (searchableQuestions.length) return;
+    if (!dailyQuestion) return null;
 
-          const fallbackQuestions = await filterSearchablePlayerGuessQuestionsLazy(
-            WHO_AM_I_QUESTIONS.filter(
-              (question) =>
-                question?.id &&
-                question?.answer &&
-                Array.isArray(question.clues) &&
-                question.clues.length > 0
-            ),
-            "daily-whoami-fallback"
-          );
-          const fallbackQuestion =
-            fallbackQuestions[
-              getSeededIndex(`daily-whoami-fallback:${dateKey}`, fallbackQuestions.length)
-            ];
+    try {
+      const searchableQuestions = await filterSearchablePlayerGuessQuestionsLazy(
+        [dailyQuestion],
+        "daily-whoami"
+      );
+      if (searchableQuestions.length) return dailyQuestion;
 
-          if (fallbackQuestion) {
-            setWhoAmIQuestions([fallbackQuestion]);
-            setWhoAmIIndex(0);
-            setWhoAmIClueIndex(0);
-            setWhoAmIInput("");
-            setWhoAmISelectedPlayer(null);
-          }
-        })
-        .catch((error) => {
-          if (import.meta.env?.DEV) {
-            console.warn("Could not validate Daily Who Am I searchability", error);
-          }
-        });
+      const fallbackQuestions = await filterSearchablePlayerGuessQuestionsLazy(
+        whoAmIQuestionBank.filter(
+          (question) =>
+            question?.id &&
+            question?.answer &&
+            Array.isArray(question.clues) &&
+            question.clues.length > 0
+        ),
+        "daily-whoami-fallback"
+      );
+
+      return (
+        fallbackQuestions[
+          getSeededIndex(`daily-whoami-fallback:${dateKey}`, fallbackQuestions.length)
+        ] || dailyQuestion
+      );
+    } catch (error) {
+      if (import.meta.env?.DEV) {
+        console.warn("Could not validate Daily Who Am I searchability", error);
+      }
+      return dailyQuestion;
     }
   };
 
-  const startWhoAmIGame = (dateKey = whoAmIDate) => {
+  const startWhoAmIGame = async (dateKey = whoAmIDate) => {
     if (isDateKeyAfterToday(dateKey)) return;
 
     preloadPlayerSearchLazy();
     playClickSound();
+    setModeLoading(true);
     setShowDailyCompletePopup(false);
     setLeaderboardOpen(false);
     setProfileOpen(false);
@@ -3667,481 +4700,173 @@ const startConnectionsGame = (difficulty = null) => {
     setFinished(false);
     setGameStarted(true);
     setWhoAmIDate(dateKey);
-    resetWhoAmIGame(dateKey);
-    window.scrollTo({ top: 0, behavior: "instant" });
+    setWhoAmIQuestion(null);
+    setWhoAmIGameSnapshot(null);
+    setWhoAmIResumeVersion((version) => version + 1);
+    try {
+      setWhoAmIQuestion(await loadWhoAmIDailyQuestion(dateKey));
+      window.scrollTo({ top: 0, behavior: "instant" });
+    } finally {
+      setModeLoading(false);
+    }
   };
 
-  const moveToNextWhoAmI = () => {
-    if (whoAmIIndex >= whoAmIQuestions.length - 1) {
-      setWhoAmIGameOver(true);
-      return;
-    }
-
-    setWhoAmIIndex((index) => index + 1);
-    setWhoAmIClueIndex(0);
-    setWhoAmIInput("");
-    setWhoAmISelectedPlayer(null);
-    setWhoAmIFeedback(null);
-  };
-
-  const submitWhoAmIGuess = (playerOverride = null) => {
-    if (!currentWhoAmI || whoAmIFeedback?.locked || whoAmIGameOver) return;
-
-    const guessedPlayer = isPlayerLike(playerOverride)
-      ? playerOverride
-      : whoAmISelectedPlayer;
-    const trimmedGuess = whoAmIInput.trim();
-    if (!trimmedGuess && !guessedPlayer) return;
-
-    if (isCorrectWhoAmIPlayerAnswer(guessedPlayer, currentWhoAmI, trimmedGuess)) {
-      const points = whoAmIPointsAvailable;
-      const clueNumber = whoAmIClueIndex + 1;
-      const earlyBonus = clueNumber <= 3 ? 50 : clueNumber <= 6 ? 25 : 0;
-      const rewardKeyBase = `whoami_daily:${whoAmIDate}:${currentWhoAmI.id}`;
-      const rewardEligible = !isDateKeyBeforeToday(whoAmIDate);
-      const previousResult = getDailyModeResult(
-        "whoami_daily",
-        whoAmIDate,
-        currentWhoAmI.id
-      );
-      const solvedBefore = Boolean(previousResult?.solved);
-      setWhoAmIScore((value) => value + points);
-      setWhoAmIStreak((value) => value + 1);
-      const solvedXpAwarded =
-        rewardEligible &&
-        !solvedBefore &&
-        awardXp({
-          key: `${rewardKeyBase}:solved`,
-          amount: 50,
-          label: "Who Am I solved",
-        });
-      if (solvedXpAwarded) {
-        updateProgressionStats((stats) => addStat(stats, "whoami_solved", 1));
-      }
-      if (rewardEligible && !solvedBefore && earlyBonus > 0) {
-        awardXp({
-          key: `${rewardKeyBase}:early-${clueNumber}`,
-          amount: earlyBonus,
-          label: "Early clue bonus",
-        });
-      }
-      if (rewardEligible && !solvedBefore) {
-        awardOneTimeCoins({
-          key: `${rewardKeyBase}:coins`,
-          amount: 50,
-          title: "Who Am I solved",
-        });
-      }
-      saveDailyModeResult("whoami_daily", whoAmIDate, currentWhoAmI.id, {
-        solved: true,
-        gaveUp: false,
-        cluesUsed: clueNumber,
-        xpAwarded: solvedXpAwarded,
-        replay: solvedBefore,
-        rewardEligible,
+  const persistWhoAmISolved = ({ question, dateKey, cluesUsed, earlyBonus }) => {
+    const rewardKeyBase = `whoami_daily:${dateKey}:${question.id}`;
+    const rewardEligible = !isDateKeyBeforeToday(dateKey);
+    const previousResult = getDailyModeResult(
+      "whoami_daily",
+      dateKey,
+      question.id
+    );
+    const solvedBefore = Boolean(previousResult?.solved);
+    const solvedXpAwarded =
+      rewardEligible &&
+      !solvedBefore &&
+      awardXp({
+        key: `${rewardKeyBase}:solved`,
+        amount: 50,
+        label: "Who Am I solved",
       });
-      setWhoAmIFeedback({
-        type: "correct",
-        text: `Correct! +${points} points`,
-        locked: true,
+
+    if (solvedXpAwarded) {
+      updateProgressionStats((stats) => addStat(stats, "whoami_solved", 1));
+    }
+    if (rewardEligible && !solvedBefore && earlyBonus > 0) {
+      awardXp({
+        key: `${rewardKeyBase}:early-${cluesUsed}`,
+        amount: earlyBonus,
+        label: "Early clue bonus",
       });
-      setWhoAmIInput("");
-      setWhoAmISelectedPlayer(null);
-      playCorrectSound();
-      window.setTimeout(moveToNextWhoAmI, 1150);
-      return;
+    }
+    if (rewardEligible && !solvedBefore) {
+      awardOneTimeCoins({
+        key: `${rewardKeyBase}:coins`,
+        amount: 50,
+        title: "Who Am I solved",
+      });
     }
 
-    setWhoAmIShake((value) => value + 1);
-    setWhoAmIInput("");
-    setWhoAmISelectedPlayer(null);
-
-    if (whoAmIClueIndex < currentWhoAmI.clues.length - 1) {
-      setWhoAmIClueIndex((index) => index + 1);
-      setWhoAmIFeedback({ type: "wrong", text: "Not yet. New clue unlocked." });
-      playWrongSound();
-      window.setTimeout(() => setWhoAmIFeedback(null), 900);
-      return;
-    }
-
-    setWhoAmIStreak(0);
-    setWhoAmIFeedback({
-      type: "reveal",
-      text: `Answer: ${currentWhoAmI.answer}`,
-      locked: true,
+    saveDailyModeResult("whoami_daily", dateKey, question.id, {
+      solved: true,
+      gaveUp: false,
+      cluesUsed,
+      xpAwarded: solvedXpAwarded,
+      replay: solvedBefore,
+      rewardEligible,
     });
-    saveDailyModeResult("whoami_daily", whoAmIDate, currentWhoAmI.id, {
+  };
+
+  const persistWhoAmIMissed = ({ question, dateKey, cluesUsed }) => {
+    saveDailyModeResult("whoami_daily", dateKey, question.id, {
       solved: false,
       gaveUp: false,
-      cluesUsed: currentWhoAmI.clues.length,
+      cluesUsed,
       xpAwarded: false,
     });
-    playWrongSound();
-
-    window.setTimeout(() => {
-      if (whoAmIIndex >= whoAmIQuestions.length - 1) {
-        setWhoAmIGameOver(true);
-      } else {
-        moveToNextWhoAmI();
-      }
-    }, 1600);
   };
 
-  const loadFindPlayerPool = async () => {
-    if (findPlayerPool.length) return findPlayerPool;
-
-    const { players, error } = await fetchFindPlayerPoolLazy();
-    if (error || !players.length) {
-      console.error("Could not load Find the Player pool", error);
-      throw new Error("Could not load player data");
-    }
-
-    setFindPlayerPool(players);
-    return players;
+  const exitWhoAmIGame = (snapshot) => {
+    setWhoAmIGameSnapshot(snapshot);
+    setGameStarted(false);
+    setModeMenuOpen(true);
+    setGameMode("general");
   };
 
-  const startFindPlayerGame = async (dateKey = findPlayerDate) => {
-    if (isDateKeyAfterToday(dateKey)) return;
-
-    preloadPlayerSearchLazy();
-    playClickSound();
-    setShowDailyCompletePopup(false);
-    setLeaderboardOpen(false);
-    setProfileOpen(false);
-    setMultiplayerOpen(false);
-    setModeMenuOpen(false);
-    setIsMockMultiplayer(false);
-    setMockOpponentScore(null);
-    setGameMode("find-player");
-    setFinished(false);
-    setGameStarted(true);
-    setFindPlayerDate(dateKey);
-    setFindPlayerStatus("loading");
-    setFindPlayerError("");
-    setFindPlayerSelected(null);
-    setFindPlayerGuesses([]);
-    setFindPlayerClueCount(0);
-    setFindPlayerElapsed(0);
-    setFindPlayerStartedAt(null);
-    window.scrollTo({ top: 0, behavior: "instant" });
-
-    try {
-      const pool = await loadFindPlayerPool();
-      const [target] = pickDailyFindPlayerTargets(
-        pool,
-        `daily-find-player:${dateKey}`,
-        1
-      );
-
-      if (!target) {
-        throw new Error("No eligible Find the Player target available");
-      }
-
-      setFindPlayerTarget(target);
-      setFindPlayerStartedAt(Date.now());
-      setFindPlayerStatus("playing");
-    } catch (error) {
-      console.error("Find the Player failed to start", error);
-      setFindPlayerError("Could not load today's player puzzle");
-      setFindPlayerStatus("error");
-    }
-  };
-
-  const shiftFindPlayerDate = (days) => {
-    const nextKey = addDaysToDateKey(findPlayerDate, days);
-    if (nextKey > getDailyDateKey()) return;
-    startFindPlayerGame(nextKey);
-  };
-
-  const submitFindPlayerGuess = (playerOverride = null) => {
-    const guessedPlayer = playerOverride || findPlayerSelected;
-
-    if (
-      findPlayerStatus !== "playing" ||
-      !guessedPlayer ||
-      !findPlayerTarget
-    ) {
-      return;
-    }
-
-    if (findPlayerSubmittingRef.current) return;
-    findPlayerSubmittingRef.current = true;
-    window.setTimeout(() => {
-      findPlayerSubmittingRef.current = false;
-    }, 300);
-
-    if (findPlayerGuesses.some((guess) => guess.player.id === guessedPlayer.id)) {
-      setFindPlayerError("You already guessed that player");
-      return;
-    }
-
-    const result =
-      findPlayerRanking.byId.get(guessedPlayer.id) ||
-      rankGuessAgainstTarget(guessedPlayer, findPlayerTarget, findPlayerPool);
-    const nextGuess = {
-      player: guessedPlayer,
-      distance: result.distance,
-      rank: result.rank,
-      poolSize: result.poolSize || findPlayerRanking.poolSize,
-      label: result.label || getDistanceLabel(result.distance),
-      color: result.color || getDistanceColor(result.distance),
-      barPercent: result.barPercent || getDistanceBarPercent(result.distance),
-      latest: true,
-    };
-    const nextGuesses = [
-      nextGuess,
-      ...findPlayerGuesses.map((guess) => ({ ...guess, latest: false })),
-    ].sort((a, b) => (a.rank || 999999) - (b.rank || 999999));
-    const isCorrect = result.distance === 0 || guessedPlayer.id === findPlayerTarget.id;
-
-    setFindPlayerGuesses(nextGuesses);
-    setFindPlayerSelected(null);
-    setFindPlayerError("");
-
-    if (isCorrect) {
-      const rewardKeyBase = `find_player:${findPlayerDate}:${findPlayerTarget.id}`;
-      const previousResult = getDailyModeResult(
-        "find_player",
-        findPlayerDate,
-        findPlayerTarget.id
-      );
-      const solvedBefore = Boolean(previousResult?.solved);
-      const rewardEligible = !isDateKeyBeforeToday(findPlayerDate);
-      setFindPlayerStatus("won");
-
-      if (solvedBefore && rewardEligible) {
-        awardXp({
-          key: `${rewardKeyBase}:replay`,
-          amount: 10,
-          label: "Replay solve",
-        });
-      } else if (rewardEligible) {
-        const solvedXpAwarded = awardXp({
-          key: `${rewardKeyBase}:solved`,
-          amount: 100,
-          label: "Find the Player solved",
-        });
-        if (solvedXpAwarded) {
-          updateProgressionStats((stats) => addStat(stats, "find_player_solved", 1));
-        }
-        if (nextGuesses.length < 5) {
-          awardXp({
-            key: `${rewardKeyBase}:under-5`,
-            amount: 100,
-            label: "Sharp solve bonus",
-          });
-        } else if (nextGuesses.length < 10) {
-          awardXp({
-            key: `${rewardKeyBase}:under-10`,
-            amount: 50,
-            label: "Quick solve bonus",
-          });
-        }
-        awardOneTimeCoins({
-          key: `${rewardKeyBase}:coins`,
-          amount: 100,
-          title: "Find the Player solved",
-        });
-      }
-      saveDailyModeResult("find_player", findPlayerDate, findPlayerTarget.id, {
-        solved: true,
-        gaveUp: false,
-        attempts: nextGuesses.length,
-        time_seconds: findPlayerElapsed,
-        xpAwarded: rewardEligible && !solvedBefore,
-        replay: solvedBefore,
-        rewardEligible,
-      });
-      playCorrectSound();
-      return;
-    }
-
-    playWrongSound();
-  };
-
-  const giveUpFindPlayer = () => {
-    if (!findPlayerTarget || findPlayerStatus !== "playing") return;
-
-    const previousResult = getDailyModeResult(
-      "find_player",
-      findPlayerDate,
-      findPlayerTarget.id
-    );
-    setFindPlayerSelected(null);
-    setFindPlayerStatus("gave-up");
-    setFindPlayerError("");
-    saveDailyModeResult("find_player", findPlayerDate, findPlayerTarget.id, {
-      solved: Boolean(previousResult?.solved),
-      gaveUp: true,
-      attempts: findPlayerGuesses.length,
-      time_seconds: findPlayerElapsed,
-      xpAwarded: false,
-    });
-    playWrongSound();
-  };
-
-  const toggleConnectionTile = (tile) => {
-    if (connectionsRewardModal || connectionsGameComplete || connectionsGameOver) return;
-
-    playClickSound();
-    setConnectionsFeedback(null);
-
-    setConnectionsSelected((selectedTiles) => {
-      if (selectedTiles.includes(tile.id)) {
-        return selectedTiles.filter((tileId) => tileId !== tile.id);
-      }
-
-      if (selectedTiles.length >= 4) return selectedTiles;
-
-      return [...selectedTiles, tile.id];
-    });
-  };
-
-  const shuffleConnectionsTiles = () => {
-    if (connectionsRewardModal || connectionsGameComplete || connectionsGameOver) return;
-
-    playClickSound();
-    setConnectionsTiles((tiles) => shuffle(tiles));
-  };
-
-  const submitConnectionsSelection = () => {
-    if (
-      !connectionsPuzzle ||
-      connectionsSelected.length !== 4 ||
-      connectionsGameComplete ||
-      connectionsGameOver ||
-      connectionsRewardModal
-    ) {
-      return;
-    }
-
-    const selectedTiles = connectionsTiles.filter((tile) =>
-      connectionsSelected.includes(tile.id)
-    );
-    const groupCounts = selectedTiles.reduce((counts, tile) => {
-      counts[tile.groupIndex] = (counts[tile.groupIndex] || 0) + 1;
-      return counts;
-    }, {});
-    const solvedGroupIndex = Number(
-      Object.entries(groupCounts).find(([, count]) => count === 4)?.[0]
-    );
-
-    if (
-      Number.isInteger(solvedGroupIndex) &&
-      !connectionsSolvedIndexes.includes(solvedGroupIndex)
-    ) {
-      const solvedGroup = connectionsPuzzle.groups[solvedGroupIndex];
-
-      setConnectionsSolved((groups) => [
-        ...groups,
-        {
-          ...solvedGroup,
-          index: solvedGroupIndex,
-          solvedItems: selectedTiles.map((tile) => tile.item),
-        },
-      ]);
-      setConnectionsSelected([]);
-      setConnectionsFeedback({ type: "correct", text: "Correct group" });
-      playCorrectSound();
-      return;
-    }
-
-    const isOneAway = Object.values(groupCounts).some((count) => count === 3);
-    const nextMistakes = connectionsMistakes + 1;
-
-    setConnectionsMistakes(nextMistakes);
-    setConnectionsFeedback({
-      type: isOneAway ? "close" : "wrong",
-      text: isOneAway ? "One away" : "Try again",
-    });
-    setConnectionsShake((value) => value + 1);
-    playWrongSound();
-
-    window.setTimeout(() => {
-      setConnectionsSelected([]);
-    }, 450);
-  };
-
-  const rewardConnectionsCompletion = () => {
-    if (connectionsRewardClaimed) return;
-
+  const persistConnectionsCompletion = ({ puzzle, solved, mistakes }) => {
     updateProgressionStats((stats) => addStat(stats, "connections_completed", 1));
     let xpEarned = 0;
     const completeXpAwarded = awardXp({
-      key: `connections-complete:${connectionsPuzzle?.id || "session"}`,
+      key: `connections-complete:${puzzle?.id || "session"}`,
       amount: 100,
       label: "Connections complete",
     });
     if (completeXpAwarded) xpEarned += 100;
-    if (connectionsMistakes === 0) {
+    if (mistakes === 0) {
       const perfectXpAwarded = awardXp({
-        key: `connections-perfect:${connectionsPuzzle?.id || "session"}`,
+        key: `connections-perfect:${puzzle?.id || "session"}`,
         amount: 50,
         label: "Perfect Connections",
       });
       if (perfectXpAwarded) xpEarned += 50;
     }
     awardOneTimeCoins({
-      key: `connections:${connectionsPuzzle?.id || "session"}`,
+      key: `connections:${puzzle?.id || "session"}`,
       amount: 75,
       title: "Connections complete",
     });
     setConnectionsRewardModal({
       title: "Puzzle Complete",
       mode: "Connections",
-      groupsSolved: connectionsSolved.length,
+      groupsSolved: solved.length,
       coins: 75,
       xp: xpEarned,
-      perfect: connectionsMistakes === 0,
+      perfect: mistakes === 0,
     });
-    setConnectionsRewardClaimed(true);
   };
 
-  const startGame = (mode, options = {}) => {
+  const startGame = async (mode, options = {}) => {
     if (mode === "career") preloadPlayerSearchLazy();
+    setModeLoading(true);
 
-    const nextRunId = Date.now();
-    const startingHighScore = highScore;
-    const startingProgression = getProgressionView({
-      xpTotal,
-      levelId: careerLevelId,
-      stats: {
-        ...progressionStats,
-        best_general_score: Math.max(
-          startingHighScore,
-          Number(progressionStats.best_general_score) || 0
-        ),
-      },
-    });
+    try {
+      const nextQuestions = await buildGameQuestions(mode, {
+        recentQuestionKeys:
+          mode === "general" && !options.multiplayer
+            ? readRecentGeneralQuestionKeys()
+            : [],
+      });
+      const nextRunId = Date.now();
+      const startingHighScore = highScore;
+      const startingProgression = getProgressionView({
+        xpTotal,
+        levelId: careerLevelId,
+        stats: {
+          ...progressionStats,
+          best_general_score: Math.max(
+            startingHighScore,
+            Number(progressionStats.best_general_score) || 0
+          ),
+        },
+      });
 
-    setShowDailyCompletePopup(false);
-    setLeaderboardOpen(false);
-    setProfileOpen(false);
-    setMultiplayerOpen(false);
-    setIsMockMultiplayer(Boolean(options.multiplayer));
-    setMockOpponentScore(null);
-    setGameMode(mode);
-    setQuestions(buildGameQuestions(mode));
-    setQuestionIndex(0);
-    setSelected(null);
-    setTextAnswer("");
-    setCareerSelectedPlayer(null);
-    setScore(0);
-    setLives(3);
-    setStreak(0);
-    setTimeLeft(HARD_TIME_LIMIT);
-    setFinished(false);
-    setRunStartHighScore(startingHighScore);
-    setRunId(nextRunId);
-    setHighScoreBonusAwarded(false);
-    setRunStartProgression(mode === "general" && !options.multiplayer ? startingProgression : null);
-    setGeneralRunXpSummary({ correct: 0, streak: 0, highscore: 0 });
-    setObjectiveProgressUpdate(null);
-    setPostGameStep("summary");
-    setRevivesUsed(0);
-    setRewardPopup(null);
-    setWrongPopup(null);
-    setGameStarted(true);
+      setShowDailyCompletePopup(false);
+      setLeaderboardOpen(false);
+      setProfileOpen(false);
+      setMultiplayerOpen(false);
+      setIsMockMultiplayer(Boolean(options.multiplayer));
+      setMockOpponentScore(null);
+      setGameMode(mode);
+      setQuestions(nextQuestions);
+      setQuestionIndex(0);
+      setSelected(null);
+      setTextAnswer("");
+      setCareerSelectedPlayer(null);
+      setScore(0);
+      setLives(3);
+      setStreak(0);
+      setTimeLeft(HARD_TIME_LIMIT);
+      setFinished(false);
+      setRunStartHighScore(startingHighScore);
+      setRunId(nextRunId);
+      setHighScoreBonusAwarded(false);
+      setRunStartProgression(mode === "general" && !options.multiplayer ? startingProgression : null);
+      setGeneralRunXpSummary({ correct: 0, streak: 0, highscore: 0 });
+      setGeneralGameSnapshot(null);
+      setGeneralResumeVersion(0);
+      setWorldCupGameSnapshot(null);
+      setWorldCupResumeVersion(0);
+      setCareerGameSnapshot(null);
+      setCareerResumeVersion(0);
+      setObjectiveProgressUpdate(null);
+      setPostGameStep("summary");
+      setRevivesUsed(0);
+      setRewardPopup(null);
+      setWrongPopup(null);
+      setGameStarted(true);
+    } finally {
+      setModeLoading(false);
+    }
   };
 
   const openMultiplayer = () => {
@@ -4167,20 +4892,73 @@ const startConnectionsGame = (difficulty = null) => {
     setMultiplayerNotice("");
   };
 
-  const getMultiplayerAuthPlayerId = (actionLabel) => {
+  const copyMultiplayerRoomCode = async () => {
+    const code = multiplayerRoomCode || activeMatch?.room_code || "";
+    if (!code) return;
+
+    playClickSound();
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(code);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = code;
+        textArea.setAttribute("readonly", "");
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+
+      setRoomCodeCopyStatus("Copied!");
+      window.setTimeout(() => setRoomCodeCopyStatus(""), 1400);
+    } catch (error) {
+      console.warn("Could not copy room code", error);
+      setRoomCodeCopyStatus("Copy failed");
+      window.setTimeout(() => setRoomCodeCopyStatus(""), 1800);
+    }
+  };
+
+  const getMultiplayerAuthPlayerId = async (actionLabel, { silent = false } = {}) => {
     const authPlayerId = effectiveAuthUser?.id;
 
     if (authPlayerId) {
       return authPlayerId;
     }
 
-    setMultiplayerNotice("");
-    setMultiplayerError(`Create an account to ${actionLabel}.`);
+    if (!silent) {
+      setMultiplayerNotice("Starting Guest online play...");
+    }
+
+    const guestUser = await ensureGuestBackendIdentity({ silent });
+
+    if (guestUser?.id) {
+      if (!silent) {
+        setMultiplayerNotice("");
+      }
+      return guestUser.id;
+    }
+
+    if (!silent) {
+      setMultiplayerNotice("");
+    }
+
     return null;
   };
 
   const getMultiplayerPermissionErrorMessage = (error, fallback) => {
     const message = error?.message || "";
+
+    if (
+      error?.name === "AuthRetryableFetchError" ||
+      error?.name === "TypeError" ||
+      /failed to fetch|networkerror|network request failed/i.test(message)
+    ) {
+      return getFriendlyAuthErrorMessage(error, fallback);
+    }
 
     if (
       error?.code === "42501" ||
@@ -4223,12 +5001,11 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
-    const matchPlayerId = effectiveAuthUser?.id;
+    const matchPlayerId = await getMultiplayerAuthPlayerId("view active matches", {
+      silent,
+    });
     if (!matchPlayerId) {
       setActiveGames([]);
-      if (!silent) {
-        setMultiplayerError("Create an account to view active matches.");
-      }
       return;
     }
 
@@ -4274,7 +5051,12 @@ const startConnectionsGame = (difficulty = null) => {
 
     const games = await Promise.all(
       (matches || [])
-      .filter((match) => !match.is_public)
+      .filter(
+        (match) =>
+          !match.is_public &&
+          match.status !== "completed" &&
+          match.phase !== "completed"
+      )
       .map(async (match) => {
         const { data: rounds } = await supabase
           .from("multiplayer_rounds")
@@ -4300,12 +5082,11 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
-    const matchPlayerId = effectiveAuthUser?.id;
+    const matchPlayerId = await getMultiplayerAuthPlayerId("view Play Now games", {
+      silent,
+    });
     if (!matchPlayerId) {
       setPlayNowGames([]);
-      if (!silent) {
-        setMultiplayerError("Create an account to view Play Now games.");
-      }
       return;
     }
 
@@ -4372,6 +5153,24 @@ const startConnectionsGame = (difficulty = null) => {
 
   const openActiveGames = async () => {
     playClickSound();
+    setMultiplayerStep("active-games");
+    await fetchActiveGames();
+  };
+
+  const openHomeActiveGames = async () => {
+    playClickSound();
+    setMultiplayerOpen(true);
+    setModeMenuOpen(false);
+    setProfileOpen(false);
+    setLeaderboardOpen(false);
+    setActiveMatch(null);
+    setActiveRound(null);
+    setMatchRounds([]);
+    setNextCategoryPickerOpen(false);
+    setMultiplayerRoomCode("");
+    setJoinRoomCode("");
+    setMultiplayerError("");
+    setMultiplayerNotice("");
     setMultiplayerStep("active-games");
     await fetchActiveGames();
   };
@@ -4537,7 +5336,7 @@ const startConnectionsGame = (difficulty = null) => {
       match.phase === "round_active" &&
       match.status !== "completed"
     ) {
-      openMultiplayerRoundFor(match, latestRound);
+      await openMultiplayerRoundFor(match, latestRound);
       return;
     }
 
@@ -4612,8 +5411,7 @@ const startConnectionsGame = (difficulty = null) => {
     if (
       leagueSettings.quizCount +
         leagueSettings.top10Count +
-        leagueSettings.whoamiCount +
-        (leagueSettings.findPlayerCount || 0) <=
+        leagueSettings.whoamiCount <=
       0
     ) {
       setLeagueLoading(false);
@@ -4632,8 +5430,8 @@ const startConnectionsGame = (difficulty = null) => {
         quizCount: leagueSettings.quizCount,
         top10Count: leagueSettings.top10Count,
         whoamiCount: leagueSettings.whoamiCount,
-        findPlayerCount: leagueSettings.findPlayerCount || 0,
-        findPlayerScoringMode: leagueSettings.findPlayerScoringMode || "attempts",
+        findPlayerCount: 0,
+        findPlayerScoringMode: "attempts",
         maxDailyPoints: leagueSettings.maxDailyPoints,
         leagueFormat: leagueFormatInput,
       },
@@ -4836,8 +5634,6 @@ const startConnectionsGame = (difficulty = null) => {
     setLeagueCustomQuizCount(preset.quizCount);
     setLeagueCustomTop10Count(preset.top10Count);
     setLeagueCustomWhoAmICount(preset.whoamiCount);
-    setLeagueCustomFindPlayerCount(preset.findPlayerCount || 0);
-    setLeagueFindPlayerScoringMode(preset.findPlayerScoringMode || "attempts");
     setLeagueFormatInput("custom");
   };
 
@@ -4876,11 +5672,6 @@ const startConnectionsGame = (difficulty = null) => {
       quizScore: Number(leagueQuizScore) || 0,
       top10Score: Number(leagueTop10TotalWithCurrent) || 0,
       whoamiScore: Number(leagueWhoAmIScore) || 0,
-      findPlayerScore: Number(leagueFindPlayerScore) || 0,
-      findPlayerAttempts:
-        Number(leagueFindPlayerAttemptTotal) +
-        (leagueChallengePhase === "find-player" ? leagueFindPlayerGuesses.length : 0),
-      findPlayerTimeSeconds: Number(leagueFindPlayerElapsed) || 0,
       updatedAt: new Date().toISOString(),
     };
   };
@@ -4907,9 +5698,6 @@ const startConnectionsGame = (difficulty = null) => {
       quizScore: Number(attempt.quizScore) || 0,
       top10Score: Number(attempt.top10Score) || 0,
       whoamiScore: Number(attempt.whoamiScore) || 0,
-      findPlayerScore: Number(attempt.findPlayerScore) || 0,
-      findPlayerAttempts: Number(attempt.findPlayerAttempts) || 0,
-      findPlayerTimeSeconds: Number(attempt.findPlayerTimeSeconds) || 0,
     });
 
     if (!error && submission) clearLeagueAttempt(leagueDay.id);
@@ -4925,7 +5713,7 @@ const startConnectionsGame = (difficulty = null) => {
     setMultiplayerError("");
 
     try {
-      const settings = getLeagueSettingsSummary(activeLeague);
+      const settings = getSupportedLeagueSettings(getLeagueSettingsSummary(activeLeague));
       const { leagueDay, error } = await getOrCreateLeagueDay(
         supabase,
         activeLeague
@@ -4938,7 +5726,6 @@ const startConnectionsGame = (difficulty = null) => {
           quiz_count: settings.quizCount,
           top10_count: settings.top10Count,
           whoami_count: settings.whoamiCount,
-          find_player_count: settings.findPlayerCount,
         });
         setMultiplayerError(
           error?.message?.includes("columns")
@@ -4972,9 +5759,9 @@ const startConnectionsGame = (difficulty = null) => {
         return;
       }
 
-      const quizQuestions = getLeagueQuestionsByIds(
+      const quizQuestions = (await getLeagueQuestionsByIds(
         leagueDay.quiz_question_ids || []
-      ).map(withShuffledOptions);
+      )).map(withShuffledOptions);
       const top10Challenge = getLeagueTop10ChallengeById(
         leagueDay.top10_challenge_id,
         `${activeLeague.id}:${leagueDay.day_key}`
@@ -4989,25 +5776,13 @@ const startConnectionsGame = (difficulty = null) => {
                   )
             ).filter(Boolean)
           : [];
-      const leagueWhoAmIItems = getLeagueWhoAmIQuestionsByIds(
+      const leagueWhoAmIItems = await getLeagueWhoAmIQuestionsByIds(
         leagueDay.whoami_question_ids || []
       );
-      const findPlayerPoolItems =
-        settings.findPlayerCount > 0 ? await loadFindPlayerPool() : [];
-      const findPlayerIds = Array.isArray(leagueDay.find_player_target_ids)
-        ? leagueDay.find_player_target_ids
-        : [];
-      const findPlayerTargets =
-        settings.findPlayerCount > 0
-          ? findPlayerIds
-              .map((id) => findPlayerPoolItems.find((player) => player.id === id))
-              .filter(Boolean)
-          : [];
 
       if (
         quizQuestions.length !== settings.quizCount ||
         leagueWhoAmIItems.length !== settings.whoamiCount ||
-        findPlayerTargets.length !== settings.findPlayerCount ||
         (settings.top10Count > 0 &&
           top10Challenges.length !== settings.top10Count)
       ) {
@@ -5023,9 +5798,6 @@ const startConnectionsGame = (difficulty = null) => {
         const loadedWhoAmIIds = new Set(
           leagueWhoAmIItems.map((question) => question.id)
         );
-        const loadedFindPlayerIds = new Set(
-          findPlayerTargets.map((player) => player.id)
-        );
 
         console.error("Invalid league challenge payload", {
           leagueId: activeLeague.id,
@@ -5034,17 +5806,12 @@ const startConnectionsGame = (difficulty = null) => {
           quiz_question_ids: quizQuestionIds,
           top10_challenge_id: leagueDay.top10_challenge_id,
           whoami_question_ids: whoamiQuestionIds,
-          find_player_target_ids: findPlayerIds,
           quizQuestions: quizQuestions.length,
           leagueWhoAmIItems: leagueWhoAmIItems.length,
-          findPlayerTargets: findPlayerTargets.length,
           top10Challenges: top10Challenges.length,
           missingQuizIds: quizQuestionIds.filter((id) => !loadedQuizIds.has(id)),
           missingWhoAmIIds: whoamiQuestionIds.filter(
             (id) => !loadedWhoAmIIds.has(id)
-          ),
-          missingFindPlayerIds: findPlayerIds.filter(
-            (id) => !loadedFindPlayerIds.has(id)
           ),
         });
         setMultiplayerError("Today's league challenge is not ready");
@@ -5061,7 +5828,6 @@ const startConnectionsGame = (difficulty = null) => {
       setLeagueTop10Index(0);
       setLeagueTop10TotalScore(0);
       setLeagueWhoAmIQuestions(leagueWhoAmIItems);
-      setLeagueFindPlayerTargets(findPlayerTargets);
       setLeagueQuizIndex(0);
       setLeagueQuizSelected(null);
       setLeagueQuizScore(0);
@@ -5079,15 +5845,6 @@ const startConnectionsGame = (difficulty = null) => {
       setLeagueWhoAmIScore(0);
       setLeagueWhoAmIFeedback(null);
       setLeagueWhoAmIShake(0);
-      setLeagueFindPlayerIndex(0);
-      setLeagueFindPlayerSelected(null);
-      setLeagueFindPlayerGuesses([]);
-      setLeagueFindPlayerClueCount(0);
-      setLeagueFindPlayerScore(0);
-      setLeagueFindPlayerAttemptTotal(0);
-      setLeagueFindPlayerStartedAt(null);
-      setLeagueFindPlayerElapsed(0);
-      setLeagueFindPlayerFeedback("");
       setLeagueResult(null);
       setLeagueChallengePhase("intro");
       setLeagueChallengeOpen(true);
@@ -5113,8 +5870,6 @@ const startConnectionsGame = (difficulty = null) => {
         ? "top10"
         : leagueSettings.whoamiCount > 0
         ? "whoami"
-        : leagueSettings.findPlayerCount > 0
-        ? "find-player"
         : "whoami";
 
     setLeagueChallengePhase(nextPhase);
@@ -5125,10 +5880,6 @@ const startConnectionsGame = (difficulty = null) => {
         ...initialAttempt,
         phase: nextPhase,
       });
-    }
-    if (leagueSettings.findPlayerCount > 0 && !leagueQuizQuestions.length && leagueSettings.top10Count <= 0 && leagueSettings.whoamiCount <= 0) {
-      setLeagueFindPlayerClueCount(0);
-      setLeagueFindPlayerStartedAt(Date.now());
     }
   };
 
@@ -5159,18 +5910,9 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
-    if (leagueSettings.findPlayerCount > 0) {
-      setLeagueTop10TotalScore(nextTotalTop10Score);
-      setLeagueChallengePhase("find-player");
-      setLeagueFindPlayerClueCount(0);
-      setLeagueFindPlayerStartedAt(Date.now());
-      return;
-    }
-
     completeLeagueChallenge({
       top10Score: nextTotalTop10Score,
       whoamiScore: leagueWhoAmIScore,
-      findPlayerScore: leagueFindPlayerScore,
     });
   };
 
@@ -5194,12 +5936,8 @@ const startConnectionsGame = (difficulty = null) => {
           setLeagueChallengePhase("top10");
         } else if (leagueSettings.whoamiCount > 0) {
           setLeagueChallengePhase("whoami");
-        } else if (leagueSettings.findPlayerCount > 0) {
-          setLeagueChallengePhase("find-player");
-          setLeagueFindPlayerClueCount(0);
-          setLeagueFindPlayerStartedAt(Date.now());
         } else {
-          completeLeagueChallenge({ top10Score: 0, whoamiScore: 0, findPlayerScore: 0 });
+          completeLeagueChallenge({ top10Score: 0, whoamiScore: 0 });
         }
       } else {
         setLeagueQuizIndex((index) => index + 1);
@@ -5332,17 +6070,9 @@ const startConnectionsGame = (difficulty = null) => {
   const moveToNextLeagueWhoAmI = (nextScore = leagueWhoAmIScore) => {
     window.setTimeout(() => {
       if (leagueWhoAmIIndex >= leagueWhoAmIQuestions.length - 1) {
-        if (leagueSettings.findPlayerCount > 0) {
-          setLeagueChallengePhase("find-player");
-          setLeagueFindPlayerClueCount(0);
-          setLeagueFindPlayerStartedAt(Date.now());
-          return;
-        }
-
         completeLeagueChallenge({
           top10Score: leagueTop10TotalWithCurrent,
           whoamiScore: nextScore,
-          findPlayerScore: leagueFindPlayerScore,
         });
         return;
       }
@@ -5418,142 +6148,10 @@ const startConnectionsGame = (difficulty = null) => {
     moveToNextLeagueWhoAmI(leagueWhoAmIScore);
   };
 
-  const submitLeagueFindPlayerGuess = (playerOverride = null) => {
-    const guessedPlayer = playerOverride || leagueFindPlayerSelected;
-
-    if (
-      leagueChallengePhase !== "find-player" ||
-      !currentLeagueFindPlayerTarget ||
-      !guessedPlayer ||
-      leagueFindPlayerFeedback.startsWith("Correct") ||
-      leagueFindPlayerFeedback.startsWith("Answer:")
-    ) {
-      return;
-    }
-
-    if (leagueFindPlayerSubmittingRef.current) return;
-    leagueFindPlayerSubmittingRef.current = true;
-    window.setTimeout(() => {
-      leagueFindPlayerSubmittingRef.current = false;
-    }, 300);
-
-    if (
-      leagueFindPlayerGuesses.some(
-        (guess) => guess.player.id === guessedPlayer.id
-      )
-    ) {
-      setLeagueFindPlayerFeedback("Already guessed");
-      return;
-    }
-
-    const result =
-      leagueFindPlayerRanking.byId.get(guessedPlayer.id) ||
-      rankGuessAgainstTarget(
-        guessedPlayer,
-        currentLeagueFindPlayerTarget,
-        findPlayerPool
-      );
-    const nextGuess = {
-      player: guessedPlayer,
-      distance: result.distance,
-      rank: result.rank,
-      poolSize: result.poolSize || leagueFindPlayerRanking.poolSize,
-      label: result.label || getDistanceLabel(result.distance),
-      color: result.color || getDistanceColor(result.distance),
-      barPercent: result.barPercent || getDistanceBarPercent(result.distance),
-      latest: true,
-    };
-    const nextGuesses = [
-      nextGuess,
-      ...leagueFindPlayerGuesses.map((guess) => ({ ...guess, latest: false })),
-    ].sort((a, b) => (a.rank || 999999) - (b.rank || 999999));
-    const solved =
-      result.distance === 0 ||
-      guessedPlayer.id === currentLeagueFindPlayerTarget.id;
-    const attempts = nextGuesses.length;
-    const sectionDone = solved;
-    const earned = sectionDone ? getFindPlayerPoints(attempts, solved) : 0;
-    const nextScore = leagueFindPlayerScore + earned;
-
-    setLeagueFindPlayerGuesses(nextGuesses);
-    setLeagueFindPlayerSelected(null);
-    setLeagueFindPlayerFeedback(
-      solved ? `Correct: +${earned}` : nextGuess.label
-    );
-
-    if (!sectionDone) {
-      playWrongSound();
-      return;
-    }
-
-    if (solved) playCorrectSound();
-    else playWrongSound();
-
-    setLeagueFindPlayerScore(nextScore);
-
-    window.setTimeout(() => {
-      if (leagueFindPlayerIndex >= leagueFindPlayerTargets.length - 1) {
-        completeLeagueChallenge({
-          top10Score: leagueTop10TotalWithCurrent,
-          whoamiScore: leagueWhoAmIScore,
-          findPlayerScore: nextScore,
-          findPlayerAttempts: leagueFindPlayerAttemptTotal + attempts,
-          findPlayerTimeSeconds: leagueFindPlayerElapsed,
-        });
-        return;
-      }
-
-      setLeagueFindPlayerAttemptTotal((total) => total + attempts);
-      setLeagueFindPlayerIndex((index) => index + 1);
-      setLeagueFindPlayerGuesses([]);
-      setLeagueFindPlayerSelected(null);
-      setLeagueFindPlayerFeedback("");
-      setLeagueFindPlayerClueCount(0);
-    }, 950);
-  };
-
-  const giveUpLeagueFindPlayer = () => {
-    if (
-      leagueChallengePhase !== "find-player" ||
-      !currentLeagueFindPlayerTarget ||
-      leagueFindPlayerFeedback.startsWith("Answer:")
-    ) {
-      return;
-    }
-
-    const attempts = leagueFindPlayerGuesses.length;
-    setLeagueFindPlayerFeedback(`Answer: ${currentLeagueFindPlayerTarget.name}  0 points`);
-    setLeagueFindPlayerSelected(null);
-    playWrongSound();
-
-    window.setTimeout(() => {
-      if (leagueFindPlayerIndex >= leagueFindPlayerTargets.length - 1) {
-        completeLeagueChallenge({
-          top10Score: leagueTop10TotalWithCurrent,
-          whoamiScore: leagueWhoAmIScore,
-          findPlayerScore: leagueFindPlayerScore,
-          findPlayerAttempts: leagueFindPlayerAttemptTotal + attempts,
-          findPlayerTimeSeconds: leagueFindPlayerElapsed,
-        });
-        return;
-      }
-
-      setLeagueFindPlayerAttemptTotal((total) => total + attempts);
-      setLeagueFindPlayerIndex((index) => index + 1);
-      setLeagueFindPlayerGuesses([]);
-      setLeagueFindPlayerSelected(null);
-      setLeagueFindPlayerFeedback("");
-      setLeagueFindPlayerClueCount(0);
-    }, 1100);
-  };
-
   const completeLeagueChallenge = async ({
     quizScore = leagueQuizScore,
     top10Score = leagueTop10Score,
     whoamiScore = leagueWhoAmIScore,
-    findPlayerScore = leagueFindPlayerScore,
-    findPlayerAttempts = null,
-    findPlayerTimeSeconds = null,
     abandoned = false,
   } = {}) => {
     if (!activeLeague || !activeLeagueDay || leagueResult) return false;
@@ -5572,9 +6170,6 @@ const startConnectionsGame = (difficulty = null) => {
         quizScore,
         top10Score,
         whoamiScore,
-        findPlayerScore,
-        findPlayerAttempts,
-        findPlayerTimeSeconds,
       }
     );
 
@@ -5603,10 +6198,6 @@ const startConnectionsGame = (difficulty = null) => {
       quizScore: submission.quiz_score,
       top10Score: submission.top10_score,
       whoamiScore: submission.whoami_score || whoamiScore,
-      findPlayerScore: submission.find_player_score || findPlayerScore,
-      findPlayerAttempts: submission.find_player_attempts || findPlayerAttempts,
-      findPlayerTimeSeconds:
-        submission.find_player_time_seconds || findPlayerTimeSeconds,
       totalPoints: submission.total_points,
       alreadySubmitted,
       abandoned,
@@ -5652,11 +6243,6 @@ const startConnectionsGame = (difficulty = null) => {
       quizScore: leagueQuizScore,
       top10Score: leagueTop10TotalWithCurrent,
       whoamiScore: leagueWhoAmIScore,
-      findPlayerScore: leagueFindPlayerScore,
-      findPlayerAttempts:
-        leagueFindPlayerAttemptTotal +
-        (leagueChallengePhase === "find-player" ? leagueFindPlayerGuesses.length : 0),
-      findPlayerTimeSeconds: leagueFindPlayerElapsed,
       abandoned: true,
     });
 
@@ -5668,6 +6254,8 @@ const startConnectionsGame = (difficulty = null) => {
   };
 
   const startPlayNow = async (categoryId = playNowCategory) => {
+    if (playNowRequestRef.current || multiplayerLoading) return;
+
     playClickSound();
 
     if (!isSupabaseConfigured || !supabase) {
@@ -5675,20 +6263,39 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
-    const matchPlayerId = getMultiplayerAuthPlayerId("start Play Now matches");
+    const matchPlayerId = await getMultiplayerAuthPlayerId("start Play Now matches");
     if (!matchPlayerId) return;
+    const matchUsername = username || getGuestDisplayName();
 
+    playNowRequestRef.current = true;
     setMultiplayerLoading(true);
     setMultiplayerError("");
     setMultiplayerNotice("Searching for opponent...");
 
-    const { match, round, created, joined, error } = await findOrCreatePublicMatch(supabase, {
-      playerId: matchPlayerId,
-      username,
-      categoryId,
-    });
+    let matchmakingResult;
+    try {
+      matchmakingResult = await findOrCreatePublicMatch(
+        supabase,
+        {
+          playerId: matchPlayerId,
+          username: matchUsername,
+          categoryId,
+        }
+      );
+    } catch (error) {
+      console.error("Could not start matchmaking", error);
+      setMultiplayerLoading(false);
+      playNowRequestRef.current = false;
+      setMultiplayerError(
+        getMultiplayerPermissionErrorMessage(error, "Could not start matchmaking")
+      );
+      return;
+    }
+
+    const { match, round, created, joined, error } = matchmakingResult;
 
     setMultiplayerLoading(false);
+    playNowRequestRef.current = false;
 
     if (error || !match) {
       console.error("Could not start matchmaking", error);
@@ -5709,7 +6316,7 @@ const startConnectionsGame = (difficulty = null) => {
     loadPlayNowGames({ silent: true });
 
     if (round) {
-      openMultiplayerRoundFor(match, round);
+      await openMultiplayerRoundFor(match, round, matchPlayerId, matchUsername);
       return;
     }
 
@@ -5727,11 +6334,12 @@ const startConnectionsGame = (difficulty = null) => {
   };
 
   const confirmDeleteMatch = async () => {
-    if (!matchDeleteCandidate?.id || !supabase) return;
+    if (deleteMatchRequestRef.current || !matchDeleteCandidate?.id || !supabase) return;
 
     const matchId = matchDeleteCandidate.id;
 
     playClickSound();
+    deleteMatchRequestRef.current = true;
     setDeletingMatchId(matchId);
     setMultiplayerError("");
     setMultiplayerNotice("");
@@ -5754,6 +6362,7 @@ const startConnectionsGame = (difficulty = null) => {
       setMultiplayerNotice(notice);
       setMatchDeleteCandidate(null);
       setDeletingMatchId(null);
+      deleteMatchRequestRef.current = false;
     };
 
     const { data: existingMatch, error: lookupError } = await supabase
@@ -5765,6 +6374,7 @@ const startConnectionsGame = (difficulty = null) => {
     if (lookupError) {
       console.error("Could not check match before delete", lookupError);
       setDeletingMatchId(null);
+      deleteMatchRequestRef.current = false;
       setMultiplayerError("Could not delete match");
       return;
     }
@@ -5782,6 +6392,7 @@ const startConnectionsGame = (difficulty = null) => {
     if (roundsDeleteError) {
       console.error("Could not delete multiplayer rounds", roundsDeleteError);
       setDeletingMatchId(null);
+      deleteMatchRequestRef.current = false;
       setMultiplayerError("Could not delete match");
       return;
     }
@@ -5794,6 +6405,7 @@ const startConnectionsGame = (difficulty = null) => {
     if (playersDeleteError) {
       console.error("Could not delete match players", playersDeleteError);
       setDeletingMatchId(null);
+      deleteMatchRequestRef.current = false;
       setMultiplayerError("Could not delete match");
       return;
     }
@@ -5807,6 +6419,7 @@ const startConnectionsGame = (difficulty = null) => {
     if (matchDeleteError) {
       console.error("Could not delete match", matchDeleteError);
       setDeletingMatchId(null);
+      deleteMatchRequestRef.current = false;
       setMultiplayerError("Could not delete match");
       return;
     }
@@ -5851,7 +6464,13 @@ const startConnectionsGame = (difficulty = null) => {
     }
   };
 
+  function createMockRoomCode() {
+    return `BK-${Math.floor(1000 + Math.random() * 9000)}`;
+  }
+
   const createMultiplayerMatch = async () => {
+    if (createMatchRequestRef.current || multiplayerLoading) return;
+
     // TODO Supabase later: create match_rounds/match_questions records when
     // replacing Start Test Round with the real turn-based round flow.
     playClickSound();
@@ -5861,9 +6480,10 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
-    const matchPlayerId = getMultiplayerAuthPlayerId("create H2H matches");
+    const matchPlayerId = await getMultiplayerAuthPlayerId("create H2H matches");
     if (!matchPlayerId) return;
-
+    const matchUsername = username || getGuestDisplayName();
+    createMatchRequestRef.current = true;
     setMultiplayerLoading(true);
     setMultiplayerError("");
 
@@ -5873,10 +6493,10 @@ const startConnectionsGame = (difficulty = null) => {
       .insert({
         room_code: roomCode,
         mode: multiplayerMode,
-        created_by: username,
-        current_turn: username,
+        created_by: matchUsername,
+        current_turn: matchUsername,
         current_turn_id: matchPlayerId,
-        player1_username: username,
+        player1_username: matchUsername,
         player1_id: matchPlayerId,
         status: "active",
         phase: "choose_category",
@@ -5886,9 +6506,19 @@ const startConnectionsGame = (difficulty = null) => {
       .select()
       .single();
 
+    if (import.meta.env?.DEV) {
+      console.log("[mp-create-match-direct]", {
+        match,
+        error: matchError,
+        roomCode,
+        playerId: matchPlayerId,
+      });
+    }
+
     if (matchError || !match) {
       console.error("Could not create match", matchError);
       setMultiplayerLoading(false);
+      createMatchRequestRef.current = false;
       setMultiplayerError(
         getMultiplayerPermissionErrorMessage(matchError, "Could not create match")
       );
@@ -5897,7 +6527,7 @@ const startConnectionsGame = (difficulty = null) => {
 
     const { error: playerError } = await supabase.from("match_players").insert({
       match_id: match.id,
-      username,
+      username: matchUsername,
       player_id: matchPlayerId,
       player_slot: "player1",
     });
@@ -5906,6 +6536,7 @@ const startConnectionsGame = (difficulty = null) => {
 
     if (playerError) {
       console.error("Match created, but player join failed", playerError);
+      createMatchRequestRef.current = false;
       setMultiplayerError(
         getMultiplayerPermissionErrorMessage(playerError, "Match created, but player join failed")
       );
@@ -5918,9 +6549,12 @@ const startConnectionsGame = (difficulty = null) => {
     setNextCategoryPickerOpen(false);
     setMultiplayerRoomCode(match.room_code);
     setMultiplayerStep("created");
+    createMatchRequestRef.current = false;
   };
 
   const joinMultiplayerMatch = async () => {
+    if (joinMatchRequestRef.current || multiplayerLoading) return;
+
     // TODO Supabase later: replace manual Refresh with realtime updates or
     // polling for match status and opponent readiness.
     if (!joinRoomCode.trim()) return;
@@ -5932,110 +6566,35 @@ const startConnectionsGame = (difficulty = null) => {
       return;
     }
 
-    const matchPlayerId = getMultiplayerAuthPlayerId("join H2H matches");
+    const matchPlayerId = await getMultiplayerAuthPlayerId("join H2H matches");
     if (!matchPlayerId) return;
+    const matchUsername = username || getGuestDisplayName();
 
+    joinMatchRequestRef.current = true;
     setMultiplayerLoading(true);
     setMultiplayerError("");
 
-    const roomCode = joinRoomCode.trim().toUpperCase();
-    const { data: match, error: lookupError } = await supabase
-      .from("matches")
-      .select("*")
-      .eq("room_code", roomCode)
-      .maybeSingle();
-
-    if (lookupError) {
-      console.error("Could not join room", lookupError);
-      setMultiplayerLoading(false);
-      setMultiplayerError(
-        getMultiplayerPermissionErrorMessage(lookupError, "Could not join room")
-      );
-      return;
-    }
-
-    if (!match) {
-      setMultiplayerLoading(false);
-      setMultiplayerError("Room not found");
-      return;
-    }
-
-    if (
-      match.player1_id === matchPlayerId ||
-      (!match.player1_id && match.player1_username === username)
-    ) {
-      setMultiplayerLoading(false);
-      setMultiplayerError("This is your own match");
-      return;
-    }
-
-    if (
-      match.player2_id &&
-      match.player2_id === matchPlayerId
-    ) {
-      setMultiplayerLoading(false);
-      await openExistingMatch(match.id);
-      return;
-    }
-
-    if (
-      match.player2_id &&
-      match.player2_id !== matchPlayerId
-    ) {
-      setMultiplayerLoading(false);
-      setMultiplayerError("Room already full");
-      return;
-    }
-
-    if (
-      match.player2_username &&
-      match.player2_username !== username &&
-      !match.player2_id
-    ) {
-      setMultiplayerLoading(false);
-      setMultiplayerError("Room already full");
-      return;
-    }
-
-    const shouldKeepActiveRound = match.phase === "round_active";
-    const { data: updatedMatch, error: updateError } = await supabase
-      .from("matches")
-      .update({
-        player2_username: username,
-        player2_id: matchPlayerId,
-        status: shouldKeepActiveRound ? "active" : "ready",
-        phase: shouldKeepActiveRound ? "round_active" : "choose_category",
-        current_turn: shouldKeepActiveRound ? username : match.player1_username,
-        current_turn_id: shouldKeepActiveRound ? matchPlayerId : match.player1_id || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", match.id)
-      .select()
-      .single();
-
-    if (updateError || !updatedMatch) {
-      console.error("Could not update room", updateError);
-      setMultiplayerLoading(false);
-      setMultiplayerError(
-        getMultiplayerPermissionErrorMessage(updateError, "Could not update room")
-      );
-      return;
-    }
-
-    const { error: playerError } = await supabase.from("match_players").insert({
-      match_id: updatedMatch.id,
-      username,
-      player_id: matchPlayerId,
-      player_slot: "player2",
+    const roomCode = normalizeRoomCode(joinRoomCode);
+    const {
+      match: updatedMatch,
+      error: joinError,
+      normalizedRoomCode,
+    } = await joinPrivateMatchByRoomCode(supabase, {
+      roomCode,
+      playerId: matchPlayerId,
+      username: matchUsername,
     });
 
-    setMultiplayerLoading(false);
+    setJoinRoomCode(normalizedRoomCode);
 
-    if (playerError) {
-      console.error("Joined room, but player save failed", playerError);
-      setMultiplayerError(
-        getMultiplayerPermissionErrorMessage(playerError, "Joined room, but player save failed")
-      );
+    if (joinError || !updatedMatch) {
+      console.error("Could not join private room", {
+        code: joinError?.code,
+        message: joinError?.message,
+      });
+      setMultiplayerLoading(false);
+      joinMatchRequestRef.current = false;
+      setMultiplayerError(getPrivateJoinErrorMessage(joinError));
       return;
     }
 
@@ -6048,40 +6607,63 @@ const startConnectionsGame = (difficulty = null) => {
     setNextCategoryPickerOpen(false);
     setMultiplayerRoomCode(updatedMatch.room_code);
     setMultiplayerMode(updatedMatch.mode || latestRound?.category || multiplayerMode);
+    await fetchActiveGames({ silent: true });
 
     if (roundLoadError) {
       console.error("Joined room, but round load failed", roundLoadError);
     }
+
+    setMultiplayerLoading(false);
 
     if (
       latestRound &&
       updatedMatch.phase === "round_active" &&
       !hasPlayerFinishedRound(latestRound, "player2")
     ) {
-      openMultiplayerRoundFor(updatedMatch, latestRound);
+      await openMultiplayerRoundFor(updatedMatch, latestRound, matchPlayerId, matchUsername);
+      joinMatchRequestRef.current = false;
       return;
     }
 
     setMultiplayerStep("joined");
+    joinMatchRequestRef.current = false;
   };
 
   const selectMultiplayerCategory = async (category) => {
-    if (!category.available || !activeMatch?.id || !supabase || multiplayerLoading) {
+    if (
+      categoryRequestRef.current ||
+      !category.available ||
+      !activeMatch?.id ||
+      !supabase ||
+      multiplayerLoading
+    ) {
       return;
     }
 
     playClickSound();
+    categoryRequestRef.current = true;
     setMultiplayerLoading(true);
     setMultiplayerError("");
 
-    const nextRoundNumber = (activeMatch.round_number || 0) + 1;
-    const questionIds = pickMultiplayerQuestionIds(category.id, 5);
+    let questionIds = [];
+    try {
+      questionIds = await pickMultiplayerQuestionIds(category.id, 5);
+    } catch (error) {
+      console.error("Could not load multiplayer questions", error);
+      setMultiplayerLoading(false);
+      categoryRequestRef.current = false;
+      setMultiplayerError("Could not load questions for this category");
+      return;
+    }
 
     if (questionIds.length !== 5) {
       setMultiplayerLoading(false);
+      categoryRequestRef.current = false;
       setMultiplayerError("Not enough questions in this category yet");
       return;
     }
+
+    const nextRoundNumber = (activeMatch.round_number || 0) + 1;
 
     const { data: existingRound, error: existingRoundError } = await supabase
       .from("multiplayer_rounds")
@@ -6092,6 +6674,7 @@ const startConnectionsGame = (difficulty = null) => {
 
     if (existingRoundError) {
       setMultiplayerLoading(false);
+      categoryRequestRef.current = false;
       setMultiplayerError("Could not check existing round");
       return;
     }
@@ -6104,6 +6687,7 @@ const startConnectionsGame = (difficulty = null) => {
       ]);
       setNextCategoryPickerOpen(false);
       setMultiplayerLoading(false);
+      categoryRequestRef.current = false;
       return;
     }
 
@@ -6140,16 +6724,19 @@ const startConnectionsGame = (difficulty = null) => {
         ]);
         setNextCategoryPickerOpen(false);
         setMultiplayerLoading(false);
+        categoryRequestRef.current = false;
         return;
       }
 
       setMultiplayerLoading(false);
+      categoryRequestRef.current = false;
       setMultiplayerError("Could not create round");
       return;
     }
 
     if (!round) {
       setMultiplayerLoading(false);
+      categoryRequestRef.current = false;
       setMultiplayerError("Could not create round");
       return;
     }
@@ -6172,6 +6759,7 @@ const startConnectionsGame = (difficulty = null) => {
     setMultiplayerLoading(false);
 
     if (error || !data) {
+      categoryRequestRef.current = false;
       setMultiplayerError("Could not update category");
       return;
     }
@@ -6184,7 +6772,8 @@ const startConnectionsGame = (difficulty = null) => {
     ]);
     setNextCategoryPickerOpen(false);
     setMultiplayerMode(data.mode || category.mode);
-    openMultiplayerRoundFor(data, round);
+    await openMultiplayerRoundFor(data, round);
+    categoryRequestRef.current = false;
   };
 
   const startMockMultiplayerMatch = () => {
@@ -6194,7 +6783,7 @@ const startConnectionsGame = (difficulty = null) => {
   };
 
   const startActiveMultiplayerRound = () => {
-    if (!activeRound || activeRoundQuestions.length !== 5) {
+    if (!activeRound || !Array.isArray(activeRound.question_ids) || activeRound.question_ids.length !== 5) {
       setMultiplayerError("Round questions are not ready");
       return;
     }
@@ -6205,29 +6794,29 @@ const startConnectionsGame = (difficulty = null) => {
     }
 
     playClickSound();
-    setMultiplayerRoundIndex(0);
-    setMultiplayerRoundSelected(null);
-    setMultiplayerRoundScore(0);
-    setMultiplayerTimeLeft(getMultiplayerQuestionTimeLimit(activeRound?.category));
-    setMultiplayerRoundDone(false);
     setIsSubmittingRound(false);
+    submitRoundRequestRef.current = false;
     setMultiplayerRoundOpen(true);
     setMultiplayerOpen(false);
   };
 
-  const openMultiplayerRoundFor = (match, round) => {
+  const openMultiplayerRoundFor = async (
+    match,
+    round,
+    currentPlayerId = playerId,
+    currentUsername = username
+  ) => {
     if (!match || !round) {
       setMultiplayerError("Round questions are not ready");
       return;
     }
 
-    const roundQuestions = getMultiplayerQuestionsByIds(round.question_ids || []);
-    if (roundQuestions.length !== 5) {
+    if (!Array.isArray(round.question_ids) || round.question_ids.length !== 5) {
       setMultiplayerError("Round questions are not ready");
       return;
     }
 
-    const playerSlot = getCurrentPlayerSlot(match, playerId, username);
+    const playerSlot = getCurrentPlayerSlot(match, currentPlayerId, currentUsername);
     if (hasPlayerFinishedRound(round, playerSlot)) {
       setActiveMatch(match);
       setActiveRound(round);
@@ -6249,61 +6838,30 @@ const startConnectionsGame = (difficulty = null) => {
     ]);
     setMultiplayerMode(match.mode || "general");
     setMultiplayerRoomCode(match.room_code);
-    setMultiplayerRoundIndex(0);
-    setMultiplayerRoundSelected(null);
-    setMultiplayerRoundScore(0);
-    setMultiplayerTimeLeft(getMultiplayerQuestionTimeLimit(round.category));
-    setMultiplayerRoundDone(false);
     setIsSubmittingRound(false);
+    submitRoundRequestRef.current = false;
     setMultiplayerRoundOpen(true);
     setMultiplayerOpen(false);
   };
 
-  const chooseMultiplayerRoundAnswer = (option) => {
-    if (
-      multiplayerRoundSelected ||
-      isSubmittingRound ||
-      !currentMultiplayerRoundQuestion
-    ) {
-      return;
-    }
-
-    setMultiplayerRoundSelected(option);
-    const isCorrect = isCorrectAnswer(option, currentMultiplayerRoundQuestion.answer);
-    const nextScore = isCorrect ? multiplayerRoundScore + 1 : multiplayerRoundScore;
-
-    if (isCorrect) {
-      setMultiplayerRoundScore(nextScore);
-      playCorrectSound();
-    } else {
-      playWrongSound();
-    }
-
-    setTimeout(() => {
-      if (multiplayerRoundIndex >= activeRoundQuestions.length - 1) {
-        setMultiplayerRoundDone(true);
-        submitMultiplayerRoundScore(nextScore);
-      } else {
-        setMultiplayerRoundIndex((value) => value + 1);
-        setMultiplayerRoundSelected(null);
-        setMultiplayerTimeLeft(getMultiplayerQuestionTimeLimit(activeRound?.category));
-      }
-    }, 850);
-  };
-
-  const submitMultiplayerRoundScore = async (scoreOverride = multiplayerRoundScore) => {
+  const submitMultiplayerRoundScore = async (scoreOverride = 0) => {
     if (!supabase || !activeRound?.id || !activeMatch?.id || !multiplayerPlayerSlot) {
       setMultiplayerError("Could not submit round");
       return;
     }
 
-    if (isSubmittingRound || hasPlayerFinishedRound(activeRound, multiplayerPlayerSlot)) {
+    if (
+      submitRoundRequestRef.current ||
+      isSubmittingRound ||
+      hasPlayerFinishedRound(activeRound, multiplayerPlayerSlot)
+    ) {
       setMultiplayerRoundOpen(false);
       setMultiplayerOpen(true);
       setMultiplayerStep("joined");
       return;
     }
 
+    submitRoundRequestRef.current = true;
     setIsSubmittingRound(true);
     setMultiplayerLoading(true);
     setMultiplayerError("");
@@ -6355,6 +6913,7 @@ const startConnectionsGame = (difficulty = null) => {
     if (roundError || !updatedRound) {
       setMultiplayerLoading(false);
       setIsSubmittingRound(false);
+      submitRoundRequestRef.current = false;
       setMultiplayerError("Could not submit round");
       return;
     }
@@ -6445,6 +7004,7 @@ const startConnectionsGame = (difficulty = null) => {
       if (matchError || !matchData) {
         setMultiplayerLoading(false);
         setIsSubmittingRound(false);
+        submitRoundRequestRef.current = false;
         setMultiplayerError("Round saved, but match update failed");
         return;
       }
@@ -6454,6 +7014,7 @@ const startConnectionsGame = (difficulty = null) => {
 
     setMultiplayerLoading(false);
     setIsSubmittingRound(false);
+    submitRoundRequestRef.current = false;
     setMultiplayerNotice("Score submitted");
     setActiveRound(updatedRound);
     setMatchRounds((rounds) => [
@@ -6489,12 +7050,8 @@ const startConnectionsGame = (difficulty = null) => {
     setMockOpponentScore(null);
     setGameMode("daily-list");
     setFoundAnswers([]);
-    setDailyInput("");
-    setDailySelectedPlayer(null);
     setDailyCoinsEarned(0);
-    setDailyReveal(null);
-    setDailyCelebratedAnswer(null);
-    setIsRevealing(false);
+    setTop10ResumeVersion((version) => version + 1);
     setQuestionIndex(0);
     setSelected(null);
     setTextAnswer("");
@@ -6505,6 +7062,15 @@ const startConnectionsGame = (difficulty = null) => {
     setTimeLeft(HARD_TIME_LIMIT);
     setFinished(false);
     setRevivesUsed(0);
+    setGeneralGameSnapshot(null);
+    setGeneralResumeVersion(0);
+    setWorldCupGameSnapshot(null);
+    setWorldCupResumeVersion(0);
+    setCareerGameSnapshot(null);
+    setCareerResumeVersion(0);
+    setWhoAmIQuestion(null);
+    setWhoAmIGameSnapshot(null);
+    setWhoAmIResumeVersion(0);
     setPostGameStep("summary");
     setRewardPopup(null);
     setWrongPopup(null);
@@ -6537,7 +7103,7 @@ const startConnectionsGame = (difficulty = null) => {
     setMultiplayerLoading(false);
     setGameMode("general");
 
-    setQuestions(buildGameQuestions("general"));
+    setQuestions([]);
     setQuestionIndex(0);
 
     setSelected(null);
@@ -6556,21 +7122,11 @@ const startConnectionsGame = (difficulty = null) => {
     setWrongPopup(null);
 
     setFoundAnswers([]);
-    setDailyInput("");
     setDailyCoinsEarned(0);
-    setDailyReveal(null);
-    setDailyCelebratedAnswer(null);
-    setIsRevealing(false);
-    setWhoAmIQuestions([]);
-    setWhoAmIIndex(0);
-    setWhoAmIClueIndex(0);
-    setWhoAmIInput("");
-    setWhoAmIScore(0);
-    setWhoAmIStreak(0);
-    setWhoAmILives(3);
-    setWhoAmIFeedback(null);
-    setWhoAmIShake(0);
-    setWhoAmIGameOver(false);
+    setTop10ResumeVersion((version) => version + 1);
+    setWhoAmIQuestion(null);
+    setWhoAmIGameSnapshot(null);
+    setWhoAmIResumeVersion(0);
   };
 
   const exitToHomeSafely = (reason = "manual") => {
@@ -6597,6 +7153,12 @@ const startConnectionsGame = (difficulty = null) => {
     setStreak(0);
     setTimeLeft(HARD_TIME_LIMIT);
     setRevivesUsed(0);
+    setGeneralGameSnapshot(null);
+    setGeneralResumeVersion(0);
+    setWorldCupGameSnapshot(null);
+    setWorldCupResumeVersion(0);
+    setCareerGameSnapshot(null);
+    setCareerResumeVersion(0);
     setIsMockMultiplayer(false);
     setMockOpponentScore(null);
 
@@ -6662,87 +7224,6 @@ const startConnectionsGame = (difficulty = null) => {
       setScore(newScore);
       setStreak(newStreak);
 
-      // TODO: add separate Supabase leaderboards per mode later. For now
-      // profiles.best_score is the All Time General Knowledge leaderboard.
-      if (gameMode === "general" && !isMockMultiplayer && newScore > highScore) {
-        setHighScore(newScore);
-        localStorage.setItem("footballQuizHighScore", String(newScore));
-        updateOnlineProfile(
-          {
-            best_score: newScore,
-            coins,
-            daily_streak: dailyStreak,
-            xp_total: xpTotal,
-            level_id: careerLevelId,
-            progression_stats: {
-              ...progressionStats,
-              best_general_score: Math.max(
-                Number(progressionStats.best_general_score) || 0,
-                newScore
-              ),
-            },
-          },
-          "ready"
-        );
-        updateProgressionStats((stats) =>
-          maxStat(stats, "best_general_score", newScore)
-        );
-      }
-
-      if (gameMode === "general" && !isMockMultiplayer) {
-        if (awardXp({
-          key: `general-correct:${Date.now()}:${questionIndex}:${newScore}`,
-          amount: 5,
-          label: "Correct answer",
-          placement: "inline",
-        })) {
-          setGeneralRunXpSummary((summary) => ({
-            ...summary,
-            correct: summary.correct + 5,
-          }));
-        }
-
-        if (newStreak === 5) {
-          if (awardXp({
-            key: `general-streak-5:${Date.now()}:${newScore}`,
-            amount: 10,
-            label: "Streak Bonus",
-            placement: "inline",
-          })) {
-            setGeneralRunXpSummary((summary) => ({
-              ...summary,
-              streak: summary.streak + 10,
-            }));
-          }
-        }
-        if (newStreak === 10) {
-          if (awardXp({
-            key: `general-streak-10:${Date.now()}:${newScore}`,
-            amount: 25,
-            label: "Streak Bonus",
-            placement: "inline",
-          })) {
-            setGeneralRunXpSummary((summary) => ({
-              ...summary,
-              streak: summary.streak + 25,
-            }));
-          }
-        }
-        if (newStreak === 20) {
-          if (awardXp({
-            key: `general-streak-20:${Date.now()}:${newScore}`,
-            amount: 75,
-            label: "Streak Bonus",
-            placement: "inline",
-          })) {
-            setGeneralRunXpSummary((summary) => ({
-              ...summary,
-              streak: summary.streak + 75,
-            }));
-          }
-        }
-      }
-
       if ((gameMode === "world-cup" || gameMode === "career") && !isMockMultiplayer) {
         if (awardXp({
           key: `${gameMode}-correct:${Date.now()}:${questionIndex}:${newScore}`,
@@ -6777,7 +7258,119 @@ const startConnectionsGame = (difficulty = null) => {
     }
   };
 
-  const finishDaily = (found, earned) => {
+  const handleGeneralHighScore = (newScore) => {
+    setHighScore(newScore);
+    localStorage.setItem("footballQuizHighScore", String(newScore));
+    updateOnlineProfile(
+      {
+        best_score: newScore,
+        coins,
+        daily_streak: dailyStreak,
+        xp_total: xpTotal,
+        level_id: careerLevelId,
+        progression_stats: {
+          ...progressionStats,
+          best_general_score: Math.max(
+            Number(progressionStats.best_general_score) || 0,
+            newScore
+          ),
+        },
+      },
+      "ready"
+    );
+    updateProgressionStats((stats) =>
+      maxStat(stats, "best_general_score", newScore)
+    );
+  };
+
+  const awardGeneralRunXp = ({ key, amount, label }) =>
+    awardXp({
+      key,
+      amount,
+      label,
+      placement: "inline",
+    });
+
+  const awardClassicQuizRunXp = ({ key, amount, label }) =>
+    awardXp({
+      key,
+      amount,
+      label,
+      placement: "inline",
+    });
+
+  const finishGeneralGame = (snapshot) => {
+    rememberGeneralQuestionsServed(questions, snapshot);
+    setGeneralGameSnapshot(snapshot);
+    setQuestionIndex(snapshot.questionIndex || 0);
+    setSelected(snapshot.selected || null);
+    setScore(snapshot.score || 0);
+    setLives(snapshot.lives ?? 0);
+    setStreak(snapshot.streak || 0);
+    setRevivesUsed(snapshot.revivesUsed || 0);
+    setGeneralRunXpSummary(snapshot.runXpSummary || { correct: 0, streak: 0, highscore: 0 });
+    setFinished(true);
+  };
+
+  const exitGeneralGame = (snapshot) => {
+    rememberGeneralQuestionsServed(questions, snapshot);
+    setGeneralGameSnapshot(snapshot);
+    exitToHomeSafely("general-home");
+  };
+
+  const finishWorldCupGame = (snapshot) => {
+    setWorldCupGameSnapshot(snapshot);
+    setQuestionIndex(snapshot.questionIndex || 0);
+    setSelected(snapshot.selected || null);
+    setTextAnswer(snapshot.textAnswer || "");
+    setScore(snapshot.score || 0);
+    setLives(snapshot.lives ?? 0);
+    setStreak(snapshot.streak || 0);
+    setRevivesUsed(snapshot.revivesUsed || 0);
+    setGeneralRunXpSummary(snapshot.runXpSummary || { correct: 0, streak: 0, highscore: 0 });
+    setFinished(true);
+  };
+
+  const exitWorldCupGame = (snapshot) => {
+    setWorldCupGameSnapshot(snapshot);
+    exitToHomeSafely("world-cup-home");
+  };
+
+  const finishCareerGame = (snapshot) => {
+    setCareerGameSnapshot(snapshot);
+    setQuestionIndex(snapshot.questionIndex || 0);
+    setSelected(snapshot.selected || null);
+    setTextAnswer(snapshot.textAnswer || "");
+    setCareerSelectedPlayer(snapshot.selectedPlayer || null);
+    setScore(snapshot.score || 0);
+    setLives(snapshot.lives ?? 0);
+    setStreak(snapshot.streak || 0);
+    setRevivesUsed(snapshot.revivesUsed || 0);
+    setGeneralRunXpSummary(snapshot.runXpSummary || { correct: 0, streak: 0, highscore: 0 });
+    setFinished(true);
+  };
+
+  const exitCareerGame = (snapshot) => {
+    setCareerGameSnapshot(snapshot);
+    exitToHomeSafely("career-home");
+  };
+
+  const persistTop10AnswerFound = ({ answerKey, reward }) => {
+    const currentCoins = Number(localStorage.getItem("footballQuizCoins")) || coins;
+    saveCoins(currentCoins + reward);
+    awardXp({
+      key: `daily-found:${getDailyDateKey()}:${answerKey}`,
+      amount: 10,
+      label: "Daily answer",
+    });
+  };
+
+  const finishDaily = ({ found, earned, foundAnswers: finalFoundAnswers, score: finalScore, lives: finalLives }) => {
+    setFoundAnswers(finalFoundAnswers);
+    setDailyCoinsEarned(earned);
+    setScore(finalScore);
+    setLives(finalLives);
+
     if (dailyPlayed || localStorage.getItem("ballKnowledgeDailyDate") === getDailyDateKey()) {
       setFinished(true);
       return;
@@ -6803,158 +7396,6 @@ const startConnectionsGame = (difficulty = null) => {
     }, 700);
   };
 
-  const checkDailyAnswer = (playerOverride = null) => {
-    const guessedPlayer = isPlayerLike(playerOverride)
-      ? playerOverride
-      : dailySelectedPlayer;
-    const guessText = guessedPlayer?.name || dailyInput.trim();
-    if (!guessText || dailyChallengeUnavailable || rewardPopup || wrongPopup || isRevealing) return;
-
-    setDailyCelebratedAnswer(null);
-
-    const matchedAnswer = findMatchingAnswer({
-      typedAnswer: guessText,
-      selectedPlayer: guessedPlayer,
-      answers: dailyAnswers,
-    });
-
-    if (matchedAnswer && !foundAnswers.includes(matchedAnswer)) {
-      const rank = dailyAnswers.indexOf(matchedAnswer) + 1;
-      const rewardPerCorrect = 15;
-
-      setDailyInput("");
-      setDailySelectedPlayer(null);
-      setIsRevealing(true);
-
-      let displayRank = dailyAnswers.length;
-
-      setDailyReveal({
-        type: "correct",
-        phase: "scan",
-        answer: matchedAnswer,
-        rank,
-        displayRank,
-      });
-
-      const interval = setInterval(() => {
-        displayRank -= 1;
-
-        if (displayRank <= rank) {
-          clearInterval(interval);
-
-          setDailyReveal({
-            type: "correct",
-            phase: "result",
-            answer: matchedAnswer,
-            rank,
-            displayRank: rank,
-          });
-
-          setTimeout(() => {
-            const newFoundAnswers = [...foundAnswers, matchedAnswer];
-            const newScore = score + 1;
-            const newCoins = coins + rewardPerCorrect;
-            const newDailyCoinsEarned = dailyCoinsEarned + rewardPerCorrect;
-
-            setFoundAnswers(newFoundAnswers);
-            setDailyCelebratedAnswer(matchedAnswer);
-            setScore(newScore);
-            setDailyCoinsEarned(newDailyCoinsEarned);
-            saveCoins(newCoins);
-            awardXp({
-              key: `daily-found:${getDailyDateKey()}:${getAnswerKey(matchedAnswer, rank)}`,
-              amount: 10,
-              label: "Daily answer",
-            });
-            playCorrectSound();
-
-            setDailyReveal(null);
-            setIsRevealing(false);
-            setTimeout(() => {
-              setDailyCelebratedAnswer(null);
-            }, 900);
-
-            if (newFoundAnswers.length >= dailyTargetCount) {
-              finishDaily(newFoundAnswers.length, newDailyCoinsEarned);
-            }
-          }, 900);
-        } else {
-          setDailyReveal({
-            type: "correct",
-            phase: "scan",
-            answer: matchedAnswer,
-            rank,
-            displayRank,
-          });
-        }
-      }, DAILY_SCAN_STEP_MS);
-    } else {
-      const newLives = Math.max(lives - 1, 0);
-      const wrongMessage = matchedAnswer
-        ? "Already guessed"
-        : "Not in today’s Top 10";
-
-      setLives(newLives);
-      setDailyInput("");
-      setDailySelectedPlayer(null);
-      setIsRevealing(true);
-
-      let displayRank = dailyAnswers.length;
-
-      setDailyReveal({
-        type: "wrong",
-        phase: "scan",
-        answer: wrongMessage,
-        rank: 0,
-        displayRank,
-      });
-
-      const interval = setInterval(() => {
-        displayRank -= 1;
-
-        if (displayRank <= 0) {
-          clearInterval(interval);
-
-          setDailyReveal({
-            type: "wrong",
-            phase: "result",
-            answer: wrongMessage,
-            rank: 0,
-            displayRank: 0,
-          });
-
-          setTimeout(() => {
-            setDailyReveal(null);
-            setIsRevealing(false);
-            setWrongPopup({
-              answer: wrongMessage,
-            });
-            playWrongSound();
-
-            if (newLives <= 0) {
-              setTimeout(() => {
-                setWrongPopup(null);
-                finishDaily(foundAnswers.length, dailyCoinsEarned);
-              }, 1400);
-            } else {
-              setTimeout(() => {
-                setWrongPopup(null);
-              }, 1200);
-            }
-          }, 260);
-        } else {
-          setDailyReveal({
-            type: "wrong",
-            phase: "scan",
-            answer: wrongMessage,
-            rank: 0,
-            displayRank,
-          });
-        }
-      }, DAILY_SCAN_STEP_MS);
-    }
-  };
-
   const collectReward = () => {
     const action = rewardPopup?.onCollect;
     setRewardPopup(null);
@@ -6974,6 +7415,66 @@ const startConnectionsGame = (difficulty = null) => {
 
     const newCoins = coins - reviveCost;
     saveCoins(newCoins);
+
+    if (gameMode === "general" && !isMockMultiplayer && generalGameSnapshot) {
+      const nextRevivesUsed = revivesUsed + 1;
+      const nextSnapshot = {
+        ...generalGameSnapshot,
+        lives: 1,
+        selected: null,
+        revivesUsed: nextRevivesUsed,
+      };
+      setGeneralGameSnapshot(nextSnapshot);
+      setRevivesUsed(nextRevivesUsed);
+      setLives(1);
+      setFinished(false);
+      setPostGameStep("summary");
+      setSelected(null);
+      setGeneralResumeVersion((version) => version + 1);
+      return;
+    }
+
+    if (gameMode === "world-cup" && !isMockMultiplayer && worldCupGameSnapshot) {
+      const nextRevivesUsed = revivesUsed + 1;
+      const nextSnapshot = {
+        ...worldCupGameSnapshot,
+        lives: 1,
+        selected: null,
+        textAnswer: "",
+        revivesUsed: nextRevivesUsed,
+      };
+      setWorldCupGameSnapshot(nextSnapshot);
+      setRevivesUsed(nextRevivesUsed);
+      setLives(1);
+      setFinished(false);
+      setPostGameStep("summary");
+      setSelected(null);
+      setTextAnswer("");
+      setWorldCupResumeVersion((version) => version + 1);
+      return;
+    }
+
+    if (gameMode === "career" && !isMockMultiplayer && careerGameSnapshot) {
+      const nextRevivesUsed = revivesUsed + 1;
+      const nextSnapshot = {
+        ...careerGameSnapshot,
+        lives: 1,
+        selected: null,
+        textAnswer: "",
+        selectedPlayer: null,
+        revivesUsed: nextRevivesUsed,
+      };
+      setCareerGameSnapshot(nextSnapshot);
+      setRevivesUsed(nextRevivesUsed);
+      setLives(1);
+      setFinished(false);
+      setPostGameStep("summary");
+      setSelected(null);
+      setTextAnswer("");
+      setCareerSelectedPlayer(null);
+      setCareerResumeVersion((version) => version + 1);
+      return;
+    }
 
     setLives(1);
     setRevivesUsed((r) => r + 1);
@@ -7025,63 +7526,45 @@ const startConnectionsGame = (difficulty = null) => {
   const coinShopModal = (
     <AnimatePresence>
       {coinsMenuOpen && (
-        <motion.div
-          className="coin-shop-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <Modal
+          title="Coin Shop"
+          closeLabel="Close coin shop"
+          cardClassName="bk-reward-card"
+          onClose={() => {
+            playClickSound();
+            setCoinsMenuOpen(false);
+          }}
         >
-          <motion.div
-            className="coin-shop-card"
-            initial={{ scale: 0.86, y: 28 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.92, y: 18, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 170, damping: 15 }}
-          >
-            <div className="coin-shop-coin"><BKIcon name="coins" size={58} /></div>
-            <h2 className="coin-shop-title">Coin Shop</h2>
-
-            <div className="coin-shop-balance">
+            <div className="bk-coin-balance">
               <span>Current coins</span>
               <strong><BKIcon name="coins" size={22} /> {coins}</strong>
             </div>
 
-            <div className="coin-shop-options">
-              <div className="coin-shop-option featured">
+            <div className="bk-coin-shop-list">
+              <div className="bk-coin-shop-option">
                 <div>
                   <strong>Earn coins</strong>
                   <small>Play quizzes, daily challenges and streaks</small>
+                  <em>No purchases needed</em>
                 </div>
-                <button onClick={() => setCoinsMenuOpen(false)}>Play</button>
-                <em>No purchases needed</em>
+                <Button variant="secondary" onClick={() => setCoinsMenuOpen(false)}>Play</Button>
               </div>
 
-              <div className="coin-shop-option">
+              <div className="bk-coin-shop-option">
                 <div>
                   <strong>Extra lives</strong>
                   <small>Use coins after game over</small>
+                  <em>Revives start at 500 coins</em>
                 </div>
-                <button onClick={() => setCoinsMenuOpen(false)}>Got it</button>
-                <em>Revives start at 500 coins</em>
+                <Button variant="secondary" onClick={() => setCoinsMenuOpen(false)}>Got it</Button>
               </div>
             </div>
 
-            <p className="coin-shop-note">
+            <AuthNotice tone="info">
               Keep playing to build your coin balance.
               {coinShopNotice && <span> • {coinShopNotice}</span>}
-            </p>
-
-            <button
-              className="coin-shop-close"
-              onClick={() => {
-                playClickSound();
-                setCoinsMenuOpen(false);
-              }}
-            >
-              CLOSE
-            </button>
-          </motion.div>
-        </motion.div>
+            </AuthNotice>
+        </Modal>
       )}
     </AnimatePresence>
   );
@@ -7090,16 +7573,18 @@ const startConnectionsGame = (difficulty = null) => {
     <AnimatePresence>
       {coinRewardToast && (
         <motion.div
-          className="coin-reward-toast"
+          className="bk-toast-stack"
           initial={{ opacity: 0, y: 18, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -14, scale: 0.96 }}
           transition={{ duration: 0.22 }}
         >
-          <span><BKIcon name="coins" size={24} /></span>
-          <div>
-            <strong>+{coinRewardToast.amount} coins</strong>
-            <small>{coinRewardToast.title}</small>
+          <div className="bk-reward-toast" role="status" aria-live="polite">
+            <span className="bk-reward-toast__icon"><BKIcon name="coins" size={24} /></span>
+            <div>
+              <strong>+{coinRewardToast.amount} coins</strong>
+              <small>{coinRewardToast.title}</small>
+            </div>
           </div>
         </motion.div>
       )}
@@ -7110,16 +7595,18 @@ const startConnectionsGame = (difficulty = null) => {
     <AnimatePresence>
       {xpToast && xpToast.placement !== "inline" && (
         <motion.div
-          className="xp-reward-toast"
+          className="bk-toast-stack"
           initial={{ opacity: 0, y: 16, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -12, scale: 0.96 }}
           transition={{ type: "spring", stiffness: 260, damping: 18 }}
         >
-          <span>XP</span>
-          <div>
-            <strong>+{xpToast.amount} XP</strong>
-            <small>{xpToast.label || "Progress earned"}</small>
+          <div className="bk-reward-toast" role="status" aria-live="polite">
+            <span className="bk-reward-toast__icon">XP</span>
+            <div>
+              <strong>+{xpToast.amount} XP</strong>
+              <small>{xpToast.label || "Progress earned"}</small>
+            </div>
           </div>
         </motion.div>
       )}
@@ -7129,79 +7616,65 @@ const startConnectionsGame = (difficulty = null) => {
   const objectiveProgressModal = (
     <AnimatePresence>
       {objectiveProgressUpdate && (
-        <motion.div
-          className="objective-progress-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <Modal
+          title="Objective updated"
+          variant="reward"
+          cardClassName="bk-reward-card"
+          closeLabel="Close objective progress"
+          onClose={() => {
+            playClickSound();
+            setObjectiveProgressUpdate(null);
+          }}
         >
-          <motion.div
-            className="objective-progress-card"
-            initial={{ opacity: 0, y: 26, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 14, scale: 0.94 }}
-            transition={{ type: "spring", stiffness: 190, damping: 16 }}
-          >
-            <div className="objective-progress-kicker">Objective updated</div>
-            <h2>{objectiveProgressUpdate.levelName}</h2>
+          <div className="bk-progression-copy">
+            <p className="bk-type-label">Level progress</p>
+            <h3>{objectiveProgressUpdate.levelName}</h3>
+          </div>
 
-            <div className="objective-progress-list">
-              {objectiveProgressUpdate.updates.map((objective) => (
-                <div
-                  className={`objective-progress-row ${
-                    objective.complete ? "complete" : ""
-                  }`}
-                  key={objective.statKey}
-                >
-                  <div className="objective-progress-row-top">
-                    <strong>{objective.label}</strong>
-                    <span>
-                      {objective.before.toLocaleString()} →{" "}
-                      {objective.after.toLocaleString()} /{" "}
-                      {objective.required.toLocaleString()}
-                    </span>
-                  </div>
-
-                  <div className="objective-progress-bar">
-                    <motion.div
-                      className="objective-progress-fill"
-                      initial={{ width: `${objective.beforeProgress}%` }}
-                      animate={{ width: `${objective.afterProgress}%` }}
-                      transition={{ delay: 0.18, duration: 0.62, ease: "easeOut" }}
-                    />
-                  </div>
-
-                  {objective.newlyCompleted && (
-                    <motion.div
-                      className="objective-progress-complete"
-                      initial={{ opacity: 0, y: 8, scale: 0.94 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ delay: 0.45, duration: 0.22 }}
-                    >
-                      ✓ Completed
-                    </motion.div>
-                  )}
+          <div className="bk-objective-list">
+            {objectiveProgressUpdate.updates.map((objective) => (
+              <div
+                className={`bk-objective-row ${objective.complete ? "is-complete" : ""}`}
+                key={objective.statKey}
+              >
+                <div className="bk-objective-top">
+                  <strong>{objective.label}</strong>
+                  <small>
+                    {objective.before.toLocaleString()} to{" "}
+                    {objective.after.toLocaleString()} /{" "}
+                    {objective.required.toLocaleString()}
+                  </small>
                 </div>
-              ))}
-            </div>
-
-            {objectiveProgressUpdate.allComplete && (
-              <div className="objective-progress-all-complete">
-                All objectives complete. Level up incoming.
+                <ProgressBar
+                  label={objective.label}
+                  value={objective.afterProgress}
+                  valueLabel={`${Math.round(objective.afterProgress)}%`}
+                />
+                <span className="bk-objective-status">
+                  {objective.newlyCompleted
+                    ? "Completed now"
+                    : objective.complete
+                    ? "Completed"
+                    : "In progress"}
+                </span>
               </div>
-            )}
+            ))}
+          </div>
 
-            <button
-              className="objective-progress-button"
-              onClick={() => {
-                playClickSound();
-                setObjectiveProgressUpdate(null);
-              }}
-            >
-              CONTINUE
-            </button>
-          </motion.div>
-        </motion.div>
+          {objectiveProgressUpdate.allComplete && (
+            <AuthNotice tone="success">All objectives complete. Level up incoming.</AuthNotice>
+          )}
+
+          <Button
+            onClick={() => {
+              playClickSound();
+              setObjectiveProgressUpdate(null);
+            }}
+            fullWidth
+          >
+            Continue
+          </Button>
+        </Modal>
       )}
     </AnimatePresence>
   );
@@ -7211,103 +7684,112 @@ const startConnectionsGame = (difficulty = null) => {
     : Math.max(1, dailyStreak + 1);
   const dailyRewardRoadDays = getStreakRoadDays(dailyRewardTargetDay);
   const nextDailyReward = getNextStreakRewardInfo(dailyStreak, dailyPlayed);
+  const dailyRewardHeroCopy = getDailyStreakHeroCopy(dailyStreak, dailyPlayed);
+  const todaysDailyReward = getStreakReward(dailyRewardTargetDay);
+  const nextMilestoneDay = Math.ceil(Math.max(1, nextDailyReward.day) / 7) * 7;
+  const daysToNextMilestone = Math.max(0, nextMilestoneDay - dailyStreak);
+  const nextMilestoneReward = getStreakReward(nextMilestoneDay);
 
   const dailyRewardMeterModal = (
     <AnimatePresence>
       {dailyRewardMeterOpen && (
-        <motion.div
-          className="daily-reward-view-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => setDailyRewardMeterOpen(false)}
+        <Modal
+          title="Daily Streak"
+          closeLabel="Close daily streak"
+          cardClassName="bk-reward-card bk-daily-streak-modal"
+          closeOnBackdrop
+          onClose={() => setDailyRewardMeterOpen(false)}
         >
-          <motion.div
-            className="daily-reward-popup daily-reward-view-card"
-            initial={{ opacity: 0, scale: 0.84, y: 30 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 18 }}
-            transition={{ type: "spring", stiffness: 170, damping: 14 }}
-            onClick={(event) => event.stopPropagation()}
+          <section
+            className={`bk-daily-streak-hero ${
+              dailyPlayed ? "is-complete" : ""
+            } ${dailyStreak <= 0 ? "is-start" : ""}`}
+            aria-label={`Current streak ${dailyStreak} ${
+              dailyStreak === 1 ? "day" : "days"
+            }`}
           >
-            <div className="daily-reward-top">
-              <div className="daily-reward-fire"><BKIcon name="dailyStreak" size={48} /></div>
+            <motion.div
+              className="bk-daily-streak-flame"
+              aria-hidden="true"
+              initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.86, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <Flame size={36} />
+            </motion.div>
 
-              <div>
-                <div className="daily-reward-title">Daily Streak</div>
-                <div className="daily-reward-subtitle">
-                  {dailyStreak} day{dailyStreak === 1 ? "" : "s"} strong
-                </div>
-              </div>
+            <div className="bk-daily-streak-hero__copy">
+              <span className="bk-type-label">{dailyRewardHeroCopy.label}</span>
+              <strong className="bk-daily-streak-number">{dailyStreak}</strong>
+              <span className="bk-daily-streak-title">
+                {dailyStreak === 1 ? "Day Streak" : "Day Streak"}
+              </span>
+              <p>{dailyRewardHeroCopy.body}</p>
             </div>
+          </section>
 
-            <div className="daily-reward-earned">
-              <span>{dailyPlayed ? "Today completed" : "Today waiting"}</span>
+          <section className="bk-daily-streak-reward" aria-label="Today's reward">
+            <span className="bk-daily-streak-reward__icon" aria-hidden="true">
+              <Coins size={24} />
+            </span>
+            <div>
+              <span className="bk-type-label">Today's reward</span>
+              <strong>+{todaysDailyReward} coins</strong>
+            </div>
+            <span
+              className={`bk-daily-streak-status ${
+                dailyPlayed ? "is-claimed" : ""
+              }`}
+            >
+              {dailyPlayed && <CheckCircle2 size={15} aria-hidden="true" />}
+              {dailyPlayed ? "Claimed" : "Play to earn"}
+            </span>
+          </section>
+
+          <section className="bk-daily-streak-road" aria-label="Seven day streak rewards">
+            {dailyRewardRoadDays.map((day) => {
+              const reached = dailyStreak >= day.day;
+              const currentDay = dailyRewardTargetDay === day.day;
+
+              return (
+                <DailyRewardSlot
+                  key={day.day}
+                  day={day}
+                  reached={reached}
+                  currentDay={currentDay}
+                />
+              );
+            })}
+          </section>
+
+          <div className="bk-daily-streak-next">
+            <div>
+              <span className="bk-type-label">Next reward</span>
               <strong>
-                <BKIcon name={dailyPlayed ? "dailyStreak" : "dailyChallenge"} size={22} />
-                {dailyPlayed ? "Reward locked in" : "Play Daily Challenge"}
+                Day {nextDailyReward.day} • +{nextDailyReward.reward} coins
               </strong>
             </div>
-
-            <div className="daily-reward-road">
-              <div
-                className="daily-reward-road-fill"
-                style={{
-                  width: `${
-                    ((Math.min(7, ((dailyRewardTargetDay - 1) % 7) + 1) - 1) /
-                      6) *
-                    86
-                  }%`,
-                }}
-              />
-              {dailyRewardRoadDays.map((day) => {
-                const reached = dailyStreak >= day.day;
-                const currentDay = dailyRewardTargetDay === day.day;
-
-                return (
-                  <motion.div
-                    key={day.day}
-                    className={`daily-reward-day ${reached ? "reached" : ""} ${
-                      currentDay ? "current" : ""
-                    }`}
-                    initial={{ opacity: 0, y: 12, scale: 0.96 }}
-                    animate={{ opacity: 1, y: 0, scale: currentDay ? 1.06 : 1 }}
-                    transition={{ delay: day.dayInRoad * 0.035, duration: 0.22 }}
-                  >
-                    <div className="daily-reward-ball">
-                      <BKIcon
-                        name={reached ? "dailyStreak" : currentDay ? "dailyChallenge" : "singlePlayer"}
-                        size={26}
-                      />
-                    </div>
-
-                    <div className="daily-reward-day-label">
-                      Day {day.day}
-                    </div>
-
-                    <div className="daily-reward-day-coins">
-                      +{day.reward}
-                    </div>
-                  </motion.div>
-                );
-              })}
+            <div>
+              <span className="bk-type-label">Next milestone</span>
+              <strong>
+                Day {nextMilestoneDay} • {daysToNextMilestone}{" "}
+                {daysToNextMilestone === 1 ? "day" : "days"} to go • +
+                {nextMilestoneReward}
+              </strong>
             </div>
+          </div>
 
-            <div className="daily-reward-next">
-              Next reward: Day {nextDailyReward.day} • +{nextDailyReward.reward} coins
-            </div>
-
-            <button
-              className="daily-reward-claim"
+            <Button
               onClick={() => {
                 playClickSound();
                 setDailyRewardMeterOpen(false);
               }}
+              fullWidth
+              variant="secondary"
             >
-              CLOSE
-            </button>
-          </motion.div>
-        </motion.div>
+              Close
+            </Button>
+        </Modal>
       )}
     </AnimatePresence>
   );
@@ -7315,109 +7797,73 @@ const startConnectionsGame = (difficulty = null) => {
   const levelProgressModal = (
     <AnimatePresence>
       {levelModalOpen && (
-        <motion.div
-          className="level-progress-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <Modal
+          title="Level Progress"
+          closeLabel="Close level progress"
+          cardClassName="bk-reward-card"
+          onClose={() => {
+            playClickSound();
+            setLevelModalOpen(false);
+          }}
         >
-          <motion.div
-            className={`level-progress-card level-${playerLevel.color}`}
-            initial={{ opacity: 0, scale: 0.86, y: 34 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 18 }}
-            transition={{ type: "spring", stiffness: 180, damping: 16 }}
-          >
-            <button
-              className="level-progress-close"
-              onClick={() => {
-                playClickSound();
-                setLevelModalOpen(false);
-              }}
-              aria-label="Close level progress"
-            >
-              <X size={22} />
-            </button>
-
-            <div className="level-progress-hero">
-              <div className="level-progress-icon">
-                <LevelIcon levelId={playerLevel.id} size={64} />
-              </div>
-              <div>
-                <div className="level-progress-label">
-                  Level {playerLevel.levelNumber}
-                </div>
-                <h2>{playerLevel.name}</h2>
-                <p>{xpTotal.toLocaleString()} XP earned</p>
-              </div>
+          <div className="bk-progression-hero">
+            <div className="bk-progression-icon">
+              <LevelIcon levelId={playerLevel.id} size={56} />
             </div>
+            <div className="bk-progression-copy">
+              <p className="bk-type-label">Level {playerLevel.levelNumber}</p>
+              <h3>{playerLevel.name}</h3>
+              <p>{xpTotal.toLocaleString()} XP earned</p>
+            </div>
+          </div>
 
-            <div className="level-progress-track">
+          <ProgressBar
+            label="Objective progress"
+            value={progressionView.objectiveProgress}
+            valueLabel={playerLevel.next ? levelObjectiveSummary : "Legend status"}
+          />
+
+          <AuthNotice tone={playerLevel.next ? "info" : "success"}>
+            {playerLevel.next
+              ? `Next: ${playerLevel.next.name}`
+              : "Legend status reached. You are at the top of Ball Knowledge."}
+          </AuthNotice>
+
+          <div className="bk-objective-list">
+            {progressionView.objectives.map((objective) => (
               <div
-                className="level-progress-fill"
-                style={{ width: `${progressionView.objectiveProgress}%` }}
-              />
-            </div>
-
-            <div className="level-progress-next">
-              {playerLevel.next ? (
-                <>
-                  <strong>{levelObjectiveSummary} ready</strong>
-                  <span>
-                    Next: {playerLevel.next.name}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <strong>Legend status reached</strong>
-                  <span>You are at the top of Ball Knowledge.</span>
-                </>
-              )}
-            </div>
-
-            <div className="level-objective-list">
-              {progressionView.objectives.map((objective) => (
-                <div
-                  className={`level-objective-item ${
-                    objective.complete ? "complete" : ""
-                  }`}
-                  key={`${objective.type}-${objective.statKey}`}
-                >
-                  <div className="level-objective-status">
-                    {objective.complete ? "✓" : "•"}
-                  </div>
-
-                  <div className="level-objective-body">
-                    <div className="level-objective-top">
-                      <strong>{objective.label}</strong>
-                      <span>
-                        {Math.min(objective.current, objective.required).toLocaleString()} /{" "}
-                        {objective.required.toLocaleString()}
-                      </span>
-                    </div>
-
-                    <div className="level-objective-track">
-                      <div
-                        className="level-objective-fill"
-                        style={{ width: `${objective.progress}%` }}
-                      />
-                    </div>
-                  </div>
+                className={`bk-objective-row ${objective.complete ? "is-complete" : ""}`}
+                key={`${objective.type}-${objective.statKey}`}
+              >
+                <div className="bk-objective-top">
+                  <strong>{objective.label}</strong>
+                  <small>
+                    {Math.min(objective.current, objective.required).toLocaleString()} /{" "}
+                    {objective.required.toLocaleString()}
+                  </small>
                 </div>
-              ))}
-            </div>
+                <ProgressBar
+                  label={objective.label}
+                  value={objective.progress}
+                  valueLabel={objective.complete ? "Completed" : "In progress"}
+                />
+                <span className="bk-objective-status">
+                  {objective.complete ? "Completed objective" : "Still needed"}
+                </span>
+              </div>
+            ))}
+          </div>
 
-            <button
-              className="level-progress-action"
-              onClick={() => {
-                playClickSound();
-                setLevelModalOpen(false);
-              }}
-            >
-              KEEP CLIMBING
-            </button>
-          </motion.div>
-        </motion.div>
+          <Button
+            onClick={() => {
+              playClickSound();
+              setLevelModalOpen(false);
+            }}
+            fullWidth
+          >
+            Keep Climbing
+          </Button>
+        </Modal>
       )}
     </AnimatePresence>
   );
@@ -7427,51 +7873,38 @@ const startConnectionsGame = (difficulty = null) => {
       {postGameStep === "xp" &&
         !gameStarted &&
         ["general", "world-cup", "career"].includes(gameMode) && (
-        <motion.div
-          className="level-progress-overlay post-game-progress-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <Modal
+          title="Run Progress"
+          variant="reward"
+          showClose={false}
+          cardClassName="bk-reward-card"
+          onClose={() => {}}
         >
-          <motion.div
-            className={`level-progress-card post-game-progress-card level-${playerLevel.color}`}
-            initial={{ opacity: 0, scale: 0.9, y: 28 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 18 }}
-            transition={{ duration: 0.22 }}
-          >
-            <div className="objective-progress-kicker">Run Progress</div>
-            <div className="level-progress-hero">
-              <div className="level-progress-icon">
-                <LevelIcon levelId={playerLevel.id} size={64} />
-              </div>
-              <div>
-                <div className="level-progress-label">
-                  {getModeLabel(gameMode)} • Level {playerLevel.levelNumber}
-                </div>
-                <h2>{playerLevel.name}</h2>
-                <p>+{generalRunXpTotal} XP this run</p>
-              </div>
+          <div className="bk-progression-hero">
+            <div className="bk-progression-icon">
+              <LevelIcon levelId={playerLevel.id} size={56} />
             </div>
+            <div className="bk-progression-copy">
+              <p className="bk-type-label">
+                {getModeLabel(gameMode)} • Level {playerLevel.levelNumber}
+              </p>
+              <h3>{playerLevel.name}</h3>
+              <p>+{generalRunXpTotal} XP this run</p>
+            </div>
+          </div>
 
-            <div className="level-progress-track">
-              <div
-                className="level-progress-fill"
-                style={{ width: `${xpProgressPercent}%` }}
-              />
-            </div>
-            <div className="level-progress-next">
-              <strong>{xpProgressLabel}</strong>
-              <span>
-                {playerLevel.next
-                  ? `Next: ${playerLevel.next.name}`
-                  : "Legend status reached"}
-              </span>
-            </div>
+          <ProgressBar
+            label="XP progress"
+            value={xpProgressPercent}
+            valueLabel={xpProgressLabel}
+          />
+          <AuthNotice tone={playerLevel.next ? "info" : "success"}>
+            {playerLevel.next ? `Next: ${playerLevel.next.name}` : "Legend status reached"}
+          </AuthNotice>
 
-            <div className="general-run-xp-summary post-game">
+            <div className="bk-reward-card">
               {score > runStartHighScore && (
-                <div className="general-run-highscore">
+                <div className="bk-reward-row">
                   <strong>New Highscore!</strong>
                   <span>
                     +{generalRunXpSummary.highscore || getGeneralHighscoreXpBonus(score)} XP
@@ -7479,66 +7912,66 @@ const startConnectionsGame = (difficulty = null) => {
                 </div>
               )}
 
-              <div className="general-run-xp-line">
+              <div className="bk-reward-row">
                 <span>Correct answers</span>
                 <strong>+{generalRunXpSummary.correct} XP</strong>
               </div>
 
               {generalRunXpSummary.streak > 0 && (
-                <div className="general-run-xp-line">
+                <div className="bk-reward-row">
                   <span>Combo bonuses</span>
                   <strong>+{generalRunXpSummary.streak} XP</strong>
                 </div>
               )}
 
               {generalRunXpSummary.highscore > 0 && (
-                <div className="general-run-xp-line">
+                <div className="bk-reward-row">
                   <span>Highscore bonus</span>
                   <strong>+{generalRunXpSummary.highscore} XP</strong>
                 </div>
               )}
 
-              <div className="general-run-xp-total">
+              <div className="bk-reward-row">
                 <span>Total XP</span>
                 <strong>+{generalRunXpTotal} XP</strong>
               </div>
             </div>
 
             {Array.isArray(objectiveProgressUpdate?.updates) && (
-              <div className="objective-progress-list inline">
+              <div className="bk-objective-list">
                 {objectiveProgressUpdate.updates.map((objective) => (
                   <div
-                    className={`objective-progress-row ${
-                      objective.complete ? "complete" : ""
-                    }`}
+                    className={`bk-objective-row ${objective.complete ? "is-complete" : ""}`}
                     key={objective.statKey}
                   >
-                    <div className="objective-progress-row-top">
+                    <div className="bk-objective-top">
                       <strong>{objective.label}</strong>
-                      <span>
+                      <small>
                         {objective.before.toLocaleString()} →{" "}
                         {objective.after.toLocaleString()} /{" "}
                         {objective.required.toLocaleString()}
-                      </span>
+                      </small>
                     </div>
-                    <div className="objective-progress-bar">
-                      <motion.div
-                        className="objective-progress-fill"
-                        initial={{ width: `${objective.beforeProgress}%` }}
-                        animate={{ width: `${objective.afterProgress}%` }}
-                        transition={{ duration: 0.55, ease: "easeOut" }}
-                      />
-                    </div>
+                    <ProgressBar
+                      label={objective.label}
+                      value={objective.afterProgress}
+                      valueLabel={`${Math.round(objective.afterProgress)}%`}
+                    />
                   </div>
                 ))}
               </div>
             )}
 
-            <button className="level-progress-action" onClick={closePostGameProgress}>
-              COLLECT & CONTINUE
-            </button>
-          </motion.div>
-        </motion.div>
+            <Button
+              onClick={() => {
+                playClickSound();
+                exitToHomeSafely("post-game-collect");
+              }}
+              fullWidth
+            >
+              Collect & Continue
+            </Button>
+        </Modal>
       )}
     </AnimatePresence>
   );
@@ -7546,35 +7979,28 @@ const startConnectionsGame = (difficulty = null) => {
   const connectionsRewardOverlay = (
     <AnimatePresence>
       {connectionsRewardModal && (
-        <motion.div
-          className="level-progress-overlay connections-reward-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <Modal
+          title="Victory"
+          variant="reward"
+          showClose={false}
+          cardClassName="bk-reward-card"
+          onClose={() => closeConnectionsReward()}
         >
-          <motion.div
-            className={`level-progress-card connections-reward-card level-${playerLevel.color}`}
-            initial={{ opacity: 0, scale: 0.9, y: 28 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 18 }}
-            transition={{ duration: 0.22 }}
-          >
-            <div className="objective-progress-kicker">Victory</div>
-            <div className="level-progress-hero">
-              <div className="level-progress-icon"><BKIcon name="connections" size={56} /></div>
-              <div>
-                <div className="level-progress-label">
-                  {connectionsRewardModal.mode}
-                </div>
-                <h2>{connectionsRewardModal.title}</h2>
-                <p>
-                  {connectionsRewardModal.groupsSolved}/4 groups solved
-                  {connectionsRewardModal.perfect ? " • Perfect run" : ""}
-                </p>
-              </div>
+          <div className="bk-progression-hero">
+            <div className="bk-progression-icon">
+              <BKIcon name="connections" size={48} />
             </div>
+            <div className="bk-progression-copy">
+              <p className="bk-type-label">{connectionsRewardModal.mode}</p>
+              <h3>{connectionsRewardModal.title}</h3>
+              <p>
+                {connectionsRewardModal.groupsSolved}/4 groups solved
+                {connectionsRewardModal.perfect ? " • Perfect run" : ""}
+              </p>
+            </div>
+          </div>
 
-            <div className="reward-summary-grid">
+            <div className="bk-reward-summary">
               <div>
                 <span>Coins</span>
                 <strong><BKIcon name="coins" size={22} /> +{connectionsRewardModal.coins}</strong>
@@ -7585,37 +8011,29 @@ const startConnectionsGame = (difficulty = null) => {
               </div>
             </div>
 
-            <div className="level-progress-track">
-              <div
-                className="level-progress-fill"
-                style={{ width: `${xpProgressPercent}%` }}
-              />
-            </div>
-            <div className="level-progress-next">
-              <strong>{xpProgressLabel}</strong>
-              <span>
-                {playerLevel.next
-                  ? `Next: ${playerLevel.next.name}`
-                  : "Legend status reached"}
-              </span>
-            </div>
+            <ProgressBar
+              label="XP progress"
+              value={xpProgressPercent}
+              valueLabel={xpProgressLabel}
+            />
+            <AuthNotice tone={playerLevel.next ? "info" : "success"}>
+              {playerLevel.next ? `Next: ${playerLevel.next.name}` : "Legend status reached"}
+            </AuthNotice>
 
-            <div className="reward-modal-actions">
-              <button
-                className="level-progress-action secondary"
+            <div className="bk-reward-actions">
+              <Button
+                variant="secondary"
                 onClick={() => closeConnectionsReward()}
               >
-                COLLECT
-              </button>
-              <button
-                className="level-progress-action"
+                Collect
+              </Button>
+              <Button
                 onClick={() => closeConnectionsReward({ playAgain: true })}
               >
-                PLAY AGAIN
-              </button>
+                Play Again
+              </Button>
             </div>
-          </motion.div>
-        </motion.div>
+        </Modal>
       )}
     </AnimatePresence>
   );
@@ -7623,38 +8041,17 @@ const startConnectionsGame = (difficulty = null) => {
   const avatarPickerModal = (
     <AnimatePresence>
       {avatarPickerOpen && (
-        <motion.div
-          className="avatar-picker-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <Modal
+          title="Avatar Builder"
+          closeLabel="Close avatar picker"
+          cardClassName="bk-avatar-builder"
+          onClose={() => {
+            playClickSound();
+            setAvatarPickerOpen(false);
+          }}
         >
-          <motion.div
-            className="avatar-picker-card"
-            initial={{ opacity: 0, scale: 0.86, y: 28 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 18 }}
-            transition={{ type: "spring", stiffness: 180, damping: 16 }}
-          >
-            <div className="avatar-picker-top">
-              <div>
-                <strong>Avatar Builder</strong>
-                <span>Build your match identity</span>
-              </div>
-
-              <button
-                onClick={() => {
-                  playClickSound();
-                  setAvatarPickerOpen(false);
-                }}
-                aria-label="Close avatar picker"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="avatar-builder-scroll">
-              <div className="avatar-builder-preview">
+            <div className="bk-avatar-builder__scroll">
+              <SurfaceCard className="bk-avatar-builder__preview">
                 <PlayerAvatar
                   profile={{
                     avatar_icon: avatarBuilderPreview.icon,
@@ -7666,39 +8063,46 @@ const startConnectionsGame = (difficulty = null) => {
                   }}
                   size="large"
                 />
-                <div>
+              <div>
+                  <span className="bk-type-label">Match identity</span>
                   <strong>{displayName || "Player"}</strong>
-                  <span>
+                  <small>
                     {avatarBuilderPreview.flag} {avatarBuilderPreview.country} •{" "}
                     {avatarBuilderPreview.style} • {avatarBuilderPreview.color}
-                  </span>
-                </div>
+                  </small>
               </div>
+              </SurfaceCard>
 
-              <div className="avatar-builder-section">
-                <strong>Icon</strong>
-                <div className="avatar-picker-grid">
+              <section className="bk-avatar-builder__section">
+                <h3 className="bk-type-section-title">Icon</h3>
+                <div className="bk-avatar-choice-grid bk-avatar-choice-grid--icons">
                   {AVATAR_ICON_OPTIONS.map((emoji) => (
                     <button
                       key={emoji}
-                      className={emoji === avatarBuilderPreview.icon ? "selected" : ""}
+                      type="button"
+                      className={`bk-avatar-choice ${
+                        emoji === avatarBuilderPreview.icon ? "is-selected" : ""
+                      }`}
+                      aria-pressed={emoji === avatarBuilderPreview.icon}
                       onClick={() => updateAvatarDraft({ icon: emoji })}
                     >
                       {emoji}
                     </button>
                   ))}
                 </div>
-              </div>
+              </section>
 
-              <div className="avatar-builder-section">
-                <strong>Favorite Nation</strong>
-                <div className="avatar-flag-grid">
+              <section className="bk-avatar-builder__section">
+                <h3 className="bk-type-section-title">Favorite Nation</h3>
+                <div className="bk-avatar-choice-grid bk-avatar-choice-grid--flags">
                   {FAVORITE_NATION_OPTIONS.map((nation) => (
                     <button
                       key={nation.country}
-                      className={`avatar-flag-option ${
-                        nation.country === avatarBuilderPreview.country ? "selected" : ""
+                      type="button"
+                      className={`bk-avatar-choice bk-avatar-choice--flag ${
+                        nation.country === avatarBuilderPreview.country ? "is-selected" : ""
                       }`}
+                      aria-pressed={nation.country === avatarBuilderPreview.country}
                       onClick={() =>
                         updateAvatarDraft({
                           country: nation.country,
@@ -7713,83 +8117,89 @@ const startConnectionsGame = (difficulty = null) => {
                     </button>
                   ))}
                 </div>
-              </div>
+              </section>
 
-              <div className="avatar-builder-section">
-                <strong>Color</strong>
-                <div className="avatar-token-grid color-grid">
+              <section className="bk-avatar-builder__section">
+                <h3 className="bk-type-section-title">Color</h3>
+                <div className="bk-avatar-choice-grid bk-avatar-choice-grid--tokens">
                   {AVATAR_COLOR_OPTIONS.map((color) => (
                     <button
                       key={color.value}
-                      className={`avatar-token avatar-color-${color.value} ${
-                        color.value === avatarBuilderPreview.color ? "selected" : ""
+                      type="button"
+                      className={`bk-avatar-choice bk-avatar-choice--token bk-avatar-choice--${color.value} ${
+                        color.value === avatarBuilderPreview.color ? "is-selected" : ""
                       }`}
+                      aria-pressed={color.value === avatarBuilderPreview.color}
                       onClick={() => updateAvatarDraft({ color: color.value })}
                     >
                       {color.label}
                     </button>
                   ))}
                 </div>
-              </div>
+              </section>
 
-              <div className="avatar-builder-section">
-                <strong>Background</strong>
-                <div className="avatar-token-grid">
+              <section className="bk-avatar-builder__section">
+                <h3 className="bk-type-section-title">Background</h3>
+                <div className="bk-avatar-choice-grid bk-avatar-choice-grid--tokens">
                   {AVATAR_BG_OPTIONS.map((bg) => (
                     <button
                       key={bg.value}
-                      className={`avatar-token ${
-                        bg.value === avatarBuilderPreview.bg ? "selected" : ""
+                      type="button"
+                      className={`bk-avatar-choice bk-avatar-choice--token ${
+                        bg.value === avatarBuilderPreview.bg ? "is-selected" : ""
                       }`}
+                      aria-pressed={bg.value === avatarBuilderPreview.bg}
                       onClick={() => updateAvatarDraft({ bg: bg.value })}
                     >
                       {bg.label}
                     </button>
                   ))}
                 </div>
-              </div>
+              </section>
 
-              <div className="avatar-builder-section">
-                <strong>Style</strong>
-                <div className="avatar-token-grid">
+              <section className="bk-avatar-builder__section">
+                <h3 className="bk-type-section-title">Style</h3>
+                <div className="bk-avatar-choice-grid bk-avatar-choice-grid--tokens">
                   {AVATAR_STYLE_OPTIONS.map((style) => (
                     <button
                       key={style.value}
-                      className={`avatar-token ${
-                        style.value === avatarBuilderPreview.style ? "selected" : ""
+                      type="button"
+                      className={`bk-avatar-choice bk-avatar-choice--token ${
+                        style.value === avatarBuilderPreview.style ? "is-selected" : ""
                       }`}
+                      aria-pressed={style.value === avatarBuilderPreview.style}
                       onClick={() => updateAvatarDraft({ style: style.value })}
                     >
                       {style.label}
                     </button>
                   ))}
                 </div>
-              </div>
+              </section>
 
-              {avatarNotice && <div className="avatar-builder-notice">{avatarNotice}</div>}
+              {avatarNotice && (
+                <AuthNotice tone="error">{avatarNotice}</AuthNotice>
+              )}
             </div>
 
-            <div className="avatar-builder-actions">
-              <button
+            <div className="bk-screen-actions">
+              <Button
                 type="button"
-                className="avatar-builder-cancel"
+                variant="secondary"
                 onClick={() => {
                   playClickSound();
                   setAvatarPickerOpen(false);
                 }}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className="avatar-builder-save"
                 onClick={saveAvatarBuilder}
               >
                 Save Avatar
-              </button>
+              </Button>
             </div>
-          </motion.div>
-        </motion.div>
+        </Modal>
       )}
     </AnimatePresence>
   );
@@ -7817,6 +8227,33 @@ const startConnectionsGame = (difficulty = null) => {
   }, [lastDailyActivityAt, effectiveAuthUserId]);
 
   useEffect(() => {
+    if (!connectionsDifficultyPickerOpen) return undefined;
+    if (Object.keys(connectionPuzzleCounts).length > 0) return undefined;
+
+    let cancelled = false;
+    loadConnectionsPuzzles()
+      .then((puzzles) => {
+        if (cancelled) return;
+        setConnectionPuzzleCounts(
+          puzzles.reduce((counts, puzzle) => {
+            const difficulty = puzzle?.difficulty || "Easy";
+            counts[difficulty] = (counts[difficulty] || 0) + 1;
+            return counts;
+          }, {})
+        );
+      })
+      .catch((error) => {
+        if (import.meta.env?.DEV) {
+          console.warn("Could not load Connections puzzle counts", error);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [connectionsDifficultyPickerOpen, connectionPuzzleCounts]);
+
+  useEffect(() => {
     if (!isSupabaseConfigured || !supabase?.auth) {
       setAuthLoading(false);
       return;
@@ -7840,8 +8277,17 @@ const startConnectionsGame = (difficulty = null) => {
         setAuthUser(user);
 
         if (user) {
-          prepareAuthenticatedIdentity(user);
-          await ensureProfileForAuthUser(user);
+          if (isAnonymousAuthUser(user)) {
+            const metadata = user.user_metadata || {};
+            const guestName =
+              metadata.username || metadata.display_name || getGuestDisplayName();
+            activateLocalGuestIdentity(guestName);
+            setProfileStatus("syncing");
+            await ensureProfileForAuthUser(user, guestName);
+          } else {
+            prepareAuthenticatedIdentity(user);
+            await ensureProfileForAuthUser(user);
+          }
         }
       })
       .catch((error) => {
@@ -7852,7 +8298,9 @@ const startConnectionsGame = (difficulty = null) => {
         setGuestMode(false);
       })
       .finally(() => {
-        if (mounted) setAuthLoading(false);
+        if (mounted) {
+          setAuthLoading(false);
+        }
       });
 
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -7862,9 +8310,19 @@ const startConnectionsGame = (difficulty = null) => {
       setAuthUser(user);
 
       if (user) {
-        prepareAuthenticatedIdentity(user);
+        const metadata = user.user_metadata || {};
+        const guestName =
+          metadata.username || metadata.display_name || getGuestDisplayName();
+
+        if (isAnonymousAuthUser(user)) {
+          activateLocalGuestIdentity(guestName);
+          setProfileStatus("syncing");
+        } else {
+          prepareAuthenticatedIdentity(user);
+        }
+
         window.setTimeout(() => {
-          ensureProfileForAuthUser(user);
+          ensureProfileForAuthUser(user, isAnonymousAuthUser(user) ? guestName : "");
         }, 0);
       }
     });
@@ -7876,7 +8334,19 @@ const startConnectionsGame = (difficulty = null) => {
   }, []);
 
   useEffect(() => {
-    if (!username || username === "Loading profile..." || (!effectiveAuthUser && !guestMode)) return;
+    if (authLoading) return undefined;
+
+    const elapsed = Date.now() - startupStartedAtRef.current;
+    const releaseDelay = Math.max(0, STARTUP_MIN_DISPLAY_MS - elapsed);
+    const releaseTimer = window.setTimeout(() => {
+      setStartupReleased(true);
+    }, releaseDelay);
+
+    return () => window.clearTimeout(releaseTimer);
+  }, [authLoading]);
+
+  useEffect(() => {
+    if (!username || username === "Loading profile..." || !effectiveAuthUser) return;
 
     ensureOnlineProfile(username);
   }, [username, playerId, effectiveAuthUserId, guestMode]);
@@ -7929,7 +8399,7 @@ const startConnectionsGame = (difficulty = null) => {
     if (
       !username ||
       username === "Loading profile..." ||
-      (!effectiveAuthUser && !guestMode) ||
+      !effectiveAuthUser ||
       profileStatus !== "ready" ||
       !isSupabaseConfigured ||
       !supabase
@@ -7966,10 +8436,9 @@ const startConnectionsGame = (difficulty = null) => {
 
   useEffect(() => {
     if (
-      !profileOpen ||
       !username ||
       username === "Loading profile..." ||
-      (!effectiveAuthUser && !guestMode) ||
+      !effectiveAuthUser ||
       !isSupabaseConfigured ||
       !supabase
     ) {
@@ -7977,7 +8446,7 @@ const startConnectionsGame = (difficulty = null) => {
     }
 
     fetchActiveGames({ silent: true });
-  }, [profileOpen, username, playerId, effectiveAuthUserId, guestMode]);
+  }, [username, playerId, effectiveAuthUserId, guestMode]);
 
   useEffect(() => {
     if (!leaderboardOpen) return;
@@ -8044,11 +8513,6 @@ const startConnectionsGame = (difficulty = null) => {
     }
   };
 
-  const closePostGameProgress = () => {
-    playClickSound();
-    exitToHomeSafely("post-game-collect");
-  };
-
   const closeConnectionsReward = ({ playAgain = false } = {}) => {
     playClickSound();
     setConnectionsRewardModal(null);
@@ -8082,8 +8546,7 @@ const startConnectionsGame = (difficulty = null) => {
       scoreSource,
       leagueSettings,
       leagueTop10MaxPoints,
-      leagueWhoAmIMaxPoints,
-      leagueFindPlayerMaxPoints
+      leagueWhoAmIMaxPoints
     );
 
     return {
@@ -8103,75 +8566,88 @@ const startConnectionsGame = (difficulty = null) => {
       scoreItems,
       isCurrentUser,
       isLeader: index === 0 && (Number(member.total_points) || 0) > 0,
+      profile: getSocialProfile(member.player_id, member.username),
     };
   });
 
+  const authErrorId = authError ? "auth-form-error" : undefined;
+  const authNoticeId = authNotice ? "auth-form-notice" : undefined;
+  const authCardTitle =
+    authMode === "signup" ? "Create your account" : "Welcome back";
+  const authCardSubtitle =
+    authMode === "signup"
+      ? "Save your progress, protect your username, and keep your Ball Knowledge profile synced."
+      : "Log in to continue with your saved profile and progress.";
+
   const authCard = (
-    <motion.div
-      className="auth-card"
+    <SurfaceCard
+      as={motion.div}
+      className="bk-auth-card"
       initial={{ opacity: 0, scale: 0.9, y: 24 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.94, y: 16 }}
       transition={{ type: "spring", stiffness: 160, damping: 16 }}
     >
-      <div className="auth-orb"><BKIcon name="profile" size={46} /></div>
-      <div className="auth-kicker">Ball Knowledge Club</div>
-      <h1>Create your club identity</h1>
-      <p>
-        Lock your username, save progress, and compete without impersonation.
-      </p>
+      <ScreenHeader
+        kicker="Ball Knowledge"
+        title={authCardTitle}
+        subtitle={authCardSubtitle}
+        className="bk-auth-header"
+      />
 
-      <div className="auth-tabs">
-        <button
-          type="button"
-          className={authMode === "signup" ? "active" : ""}
-          onClick={() => {
-            setAuthMode("signup");
-            resetAuthFormFeedback();
-          }}
-        >
-          Sign Up
-        </button>
-        <button
-          type="button"
-          className={authMode === "login" ? "active" : ""}
-          onClick={() => {
-            setAuthMode("login");
-            resetAuthFormFeedback();
-          }}
-        >
-          Login
-        </button>
-      </div>
+      <SegmentedControl
+        ariaLabel="Choose authentication mode"
+        value={authMode}
+        options={[
+          { value: "signup", label: "Sign Up" },
+          { value: "login", label: "Login" },
+        ]}
+        onChange={(nextMode) => {
+          setAuthMode(nextMode);
+          resetAuthFormFeedback();
+        }}
+      />
 
-      <form className="auth-form" onSubmit={submitAuthForm}>
+      <form
+        className="bk-auth-form"
+        onSubmit={submitAuthForm}
+        aria-describedby={[authErrorId, authNoticeId].filter(Boolean).join(" ") || undefined}
+      >
         {authMode === "signup" && (
-          <label>
-            Username
+          <FormField
+            id="auth-username"
+            label="Username"
+            hint="3-18 characters. Letters, numbers, dots, dashes or underscores."
+          >
             <input
+              id="auth-username"
               value={authUsername}
               onChange={(event) => setAuthUsername(event.target.value)}
               placeholder="fabian"
               autoComplete="username"
               maxLength={18}
             />
-          </label>
+          </FormField>
         )}
 
-        <label>
-          Email
+        <FormField id="auth-email" label="Email">
           <input
+            id="auth-email"
             value={authEmail}
             onChange={(event) => setAuthEmail(event.target.value)}
             placeholder="you@example.com"
             type="email"
             autoComplete="email"
           />
-        </label>
+        </FormField>
 
-        <label>
-          Password
+        <FormField
+          id="auth-password"
+          label="Password"
+          hint={authMode === "signup" ? "Use at least 6 characters." : ""}
+        >
           <input
+            id="auth-password"
             value={authPassword}
             onChange={(event) => setAuthPassword(event.target.value)}
             placeholder="••••••••"
@@ -8179,129 +8655,127 @@ const startConnectionsGame = (difficulty = null) => {
             autoComplete={authMode === "signup" ? "new-password" : "current-password"}
             minLength={6}
           />
-        </label>
+        </FormField>
 
-        {authError && <div className="auth-message error">{authError}</div>}
-        {authNotice && <div className="auth-message notice">{authNotice}</div>}
+        <AuthNotice id={authErrorId} tone="error">
+          {authError}
+        </AuthNotice>
+        <AuthNotice id={authNoticeId} tone="success">
+          {authNotice}
+        </AuthNotice>
 
-        <button className="auth-submit" type="submit" disabled={authSubmitting}>
+        <Button type="submit" disabled={authSubmitting} fullWidth>
           {authSubmitting
             ? "Working..."
             : authMode === "signup"
             ? "Create Account"
             : "Login"}
-        </button>
+        </Button>
       </form>
 
-      <button className="auth-guest-button" type="button" onClick={continueAsGuest}>
-        Continue as Guest
-      </button>
-    </motion.div>
+      <Button
+        variant="secondary"
+        type="button"
+        onClick={continueAsGuest}
+        disabled={authSubmitting}
+        fullWidth
+      >
+        Play as Guest
+      </Button>
+      <p className="bk-auth-guest-note">
+        Guest play can join online H2H without email. Create an account when you want protected cross-device sync.
+      </p>
+    </SurfaceCard>
   );
 
   const authPromptModal = (
     <AnimatePresence>
       {authPrompt && (
-        <motion.div
-          className="auth-prompt-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <Modal
+          title="Account"
+          cardClassName="bk-auth-prompt-card"
+          onClose={() => setAuthPrompt(null)}
         >
-          <button
-            className="auth-prompt-close"
-            type="button"
-            onClick={() => setAuthPrompt(null)}
-            aria-label="Close auth prompt"
-          >
-            <X size={18} />
-          </button>
-          <div className="auth-prompt-copy">
+          <AuthNotice tone="warning" className="bk-auth-prompt-copy">
             <strong>{authPrompt}</strong>
-          </div>
+          </AuthNotice>
           {authCard}
-        </motion.div>
+        </Modal>
       )}
     </AnimatePresence>
   );
 
-  if (authLoading) {
-    return (
-      <div
-        className="fullscreen-bg auth-screen"
-        style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.06), rgba(0,0,0,0.52)), url(${stadiumBg})`,
-        }}
-      >
-        <div className="auth-loading-card">Loading club identity...</div>
-      </div>
-    );
+  if (authLoading || !startupReleased) {
+    return <StartupExperience isWorking={authLoading} />;
   }
 
   if (!effectiveAuthUser && !guestMode) {
     return (
-      <div
-        className="fullscreen-bg auth-screen"
-        style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.06), rgba(0,0,0,0.52)), url(${stadiumBg})`,
-        }}
+      <AppScreen
+        centered
+        className="bk-auth-screen"
+        backgroundImage={stadiumBg}
       >
         {authCard}
-      </div>
+      </AppScreen>
     );
   }
 
   if (!username) {
     return (
-      <div
-        className="fullscreen-bg daily-list-bg"
-        style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.08), rgba(0,0,0,0.48)), url(${stadiumBg})`,
-        }}
+      <AppScreen
+        centered
+        className="bk-auth-screen"
+        backgroundImage={stadiumBg}
       >
-        <div className="name-screen">
-          <motion.div
-            className="name-card"
+        <SurfaceCard
+            as={motion.div}
+            className="bk-auth-card bk-account-setup-card"
             initial={{ opacity: 0, scale: 0.88, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 160, damping: 13 }}
           >
-            <div className="name-ball"><BKIcon name="profile" size={58} /></div>
+            <ScreenHeader
+              kicker="Account Setup"
+              title="Choose your player name"
+              subtitle="This name appears on your profile and future leaderboards."
+              className="bk-auth-header"
+            />
 
-            <h1 className="name-title">Choose your player name</h1>
-
-            <p className="name-subtitle">
-              Your name will show on your profile and future leaderboards.
-            </p>
-
+            <FormField
+              id="player-name"
+              label="Player name"
+              hint="You can update your profile details later."
+            >
             <input
-              className="name-input"
+              id="player-name"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") saveUsername();
               }}
               placeholder="ball.knowledge"
+              autoComplete="nickname"
               maxLength={16}
               autoFocus
             />
+            </FormField>
 
-            <button className="name-save-button" onClick={saveUsername}>
-              START PLAYING
-            </button>
-          </motion.div>
-        </div>
-      </div>
+            <Button onClick={saveUsername} fullWidth>
+              Start Playing
+            </Button>
+          </SurfaceCard>
+      </AppScreen>
     );
   }
 
   if (leagueChallengeOpen && activeLeague && activeLeagueDay) {
     return (
-      <div
-        className="fullscreen-bg"
-        style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.05), rgba(0,0,0,0.58)), url(${stadiumBg})`,
-        }}
+      <AppScreen
+        backgroundImage={stadiumBg}
+        className="league-challenge-root"
+        contentClassName="league-challenge-root__content"
+        width="wide"
       >
         <GameTopNav
           className="multiplayer-round-back"
@@ -8311,172 +8785,151 @@ const startConnectionsGame = (difficulty = null) => {
 
         <AnimatePresence>
           {leagueLeaveConfirmOpen && (
-            <motion.div
-              className="league-leave-overlay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+            <Modal
+              title="Leave league challenge?"
+              variant="reward"
+              showClose={false}
+              cardClassName="bk-confirmation-modal bk-stack"
+              onClose={() => setLeagueLeaveConfirmOpen(false)}
             >
-              <motion.div
-                className="league-leave-modal"
-                initial={{ scale: 0.92, y: 18 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.96, y: 10 }}
-              >
-                <div className="league-kicker">League attempt locked</div>
-                <h2>Leave league challenge?</h2>
-                <p>
+                <StatusBadge tone="warning">League attempt locked</StatusBadge>
+                <p className="bk-type-body">
                   Your current score will be submitted and today's league challenge
                   will be locked. You cannot replay it.
                 </p>
-                <div className="league-leave-score">
-                  <span>Current score</span>
+                <div className="bk-reward-summary">
+                  <div>
+                    <span>Current score</span>
                   <strong>
                     {leagueQuizScore +
                       leagueTop10TotalWithCurrent +
-                      leagueWhoAmIScore +
-                      leagueFindPlayerScore}
+                      leagueWhoAmIScore}
                     /{leagueSettings.maxDailyPoints}
                   </strong>
+                  </div>
                 </div>
-                <div className="league-leave-actions">
-                  <button
+                <div className="bk-screen-actions">
+                  <Button
                     type="button"
+                    variant="secondary"
                     onClick={() => setLeagueLeaveConfirmOpen(false)}
                     disabled={leagueAttemptSubmitting}
                   >
                     Stay
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
-                    className="danger"
+                    variant="destructive"
                     onClick={submitAndCloseLeagueAttempt}
                     disabled={leagueAttemptSubmitting}
                   >
                     {leagueAttemptSubmitting
                       ? "Submitting..."
                       : "Submit current result"}
-                  </button>
+                  </Button>
                 </div>
-              </motion.div>
-            </motion.div>
+            </Modal>
           )}
         </AnimatePresence>
 
-        <ScreenTransition className="league-challenge-screen">
+        <ScreenTransition className="league-play-screen league-modern-screen">
           {leagueChallengePhase === "intro" && (
-            <div className="league-challenge-card">
-              <div className="league-kicker"><BKIcon name="league" size={22} /> Daily League</div>
+            <div className="league-play-card league-modern-card league-intro-card">
+              <LeagueContextHeader
+                leagueName={activeLeague.name}
+                dayLabel={leagueDayLabel}
+                modeLabel="Daily Challenge"
+                metaValue={`${leagueSettings.maxDailyPoints} pts`}
+              />
+              <div className="league-kicker"><BKIcon name="league" size={36} /> Daily League</div>
               <h1>{leagueDayLabel} Challenge</h1>
               <p>
                 Max {leagueSettings.maxDailyPoints} points: {leagueDailyStructureText}.
               </p>
-              <button onClick={startLeagueQuiz}>Start</button>
+              <Button onClick={startLeagueQuiz}>Start Challenge</Button>
             </div>
           )}
 
           {leagueChallengePhase === "quiz" && currentLeagueQuizQuestion && (
-            <div className="league-challenge-card league-quiz-card">
-              <div className="league-quiz-top">
-                <span>
-                  Question {leagueQuizIndex + 1}/{leagueSettings.quizCount}
-                </span>
-                <strong className={leagueTimeLeft <= 3 ? "danger" : ""}>
-                  {leagueTimeLeft}s
-                </strong>
-                <span>
-                  {leagueQuizScore}/{leagueSettings.quizCount}
-                </span>
+            <div className="league-play-card league-modern-card league-play-quiz-card gk-game">
+              <LeagueContextHeader
+                leagueName={activeLeague.name}
+                dayLabel={leagueDayLabel}
+                modeLabel="General Knowledge"
+                metaValue={`${leagueQuizScore}/${leagueSettings.quizCount}`}
+              />
+
+              <div className="league-gk-meta">
+                <span>Question {leagueQuizIndex + 1}/{leagueSettings.quizCount}</span>
+                <QuizTimer
+                  difficulty={currentLeagueQuizQuestion.difficulty}
+                  timeLeft={leagueTimeLeft}
+                />
               </div>
 
-              <h1 className="question-title quiz-question-card neonGlassCard league-question-card">
-                {currentLeagueQuizQuestion.question}
-              </h1>
+              <QuestionCard
+                question={currentLeagueQuizQuestion.question}
+                category={currentLeagueQuizQuestion.category || currentLeagueQuizQuestion.mode}
+              />
 
-              <div className="answers-grid neonAnswerGrid league-answer-grid">
-                {currentLeagueQuizQuestion.options.map((option) => {
-                  const isCorrect = option === currentLeagueQuizQuestion.answer;
-                  const isChosen = leagueQuizSelected === option;
-                  const showCorrect = leagueQuizSelected && isCorrect;
-                  const showWrong = leagueQuizSelected && isChosen && !isCorrect;
-
-                  return (
-                    <button
-                      key={option}
-                      className={`answer-button neonAnswerButton ${
-                        showCorrect ? "correct" : showWrong ? "wrong" : ""
-                      }`}
-                      disabled={Boolean(leagueQuizSelected)}
-                      onClick={() => chooseLeagueQuizAnswer(option)}
-                    >
-                      <span>{option}</span>
-                      {showCorrect && <CheckCircle2 size={28} />}
-                      {showWrong && <XCircle size={28} />}
-                    </button>
-                  );
-                })}
-              </div>
+              <AnswerGrid
+                options={currentLeagueQuizQuestion.options}
+                answer={currentLeagueQuizQuestion.answer}
+                selected={leagueQuizSelected}
+                onChoose={chooseLeagueQuizAnswer}
+                onPlayClick={playClickSound}
+              />
             </div>
           )}
 
           {leagueChallengePhase === "top10" && leagueTop10Challenge && (
-            <div className="league-challenge-card league-top10-card">
-              <div className="league-kicker">Top 10</div>
-              <h1>{leagueTop10Challenge.label}</h1>
-              <p>{leagueTop10Challenge.question}</p>
+            <div className="league-play-card league-modern-card league-play-top10-card dc-shell">
+              <LeagueContextHeader
+                leagueName={activeLeague.name}
+                dayLabel={leagueDayLabel}
+                modeLabel="Top 10"
+                metaValue={`${leagueQuizScore + leagueTop10TotalWithCurrent + leagueWhoAmIScore}/${leagueSettings.maxDailyPoints}`}
+              />
 
-              <div className="league-score-strip">
-                {leagueSettings.quizCount > 0 && (
-                  <span>
-                    Quiz: {leagueQuizScore}/{leagueSettings.quizCount}
-                  </span>
-                )}
-                <span>
-                  Top 10 {leagueTop10Index + 1}/{leagueSettings.top10Count}:{" "}
-                  {Math.min(leagueTop10Score, leagueTop10TargetCount)}/{leagueTop10TargetCount}
-                </span>
-                <span>
-                  {Array.from({ length: 3 }).map((_, index) => (
-                    <span
-                      key={index}
-                      className={
-                        index >= leagueTop10Lives ? "league-life-used" : ""
-                      }
-                    >
-                      <BKIcon name="lives" size={18} />
-                    </span>
-                  ))}
-                </span>
-                <strong>
-                  Total: {leagueQuizScore + leagueTop10TotalWithCurrent + leagueWhoAmIScore}/
-                  {leagueSettings.maxDailyPoints}
-                </strong>
-              </div>
+              <header className="dc-header league-modern-top10-header">
+                <div className="dc-title-row">
+                  <div>
+                    <span className="dc-kicker">League Top 10</span>
+                    <h1>{leagueTop10Challenge.label}</h1>
+                  </div>
+                  <div className="dc-date-pill">
+                    <span>List</span>
+                    <strong>{leagueTop10Index + 1}/{leagueSettings.top10Count}</strong>
+                  </div>
+                </div>
+                <p className="dc-question">{leagueTop10Challenge.question}</p>
+              </header>
 
-              <div className="league-top10-list">
-                {getChallengeAnswers(leagueTop10Challenge).map((answer, index) => {
-                  const found = leagueTop10Found.includes(answer);
-                  const rank = index + 1;
-                  const isScanning =
-                    leagueTop10Reveal?.phase === "scan" &&
-                    leagueTop10Reveal.displayRank === rank;
-                  const isRevealTarget =
-                    leagueTop10Reveal?.type === "correct" &&
-                    leagueTop10Reveal.rank === rank;
+              <LeagueProgressStrip
+                items={[
+                  leagueSettings.quizCount > 0 && {
+                    label: "Quiz",
+                    value: `${leagueQuizScore}/${leagueSettings.quizCount}`,
+                  },
+                  {
+                    label: "Found",
+                    value: `${Math.min(leagueTop10Score, leagueTop10TargetCount)}/${leagueTop10TargetCount}`,
+                  },
+                  {
+                    label: "Lives",
+                    value: leagueTop10Lives,
+                  },
+                ]}
+              />
 
-                  return (
-                    <div
-                      key={getAnswerKey(answer, index)}
-                      className={`${found ? "found" : ""} ${
-                        isScanning ? "scanning" : ""
-                      } ${isRevealTarget ? "reveal-target" : ""}`}
-                    >
-                      <span>#{index + 1}</span>
-                      <strong>{found ? formatAnswerWithValue(answer) : <BKIcon name="questionMark" size={24} />}</strong>
-                    </div>
-                  );
-                })}
-              </div>
+              <LeagueTop10Board
+                answers={getChallengeAnswers(leagueTop10Challenge)}
+                foundAnswers={leagueTop10Found}
+                reveal={leagueTop10Reveal}
+                isRevealing={leagueTop10Scanning}
+                getAnswerKey={getAnswerKey}
+                formatAnswerWithValue={formatAnswerWithValue}
+              />
 
               <GuessInput
                 answerType={isLeagueTop10PlayerChallenge ? "player" : "text"}
@@ -8493,9 +8946,9 @@ const startConnectionsGame = (difficulty = null) => {
                 }
                 disabled={leagueTop10Scanning || leagueTop10Lives <= 0}
                 buttonLabel={leagueTop10Scanning ? "Scanning..." : "Guess"}
-                rowClassName="daily-input-row league-input-row"
-                inputClassName="daily-list-input"
-                buttonClassName="daily-submit-button"
+                rowClassName="dc-input-row league-play-input-row"
+                inputClassName="dc-text-input"
+                buttonClassName="dc-submit"
                 maxSuggestions={4}
                 autoFocus
               />
@@ -8504,37 +8957,38 @@ const startConnectionsGame = (difficulty = null) => {
           )}
 
           {leagueChallengePhase === "top10-reveal" && leagueTop10Challenge && (
-            <div className="league-challenge-card league-top10-card league-top10-reveal-card">
-              <div className="league-kicker">Top 10 Reveal</div>
-              <h1>{leagueTop10Challenge.label}</h1>
-              <p>
-                {Math.min(leagueTop10Score, leagueTop10TargetCount)}/{leagueTop10TargetCount} found. Review the list, then keep climbing.
-              </p>
+            <div className="league-play-card league-modern-card league-play-top10-card league-top10-reveal-card dc-shell">
+              <LeagueContextHeader
+                leagueName={activeLeague.name}
+                dayLabel={leagueDayLabel}
+                modeLabel="Top 10 Reveal"
+                metaValue={`${Math.min(leagueTop10Score, leagueTop10TargetCount)}/${leagueTop10TargetCount}`}
+              />
+              <header className="dc-header league-modern-top10-header">
+                <div className="dc-title-row">
+                  <div>
+                    <span className="dc-kicker">Top 10 Reveal</span>
+                    <h1>{leagueTop10Challenge.label}</h1>
+                  </div>
+                  <div className="dc-date-pill">
+                    <span>Found</span>
+                    <strong>{Math.min(leagueTop10Score, leagueTop10TargetCount)}/{leagueTop10TargetCount}</strong>
+                  </div>
+                </div>
+                <p className="dc-question">Review the list, then keep climbing.</p>
+              </header>
 
-              <div className="league-top10-reveal-list">
-                {getChallengeAnswers(leagueTop10Challenge).map((answer, index) => {
-                  const found = leagueTop10Found.includes(answer);
+              <LeagueTop10Board
+                answers={getChallengeAnswers(leagueTop10Challenge)}
+                foundAnswers={leagueTop10Found}
+                reveal={leagueTop10Reveal}
+                isRevealing={false}
+                getAnswerKey={getAnswerKey}
+                formatAnswerWithValue={formatAnswerWithValue}
+                revealAll
+              />
 
-                  return (
-                    <motion.div
-                      key={getAnswerKey(answer, index)}
-                      className={`league-top10-reveal-row ${
-                        found ? "found" : "missed"
-                      }`}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.035 }}
-                    >
-                      <span>#{index + 1}</span>
-                      <strong>{getAnswerLabel(answer)}</strong>
-                      <em>{getAnswerValue(answer) || "-"}</em>
-                      <small>{found ? "Found" : "Missed"}</small>
-                    </motion.div>
-                  );
-                })}
-              </div>
-
-              <button
+              <Button
                 className="league-reveal-continue-button"
                 onClick={() => advanceAfterLeagueTop10(leagueTop10Found.length)}
               >
@@ -8542,65 +8996,80 @@ const startConnectionsGame = (difficulty = null) => {
                   ? "Next Top 10"
                   : leagueSettings.whoamiCount > 0
                   ? "Next Section"
-                  : leagueSettings.findPlayerCount > 0
-                  ? "Next Section"
                   : "See Results"}
-              </button>
+              </Button>
             </div>
           )}
 
           {leagueChallengePhase === "whoami" && currentLeagueWhoAmI && (
-            <div className="league-challenge-card league-whoami-card">
-              <div className="league-kicker">Who Am I?</div>
-              <h1>Mystery Player</h1>
+            <div className="league-play-card league-modern-card league-play-whoami-card gp-whoami-shell">
+              <LeagueContextHeader
+                leagueName={activeLeague.name}
+                dayLabel={leagueDayLabel}
+                modeLabel="Who Am I"
+                metaValue={`${leagueWhoAmIScore}/${leagueWhoAmIMaxPoints}`}
+              />
 
-              <div className="league-score-strip">
-                {leagueSettings.quizCount > 0 && (
-                  <span>
-                    Quiz: {leagueQuizScore}/{leagueSettings.quizCount}
-                  </span>
-                )}
-                {leagueSettings.top10Count > 0 && (
-                  <span>
-                    Top 10: {leagueTop10TotalWithCurrent}/{leagueTop10MaxPoints}
-                  </span>
-                )}
-                <span>
-                  Who Am I: {leagueWhoAmIScore}/{leagueWhoAmIMaxPoints}
-                </span>
-                <strong>
-                  Player {leagueWhoAmIIndex + 1}/{leagueSettings.whoamiCount}
-                </strong>
-              </div>
+              <LeagueProgressStrip
+                items={[
+                  leagueSettings.quizCount > 0 && {
+                    label: "Quiz",
+                    value: `${leagueQuizScore}/${leagueSettings.quizCount}`,
+                  },
+                  leagueSettings.top10Count > 0 && {
+                    label: "Top 10",
+                    value: `${leagueTop10TotalWithCurrent}/${leagueTop10MaxPoints}`,
+                  },
+                  {
+                    label: "Player",
+                    value: `${leagueWhoAmIIndex + 1}/${leagueSettings.whoamiCount}`,
+                  },
+                ]}
+              />
 
               <motion.div
-                className={`league-whoami-panel ${leagueWhoAmIShake ? "shake" : ""}`}
+                className={`gp-mystery-card gp-whoami-card league-play-whoami-panel ${leagueWhoAmIShake ? "shake" : ""}`}
                 animate={leagueWhoAmIShake ? { x: [0, -7, 7, -4, 4, 0] } : { x: 0 }}
                 transition={{ duration: 0.28 }}
               >
-                <div className="whoami-mystery-icon"><BKIcon name="questionMark" size={34} /></div>
-                <div className="whoami-clue-progress">
-                  <span>Clue {leagueWhoAmIClueIndex + 1} / 10</span>
-                  <strong>Worth {leagueWhoAmIPointsAvailable} points</strong>
+                <div className="gp-whoami-top">
+                  <div>
+                    <div className="gp-kicker">League mystery player</div>
+                    <h1>Who Am I?</h1>
+                  </div>
+                  <div className={`gp-whoami-difficulty ${currentLeagueWhoAmI.difficulty?.toLowerCase?.() || ""}`}>
+                    {currentLeagueWhoAmI.difficulty || "League"}
+                  </div>
                 </div>
 
-                <div className="whoami-clue-list">
+                <div className="gp-whoami-mystery">
+                  <div className="gp-whoami-silhouette">
+                    <BKIcon name="whoAmI" size={64} />
+                  </div>
+                  <div>
+                    <span>Clue {leagueWhoAmIClueIndex + 1} / 10</span>
+                    <strong>{leagueWhoAmIPointsAvailable} points available</strong>
+                  </div>
+                </div>
+
+                <div className="gp-whoami-clues">
                   {leagueWhoAmIVisibleClues.map((clue, index) => (
                     <motion.div
                       key={`${currentLeagueWhoAmI.id}-${index}`}
-                      className={`whoami-clue ${
+                      className={`gp-whoami-clue ${
                         index === leagueWhoAmIClueIndex ? "latest" : ""
                       }`}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                     >
-                      {clue}
+                      <span>{index + 1}</span>
+                      <p>{clue}</p>
                     </motion.div>
                   ))}
                 </div>
 
                 {leagueWhoAmIFeedback && (
-                  <div className={`whoami-feedback ${leagueWhoAmIFeedback.type}`}>
+                  <div className={`gp-feedback ${leagueWhoAmIFeedback.type}`}>
                     {leagueWhoAmIFeedback.text}
                   </div>
                 )}
@@ -8616,158 +9085,28 @@ const startConnectionsGame = (difficulty = null) => {
                 placeholder="Search player or type full name..."
                 disabled={Boolean(leagueWhoAmIFeedback?.locked)}
                 buttonLabel="Guess"
-                rowClassName="daily-input-row league-input-row"
-                inputClassName="daily-list-input"
-                buttonClassName="daily-submit-button"
+                rowClassName="gp-input-row gp-whoami-answer-row league-play-input-row"
+                inputClassName="gp-text-input"
+                buttonClassName="gp-submit-button"
                 maxSuggestions={4}
                 autoFocus
               />
             </div>
           )}
 
-          {leagueChallengePhase === "find-player" && currentLeagueFindPlayerTarget && (
-            <div className="league-challenge-card find-player-card">
-              <div className="league-kicker">Find the Player</div>
-              <h1>Hidden Footballer</h1>
-
-              <div className="league-score-strip">
-                {leagueSettings.quizCount > 0 && (
-                  <span>
-                    Quiz: {leagueQuizScore}/{leagueSettings.quizCount}
-                  </span>
-                )}
-                {leagueSettings.top10Count > 0 && (
-                  <span>
-                    Top 10: {leagueTop10TotalWithCurrent}/{leagueTop10MaxPoints}
-                  </span>
-                )}
-                {leagueSettings.whoamiCount > 0 && (
-                  <span>
-                    Who Am I: {leagueWhoAmIScore}/{leagueWhoAmIMaxPoints}
-                  </span>
-                )}
-                <span>
-                  Find: {leagueFindPlayerScore}/{leagueFindPlayerMaxPoints}
-                </span>
-                <strong>
-                  Player {leagueFindPlayerIndex + 1}/{leagueSettings.findPlayerCount}
-                </strong>
-              </div>
-
-              <div className="find-player-mystery-card">
-                <div className="whoami-mystery-icon"><BKIcon name="questionMark" size={34} /></div>
-                <div>
-                  <span>Guesses: {leagueFindPlayerGuesses.length}</span>
-                  <strong>{formatElapsedTime(leagueFindPlayerElapsed)}</strong>
-                  {leagueFindPlayerRanking.poolSize > 0 && (
-                    <small>{leagueFindPlayerRanking.poolSize} players ranked</small>
-                  )}
-                </div>
-              </div>
-
-              <div className="find-player-clue-panel">
-                <div className="find-player-clue-list">
-                  {leagueFindPlayerClues.slice(0, leagueFindPlayerClueCount).map((clue) => (
-                    <span key={clue}>{clue}</span>
-                  ))}
-                  {leagueFindPlayerClueCount === 0 && (
-                    <small>Optional clue ready</small>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setLeagueFindPlayerClueCount((count) =>
-                      Math.min(count + 1, leagueFindPlayerClues.length)
-                    )
-                  }
-                  disabled={
-                    leagueFindPlayerClueCount >= leagueFindPlayerClues.length ||
-                    leagueFindPlayerFeedback.startsWith("Correct") ||
-                    leagueFindPlayerFeedback.startsWith("Answer:")
-                  }
-                >
-                  Reveal clue
-                </button>
-              </div>
-
-              <div className="find-player-input-row">
-                <React.Suspense
-                  fallback={
-                    <input
-                      className="player-picker-input"
-                      placeholder="Loading player search..."
-                      disabled
-                    />
-                  }
-                >
-                  <PlayerPicker
-                    value={leagueFindPlayerSelected}
-                    onSelect={setLeagueFindPlayerSelected}
-                    onSubmit={submitLeagueFindPlayerGuess}
-                    autoSubmitOnSelect
-                    placeholder="Search exact player..."
-                    compact
-                    maxSuggestions={5}
-                    disabled={
-                      leagueFindPlayerFeedback.startsWith("Correct") ||
-                      leagueFindPlayerFeedback.startsWith("Answer:")
-                    }
-                  />
-                </React.Suspense>
-                <button
-                  className="find-player-give-up-button"
-                  onClick={giveUpLeagueFindPlayer}
-                  type="button"
-                  disabled={leagueFindPlayerFeedback.startsWith("Answer:")}
-                >
-                  Give Up
-                </button>
-              </div>
-
-              {leagueFindPlayerFeedback && (
-                <div className="whoami-feedback reveal">{leagueFindPlayerFeedback}</div>
-              )}
-
-              <div className="find-player-guesses">
-                {leagueFindPlayerGuesses.map((guess) => (
-                  <div
-                    key={`${guess.player.id}-${guess.distance}`}
-                    className={`find-player-guess ${guess.color} ${
-                      guess.latest ? "latest" : ""
-                    }`}
-                  >
-                    <div
-                      className="find-player-bar-fill"
-                      style={{ width: `${guess.barPercent || 12}%` }}
-                    />
-                    <div className="find-player-guess-content">
-                      <div>
-                        <strong>{guess.player.name}</strong>
-                        <span>
-                          {guess.player.nationality || "Unknown"} •{" "}
-                          {guess.player.position_group || guess.player.position || "Unknown"}
-                        </span>
-                      </div>
-                      <em>#{guess.rank || "?"}</em>
-                    </div>
-                    <small>
-                      Rank #{guess.rank || "?"}
-                      {guess.poolSize ? ` / ${guess.poolSize}` : ""} • {guess.label}
-                    </small>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {leagueChallengePhase === "complete" && leagueResult && (
-            <div className="league-challenge-card league-complete-card">
+            <div className="league-play-card league-modern-card league-complete-card">
+              <LeagueContextHeader
+                leagueName={activeLeague.name}
+                dayLabel={leagueDayLabel}
+                modeLabel="Day Complete"
+                metaValue={`${leagueResult.totalPoints}/${leagueSettings.maxDailyPoints}`}
+              />
               <div className="league-kicker"><BKIcon name="dailyStreak" size={22} /> Day Complete</div>
               <h1>
                 {leagueResult.totalPoints}/{leagueSettings.maxDailyPoints} points
               </h1>
-              <div className="league-result-grid">
+              <div className="league-play-result-grid">
                 {leagueSettings.quizCount > 0 && (
                   <div>
                     <span>Quiz</span>
@@ -8792,122 +9131,49 @@ const startConnectionsGame = (difficulty = null) => {
                     </strong>
                   </div>
                 )}
-                {leagueSettings.findPlayerCount > 0 && (
-                  <div>
-                    <span>Find the Player</span>
-                    <strong>
-                      {leagueResult.findPlayerScore}/{leagueFindPlayerMaxPoints}
-                    </strong>
-                    <small>
-                      {leagueResult.findPlayerAttempts ?? 0} guesses •{" "}
-                      {formatElapsedTime(leagueResult.findPlayerTimeSeconds ?? 0)}
-                    </small>
-                  </div>
-                )}
               </div>
-              <button onClick={closeLeagueChallenge}>Back to League</button>
+              <Button onClick={closeLeagueChallenge}>Back to League</Button>
             </div>
           )}
         </ScreenTransition>
-      </div>
+      </AppScreen>
     );
   }
 
-  if (multiplayerRoundOpen && currentMultiplayerRoundQuestion) {
+  if (multiplayerRoundOpen && activeRound) {
     return (
-      <div
-        className="fullscreen-bg"
-        style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.04), rgba(0,0,0,0.58)), url(${quizBg})`,
-        }}
-      >
-        <GameTopNav
-          className="multiplayer-round-back"
-          label="Save & Exit"
-          onClick={() => submitMultiplayerRoundScore(multiplayerRoundScore)}
-          disabled={isSubmittingRound || multiplayerLoading}
+      <React.Suspense fallback={<div className="fullscreen-bg" />}>
+        <ActiveMatchRound
+          key={activeRound.id}
+          round={activeRound}
+          quizBackground={quizBg}
+          categoryClass={getCategoryClass(activeRound?.category)}
+          categoryLabel={getCategoryLabel(activeRound?.category)}
+          match={activeMatch}
+          playerSlot={multiplayerPlayerSlot}
+          playerProfile={getMatchPlayerProfile(
+            activeMatch,
+            multiplayerPlayerSlot || "player1"
+          )}
+          opponentProfile={getMatchPlayerProfile(
+            activeMatch,
+            multiplayerPlayerSlot === "player2" ? "player1" : "player2"
+          )}
+          playerName={username}
+          opponentName={getOpponentName(activeMatch, playerId, username)}
+          timeLimit={getMultiplayerQuestionTimeLimit(activeRound?.category)}
+          isSubmitting={isSubmittingRound}
+          persistenceLoading={multiplayerLoading}
+          onSubmitScore={submitMultiplayerRoundScore}
+          onRuntimeError={setMultiplayerError}
+          playCorrectSound={playCorrectSound}
+          playWrongSound={playWrongSound}
         />
-
-        <div className="multiplayer-round-card">
-          <div className={`difficulty-pill ${getCategoryClass(activeRound?.category)}`}>
-            Async Round {activeRound?.round_number || 1} •{" "}
-            {getCategoryLabel(activeRound?.category)}
-          </div>
-
-          <div className="multiplayer-round-progress">
-            Question {multiplayerRoundIndex + 1} / {activeRoundQuestions.length}
-          </div>
-
-          <div
-            className={`multiplayer-timer ${
-              multiplayerTimeLeft <= 3 ? "danger" : ""
-            }`}
-          >
-            <span>⏱</span>
-            <strong>{multiplayerTimeLeft}s</strong>
-          </div>
-
-          <div className="multiplayer-live-score">
-            Score {multiplayerRoundScore}/5
-          </div>
-
-          {activeRound?.category === "career_path" ? (
-            <CareerPathQuestionView
-              question={currentMultiplayerRoundQuestion.question}
-              className="multiplayer-career-path-card"
-            />
-          ) : (
-            <h1 className="question-title quiz-question-card neonGlassCard">
-              {currentMultiplayerRoundQuestion.question}
-            </h1>
-          )}
-
-          {multiplayerRoundSelected === MULTIPLAYER_TIMEOUT_VALUE && (
-            <div className="multiplayer-timeup-card">Time's up!</div>
-          )}
-
-          <div className="answers-grid neonAnswerGrid">
-            {currentMultiplayerRoundQuestion.options.map((option) => {
-              const isCorrect = isCorrectAnswer(
-                option,
-                currentMultiplayerRoundQuestion.answer
-              );
-              const isChosen = multiplayerRoundSelected === option;
-              const showCorrect = multiplayerRoundSelected && isCorrect;
-              const showWrong =
-                multiplayerRoundSelected && isChosen && !isCorrect;
-
-              return (
-                <button
-                  key={option}
-                  onClick={() => chooseMultiplayerRoundAnswer(option)}
-                  disabled={Boolean(multiplayerRoundSelected) || isSubmittingRound}
-                  className={`answer-button neonAnswerButton ${
-                    showCorrect ? "correct" : showWrong ? "wrong" : ""
-                  }`}
-                >
-                  <span>{option}</span>
-                  {showCorrect && <CheckCircle2 size={28} />}
-                  {showWrong && <XCircle size={28} />}
-                </button>
-              );
-            })}
-          </div>
-
-          {multiplayerRoundDone && (
-            <div className="multiplayer-submit-card">
-              <strong>{multiplayerRoundScore}/5</strong>
-              <span>
-                {isSubmittingRound || multiplayerLoading
-                  ? "Submitting score..."
-                  : "Score submitted"}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
+      </React.Suspense>
     );
-  }  if (connectionsDifficultyPickerOpen) {
+  }
+
+  if (connectionsDifficultyPickerOpen) {
     const connectionDifficulties = [
       {
         label: "Easy",
@@ -8936,76 +9202,374 @@ const startConnectionsGame = (difficulty = null) => {
     ];
 
     return (
-      <div
-        className="fullscreen-bg"
-        style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.05), rgba(0,0,0,0.58)), url(${stadiumBg})`,
-        }}
-      >
+      <AppScreen backgroundImage={stadiumBg} width="wide">
         {coinShopModal}
         {dailyRewardMeterModal}
         {coinRewardToastOverlay}
         {xpToastOverlay}
 
-        <ScreenTransition className="connections-difficulty-screen">
-          <GameTopNav
-            className="connections-back-button"
-            label="Back"
-            onClick={() => {
-              playClickSound();
-              setConnectionsDifficultyPickerOpen(false);
-              setModeMenuOpen(true);
-              setGameMode("general");
-              setGameStarted(false);
-            }}
+        <ScreenTransition className="bk-connections-difficulty-screen">
+          <ScreenHeader
+            kicker="Single Player"
+            title="Choose Connections Level"
+            subtitle="Pick the difficulty and solve four hidden football groups."
+            leadingAction={
+              <BackButton
+                label="Back"
+                onClick={() => {
+                  playClickSound();
+                  setConnectionsDifficultyPickerOpen(false);
+                  setModeMenuOpen(true);
+                  setGameMode("general");
+                  setGameStarted(false);
+                }}
+              />
+            }
           />
 
-          <div className="connections-difficulty-panel">
-            <div className="connections-difficulty-hero">
-              <div className="connections-kicker">Single Player</div>
-              <h1>Choose Connections Level</h1>
-              <p>Pick the difficulty and solve four hidden football groups.</p>
-            </div>
+          <div className="bk-difficulty-grid">
+            {connectionDifficulties.map((difficulty) => (
+              <SurfaceCard
+                as="button"
+                key={difficulty.label}
+                className={`bk-difficulty-card bk-difficulty-card--${difficulty.className}`}
+                interactive
+                onClick={() => startConnectionsGame(difficulty.label)}
+              >
+                <div className="bk-difficulty-card__top">
+                  <span className="bk-mode-card__icon">
+                    <BKIcon name={difficulty.icon} size={26} />
+                  </span>
+                  <span className="bk-difficulty-card__meta">
+                    {connectionPuzzleCounts[difficulty.label] ?? "Loading"} puzzles
+                  </span>
+                </div>
 
-            <div className="connections-difficulty-grid">
-              {connectionDifficulties.map((difficulty) => (
-                <button
-                  key={difficulty.label}
-                  className={`connections-difficulty-card ${difficulty.className}`}
-                  onClick={() => startConnectionsGame(difficulty.label)}
-                >
-                  <div className="difficulty-card-top">
-                    <span className="difficulty-emoji"><BKIcon name={difficulty.icon} size={28} /></span>
-                    <span className="difficulty-count">
-                      {
-                        CONNECTIONS_PUZZLES.filter(
-                          (puzzle) => puzzle.difficulty === difficulty.label
-                        ).length
-                      }{" "}
-                      puzzles
-                    </span>
-                  </div>
-
-                  <strong>{difficulty.label}</strong>
-                  <p>{difficulty.subtitle}</p>
-
-                  <span className="difficulty-play">Play now →</span>
-                </button>
-              ))}
-            </div>
+                <strong className="bk-type-section-title">{difficulty.label}</strong>
+                <p className="bk-type-body">{difficulty.subtitle}</p>
+                <span className="bk-type-label">Play now</span>
+              </SurfaceCard>
+            ))}
           </div>
         </ScreenTransition>
+      </AppScreen>
+    );
+  }
+
+  if (
+    !gameStarted &&
+    modeMenuOpen &&
+    !profileOpen &&
+    !leaderboardOpen &&
+    !multiplayerOpen
+  ) {
+    return (
+      <AppScreen backgroundImage={stadiumBg} className="bk-v2-screen bk-v2-mode-screen">
+        {coinShopModal}
+        {dailyRewardMeterModal}
+        {levelProgressModal}
+        {postGameProgressModal}
+        {avatarPickerModal}
+        {authPromptModal}
+        {postGameStep !== "xp" && xpToastOverlay}
+        {postGameStep !== "xp" && objectiveProgressModal}
+
+        <ScreenTransition className="bk-sp-hub">
+
+  {/* HEADER */}
+  <header className="bk-sp-header">
+    <BackButton
+      label="Back"
+      onClick={() => {
+        playClickSound();
+        setModeMenuOpen(false);
+      }}
+    />
+
+    <div className="bk-sp-header-copy">
+      <span>SINGLE PLAYER</span>
+
+      <h1>
+        Choose your
+        <br />
+        challenge.
+      </h1>
+
+      <p>
+        Different tests. Same game.
+        <br />
+        How good is your football knowledge?
+      </p>
+    </div>
+
+    <div className="bk-sp-header-art" aria-hidden="true">
+      <svg viewBox="0 0 220 180">
+        <circle cx="112" cy="87" r="51" className="bk-sp-svg-soft" />
+        <circle cx="112" cy="87" r="42" className="bk-sp-svg-line" />
+        <polygon
+          points="112,61 130,73 124,95 100,95 94,73"
+          className="bk-sp-svg-fill"
+        />
+        <path
+          d="M112 61 L112 44 M130 73 L148 64 M124 95 L138 112 M100 95 L85 112 M94 73 L76 64"
+          className="bk-sp-svg-line"
+        />
+      </svg>
+    </div>
+  </header>
+
+  {/* FEATURED */}
+  <section className="bk-sp-section">
+    <div className="bk-sp-section-heading">
+      <span>FEATURED</span>
+      <small>Classic mode</small>
+    </div>
+
+    <button
+      type="button"
+      className="bk-sp-featured"
+      disabled={modeLoading}
+      onClick={() => {
+        playClickSound();
+        startGame("general");
+      }}
+    >
+      <div className="bk-sp-featured-art" aria-hidden="true">
+  <svg viewBox="0 0 220 180">
+    <circle cx="110" cy="90" r="58" className="bk-sp-svg-soft" />
+
+    <circle
+      cx="110"
+      cy="90"
+      r="42"
+      className="bk-sp-svg-line"
+    />
+
+    <polygon
+      points="110,60 126,71 120,90 100,90 94,71"
+      className="bk-sp-svg-fill"
+    />
+
+    <path
+      d="M110 60
+         L96 71
+         L83 63
+         M126 71
+         L142 63
+         M100 90
+         L90 109
+         M120 90
+         L130 109
+         M90 109
+         L110 124
+         L130 109"
+      className="bk-sp-svg-line"
+    />
+  </svg>
+</div>
+
+      <div className="bk-sp-featured-content">
+        <span>FEATURED</span>
+
+        <h2>
+          General
+          <br />
+          Knowledge
+        </h2>
+
+        <p>Fast questions across clubs, players and eras.</p>
+
+        <div className="bk-sp-featured-bottom">
+          <div className="bk-sp-featured-status">
+            <small>CLASSIC QUIZ</small>
+            <strong>Beat your best</strong>
+          </div>
+
+          <span className="bk-sp-featured-play">
+            PLAY NOW
+            <b>›</b>
+          </span>
+        </div>
       </div>
+    </button>
+  </section>
+
+  {/* ALL MODES */}
+  <section className="bk-sp-section">
+    <div className="bk-sp-section-heading">
+      <span>DISCOVER ALL MODES</span>
+      <small>6 modes</small>
+    </div>
+
+    <div className="bk-sp-games-grid">
+
+      {/* CAREER PATH */}
+      <button
+        type="button"
+        className="bk-sp-game-card bk-sp-game-card--blue"
+        disabled={modeLoading}
+        onClick={() => {
+          playClickSound();
+          startGame("career");
+        }}
+      >
+        <span className="bk-sp-card-arrow">›</span>
+
+        <div className="bk-sp-card-art bk-sp-card-art--career" aria-hidden="true">
+          <svg viewBox="0 0 220 150">
+            <path
+              d="M24 126 C55 111 47 76 85 72 C123 67 104 36 158 39 C184 40 187 22 199 18"
+              className="bk-sp-svg-line bk-sp-svg-route"
+            />
+            <circle cx="25" cy="126" r="6" className="bk-sp-svg-fill" />
+            <circle cx="84" cy="72" r="6" className="bk-sp-svg-fill" />
+            <circle cx="158" cy="39" r="6" className="bk-sp-svg-fill" />
+            <path d="M198 18 V47" className="bk-sp-svg-line" />
+            <path d="M198 19 L216 25 L198 32 Z" className="bk-sp-svg-fill" />
+          </svg>
+        </div>
+
+        <div className="bk-sp-card-content">
+          <span>PLAYER IQ</span>
+          <strong>Career Path</strong>
+          <p>Trace the clubs and spot the career.</p>
+
+          <div className="bk-sp-card-status">
+            <small>ENDLESS MODE</small>
+            <b>Beat your best</b>
+          </div>
+        </div>
+      </button>
+
+      {/* WORLD CUP */}
+      <button
+        type="button"
+        className="bk-sp-game-card bk-sp-game-card--gold"
+        disabled={modeLoading}
+        onClick={() => {
+          playClickSound();
+          startGame("world-cup");
+        }}
+      >
+        <span className="bk-sp-card-arrow">›</span>
+
+        <div className="bk-sp-card-art" aria-hidden="true">
+          <svg viewBox="0 0 200 170">
+            <ellipse cx="118" cy="143" rx="54" ry="10" className="bk-sp-svg-soft" />
+            <path
+              d="M96 32
+                 C95 52 98 63 107 75
+                 C112 82 113 96 109 108
+                 L92 130
+                 L142 130
+                 L126 108
+                 C122 96 123 82 129 74
+                 C139 60 141 46 139 32
+                 C128 39 108 39 96 32 Z"
+              className="bk-sp-svg-fill"
+            />
+            <circle cx="117" cy="53" r="22" className="bk-sp-svg-line" />
+          </svg>
+        </div>
+
+        <div className="bk-sp-card-content">
+          <span>GLOBAL</span>
+          <strong>World Cup</strong>
+          <p>History&apos;s greatest tournament.</p>
+
+          <div className="bk-sp-card-status">
+            <small>ENDLESS MODE</small>
+            <b>Beat your best</b>
+          </div>
+        </div>
+      </button>
+
+      {/* WHO AM I */}
+      <button
+        type="button"
+        className="bk-sp-game-card bk-sp-game-card--violet"
+        onClick={() => startWhoAmIGame(getDailyDateKey())}
+      >
+        <span className="bk-sp-card-arrow">›</span>
+
+        <div className="bk-sp-card-art" aria-hidden="true">
+          <svg viewBox="0 0 200 170">
+            <circle cx="118" cy="59" r="30" className="bk-sp-svg-soft" />
+            <circle cx="118" cy="59" r="24" className="bk-sp-svg-dark" />
+            <path
+              d="M69 145 C74 105 93 91 118 91 C143 91 163 105 168 145"
+              className="bk-sp-svg-dark"
+            />
+            <text x="108" y="73" className="bk-sp-svg-question">?</text>
+          </svg>
+        </div>
+
+        <div className="bk-sp-card-content">
+          <span>CLUES</span>
+          <strong>Who Am I?</strong>
+          <p>Guess the player before the reveal.</p>
+
+          <div className="bk-sp-card-status">
+            <small>DAILY</small>
+            <b>Today&apos;s player</b>
+          </div>
+        </div>
+      </button>
+
+      {/* CONNECTIONS */}
+      <button
+        type="button"
+        className="bk-sp-game-card bk-sp-game-card--cyan"
+        disabled={modeLoading}
+        onClick={openConnectionsDifficultyPicker}
+      >
+        <span className="bk-sp-card-arrow">›</span>
+
+        <div className="bk-sp-card-art" aria-hidden="true">
+          <svg viewBox="0 0 210 160">
+            <g transform="translate(73 39) rotate(-7)">
+              <rect x="0" y="0" width="50" height="50" rx="9" className="bk-sp-svg-fill" />
+            </g>
+            <g transform="translate(121 51) rotate(7)">
+              <rect x="0" y="0" width="50" height="50" rx="9" className="bk-sp-svg-fill-soft" />
+            </g>
+            <g transform="translate(77 88) rotate(5)">
+              <rect x="0" y="0" width="50" height="50" rx="9" className="bk-sp-svg-fill-soft" />
+            </g>
+          </svg>
+        </div>
+
+        <div className="bk-sp-card-content">
+          <span>PATTERN PLAY</span>
+          <strong>Connections</strong>
+          <p>Find four hidden football groups.</p>
+
+          <div className="bk-sp-card-status">
+            <small>4 LEVELS</small>
+            <b>Choose difficulty</b>
+          </div>
+        </div>
+      </button>
+
+    </div>
+  </section>
+
+</ScreenTransition>
+      </AppScreen>
     );
   }
 
   if (!gameStarted) {
     return (
       <div
-        className={`fullscreen-bg ${isHomeScreen ? "home-landing-bg" : ""}`}
-        style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.06), rgba(0,0,0,0.34)), url(${stadiumBg})`,
-        }}
+        className={`fullscreen-bg ${isHomeScreen ? "bk-home-root" : ""}`}
+        style={
+          isHomeScreen
+            ? undefined
+            : {
+                backgroundImage: `linear-gradient(rgba(255,255,255,0.06), rgba(0,0,0,0.34)), url(${stadiumBg})`,
+              }
+        }
       >
         {coinShopModal}
         {dailyRewardMeterModal}
@@ -9017,67 +9581,48 @@ const startConnectionsGame = (difficulty = null) => {
         {postGameStep !== "xp" && objectiveProgressModal}
         <AnimatePresence>
           {showDailyCompletePopup && lastDailyResult && (
-            <motion.div
-              className="daily-reward-view-overlay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+            <Modal
+              title="Daily Reward"
+              variant="reward"
+              showClose={false}
+              cardClassName="bk-reward-card"
+              onClose={() => setShowDailyCompletePopup(false)}
             >
-              <motion.div
-                className="daily-reward-popup"
-                initial={{ opacity: 0, scale: 0.82, y: 35 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: -20 }}
-                transition={{ duration: 0.35 }}
-              >
-                <div className="daily-reward-top">
-                <div className="daily-reward-fire"><BKIcon name="dailyStreak" size={48} /></div>
+              <div className="bk-progression-hero">
+                <div className="bk-progression-icon">
+                  <BKIcon name="dailyStreak" size={52} />
+                </div>
 
-                <div>
-                  <div className="daily-reward-title">Daily Reward</div>
-
-                  <div className="daily-reward-subtitle">
+                <div className="bk-progression-copy">
+                  <p className="bk-type-label">
                     Day {lastDailyResult.streak} complete
-                  </div>
+                  </p>
+                  <h3>Reward locked in</h3>
+                  <p>Your daily challenge rewards have been added.</p>
                 </div>
               </div>
 
-              <motion.div
-                className="daily-reward-main-ball daily-reward-chest"
-                initial={{ rotate: -12, scale: 0.72, y: 18 }}
-                animate={{
-                  rotate: [0, -7, 7, 0],
-                  scale: [1, 1.14, 1.03],
-                  y: [12, -8, 0],
-                }}
-                transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <BKIcon name="dailyChallenge" size={58} />
-              </motion.div>
-
-              <div className="daily-reward-earned">
-                <span>Today you earned</span>
-                <strong><BKIcon name="coins" size={22} /> +{lastDailyResult.coins}</strong>
+              <div className="bk-reward-summary">
+                <div>
+                  <span>Coins</span>
+                  <strong>
+                    <BKIcon name="coins" size={22} /> +{lastDailyResult.coins}
+                  </strong>
+                </div>
+                <div>
+                  <span>Streak</span>
+                  <strong>{lastDailyResult.streak} days</strong>
+                </div>
               </div>
 
               {lastDailyResult.streakBonus > 0 && (
-                <div className="daily-reward-bonus">
-                  <BKIcon name="dailyStreak" size={20} /> Streak bonus +{lastDailyResult.streakBonus}
-                </div>
+                <AuthNotice tone="success">
+                  <BKIcon name="dailyStreak" size={20} /> Streak bonus +
+                  {lastDailyResult.streakBonus}
+                </AuthNotice>
               )}
 
-              <div className="daily-reward-road">
-                <div
-                  className="daily-reward-road-fill"
-                  style={{
-                    width: `${
-                      ((Math.min(7, ((lastDailyResult.streak - 1) % 7) + 1) -
-                        1) /
-                        6) *
-                      86
-                    }%`,
-                  }}
-                />
+              <div className="bk-streak-road">
                 {getStreakRoadDays(lastDailyResult.streak).map((day) => {
                   const reached = lastDailyResult.streak >= day.day;
                   const currentDay = lastDailyResult.streak === day.day;
@@ -9087,9 +9632,9 @@ const startConnectionsGame = (difficulty = null) => {
                   return (
                     <motion.div
                       key={day.day}
-                      className={`daily-reward-day ${
-                        reached ? "reached" : ""
-                      } ${currentDay ? "current newly-lit" : ""}`}
+                      className={`bk-streak-day ${
+                        reached ? "is-reached" : ""
+                      } ${currentDay ? "is-current" : ""}`}
                       initial={{
                         opacity: previousReached ? 1 : 0.58,
                         y: currentDay ? 12 : 0,
@@ -9098,92 +9643,76 @@ const startConnectionsGame = (difficulty = null) => {
                       animate={{
                         opacity: reached ? 1 : 0.78,
                         y: currentDay ? -6 : 0,
-                        scale: currentDay ? [1, 1.14, 1.06] : 1,
+                        scale: currentDay ? [1, 1.08, 1.03] : 1,
                       }}
                       transition={{
-                        delay: day.dayInRoad * 0.055,
-                        duration: currentDay ? 0.62 : 0.24,
+                        delay: day.dayInRoad * 0.04,
+                        duration: currentDay ? 0.42 : 0.2,
                         ease: [0.22, 1, 0.36, 1],
                       }}
                     >
-                      <div className="daily-reward-ball">
+                      <div className="bk-streak-icon" aria-hidden="true">
                         <BKIcon
-                          name={currentDay ? "dailyStreak" : reached ? "dailyChallenge" : "singlePlayer"}
-                          size={26}
+                          name={
+                            currentDay
+                              ? "dailyStreak"
+                              : reached
+                              ? "dailyChallenge"
+                              : "singlePlayer"
+                          }
+                          size={22}
                         />
                       </div>
-
-                      <div className="daily-reward-day-label">
-                        Day {day.day}
-                      </div>
-
-                      <div className="daily-reward-day-coins">
-                        +{day.reward}
-                      </div>
+                      <strong>Day {day.day}</strong>
+                      <small>{reached ? "Claimed" : "Upcoming"}</small>
+                      <small>+{day.reward}</small>
                     </motion.div>
                   );
                 })}
               </div>
 
-              <div className="daily-reward-next">
+              <AuthNotice tone="info">
                 Next reward: Day{" "}
                 {getNextStreakRewardInfo(lastDailyResult.streak, true).day} • +
                 {getNextStreakRewardInfo(lastDailyResult.streak, true).reward} coins
-              </div>
+              </AuthNotice>
 
-              <button
-                className="daily-reward-claim"
+              <Button
                 onClick={() => setShowDailyCompletePopup(false)}
+                fullWidth
               >
-                CLAIM
-              </button>
-              </motion.div>
-            </motion.div>
+                Claim
+              </Button>
+            </Modal>
           )}
         </AnimatePresence>
         <AnimatePresence>
   {levelUpPopup && isHomeScreen && (
-    <motion.div
-      className="level-up-overlay"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+    <Modal
+      title="Level Up"
+      variant="reward"
+      showClose={false}
+      cardClassName="bk-reward-card"
+      onClose={() => {
+        playClickSound();
+        setLevelUpPopup(null);
+      }}
     >
-      <motion.div
-        className={`level-up-card level-${levelUpPopup.newLevel.color}`}
-        initial={{ scale: 0.72, y: 60, rotate: -3 }}
-        animate={{ scale: 1, y: 0, rotate: 0 }}
-        exit={{ scale: 0.86, y: -30, opacity: 0 }}
-        transition={{
-          type: "spring",
-          stiffness: 170,
-          damping: 12,
-        }}
-      >
         <motion.div
-          className="level-up-burst"
-          initial={{ scale: 0, rotate: 0 }}
-          animate={{ scale: 1, rotate: 180 }}
-          transition={{ duration: 0.55, ease: "easeOut" }}
-        >
-          <BKIcon name="rankings" size={54} />
-        </motion.div>
-
-        <motion.div
-          className="level-up-title"
-          initial={{ y: 12, opacity: 0 }}
+          className="bk-level-up-title"
+          initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.12 }}
+          transition={{ duration: 0.22 }}
         >
-          LEVEL UP!
+          Level {levelUpPopup.newLevel.id}
         </motion.div>
 
-        <div className="level-up-evolution multi">
+        <div className="bk-level-evolution">
           <motion.div
-            className="level-up-icon old"
-            initial={{ scale: 1, x: 0 }}
-            animate={{ scale: [1, 0.88, 1], x: [-4, 0, -4] }}
-            transition={{ duration: 0.7, repeat: 1 }}
+            className="bk-level-evolution__icon"
+            initial={{ scale: 0.96 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.2 }}
           >
             <LevelIcon levelId={levelUpPopup.oldLevel.id} size={76} />
           </motion.div>
@@ -9191,7 +9720,7 @@ const startConnectionsGame = (difficulty = null) => {
           {levelUpPopup.unlockedLevels.map((level, index) => (
             <React.Fragment key={`${level.name}-${level.id}`}>
               <motion.div
-                className="level-up-arrow"
+                className="bk-type-section-title"
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{
@@ -9204,15 +9733,14 @@ const startConnectionsGame = (difficulty = null) => {
               </motion.div>
 
               <motion.div
-                className={`level-up-icon ${
+                className={`bk-level-evolution__icon ${
                   index === levelUpPopup.unlockedLevels.length - 1
-                    ? "new"
-                    : "middle"
+                    ? "is-new"
+                    : ""
                 }`}
-                initial={{ scale: 0.2, rotate: -20, opacity: 0 }}
+                initial={{ scale: 0.85, opacity: 0 }}
                 animate={{
-                  scale: [0.2, 1.22, 1],
-                  rotate: [-20, 8, 0],
+                  scale: [0.85, 1.08, 1],
                   opacity: 1,
                 }}
                 transition={{
@@ -9227,72 +9755,60 @@ const startConnectionsGame = (difficulty = null) => {
           ))}
         </div>
 
-        <motion.div
-          className="level-up-unlocked"
-          initial={{ y: 18, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.68 }}
-        >
-          {levelUpPopup.newLevel.name}
-        </motion.div>
-
-        <motion.div
-          className="level-up-subtitle"
-          initial={{ y: 14, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.82 }}
-        >
-          {levelUpPopup.levelsGained > 1
-            ? `${levelUpPopup.levelsGained} new ranks unlocked`
-            : "New rank unlocked"}
+        <div className="bk-progression-copy">
+          <p className="bk-type-label">
+            {levelUpPopup.levelsGained > 1
+              ? `${levelUpPopup.levelsGained} new ranks unlocked`
+              : "New rank unlocked"}
+          </p>
+          <h3>{levelUpPopup.newLevel.name}</h3>
           {levelUpPopup.coins ? (
-            <span className="level-up-coin-bonus">
+            <AuthNotice tone="success">
               <BKIcon name="coins" size={20} /> +{levelUpPopup.coins} coins
-            </span>
+            </AuthNotice>
           ) : null}
-        </motion.div>
+        </div>
 
-        <motion.div
-          className="level-up-progress-glow"
-          initial={{ width: "0%" }}
-          animate={{ width: "100%" }}
-          transition={{ delay: 0.85, duration: 0.75 }}
+        <ProgressBar
+          label="Level progress"
+          value={100}
+          valueLabel="Level unlocked"
         />
 
-        <button
-          className="level-up-button"
+        <Button
           onClick={() => {
             playClickSound();
             setLevelUpPopup(null);
           }}
+          fullWidth
         >
-          AWESOME
-        </button>
-      </motion.div>
-    </motion.div>
+          Awesome
+        </Button>
+    </Modal>
   )}
 </AnimatePresence>
 
         <AnimatePresence mode="wait" initial={false}>
           <ScreenTransition key={currentHomeViewKey}>
         {profileOpen ? (
-          <div className="profile-screen">
-            <button
-              className="profile-top-back-button"
-              onClick={() => {
-                playClickSound();
-                setProfileOpen(false);
-              }}
-            >
-              BACK
-            </button>
-            <motion.div
-              className={`profile-card level-${playerLevel.color}`}
-              initial={{ opacity: 0, scale: 0.9, y: 26 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 160, damping: 14 }}
-            >
-              <div className="profile-hero-row">
+          <AppScreen backgroundImage={stadiumBg} className="bk-nav-screen" width="wide">
+            <div className="bk-profile-shell">
+              <ScreenHeader
+                kicker="Profile"
+                title={displayName}
+                subtitle="Your identity, progress and competitive record."
+                leadingAction={
+                  <BackButton
+                    label="Back"
+                    onClick={() => {
+                      playClickSound();
+                      setProfileOpen(false);
+                    }}
+                  />
+                }
+              />
+
+              <SurfaceCard className="bk-profile-identity">
                 <PlayerAvatar
                   profile={{
                     ...profile,
@@ -9304,20 +9820,13 @@ const startConnectionsGame = (difficulty = null) => {
                   }}
                   size="large"
                   button
-                  className="profile-avatar-button"
                   onClick={openAvatarBuilder}
                   label="Edit avatar"
                 />
 
-                <div className="profile-name-wrap">
-                  <div className="profile-title">Your Profile</div>
-                  <div className="profile-name-pill">
-                    <span>{profileAvatar.flag}</span> {displayName}
-                  </div>
-                  <button className="profile-edit-avatar-button" onClick={openAvatarBuilder}>
-                    Edit Avatar
-                  </button>
-                  <div className={`profile-sync-pill ${profileStatus}`}>
+                <div className="bk-profile-copy">
+                  <strong><span>{profileAvatar.flag}</span> {displayName}</strong>
+                  <StatusBadge tone={profileStatus === "ready" ? "success" : "info"}>
                     {isGuest
                       ? "Guest profile"
                       : profileStatus === "ready"
@@ -9325,395 +9834,575 @@ const startConnectionsGame = (difficulty = null) => {
                       : profileStatus === "syncing"
                       ? "Syncing profile..."
                       : profileError || "Local profile"}
-                  </div>
+                  </StatusBadge>
                   {!isGuest && effectiveAuthUser?.email && (
-                    <div className="profile-account-email">{effectiveAuthUser.email}</div>
+                    <span className="bk-profile-email">{effectiveAuthUser.email}</span>
                   )}
+                  <Button variant="secondary" onClick={openAvatarBuilder}>
+                    Edit Avatar
+                  </Button>
                 </div>
-              </div>
+              </SurfaceCard>
 
-              <div className="profile-level-name">{playerLevel.name}</div>
-
-              <button className="profile-level-button" onClick={openLevelModal}>
-                <div className="home-level-label">
-                  Level {playerLevel.levelNumber}
+              <SurfaceCard
+                as="button"
+                interactive
+                className="bk-profile-level"
+                onClick={openLevelModal}
+              >
+                <div className="bk-profile-level__top">
+                  <div className="bk-row-copy">
+                    <small>Level {playerLevel.levelNumber}</small>
+                    <strong>{playerLevel.name}</strong>
+                  </div>
+                  <LevelIcon levelId={playerLevel.id} size={42} />
                 </div>
+                <ProgressBar
+                  value={playerLevel.progress}
+                  max={100}
+                  label="Progress"
+                  valueLabel={playerLevel.next ? levelObjectiveSummary : "Legend status"}
+                />
+              </SurfaceCard>
 
-                <div className="profile-bar-outer">
-                  <div
-                    className="profile-bar-inner"
-                    style={{ width: `${playerLevel.progress}%` }}
-                  />
-                </div>
-
-                <div className="profile-next-level">
-                  {playerLevel.next
-                    ? `${levelObjectiveSummary} toward ${playerLevel.next.name}`
-                    : "Legend status reached"}
-                </div>
-              </button>
-
-              <div className="profile-stats-grid">
-                <div className="profile-stat-card">
-                  <span><BKIcon name="dailyStreak" size={24} /></span>
-                  <strong>{highScore}</strong>
-                  <small>Best score</small>
-                </div>
-
-                <button
-                  className="profile-stat-card profile-stat-button"
+              <div className="bk-stat-grid">
+                <SurfaceCard
+                  as="button"
+                  interactive
                   onClick={openCoinShop}
+                  className="bk-stat-grid__item"
                 >
                   <span><BKIcon name="coins" size={24} /></span>
                   <strong>{coins}</strong>
                   <small>Coins</small>
-                </button>
+                </SurfaceCard>
 
-                <button
-                  className="profile-stat-card profile-stat-button"
+                <SurfaceCard
+                  as="button"
+                  interactive
                   onClick={openDailyRewardMeter}
+                  className="bk-stat-grid__item"
                 >
-                  <span><BKIcon name="dailyChallenge" size={24} /></span>
+                  <span><BKIcon name="dailyChallenge" size={65} /></span>
                   <strong>{dailyStreak}</strong>
                   <small>Daily streak</small>
-                </button>
-
-                <div className="profile-stat-card">
-                  <span><LevelIcon levelId={playerLevel.id} size={26} /></span>
-                  <strong>{playerLevel.levelNumber}</strong>
-                  <small>Level</small>
-                </div>
-
-                <div className="profile-stat-card">
-                  <span><BKIcon name="h2h" size={24} /></span>
-                  <strong>{profileStats.multiplayerWins}</strong>
-                  <small>Wins</small>
-                </div>
-
-                <div className="profile-stat-card">
-                  <span><BKIcon name="questionMark" size={24} /></span>
-                  <strong>{profileStats.multiplayerLosses}</strong>
-                  <small>Losses</small>
-                </div>
-
-                <div className="profile-stat-card">
-                  <span><BKIcon name="multiplayer" size={24} /></span>
-                  <strong>{profileStats.multiplayerDraws}</strong>
-                  <small>Draws</small>
-                </div>
-
-                <div className="profile-stat-card">
-                  <span><BKIcon name="activeMatches" size={24} /></span>
-                  <strong>{activeGames.length}</strong>
-                  <small>Active</small>
-                </div>
+                </SurfaceCard>
               </div>
 
-              <div className="profile-record-strip">
-                <strong>
-                  {profileStats.multiplayerWins}-{profileStats.multiplayerLosses}
-                  -{profileStats.multiplayerDraws}
-                </strong>
-                <span>
+              <SurfaceCard>
+                <p className="bk-section-title">Competitive record</p>
+                <StatGrid
+                  items={[
+                    { label: "Best score", value: highScore, icon: <BKIcon name="dailyStreak" size={22} /> },
+                    { label: "Wins", value: profileStats.multiplayerWins, icon: <BKIcon name="h2h" size={22} /> },
+                    { label: "Losses", value: profileStats.multiplayerLosses, icon: <BKIcon name="questionMark" size={22} /> },
+                    { label: "Draws", value: profileStats.multiplayerDraws, icon: <BKIcon name="multiplayer" size={22} /> },
+                    { label: "Active", value: activeGames.length, icon: <BKIcon name="activeMatches" size={22} /> },
+                    { label: "Level", value: playerLevel.levelNumber, icon: <LevelIcon levelId={playerLevel.id} size={22} /> },
+                  ]}
+                />
+                <span className="bk-profile-record">
                   Multiplayer rounds counted: {profileStats.multiplayerMatches}
                 </span>
-              </div>
+              </SurfaceCard>
 
-              <button
-                className={`profile-sound-toggle ${soundOn ? "on" : "off"}`}
-                onClick={toggleSound}
-                aria-pressed={soundOn}
-              >
-                <span>Sound</span>
-                <strong>{soundOn ? "On" : "Off"}</strong>
-                <i />
-              </button>
+              {/* ACCOUNT */}
+<SurfaceCard className="bk-account-panel">
+  <div className="bk-account-panel__heading">
+    <div>
+      <span className="bk-type-label">ACCOUNT</span>
 
-              <div className="profile-actions">
-                {isGuest ? (
-                  <>
-                    <button
-                      className="profile-change-name-button"
-                      onClick={changeUsername}
-                    >
-                      CHANGE GUEST NAME
-                    </button>
-                    <button
-                      className="profile-auth-button"
-                      onClick={switchAccount}
-                    >
-                      SWITCH ACCOUNT
-                    </button>
-                  </>
-                ) : (
-                  <button className="profile-logout-button" onClick={logout}>
-                    LOG OUT
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          </div>
+      <strong>
+        {isGuest ? "Guest account" : "Your Ball Knowledge account"}
+      </strong>
+
+      <p>
+        {isGuest
+          ? "Your progress is currently stored on this device."
+          : "Your profile and progression are connected to your account."}
+      </p>
+    </div>
+
+    <StatusBadge tone={isGuest ? "warning" : "success"}>
+      {isGuest ? "Guest" : "Synced"}
+    </StatusBadge>
+  </div>
+
+  {isGuest ? (
+    <>
+      <div className="bk-account-upgrade">
+        <div className="bk-account-upgrade__icon">
+          <BKIcon name="profile" size={24} />
+        </div>
+
+        <div>
+          <strong>Keep your progress safe</strong>
+          <p>
+            Create a free account to save your progress and use your profile
+            across devices.
+          </p>
+        </div>
+      </div>
+
+      <div className="bk-account-primary-actions">
+        <Button
+          variant="primary"
+          onClick={openGuestSignup}
+          fullWidth
+        >
+          Create Account
+        </Button>
+
+        <Button
+          variant="secondary"
+          onClick={openGuestLogin}
+          fullWidth
+        >
+          Log In
+        </Button>
+      </div>
+
+      <button
+        type="button"
+        className="bk-account-text-action"
+        onClick={changeUsername}
+      >
+        Change guest name
+      </button>
+    </>
+  ) : (
+    <>
+      {effectiveAuthUser?.email && (
+        <div className="bk-account-email-row">
+          <span>Email</span>
+          <strong>{effectiveAuthUser.email}</strong>
+        </div>
+      )}
+
+      <div className="bk-account-primary-actions">
+        <Button
+          variant="secondary"
+          onClick={logout}
+          fullWidth
+        >
+          Switch Account
+        </Button>
+      </div>
+
+      <button
+        type="button"
+        className="bk-account-text-action bk-account-text-action--danger"
+        onClick={logout}
+      >
+        Log out
+      </button>
+    </>
+  )}
+</SurfaceCard>
+
+{/* SETTINGS */}
+<SurfaceCard className="bk-settings-panel">
+  <div className="bk-settings-row">
+    <div className="bk-settings-row__copy">
+      <strong>Sound</strong>
+      <span>Game sounds and feedback</span>
+    </div>
+
+    <button
+      type="button"
+      className={`bk-settings-toggle ${soundOn ? "is-active" : ""}`}
+      onClick={toggleSound}
+      aria-pressed={soundOn}
+      aria-label={`Turn sound ${soundOn ? "off" : "on"}`}
+    >
+      <span />
+    </button>
+  </div>
+</SurfaceCard>
+            </div>
+          </AppScreen>
         ) : leaderboardOpen ? (
-          <div className="leaderboard-screen">
-            <motion.div
-              className="leaderboard-card"
-              initial={{ opacity: 0, scale: 0.92, y: 24 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 160, damping: 14 }}
-            >
-              <div className="leaderboard-topbar">
-                <div className="leaderboard-kicker">Community</div>
-                <button
-                  className="leaderboard-back-button"
-                  onClick={() => {
-                    playClickSound();
-                    setLeaderboardOpen(false);
-                  }}
-                >
-                  BACK
-                </button>
+          <AppScreen backgroundImage={stadiumBg} className="bk-nav-screen" width="wide">
+            <div className="bk-leaderboard-shell bk-leaderboard-shell--premium">
+              <div className="bk-leaderboard-hero">
+                <ScreenHeader
+                  kicker="Community"
+                  title="Leaderboard"
+                  subtitle="See how you stack up against the Ball Knowledge community."
+                  leadingAction={
+                    <BackButton
+                      label="Back"
+                      onClick={() => {
+                        playClickSound();
+                        setLeaderboardOpen(false);
+                      }}
+                    />
+                  }
+                />
+                <div className="bk-leaderboard-hero-icon" aria-hidden="true">
+                  <BKIcon name="rankings" size={54} />
+                </div>
               </div>
 
-              <h1 className="leaderboard-title">Leaderboard</h1>
-              <p className="leaderboard-subtitle">
-                All Time • Real player profiles
-              </p>
-
-              <div className="leaderboard-tabs leaderboard-tabs-premium">
-                <button
-                  className={leaderboardTab === "general" ? "active" : ""}
-                  onClick={() => setLeaderboardTab("general")}
-                >
-                  General Knowledge
-                </button>
-                <button
-                  className={leaderboardTab === "levels" ? "active" : ""}
-                  onClick={() => setLeaderboardTab("levels")}
-                >
-                  Highest Levels
-                </button>
-              </div>
-
-              <div className="leaderboard-mode-pill">
-                {leaderboardTab === "levels" ? "Highest Levels" : "General Knowledge"}
-              </div>
+              <SegmentedControl
+                ariaLabel="Leaderboard view"
+                value={leaderboardTab}
+                onChange={setLeaderboardTab}
+                options={[
+                  { value: "general", label: "General Knowledge" },
+                  { value: "levels", label: "Levels" },
+                ]}
+              />
 
               {leaderboardLoading ? (
-                <div className="leaderboard-empty-state">
-                  <strong>Loading scores...</strong>
-                  <span>Finding the sharpest ball knowledge.</span>
-                </div>
-              ) : leaderboardTab === "general" && leaderboardRows.length > 0 ? (
-                <div className="leaderboard-list">
-                  {leaderboardRows.map((row) => (
-                    <div
-                      key={row.id || row.username}
-                      className={`leaderboard-row rank-${row.rank} ${
-                        row.isCurrentUser ? "current-user" : ""
-                      }`}
-                    >
-                      <div className="leaderboard-rank">
-                        {row.medal || row.rank}
-                      </div>
+                <LeaderboardLoadingState type={leaderboardTab} />
+              ) : (() => {
+                const rows =
+                  leaderboardTab === "levels" ? levelLeaderboardRows : leaderboardRows;
+                const currentRow =
+                  leaderboardTab === "levels"
+                    ? currentLevelLeaderboardRow
+                    : currentLeaderboardRow;
+                const podiumRows = rows.length >= 3 ? rows.slice(0, 3) : [];
+                const listRows = rows.length >= 3 ? rows.slice(3) : rows;
 
-                      <PlayerAvatar profile={row} size="small" />
+                if (rows.length === 0) {
+                  return (
+                    <LeaderboardEmptyState
+                      type={leaderboardTab}
+                      message={leaderboardError}
+                    />
+                  );
+                }
 
-                      <div className="leaderboard-player">
-                        <strong>{row.username}</strong>
-                        <small>
-                          {row.isCurrentUser ? "You" : "General Knowledge"}
-                        </small>
-                      </div>
-
-                      <div className="leaderboard-score">{row.score}</div>
+                return (
+                  <div className="bk-leaderboard-board">
+                    <div className="bk-leaderboard-board-top">
+                      <StatusBadge tone={leaderboardTab === "levels" ? "info" : "success"}>
+                        {leaderboardTab === "levels" ? "Level ranking" : "Best score ranking"}
+                      </StatusBadge>
+                      <span>{rows.length} real players</span>
                     </div>
-                  ))}
-                </div>
-              ) : leaderboardTab === "levels" && levelLeaderboardRows.length > 0 ? (
-                <div className="leaderboard-list">
-                  {levelLeaderboardRows.map((row) => (
-                    <motion.div
-                      key={row.id || row.username}
-                      className={`leaderboard-row level-leaderboard-row rank-${row.rank} ${
-                        row.isCurrentUser ? "current-user" : ""
-                      }`}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: row.rank * 0.035, duration: 0.22 }}
-                    >
-                      <div className="leaderboard-rank">
-                        {row.medal || row.rank}
-                      </div>
 
-                      <PlayerAvatar profile={row} size="small" />
+                    {podiumRows.length === 3 && (
+                      <LeaderboardPodium rows={podiumRows} type={leaderboardTab} />
+                    )}
 
-                      <div className="leaderboard-player">
-                        <strong>{row.username}</strong>
+                    <div className="bk-leaderboard-list-v2">
+                      {listRows.map((row) => (
+                        <LeaderboardRow
+                          key={row.id || row.username}
+                          row={row}
+                          type={leaderboardTab}
+                        />
+                      ))}
+                    </div>
+
+                    {currentRow && (
+                      <div className="bk-leaderboard-current-card">
+                        <span>Your standing</span>
+                        <LeaderboardRow row={currentRow} type={leaderboardTab} featured />
                         <small>
-                          Level {row.levelId} · {row.levelName}
+                          Ranking shown from the current live leaderboard window.
                         </small>
                       </div>
-
-                      <div className="leaderboard-score level-score">
-                        <span><LevelIcon levelId={row.levelId} size={26} /></span>
-                        <strong>{row.xpTotal.toLocaleString()}</strong>
-                        <small>XP</small>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              ) : (
-                <div className="leaderboard-empty-state">
-                  <strong>
-                    {leaderboardTab === "levels" ? "No levels yet" : "No rankings yet"}
-                  </strong>
-                  <span>
-                    {leaderboardError ||
-                      (leaderboardTab === "levels"
-                        ? "Earn XP to appear on the levels leaderboard"
-                        : "No rankings yet. Play a game to enter the leaderboard.")}
-                  </span>
-                </div>
-              )}
-
-            </motion.div>
-          </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          </AppScreen>
         ) : multiplayerOpen ? (
-          <div className="multiplayer-screen">
-            <motion.div
-              className="multiplayer-card"
-              initial={{ opacity: 0, scale: 0.92, y: 24 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 160, damping: 14 }}
-            >
-              <div className="multiplayer-topbar">
-                <GameTopNav label="Back" onClick={goBackMultiplayer} />
-              </div>
-
-              <div className="multiplayer-badge">
-                <BKIcon name="multiplayer" size={22} /> Arena
-              </div>
-              <h1 className="multiplayer-title">Arena</h1>
+          <AppScreen backgroundImage={stadiumBg} className="bk-nav-screen" width="wide">
+            <div className="bk-arena-shell">
+              <ScreenHeader
+                kicker="Arena"
+                title="Multiplayer"
+                subtitle="Play random matches, challenge friends, or run a daily league."
+                leadingAction={<BackButton label="Back" onClick={goBackMultiplayer} />}
+              />
 
               {multiplayerError && (
-                <div className="multiplayer-error">{multiplayerError}</div>
+                <div className="bk-notice bk-notice--error">{multiplayerError}</div>
               )}
 
               {multiplayerNotice && (
-                <div className="multiplayer-notice">{multiplayerNotice}</div>
+                <div className="bk-notice">{multiplayerNotice}</div>
               )}
 
               {multiplayerStep === "menu" && (
-                <div className="arena-hub-grid">
-                  <button
-                    className="arena-hub-card play-now"
-                    onClick={openPlayNowLobby}
-                    disabled={multiplayerLoading}
-                  >
-                    <span><BKIcon name="playNow" size={48} /></span>
-                    <strong>Play Now</strong>
-                    <small>Random async matches</small>
-                  </button>
+  <div className="bk-mp-hub">
 
-                  <button
-                    className="arena-hub-card h2h"
-                    onClick={() => openArenaSection("h2h-menu")}
-                  >
-                    <span><BKIcon name="h2h" size={48} /></span>
-                    <strong>H2H</strong>
-                    <small>Async 1v1 battles</small>
-                  </button>
+    {/* ARENA INTRO */}
+    <section className="bk-mp-hero">
+      <span className="bk-mp-hero-glow" aria-hidden="true" />
+      <span className="bk-mp-hero-ball" aria-hidden="true">
+        <svg viewBox="0 0 160 160">
+          <circle cx="80" cy="80" r="52" className="bk-mp-svg-line" />
+          <polygon
+            points="80,48 101,63 93,88 67,88 59,63"
+            className="bk-mp-svg-fill"
+          />
+          <path
+            d="M80 48 L80 29
+               M101 63 L121 52
+               M93 88 L108 108
+               M67 88 L52 108
+               M59 63 L39 52"
+            className="bk-mp-svg-line"
+          />
+        </svg>
+      </span>
 
-                  <button
-                    className="arena-hub-card league"
-                    onClick={() => openArenaSection("league-menu")}
-                  >
-                    <span><BKIcon name="league" size={48} /></span>
-                    <strong>League</strong>
-                    <small>Daily points with friends</small>
-                  </button>
-                </div>
-              )}
+      <span className="bk-mp-eyebrow">MULTIPLAYER ARENA</span>
+
+      <h2>
+        Take on
+        <br />
+        the competition.
+      </h2>
+
+      <p>
+        Play instantly, challenge rivals or build your own league.
+      </p>
+
+      <div className="bk-mp-live-strip">
+        <span className="bk-mp-live-dot" />
+        <span>Competitive football knowledge</span>
+      </div>
+    </section>
+
+
+    {/* PLAY NOW — PRIMARY MULTIPLAYER DESTINATION */}
+    <button
+      type="button"
+      className="bk-mp-card bk-mp-card--play"
+      onClick={openPlayNowLobby}
+      disabled={multiplayerLoading}
+    >
+      <span className="bk-mp-card-art bk-mp-card-art--play" aria-hidden="true">
+        <svg viewBox="0 0 220 160">
+          <circle cx="150" cy="82" r="52" className="bk-mp-svg-soft" />
+          <circle cx="150" cy="82" r="34" className="bk-mp-svg-line" />
+
+          <polygon
+            points="150,58 165,69 159,87 141,87 135,69"
+            className="bk-mp-svg-fill"
+          />
+
+          <path
+            d="M150 58 L150 45
+               M165 69 L181 61
+               M159 87 L169 101
+               M141 87 L131 101
+               M135 69 L119 61"
+            className="bk-mp-svg-line"
+          />
+
+          <path
+            d="M57 52 C74 39 93 39 108 49"
+            className="bk-mp-svg-motion"
+          />
+          <path
+            d="M53 71 C74 58 94 58 112 68"
+            className="bk-mp-svg-motion"
+          />
+        </svg>
+      </span>
+
+      <span className="bk-mp-card-icon">
+        <BKIcon name="playNow" size={36} />
+      </span>
+
+      <span className="bk-mp-card-copy">
+        <small>QUICK MATCH</small>
+
+        <strong>Play Now</strong>
+
+        <span>
+          Jump into a random async match.
+        </span>
+      </span>
+
+      <span className="bk-mp-card-meta">
+        <span>
+          <small>MATCH TYPE</small>
+          <strong>Random opponent</strong>
+        </span>
+
+        <b aria-hidden="true">›</b>
+      </span>
+    </button>
+
+
+    {/* SECONDARY ARENA MODES */}
+    <div className="bk-mp-secondary-grid">
+
+      {/* H2H */}
+      <button
+        type="button"
+        className="bk-mp-card bk-mp-card--h2h"
+        onClick={() => openArenaSection("h2h-menu")}
+      >
+        <span className="bk-mp-card-art bk-mp-card-art--h2h" aria-hidden="true">
+          <svg viewBox="0 0 180 160">
+            <path
+              d="M50 45 L126 121"
+              className="bk-mp-svg-sword"
+            />
+            <path
+              d="M126 45 L50 121"
+              className="bk-mp-svg-sword"
+            />
+            <circle cx="88" cy="82" r="46" className="bk-mp-svg-soft" />
+          </svg>
+        </span>
+
+        <span className="bk-mp-card-top">
+          <span className="bk-mp-card-icon">
+            <BKIcon name="h2h" size={32} />
+          </span>
+
+          <span className="bk-mp-card-arrow" aria-hidden="true">
+            ›
+          </span>
+        </span>
+
+        <span className="bk-mp-card-copy">
+          <small>1 VS 1</small>
+          <strong>H2H</strong>
+          <span>Challenge a friend or rival.</span>
+        </span>
+
+        <span className="bk-mp-card-footer">
+          HEAD TO HEAD
+        </span>
+      </button>
+
+
+      {/* LEAGUE */}
+      <button
+        type="button"
+        className="bk-mp-card bk-mp-card--league"
+        onClick={() => openArenaSection("league-menu")}
+      >
+        <span className="bk-mp-card-art bk-mp-card-art--league" aria-hidden="true">
+          <svg viewBox="0 0 180 160">
+            <path
+              d="M49 117
+                 C69 91 70 63 63 38
+                 C87 53 106 53 128 38
+                 C121 65 124 92 142 117"
+              className="bk-mp-svg-laurel"
+            />
+
+            <path
+              d="M72 78
+                 L90 55
+                 L108 78
+                 L122 62
+                 L117 103
+                 H63
+                 L58 62
+                 Z"
+              className="bk-mp-svg-fill"
+            />
+          </svg>
+        </span>
+
+        <span className="bk-mp-card-top">
+          <span className="bk-mp-card-icon">
+            <BKIcon name="league" size={32} />
+          </span>
+
+          <span className="bk-mp-card-arrow" aria-hidden="true">
+            ›
+          </span>
+        </span>
+
+        <span className="bk-mp-card-copy">
+          <small>COMPETE TOGETHER</small>
+          <strong>League</strong>
+          <span>Daily points and private tables.</span>
+        </span>
+
+        <span className="bk-mp-card-footer">
+          DAILY COMPETITION
+        </span>
+      </button>
+
+    </div>
+
+  </div>
+)}
 
               {multiplayerStep === "play-now" && (
-                <div className="play-now-lobby">
-                  <div className="play-now-lobby-hero">
-                    <div>
-                      <div className="league-kicker">Arena</div>
-                      <h2>Play Now</h2>
-                      <p>
-                        Play a random async match. You play now, your opponent
-                        answers later.
-                      </p>
-                    </div>
-                  </div>
+  <section className="bk-mp-submenu bk-mp-submenu--play">
+    <header className="bk-mp-subhead">
+      <span className="bk-mp-subhead__icon">
+        <BKIcon name="playNow" size={34} />
+      </span>
 
-                  <div className="play-now-choice-grid">
-                    <button
-                      type="button"
-                      className="play-now-choice-card current"
-                      onClick={openCurrentRandomMatches}
-                      disabled={playNowGamesLoading}
-                    >
-                      <span><BKIcon name="activeRandomMatches" size={42} /></span>
-                      <strong>
-                        {playNowGamesLoading
-                          ? "Loading..."
-                          : "Active Random Matches"}
-                      </strong>
-                      <small>Continue matches you already started.</small>
-                    </button>
+      <div>
+        <span className="bk-mp-subhead__eyebrow">QUICK MATCH</span>
+        <h2>Play Now</h2>
+        <p>Jump into the arena or continue a match already in progress.</p>
+      </div>
+    </header>
 
-                    <button
-                      type="button"
-                      className="play-now-choice-card start"
-                      onClick={() => startPlayNow(playNowCategory)}
-                      disabled={multiplayerLoading}
-                    >
-                      <span><BKIcon name="startNewRandomMatch" size={42} /></span>
-                      <strong>
-                        {multiplayerLoading
-                          ? "Finding..."
-                          : "Start New Random Match"}
-                      </strong>
-                      <small>Find an opponent and start a new async match.</small>
-                    </button>
-                  </div>
+    <div className="bk-mp-option-stack">
+      <ArenaOptionCard
+        tone="primary"
+        icon="startNewRandomMatch"
+        eyebrow="NEW MATCH"
+        title={multiplayerLoading ? "Finding opponent..." : "Find an Opponent"}
+        description="Start a fresh random async battle."
+        onClick={() => startPlayNow(playNowCategory)}
+        disabled={multiplayerLoading}
+      />
 
-                </div>
-              )}
+      <ArenaOptionCard
+        tone="blue"
+        icon="activeRandomMatches"
+        eyebrow="YOUR GAMES"
+        title={playNowGamesLoading ? "Loading..." : "Active Matches"}
+        description="Continue random matches you already started."
+        onClick={openCurrentRandomMatches}
+        disabled={playNowGamesLoading}
+      />
+    </div>
+  </section>
+)}
 
               {multiplayerStep === "play-now-active-games" && (
-                <div className="active-games-page play-now-active-page">
-                  <div className="active-games-page-header">
+                <div className="bk-stack">
+                  <SurfaceCard className="bk-profile-level__top">
                     <div>
-                      <div className="league-kicker">Arena</div>
-                      <h2>Active Random Matches</h2>
-                      <p>Continue random matches you already started.</p>
+                      <p className="bk-type-label">Arena</p>
+                      <h2 className="bk-type-section-title">Active Random Matches</h2>
+                      <p className="bk-type-body">Continue random matches you already started.</p>
                     </div>
-                    <button
+                    <Button
                       type="button"
-                      className="refresh-play-now-button"
+                      variant="secondary"
                       onClick={() => loadPlayNowGames()}
                       disabled={playNowGamesLoading}
                     >
                       {playNowGamesLoading ? "Refreshing..." : "Refresh"}
-                    </button>
-                  </div>
+                    </Button>
+                  </SurfaceCard>
 
-                  <div className="active-games-panel play-now-games-panel standalone">
+                  <SurfaceCard>
                     {playNowGamesLoading ? (
-                      <div className="active-games-empty">
-                        <strong>Loading current matches...</strong>
-                        <span>Checking your saved random matches.</span>
-                      </div>
+                      <EmptyState title="Loading current matches..." icon={<BKIcon name="activeRandomMatches" size={24} />}>
+                        Checking your saved random matches.
+                      </EmptyState>
                     ) : playNowGames.length === 0 ? (
-                      <div className="active-games-empty">
-                        <strong>No current random matches</strong>
-                        <span>Start a new random match when you are ready.</span>
-                      </div>
+                      <EmptyState title="No current random matches" icon={<BKIcon name="playNow" size={24} />}>
+                        Start a new random match when you are ready.
+                      </EmptyState>
                     ) : (
-                      <div className="active-games-list play-now-games-list">
+                      <div className="bk-match-list">
                         {playNowGames.map(({ match, latestRound }) => {
                           const playerSlot = getCurrentPlayerSlot(
                             match,
@@ -9794,173 +10483,173 @@ const startConnectionsGame = (difficulty = null) => {
 
                           return (
                             <div
-                              className={`active-game-card play-now-game-card ${getCategoryClass(
-                                category
-                              )}`}
+                              className="bk-match-row"
                               key={match.id}
                             >
-                              <div className="active-game-top">
-                                <div className="active-game-player">
-                                  <PlayerAvatar profile={opponentProfile} size="small" />
-                                  <strong>
-                                    {opponentLabel === "random opponent"
-                                      ? "Searching random opponent"
-                                      : opponentLabel}
-                                  </strong>
-                                </div>
-                                <span>{match.room_code}</span>
+                              <PlayerAvatar profile={opponentProfile} size="small" />
+                              <div className="bk-row-copy">
+                                <strong>
+                                  {opponentLabel === "random opponent"
+                                    ? "Searching random opponent"
+                                    : opponentLabel}
+                                </strong>
+                                <small>{category ? getCategoryLabel(category) : match.room_code}</small>
+                                <small>{detailText}</small>
                               </div>
-
-                              {category && (
-                                <div
-                                  className={`active-game-category ${getCategoryClass(
-                                    category
-                                  )}`}
-                                >
-                                  {getCategoryLabel(category)}
-                                </div>
-                              )}
-
-                              <div className="active-game-score">
-                                Your score: {userFinished ? userScore : "-"} · Opponent:{" "}
-                                {opponentFinished || isCompleted ? opponentScore : "-"}
+                              <div className="bk-row-score">
+                                <strong>{userFinished ? userScore : "-"}</strong>
+                                <small>{opponentFinished || isCompleted ? opponentScore : "-"}</small>
                               </div>
-
-                              <div
-                                className={`active-game-status ${
-                                  isCompleted
-                                    ? "result"
-                                    : userFinished
-                                    ? "waiting"
-                                    : "your-turn"
-                                }`}
-                              >
-                                {statusText}
-                              </div>
-
-                              <small>{detailText}</small>
-
-                              <div className="active-game-actions">
-                                <button
-                                  className="open-match-button"
-                                  onClick={() => openPlayNowGame(match.id)}
-                                  disabled={multiplayerLoading}
-                                >
+                              <div className="bk-match-actions">
+                                <StatusBadge tone={isCompleted ? "success" : userFinished ? "warning" : "info"}>
+                                  {statusText}
+                                </StatusBadge>
+                                <Button onClick={() => openPlayNowGame(match.id)} disabled={multiplayerLoading}>
                                   {ctaText}
-                                </button>
-
-                                <button
-                                  className="delete-match-button leave-play-now-button"
+                                </Button>
+                                <Button
+                                  variant="destructive"
                                   onClick={() => requestDeleteMatch(match)}
                                   disabled={Boolean(deletingMatchId)}
                                   aria-label="Leave random match"
+                                  leadingIcon={<Trash2 size={16} />}
                                 >
-                                  <Trash2 size={16} />
-                                  <span>Leave</span>
-                                </button>
+                                  Leave
+                                </Button>
                               </div>
                             </div>
                           );
                         })}
                       </div>
                     )}
-                  </div>
+                  </SurfaceCard>
                 </div>
               )}
 
               {multiplayerStep === "league-menu" && (
-                <div className="arena-section-grid league-theme">
-                  <button
-                    className="multiplayer-action-card league-list"
-                    onClick={loadMyLeagues}
-                    disabled={leagueLoading}
-                  >
-                    <span><BKIcon name="myLeagues" size={42} /></span>
-                    <strong>My Leagues</strong>
-                  </button>
+  <section className="bk-mp-submenu bk-mp-submenu--league">
+    <header className="bk-mp-subhead">
+      <span className="bk-mp-subhead__icon bk-mp-subhead__icon--gold">
+        <BKIcon name="league" size={34} />
+      </span>
 
-                  <button
-                    className="multiplayer-action-card league-create"
-                    onClick={() => {
-                      playClickSound();
-                      setLeagueNameInput(`${username}'s League`);
-                      setMultiplayerStep("create-league");
-                    }}
-                  >
-                    <span><BKIcon name="createLeague" size={42} /></span>
-                    <strong>Create League</strong>
-                  </button>
+      <div>
+        <span className="bk-mp-subhead__eyebrow">LEAGUE CLUB</span>
+        <h2>Compete Together</h2>
+        <p>Create daily competitions and climb the table with friends.</p>
+      </div>
+    </header>
 
-                  <button
-                    className="multiplayer-action-card league-join"
-                    onClick={() => {
-                      playClickSound();
-                      setMultiplayerStep("join-league");
-                    }}
-                  >
-                    <span><BKIcon name="joinLeague" size={42} /></span>
-                    <strong>Join League</strong>
-                  </button>
-                </div>
-              )}
+    <div className="bk-mp-option-stack">
+      <ArenaOptionCard
+        tone="gold"
+        icon="myLeagues"
+        eyebrow="YOUR COMPETITIONS"
+        title={leagueLoading ? "Loading..." : "My Leagues"}
+        description="Standings, scores and today's challenge."
+        onClick={loadMyLeagues}
+        disabled={leagueLoading}
+      />
+
+      <ArenaOptionCard
+        tone="purple"
+        icon="createLeague"
+        eyebrow="BUILD YOUR OWN"
+        title="Create League"
+        description="Choose the games, duration and daily format."
+        onClick={() => {
+          playClickSound();
+          setLeagueNameInput(`${username}'s League`);
+          setMultiplayerStep("create-league");
+        }}
+      />
+
+      <ArenaOptionCard
+        tone="primary"
+        icon="joinLeague"
+        eyebrow="INVITE CODE"
+        title="Join League"
+        description="Enter a friend's league code."
+        onClick={() => {
+          playClickSound();
+          setMultiplayerStep("join-league");
+        }}
+      />
+    </div>
+  </section>
+)}
 
               {multiplayerStep === "h2h-menu" && (
-                <div className="arena-section-grid h2h-theme">
-                  <button
-                    className="multiplayer-action-card active-games"
-                    onClick={openActiveGames}
-                    disabled={activeGamesLoading}
-                  >
-                    <span><BKIcon name="activeMatches" size={42} /></span>
-                    <strong>
-                      {activeGamesLoading ? "Loading..." : "Active Matches"}
-                    </strong>
-                  </button>
+  <section className="bk-mp-submenu bk-mp-submenu--h2h">
+    <header className="bk-mp-subhead">
+      <span className="bk-mp-subhead__icon bk-mp-subhead__icon--purple">
+        <BKIcon name="h2h" size={34} />
+      </span>
 
-                  <button
-                    className="multiplayer-action-card create"
-                    onClick={createMultiplayerMatch}
-                    disabled={multiplayerLoading}
-                  >
-                    <span><BKIcon name="createMatch" size={42} /></span>
-                    <strong>{multiplayerLoading ? "Creating..." : "Create Match"}</strong>
-                  </button>
+      <div>
+        <span className="bk-mp-subhead__eyebrow">HEAD TO HEAD</span>
+        <h2>Challenge a Rival</h2>
+        <p>Create a private battle, join a friend or continue the rivalry.</p>
+      </div>
+    </header>
 
-                  <button
-                    className="multiplayer-action-card join"
-                    onClick={() => {
-                      playClickSound();
-                      setMultiplayerStep("join");
-                    }}
-                  >
-                    <span><BKIcon name="joinMatch" size={42} /></span>
-                    <strong>Join Match</strong>
-                  </button>
-                </div>
-              )}
+    <div className="bk-mp-option-stack">
+      <ArenaOptionCard
+        tone="purple"
+        icon="activeMatches"
+        eyebrow="ONGOING"
+        title={activeGamesLoading ? "Loading..." : "Active Matches"}
+        description="Continue ongoing H2H battles."
+        onClick={openActiveGames}
+        disabled={activeGamesLoading}
+      />
+
+      <ArenaOptionCard
+        tone="blue"
+        icon="createMatch"
+        eyebrow="HOST"
+        title={multiplayerLoading ? "Creating..." : "Create Match"}
+        description="Generate a private room code."
+        onClick={createMultiplayerMatch}
+        disabled={multiplayerLoading}
+      />
+
+      <ArenaOptionCard
+        tone="gold"
+        icon="joinMatch"
+        eyebrow="INVITE"
+        title="Join Match"
+        description="Enter a room code from another player."
+        onClick={() => {
+          playClickSound();
+          setMultiplayerStep("join");
+        }}
+      />
+    </div>
+  </section>
+)}
 
               {multiplayerStep === "active-games" && (
-                <div className="active-games-page h2h-active-page">
-                  <div className="active-games-page-header">
+                <div className="bk-stack">
+                  <SurfaceCard className="bk-profile-level__top">
                     <div>
-                      <div className="league-kicker">Arena</div>
-                      <h2>H2H Active Matches</h2>
-                      <p>Continue friend and invite matches.</p>
+                      <p className="bk-type-label">Arena</p>
+                      <h2 className="bk-type-section-title">H2H Active Matches</h2>
+                      <p className="bk-type-body">Continue friend and invite matches.</p>
                     </div>
 
-                    <button onClick={fetchActiveGames} disabled={activeGamesLoading}>
+                    <Button variant="secondary" onClick={fetchActiveGames} disabled={activeGamesLoading}>
                       {activeGamesLoading ? "Refreshing..." : "Refresh"}
-                    </button>
-                  </div>
+                    </Button>
+                  </SurfaceCard>
 
-                  <div className="active-games-panel standalone">
+                  <SurfaceCard>
                     {activeGames.length === 0 && !activeGamesLoading ? (
-                      <div className="active-games-empty">
-                        <strong>No active matches yet</strong>
-                        <span>Create a match or join with a room code</span>
-                      </div>
+                      <EmptyState title="No active matches yet" icon={<BKIcon name="activeMatches" size={24} />}>
+                        Create a match or join with a room code.
+                      </EmptyState>
                     ) : (
-                      <div className="active-games-list">
+                      <div className="bk-match-list">
                         {activeGames.map(({ match, latestRound }) => {
                         const playerSlot = getCurrentPlayerSlot(
                           match,
@@ -9986,83 +10675,67 @@ const startConnectionsGame = (difficulty = null) => {
 
                         return (
                           <div
-                            className={`active-game-card ${getCategoryClass(category)}`}
+                            className="bk-match-row"
                             key={match.id}
                           >
-                            <div className="active-game-top">
-                              <div className="active-game-player">
-                                <PlayerAvatar profile={opponentProfile} size="small" />
-                                <strong>{getOpponentName(match, playerId, username)}</strong>
-                              </div>
-                              <span>{match.room_code}</span>
+                            <PlayerAvatar profile={opponentProfile} size="small" />
+                            <div className="bk-row-copy">
+                              <strong>{getOpponentName(match, playerId, username)}</strong>
+                              <small>
+                                {category
+                                  ? `Round ${latestRound?.round_number || match.round_number || 1} · ${getCategoryLabel(category)}`
+                                  : match.room_code}
+                              </small>
+                              <small>
+                                {timestamp
+                                  ? new Date(timestamp).toLocaleDateString([], {
+                                      month: "short",
+                                      day: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })
+                                  : "Recently active"}
+                              </small>
                             </div>
-
-                            <div className="active-game-score">
-                              Match score: {match.player1_wins || 0} -{" "}
-                              {match.player2_wins || 0}
+                            <div className="bk-row-score">
+                              <strong>{match.player1_wins || 0} - {match.player2_wins || 0}</strong>
+                              <small>Match</small>
                             </div>
-
-                            {category && (
-                              <div className={`active-game-category ${getCategoryClass(category)}`}>
-                                Round {latestRound?.round_number || match.round_number || 1} •{" "}
-                                {getCategoryLabel(category)}
-                              </div>
-                            )}
-
-                            <div className="active-game-phase">
-                              {match.phase || match.status || "active"}
-                            </div>
-
-                            <div className={`active-game-status ${actionKind}`}>
-                              {actionLabel}
-                            </div>
-
-                            <small>
-                              {timestamp
-                                ? new Date(timestamp).toLocaleDateString([], {
-                                    month: "short",
-                                    day: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })
-                                : "Recently active"}
-                            </small>
-
-                            <div className="active-game-actions">
-                              <button
-                                className="open-match-button"
+                            <div className="bk-match-actions">
+                              <StatusBadge tone={actionKind === "your-turn" ? "info" : actionKind === "result" ? "success" : "warning"}>
+                                {actionLabel}
+                              </StatusBadge>
+                              <Button
                                 onClick={() => openExistingMatch(match.id)}
                                 disabled={multiplayerLoading}
                               >
                                 {getMatchCtaLabel(actionKind, match)}
-                              </button>
-
-                              <button
-                                className="delete-match-button"
+                              </Button>
+                              <Button
+                                variant="destructive"
                                 onClick={() => requestDeleteMatch(match)}
                                 disabled={Boolean(deletingMatchId)}
                                 aria-label="Delete match"
+                                leadingIcon={<Trash2 size={16} />}
                               >
-                                <Trash2 size={16} />
-                                <span>Delete</span>
-                              </button>
+                                Delete
+                              </Button>
                             </div>
                           </div>
                         );
                         })}
                       </div>
                     )}
-                  </div>
-
+                  </SurfaceCard>
                 </div>
               )}
 
               {multiplayerStep === "create-league" && (
-                <div className="league-form-card">
-                  <div className="league-kicker">
+                <SurfaceCard className="bk-form-grid bk-league-create-flow">
+                  <p className="bk-type-label">
                     <BKIcon name="createLeague" size={22} /> Create League
-                  </div>
-                  <h2>Start a Daily League</h2>
+                  </p>
+                  <h2 className="bk-type-section-title">Start a Daily League</h2>
                   <input
                     value={leagueNameInput}
                     onChange={(event) => setLeagueNameInput(event.target.value)}
@@ -10073,58 +10746,60 @@ const startConnectionsGame = (difficulty = null) => {
                     autoFocus
                   />
 
-                  <div className="league-picker-section">
-                    <strong>Format</strong>
-                    <div className="league-format-grid">
+                  <div className="bk-form-section">
+                    <strong className="bk-section-title">Format</strong>
+                    <div className="bk-category-grid bk-category-grid--league">
                       {Object.entries(LEAGUE_FORMATS).map(([format, config]) => (
-                        <button
+                        <SurfaceCard
+                          as="button"
+                          interactive
                           key={format}
                           type="button"
-                          className={`league-option-card ${
-                            leagueFormatInput === format ? "selected" : ""
-                          }`}
+                          variant={leagueFormatInput === format ? "selected" : "default"}
+                          className="bk-category-card"
                           onClick={() => setLeagueFormatInput(format)}
                         >
                           <b><BKIcon name={config.icon} size={34} /></b>
                           <span>{config.label}</span>
                           <small>{config.description}</small>
-                        </button>
+                        </SurfaceCard>
                       ))}
                     </div>
                   </div>
 
                   {leagueFormatInput !== "custom" && (
-                    <button
+                    <Button
                       type="button"
-                      className="league-customize-link"
+                      variant="secondary"
                       onClick={() => customizeLeaguePreset(leagueFormatInput)}
                     >
                       Customize this
-                    </button>
+                    </Button>
                   )}
 
                   {leagueFormatInput === "custom" && (
                     <>
-                      <div className="league-picker-section compact">
-                        <strong>Length</strong>
-                        <div className="league-duration-grid">
+                      <div className="bk-form-section">
+                        <strong className="bk-section-title">Length</strong>
+                        <div className="bk-category-grid bk-category-grid--compact">
                           {LEAGUE_DURATIONS.map((duration) => (
-                            <button
+                            <SurfaceCard
+                              as="button"
+                              interactive
                               key={duration.label}
                               type="button"
-                              className={`league-option-card ${
-                                leagueDurationInput === duration.value ? "selected" : ""
-                              }`}
+                              variant={leagueDurationInput === duration.value ? "selected" : "default"}
+                              className="bk-category-card bk-category-card--compact"
                               onClick={() => setLeagueDurationInput(duration.value)}
                             >
                               {duration.label}
-                            </button>
+                            </SurfaceCard>
                           ))}
                         </div>
                       </div>
 
-                      <div className="league-custom-panel">
-                        <div className="league-custom-row">
+                      <SurfaceCard className="bk-setting-panel">
+                        <div className="bk-setting-row">
                           <span>Quick questions</span>
                           <div>
                             {CUSTOM_QUIZ_COUNTS.map((count) => (
@@ -10142,7 +10817,7 @@ const startConnectionsGame = (difficulty = null) => {
                           </div>
                         </div>
 
-                        <div className="league-custom-row">
+                        <div className="bk-setting-row">
                           <span>Top 10 lists</span>
                           <div>
                             {CUSTOM_TOP10_COUNTS.map((count) => (
@@ -10160,7 +10835,7 @@ const startConnectionsGame = (difficulty = null) => {
                           </div>
                         </div>
 
-                        <div className="league-custom-row">
+                        <div className="bk-setting-row">
                           <span>Who Am I</span>
                           <div>
                             {CUSTOM_WHOAMI_COUNTS.map((count) => (
@@ -10178,101 +10853,44 @@ const startConnectionsGame = (difficulty = null) => {
                           </div>
                         </div>
 
-                        <div className="league-custom-row">
-                          <span>Find the Player</span>
-                          <div>
-                            {CUSTOM_FIND_PLAYER_COUNTS.map((count) => (
-                              <button
-                                key={count}
-                                type="button"
-                                className={
-                                  leagueCustomFindPlayerCount === count ? "selected" : ""
-                                }
-                                onClick={() => setLeagueCustomFindPlayerCount(count)}
-                              >
-                                {count}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                      </SurfaceCard>
                     </>
                   )}
 
-                  {leagueSettings.findPlayerCount > 0 && (
-                    <div className="league-custom-panel league-scoring-panel">
-                      <div className="league-custom-row">
-                        <span>Find scoring</span>
-                        <div>
-                          <button
-                            type="button"
-                            className={
-                              leagueFindPlayerScoringMode === "attempts"
-                                ? "selected"
-                                : ""
-                            }
-                            onClick={() => setLeagueFindPlayerScoringMode("attempts")}
-                          >
-                            Fewest guesses
-                          </button>
-                          <button
-                            type="button"
-                            className={
-                              leagueFindPlayerScoringMode === "time" ? "selected" : ""
-                            }
-                            onClick={() => setLeagueFindPlayerScoringMode("time")}
-                          >
-                            Fastest time
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="league-preview-card">
+                  <SurfaceCard variant="selected" className="bk-stack">
                     <span>Your league</span>
                     <strong>
                       {leagueSettings.quizCount} quiz · {leagueSettings.top10Count} Top 10 ·{" "}
-                      {leagueSettings.whoamiCount} Who Am I ·{" "}
-                      {leagueSettings.findPlayerCount || 0} Find
+                      {leagueSettings.whoamiCount} Who Am I
                     </strong>
                     <strong>Max daily score: {leagueSettings.maxDailyPoints}</strong>
-                    {leagueSettings.findPlayerCount > 0 && (
-                      <small>
-                        Find scoring:{" "}
-                        {leagueSettings.findPlayerScoringMode === "time"
-                          ? "Fastest time"
-                          : "Fewest guesses"}
-                      </small>
-                    )}
                     <small>
                       Duration:{" "}
                       {leagueDurationInput ? `${leagueDurationInput} days` : "Infinite"}
                     </small>
-                  </div>
+                  </SurfaceCard>
 
-                  <button
+                  <Button
                     onClick={createNewLeague}
                     disabled={
                       leagueLoading ||
                       leagueSettings.quizCount +
                         leagueSettings.top10Count +
-                        leagueSettings.whoamiCount +
-                        (leagueSettings.findPlayerCount || 0) <=
+                        leagueSettings.whoamiCount <=
                         0
                     }
                   >
                     {leagueLoading ? "Creating..." : "Create League"}
-                  </button>
-                </div>
+                  </Button>
+                </SurfaceCard>
               )}
 
               {multiplayerStep === "join-league" && (
-                <div className="league-form-card">
-                  <div className="league-kicker">
+                <SurfaceCard className="bk-form-grid bk-league-create-flow bk-league-join-flow">
+                  <p className="bk-type-label">
                     <BKIcon name="joinLeague" size={22} /> Join League
-                  </div>
-                  <h2>Enter League Code</h2>
+                  </p>
+                  <h2 className="bk-type-section-title">Enter League Code</h2>
                   <input
                     value={leagueCodeInput}
                     onChange={(event) => setLeagueCodeInput(event.target.value.toUpperCase())}
@@ -10282,297 +10900,160 @@ const startConnectionsGame = (difficulty = null) => {
                     placeholder="LG-4821"
                     autoFocus
                   />
-                  <button onClick={joinExistingLeague} disabled={leagueLoading}>
+                  <Button onClick={joinExistingLeague} disabled={leagueLoading}>
                     {leagueLoading ? "Joining..." : "Join League"}
-                  </button>
-                </div>
+                  </Button>
+                </SurfaceCard>
               )}
 
               {multiplayerStep === "my-leagues" && (
-                <div className="active-games-page league-list-page">
-                  <div className="active-games-page-header">
+                <div className="bk-stack bk-league-menu-flow">
+                  <SurfaceCard className="bk-match-row">
                     <div>
-                      <div className="league-kicker">Arena</div>
-                      <h2>My Leagues</h2>
-                      <p>Open leagues you created or joined.</p>
+                      <p className="bk-type-label">Arena</p>
+                      <h2 className="bk-type-section-title">My Leagues</h2>
+                      <p className="bk-type-body">Open leagues you created or joined.</p>
                     </div>
-                    <button onClick={loadMyLeagues} disabled={leagueLoading}>
+                    <Button onClick={loadMyLeagues} disabled={leagueLoading}>
                       {leagueLoading ? "Loading..." : "Refresh"}
-                    </button>
-                  </div>
+                    </Button>
+                  </SurfaceCard>
 
-                  <div className="active-games-panel league-list-panel standalone">
+                  <SurfaceCard>
                     {!leagueLoading && myLeagues.length === 0 ? (
-                      <div className="active-games-empty">
-                        <strong>No leagues yet</strong>
-                        <span>Create a league or join with a code</span>
-                      </div>
+                      <EmptyState
+                        icon={<BKIcon name="league" size={28} />}
+                        title="No leagues yet"
+                      >
+                        Create a league or join with a code
+                      </EmptyState>
                     ) : (
-                      <div className="active-games-list">
+                      <div className="bk-league-list">
                         {myLeagues.map(({ league, member, memberCount, rank, todayPlayed }) => (
-                        <div className="league-card" key={league.id}>
-                          <div className="league-card-top">
+                        <div className="bk-league-row" key={league.id}>
+                          <div className="bk-row-copy">
                             <strong>{league.name}</strong>
-                            <span>{league.league_code}</span>
+                            <small>{league.league_code}</small>
                           </div>
-                          <div className="league-card-stats">
-                            <span>Rank #{rank || "-"}</span>
-                            <span>{member?.total_points || 0} pts</span>
-                            <span>{memberCount} players</span>
+                          <div className="bk-league-stats">
+                            <StatusBadge tone="info">Rank #{rank || "-"}</StatusBadge>
+                            <StatusBadge tone="neutral">{member?.total_points || 0} pts</StatusBadge>
+                            <StatusBadge tone="neutral">{memberCount} players</StatusBadge>
                           </div>
-                          <div className={`league-today-status ${todayPlayed ? "played" : ""}`}>
+                          <StatusBadge tone={todayPlayed ? "success" : "warning"}>
                             {todayPlayed ? "Played today" : "Not played today"}
-                          </div>
-                          <button onClick={() => openLeagueDashboard(league.id)}>
+                          </StatusBadge>
+                          <Button onClick={() => openLeagueDashboard(league.id)}>
                             Open League
-                          </button>
+                          </Button>
                         </div>
                         ))}
                       </div>
                     )}
-                  </div>
+                  </SurfaceCard>
                 </div>
               )}
 
               {multiplayerStep === "league-dashboard" && leagueDashboard && (
-                <div className="league-dashboard">
-                  <div className="league-dashboard-hero">
-                    <div className="league-dashboard-title-block">
-                      <div className="league-kicker">
-                        <BKIcon name="league" size={22} /> League
-                      </div>
-                      <h2>{leagueDashboard.league.name}</h2>
-                    </div>
-                    <div className="league-dashboard-actions">
-                      <div className="league-code-pill">{leagueDashboard.league.league_code}</div>
-                      <button
-                        type="button"
-                        className="league-leave-button"
-                        onClick={() => setLeagueExitConfirmOpen(true)}
-                        disabled={leagueLoading}
-                      >
-                        Leave league
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="league-meta-row">
-                    <span>{leagueDashboard.members.length} players</span>
-                    <span>{leagueDayLabel}</span>
-                    <span>
-                      {leagueDayExpired
+                <div className="bk-stack bk-league-dashboard bk-league-menu-flow">
+                  <LeagueDashboardHero
+                    league={leagueDashboard.league}
+                    dayLabel={leagueDayLabel}
+                    memberCount={leagueDashboard.members.length}
+                    statusLabel={
+                      leagueDayExpired
                         ? "League finished"
                         : activeLeagueSubmission
                         ? "Played today"
-                        : "Ready today"}
-                    </span>
-                  </div>
+                        : "Ready today"
+                    }
+                    statusTone={
+                      leagueDayExpired ? "danger" : activeLeagueSubmission ? "success" : "warning"
+                    }
+                    onLeave={() => setLeagueExitConfirmOpen(true)}
+                    loading={leagueLoading}
+                  />
 
-                  <div
-                    className={`league-daily-card ${
-                      !activeLeagueSubmission && !leagueDayExpired ? "pulse" : ""
-                    } ${leagueDayExpired ? "finished" : ""}`}
-                  >
-                    <div className="league-daily-card-top">
-                      <strong>Today's Challenge</strong>
-                      <span className="league-daily-max">
-                        Max {leagueSettings.maxDailyPoints} pts
-                      </span>
-                    </div>
-                    {leagueDayExpired ? (
-                      <>
-                        <span>League finished</span>
-                        <small>Final standings are locked in</small>
-                      </>
-                    ) : activeLeagueSubmission ? (
-                      <>
-                        <span>
-                          Today's score: {activeLeagueSubmission.total_points}/
-                          {leagueSettings.maxDailyPoints}
-                        </span>
-                        <div className="league-daily-mini-stats">
-                          {getLeagueScoreItems(
-                            activeLeagueSubmission,
-                            leagueSettings,
-                            leagueTop10MaxPoints,
-                            leagueWhoAmIMaxPoints,
-                            leagueFindPlayerMaxPoints
-                          ).map((item) => (
-                            <span key={item.key}>
-                              <em>{item.label}</em>
-                              <b>{item.display}</b>
-                            </span>
-                          ))}
-                        </div>
-                        <small>Come back tomorrow</small>
-                      </>
-                    ) : (
-                      <>
-                        <span>{leagueDailyStructureText}</span>
-                        <button onClick={prepareLeagueChallenge} disabled={leagueLoading}>
-                          {leagueLoading ? "Loading..." : "Play Today's Challenge"}
-                        </button>
-                      </>
+                  <LeagueTodayChallengeCard
+                    expired={leagueDayExpired}
+                    submission={activeLeagueSubmission}
+                    settings={leagueSettings}
+                    scoreItems={getLeagueScoreItems(
+                      activeLeagueSubmission,
+                      leagueSettings,
+                      leagueTop10MaxPoints,
+                      leagueWhoAmIMaxPoints
                     )}
-                  </div>
+                    structureText={leagueDailyStructureText}
+                    loading={leagueLoading}
+                    onPlay={prepareLeagueChallenge}
+                  />
 
-                  <div className="league-section-title">Leaderboard</div>
-                  <div className="league-leaderboard premium-league-table">
-                    {leagueDashboardRows.map((row) => (
-                      <div
-                        className={`league-row premium-league-row ${
-                          row.isCurrentUser ? "current-user" : ""
-                        } ${row.isLeader ? "league-leader" : ""}`}
-                        key={row.member.id}
-                      >
-                        <div className="league-rank">
-                          <span>#{row.rank}</span>
-                        </div>
-                        <div className="league-player-cell">
-                          <PlayerAvatar
-                            profile={getSocialProfile(row.member.player_id, row.member.username)}
-                            size="small"
-                          />
-                          <div className="league-player-copy">
-                            <strong>{row.member.username}</strong>
-                            <small>{row.member.days_played || 0} days played</small>
-                          </div>
-                        </div>
-                        <div className={`league-status-pill ${row.status}`}>
-                          {row.statusLabel}
-                        </div>
-                        <div className="league-score-pill-grid">
-                          {row.scoreItems.length > 0 ? (
-                            row.scoreItems.map((item) => (
-                              <span className="league-score-pill" key={item.key}>
-                                <em>{item.label}</em>
-                                <b>{item.display}</b>
-                              </span>
-                            ))
-                          ) : (
-                            <span className="league-score-pill muted">
-                              <em>Today</em>
-                              <b>-</b>
-                            </span>
-                          )}
-                        </div>
-                        <div className="league-total-stack">
-                          <span>Today</span>
-                          <strong>{row.totalToday}</strong>
-                        </div>
-                        <div className="league-total-stack overall">
-                          <span>Total</span>
-                          <strong>{row.member.total_points || 0}</strong>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="league-section-title">Today</div>
-                  <div className="league-results-list premium-today-list">
-                    {leagueDashboardRows.map((row) => (
-                      <div className={`league-result-row premium-today-row ${row.status}`} key={row.member.id}>
-                        <div className="league-result-player">
-                          <PlayerAvatar
-                            profile={getSocialProfile(row.member.player_id, row.member.username)}
-                            size="small"
-                          />
-                          <div className="league-player-copy">
-                            <strong>{row.member.username}</strong>
-                            <small>{row.statusLabel}</small>
-                          </div>
-                        </div>
-                        <div className="league-today-score-grid">
-                          {row.scoreItems.length > 0 ? (
-                            row.scoreItems.map((item) => (
-                              <span className="league-score-pill" key={item.key}>
-                                <em>{item.label}</em>
-                                <b>{item.display}</b>
-                              </span>
-                            ))
-                          ) : (
-                            <span className="league-score-pill muted">
-                              <em>Score</em>
-                              <b>-</b>
-                            </span>
-                          )}
-                          <span className="league-score-pill total">
-                            <em>Total today</em>
-                            <b>{row.totalToday}/{leagueSettings.maxDailyPoints}</b>
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <LeagueStandings rows={leagueDashboardRows} />
 
                   {leagueExitConfirmOpen && (
-                    <div className="match-delete-overlay">
-                      <div className="match-delete-modal league-leave-modal">
-                        <strong>Leave this league?</strong>
-                        <span>Are you sure you want to leave this league?</span>
+                    <Modal
+                      title="Leave this league?"
+                      showClose={false}
+                      cardClassName="bk-confirmation-modal bk-stack"
+                      onClose={() => setLeagueExitConfirmOpen(false)}
+                    >
+                        <p className="bk-type-body">Are you sure you want to leave this league?</p>
                         {activeLeague?.created_by_id === (effectiveAuthUser?.id || playerId) && (
-                          <small>
+                          <p className="bk-type-caption">
                             If other members are still here, ownership will move to another member.
                             If not, the league will be archived.
-                          </small>
+                          </p>
                         )}
-                        <div>
-                          <button
+                        <div className="bk-screen-actions">
+                          <Button
                             type="button"
+                            variant="secondary"
                             onClick={() => setLeagueExitConfirmOpen(false)}
                             disabled={leagueLoading}
                           >
                             Cancel
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
-                            className="danger"
+                            variant="destructive"
                             onClick={confirmLeaveActiveLeague}
                             disabled={leagueLoading}
                           >
                             {leagueLoading ? "Leaving..." : "Leave league"}
-                          </button>
+                          </Button>
                         </div>
-                      </div>
-                    </div>
+                    </Modal>
                   )}
                 </div>
               )}
 
               {multiplayerStep === "play-now-waiting" && (
-                <div className="multiplayer-room-card play-now-waiting-card">
-                  <div className="room-status">Waiting for random opponent</div>
-                  <p>Your score is saved. We will match you with a random player.</p>
-                  <div className="multiplayer-player-list">
-                    <span>
-                      <PlayerAvatar
-                        profile={getMatchPlayerProfile(
-                          activeMatch,
-                          multiplayerPlayerSlot || "player1"
-                        )}
-                        size="small"
-                      />
-                      {username}
-                    </span>
-                    <span className="waiting-opponent-profile">
-                      <PlayerAvatar
-                        profile={{
-                          avatar_icon: "profile",
-                          avatar_style: "mystery",
-                          avatar_color: "purple",
-                          avatar_bg: "night",
-                        }}
-                        size="small"
-                        hideFlag
-                      />
-	                      Searching random opponent
-                    </span>
-                  </div>
+                <SurfaceCard className="bk-stack">
+                  <p className="bk-type-label">Play Now Online</p>
+                  <MultiplayerMatchScoreboard
+                    activeMatch={activeMatch}
+                    activeRound={activeRound}
+                    playerOneProfile={getMatchPlayerProfile(activeMatch, "player1")}
+                    playerTwoProfile={getMatchPlayerProfile(activeMatch, "player2")}
+                    currentPlayerSlot={multiplayerPlayerSlot || "player1"}
+                    currentUsername={username}
+                    hasBothPlayers={hasBothMultiplayerPlayers}
+                  />
+                  <MultiplayerRoundStatus
+                    activeMatch={activeMatch}
+                    activeRound={activeRound}
+                    hasBothPlayers={hasBothMultiplayerPlayers}
+                    hasPlayedActiveRound={hasPlayedActiveRound}
+                    isMultiplayerTurn={isMultiplayerTurn}
+                    nextCategoryWaitingName={nextCategoryWaitingName}
+                    activeOpponentLabel={activeOpponentLabel}
+                  />
                   {activeRound && (
-                    <div className="multiplayer-round-result-card">
+                    <SurfaceCard variant="selected">
                       <strong>Your saved score</strong>
                       <span>{getCategoryLabel(activeRound.category)}</span>
-                      <div className="round-score-grid">
+                      <div className="bk-score-grid">
                         <div>
                           <small>{username}</small>
                           <b>
@@ -10586,193 +11067,49 @@ const startConnectionsGame = (difficulty = null) => {
                           <b>Waiting</b>
                         </div>
                       </div>
-                    </div>
+                    </SurfaceCard>
                   )}
-                  <div className="room-code">Public match: {multiplayerRoomCode}</div>
-                  <button onClick={refreshMultiplayerMatch} disabled={multiplayerLoading}>
+                  <StatusBadge tone="info">Public match: {multiplayerRoomCode}</StatusBadge>
+                  <Button onClick={refreshMultiplayerMatch} disabled={multiplayerLoading}>
                     {multiplayerLoading ? "Checking..." : "Check Now"}
-                  </button>
-                  <GameTopNav
-                    className="multiplayer-back-button"
-                    label="Home"
-                    variant="home"
-                    onClick={goBackMultiplayer}
-                  />
-                </div>
+                  </Button>
+                  <Button variant="secondary" onClick={goBackMultiplayer}>
+                    Home
+                  </Button>
+                </SurfaceCard>
               )}
 
               {multiplayerStep === "created" && (
-                <div className="multiplayer-room-card">
-                  <div className="room-status">
-                    {isH2HWaitingAfterCreatorRound
-                      ? "Your round is complete"
-                      : "Match created"}
-                  </div>
-                  {isH2HWaitingAfterCreatorRound && (
-                    <p>
-                      Share room code {multiplayerRoomCode} and wait for your opponent.
-                    </p>
-                  )}
-                  <div className="room-code">Room code: {multiplayerRoomCode}</div>
-                  <div className="multiplayer-player-list">
-                    <span>
-                      <PlayerAvatar
-                        profile={getMatchPlayerProfile(activeMatch, "player1")}
-                        size="small"
-                      />
-                      {activeMatch?.player1_username || username}
-                    </span>
-                    {activeMatch?.player2_username && (
-                      <span>
-                        <PlayerAvatar
-                          profile={getMatchPlayerProfile(activeMatch, "player2")}
-                          size="small"
-                        />
-                        {activeMatch.player2_username}
-                      </span>
-                    )}
-                  </div>
-                  {activeMatch?.status === "ready" ? (
-                    <div className="opponent-found">Opponent found</div>
-                  ) : isH2HWaitingAfterCreatorRound ? (
-                    <>
-                      <div className="waiting-pulse">
-                        <span />
-                        <span />
-                        <span />
-                      </div>
-                      <p>Your score is saved. Waiting for opponent to play.</p>
-                    </>
-                  ) : (
-                    <>
-                      <p>Choose a category and play your first round now.</p>
-                    </>
-                  )}
-                  {hasBothMultiplayerPlayers &&
-                    activeMatch?.phase === "choose_category" && (
-                      <div className="category-turn-note">
-                        {canChooseMultiplayerCategory
-                          ? "Your turn to choose a category"
-                          : `${activeMatch.current_turn} chooses first`}
-                      </div>
-                    )}
-                  {canChooseMultiplayerCategory && (
-                    <div className="multiplayer-category-grid">
-                      {MULTIPLAYER_CATEGORIES.map((category) => (
-                        <button
-                          key={category.id}
-                          className={`${getCategoryClass(category.id)} ${
-                            !category.available ? "coming-soon" : ""
-                          }`}
-                          disabled={!category.available || multiplayerLoading}
-                          onClick={() => selectMultiplayerCategory(category)}
-                        >
-                          <strong>{category.label}</strong>
-                          {!category.available && <small>Coming soon</small>}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {activeMatch?.phase === "category_selected" && (
-                    <div className={`category-selected-card ${getCategoryClass(activeRound.category)}`}>
-                      <strong>
-                        Category selected:{" "}
-                        {getCategoryLabel(activeMatch.selected_category)}
-                      </strong>
-                      <span>
-                        Round {activeMatch.round_number || 1} is ready
-                      </span>
-                    </div>
-                  )}
-                  {activeMatch?.phase === "round_active" && activeRound && (
-                    <div className="category-selected-card">
-                      <strong>
-                        Round {activeRound.round_number} •{" "}
-                        {getCategoryLabel(activeRound.category)}
-                      </strong>
-                      {hasPlayedActiveRound ? (
-                        <span>
-                          {isH2HWaitingAfterCreatorRound
-                            ? `Share ${multiplayerRoomCode}. Waiting for opponent to join and play.`
-                            : "Waiting for opponent to play this round"}
-                        </span>
-                      ) : (
-                        <>
-                          <span>Your 5-question round is ready</span>
-                          <button onClick={startActiveMultiplayerRound}>
-                            Play Round
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
-                  {activeMatch?.phase === "round_finished" && activeRound && (
-                    <div className="multiplayer-round-result-card">
-                      <strong>Round {activeRound.round_number} Result</strong>
-                      <span>{getCategoryLabel(activeRound.category)}</span>
-                      <div className="round-score-grid">
-                        <div>
-                          <small>{activeMatch.player1_username}</small>
-                          <b>{activeRound.player1_score ?? 0}</b>
-                        </div>
-                        <div>
-                          <small>{activeMatch.player2_username}</small>
-                          <b>{activeRound.player2_score ?? 0}</b>
-                        </div>
-                      </div>
-                      <em>
-                        Winner:{" "}
-                        {activeRound.winner === "draw"
-                          ? "Draw"
-                          : activeRound.winner}
-                      </em>
-                      <p>
-                        Match wins: {activeMatch.player1_wins || 0} -{" "}
-                        {activeMatch.player2_wins || 0}
-                      </p>
-                      <p>
-                        Next:{" "}
-                        {isMultiplayerTurn
-                          ? "you choose the next category"
-                          : `${nextCategoryWaitingName} chooses the next category`}
-                      </p>
-                      {canChooseMultiplayerCategory ? (
-                        <p>Pick the next category above.</p>
-                      ) : (
-                        <p>Waiting for {nextCategoryWaitingName} to choose the next category</p>
-                      )}
-                    </div>
-                  )}
-                  {matchRounds.length > 0 && (
-                    <div className="match-history-card">
-                      <strong>Rounds</strong>
-                      {matchRounds.slice(0, 4).map((round) => (
-                        <span
-                          key={round.id}
-                          className={getCategoryClass(round.category)}
-                        >
-                          Round {round.round_number} •{" "}
-                          {getCategoryLabel(round.category)} •{" "}
-                          {round.status === "finished"
-                            ? `${activeMatch.player1_username} ${
-                                round.player1_score ?? 0
-                              } - ${round.player2_score ?? 0} ${
-                                activeMatch.player2_username
-                              }`
-                            : "waiting"}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <button onClick={refreshMultiplayerMatch}>
-                    {multiplayerLoading ? "Refreshing..." : "Refresh"}
-                  </button>
-                </div>
+                <PrivateBattleLobby
+                  roomCode={multiplayerRoomCode}
+                  activeMatch={activeMatch}
+                  activeRound={activeRound}
+                  matchRounds={matchRounds}
+                  canChooseCategory={canChooseMultiplayerCategory}
+                  categories={MULTIPLAYER_CATEGORIES}
+                  multiplayerLoading={multiplayerLoading}
+                  copyStatus={roomCodeCopyStatus}
+                  isWaitingAfterCreatorRound={isH2HWaitingAfterCreatorRound}
+                  hasBothPlayers={hasBothMultiplayerPlayers}
+                  hasPlayedActiveRound={hasPlayedActiveRound}
+                  isMultiplayerTurn={isMultiplayerTurn}
+                  nextCategoryWaitingName={nextCategoryWaitingName}
+                  playerOneProfile={getMatchPlayerProfile(activeMatch, "player1")}
+                  playerTwoProfile={getMatchPlayerProfile(activeMatch, "player2")}
+                  currentPlayerSlot={multiplayerPlayerSlot}
+                  currentUsername={username}
+                  onCopyCode={copyMultiplayerRoomCode}
+                  onSelectCategory={selectMultiplayerCategory}
+                  onStartRound={startActiveMultiplayerRound}
+                  onRefresh={refreshMultiplayerMatch}
+                />
               )}
 
               {multiplayerStep === "join" && (
-                <div className="multiplayer-join-card">
-                  <label htmlFor="room-code-input">Enter room code</label>
+                <SurfaceCard className="bk-form-grid">
+                  <p className="bk-type-label">Join H2H</p>
+                  <h2 className="bk-type-section-title">Enter room code</h2>
+                  <label htmlFor="room-code-input">Room code</label>
                   <input
                     id="room-code-input"
                     value={joinRoomCode}
@@ -10783,74 +11120,59 @@ const startConnectionsGame = (difficulty = null) => {
                     placeholder="BK-4831"
                     autoFocus
                   />
-                  <button
+                  <Button
                     onClick={joinMultiplayerMatch}
                     disabled={multiplayerLoading}
                   >
                     {multiplayerLoading ? "Joining match..." : "Join Match"}
-                  </button>
-                </div>
+                  </Button>
+                </SurfaceCard>
               )}
 
               {multiplayerStep === "joined" && (
-                <div className="multiplayer-room-card joined">
-                  <div className="room-status">
-                    {activeMatch?.is_public ? "Play Now Match" : "Joined room"}
-                  </div>
-                  {activeMatch?.is_public ? (
-                    <div className="room-code">Random match vs {activeOpponentLabel}</div>
-                  ) : (
-                    <div className="room-code">Room code: {multiplayerRoomCode}</div>
-                  )}
-                  <div className="opponent-found">
-                    {activeMatch?.is_public
-                      ? `Opponent: ${activeOpponentLabel}`
-                      : "Opponent found"}
-                  </div>
+                <SurfaceCard className="bk-stack">
+                  <p className="bk-type-label">
+                    {activeMatch?.is_public ? "Play Now Online" : "Private Battle"}
+                  </p>
                   {activeMatch && (
-                    <div className="multiplayer-player-list">
-                      <span>
-                        <PlayerAvatar
-                          profile={getMatchPlayerProfile(activeMatch, "player1")}
-                          size="small"
-                        />
-                        {activeMatch.player1_username}
-                      </span>
-                      <span>
-                        <PlayerAvatar
-                          profile={getMatchPlayerProfile(activeMatch, "player2")}
-                          size="small"
-                        />
-                        {activeMatch.player2_username}
-                      </span>
-                    </div>
+                    <MultiplayerMatchScoreboard
+                      activeMatch={activeMatch}
+                      activeRound={activeRound}
+                      playerOneProfile={getMatchPlayerProfile(activeMatch, "player1")}
+                      playerTwoProfile={getMatchPlayerProfile(activeMatch, "player2")}
+                      currentPlayerSlot={multiplayerPlayerSlot}
+                      currentUsername={username}
+                      hasBothPlayers={hasBothMultiplayerPlayers}
+                    />
                   )}
+                  {!activeMatch?.is_public && (
+                    <StatusBadge tone="info">Room {multiplayerRoomCode}</StatusBadge>
+                  )}
+                  <MultiplayerRoundStatus
+                    activeMatch={activeMatch}
+                    activeRound={activeRound}
+                    hasBothPlayers={hasBothMultiplayerPlayers}
+                    hasPlayedActiveRound={hasPlayedActiveRound}
+                    isMultiplayerTurn={isMultiplayerTurn}
+                    nextCategoryWaitingName={nextCategoryWaitingName}
+                    activeOpponentLabel={activeOpponentLabel}
+                  />
                   {activeMatch?.phase === "choose_category" && (
-	                    <div className="category-turn-note">
-	                      {canChooseMultiplayerCategory
-	                        ? "Your turn to choose a category"
-	                        : `${nextCategoryWaitingName} chooses first`}
-	                    </div>
+                    <StatusBadge tone={canChooseMultiplayerCategory ? "info" : "warning"}>
+                      {canChooseMultiplayerCategory
+                        ? "Your turn to choose a category"
+                        : `${nextCategoryWaitingName} chooses first`}
+                    </StatusBadge>
                   )}
                   {canChooseMultiplayerCategory && (
-                    <div className="multiplayer-category-grid">
-                      {MULTIPLAYER_CATEGORIES.map((category) => (
-                        <button
-                          key={category.id}
-                          className={`${getCategoryClass(category.id)} ${
-                            !category.available ? "coming-soon" : ""
-                          }`}
-                          disabled={!category.available || multiplayerLoading}
-                          onClick={() => selectMultiplayerCategory(category)}
-                        >
-                          <strong>{category.label}</strong>
-                          {!category.available && <small>Coming soon</small>}
-                        </button>
-                      ))}
-                    </div>
+                    <MultiplayerCategoryGrid
+                      categories={MULTIPLAYER_CATEGORIES}
+                      onSelect={selectMultiplayerCategory}
+                      disabled={multiplayerLoading}
+                    />
                   )}
                   {activeMatch?.phase === "category_selected" && (
-                    <div className={`category-selected-card ${getCategoryClass(activeRound.category)}`}>
+                    <SurfaceCard variant="selected">
                       <strong>
                         Category selected:{" "}
                         {getCategoryLabel(activeMatch.selected_category)}
@@ -10858,107 +11180,71 @@ const startConnectionsGame = (difficulty = null) => {
                       <span>
                         Round {activeMatch.round_number || 1} is ready
                       </span>
-                    </div>
+                    </SurfaceCard>
                   )}
                   {activeMatch?.phase === "round_active" && activeRound && (
-                    <div className="category-selected-card">
+                    <SurfaceCard variant="selected">
                       <strong>
                         Round {activeRound.round_number} •{" "}
                         {getCategoryLabel(activeRound.category)}
                       </strong>
-	                      {hasPlayedActiveRound ? (
-	                        <span>Waiting for {activeOpponentLabel} to play this round</span>
-	                      ) : (
+                      {hasPlayedActiveRound ? (
+                        <span>Waiting for {activeOpponentLabel} to play this round</span>
+                      ) : (
                         <>
                           <span>Your 5-question round is ready</span>
-                          <button onClick={startActiveMultiplayerRound}>
+                          <Button onClick={startActiveMultiplayerRound}>
                             Play Round
-                          </button>
+                          </Button>
                         </>
                       )}
-                    </div>
+                    </SurfaceCard>
                   )}
-                  {activeMatch?.phase === "round_finished" && activeRound && (
-                    <div className="multiplayer-round-result-card">
-                      <strong>Round {activeRound.round_number} Result</strong>
-                      <span>{getCategoryLabel(activeRound.category)}</span>
-                      <div className="round-score-grid">
-                        <div>
-                          <small>{activeMatch.player1_username}</small>
-                          <b>{activeRound.player1_score ?? 0}</b>
-                        </div>
-                        <div>
-                          <small>{activeMatch.player2_username}</small>
-                          <b>{activeRound.player2_score ?? 0}</b>
-                        </div>
-                      </div>
-                      <em>
-                        Winner:{" "}
-                        {activeRound.winner === "draw"
-                          ? "Draw"
-                          : activeRound.winner}
-                      </em>
-                      <p>
-                        Match wins: {activeMatch.player1_wins || 0} -{" "}
-                        {activeMatch.player2_wins || 0}
-                      </p>
-	                      <p>
-	                        Next:{" "}
-	                        {isMultiplayerTurn
-	                          ? "you choose the next category"
-	                          : `${nextCategoryWaitingName} chooses the next category`}
-	                      </p>
-                      {canChooseMultiplayerCategory ? (
-                        <p>Pick the next category above.</p>
-                      ) : (
-                        <p>Waiting for {nextCategoryWaitingName} to choose the next category</p>
-                      )}
-                    </div>
-                  )}
-                  {matchRounds.length > 0 && (
-                    <div className="match-history-card">
-                      <strong>Rounds</strong>
-                      {matchRounds.slice(0, 4).map((round) => (
-                        <span
-                          key={round.id}
-                          className={getCategoryClass(round.category)}
-                        >
-                          Round {round.round_number} •{" "}
-                          {getCategoryLabel(round.category)} •{" "}
-                          {round.status === "finished"
-                            ? `${activeMatch.player1_username} ${
-                                round.player1_score ?? 0
-                              } - ${round.player2_score ?? 0} ${
-                                activeMatch.player2_username
-                              }`
-                            : "waiting"}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <button onClick={refreshMultiplayerMatch}>
+                  <MultiplayerRoundResult
+                    activeMatch={activeMatch}
+                    activeRound={activeRound}
+                    currentPlayerSlot={multiplayerPlayerSlot}
+                    playerOneProfile={getMatchPlayerProfile(activeMatch, "player1")}
+                    playerTwoProfile={getMatchPlayerProfile(activeMatch, "player2")}
+                    currentUsername={username}
+                    isMultiplayerTurn={isMultiplayerTurn}
+                    nextCategoryWaitingName={nextCategoryWaitingName}
+                  />
+                  <MultiplayerRoundHistory
+                    activeMatch={activeMatch}
+                    activeRound={activeRound}
+                    matchRounds={matchRounds}
+                    currentPlayerSlot={multiplayerPlayerSlot}
+                    playerOneProfile={getMatchPlayerProfile(activeMatch, "player1")}
+                    playerTwoProfile={getMatchPlayerProfile(activeMatch, "player2")}
+                    currentUsername={username}
+                  />
+                  <Button onClick={refreshMultiplayerMatch} variant="secondary">
                     {multiplayerLoading ? "Refreshing..." : "Refresh"}
-                  </button>
-                </div>
+                  </Button>
+                </SurfaceCard>
               )}
 
               {matchDeleteCandidate && (
-                <div className="match-delete-overlay">
-                  <div className="match-delete-modal">
-                    <strong>
-                      {matchDeleteCandidate.is_public
-                        ? "Leave this random match?"
-                        : "Delete this match?"}
-                    </strong>
-                    <span>
+                <Modal
+                  title={
+                    matchDeleteCandidate.is_public
+                      ? "Leave this random match?"
+                      : "Delete this match?"
+                  }
+                  showClose={false}
+                  cardClassName="bk-confirmation-modal"
+                  onClose={cancelDeleteMatch}
+                >
+                    <p className="bk-type-body">
                       {matchDeleteCandidate.is_public
                         ? "This removes the Play Now match from Active Games."
                         : "This removes it from your Active Matches."}
-                    </span>
-                    <div>
-                      <button onClick={cancelDeleteMatch}>Cancel</button>
-                      <button
-                        className="danger"
+                    </p>
+                    <div className="bk-screen-actions">
+                      <Button variant="secondary" onClick={cancelDeleteMatch}>Cancel</Button>
+                      <Button
+                        variant="destructive"
                         onClick={confirmDeleteMatch}
                         disabled={deletingMatchId === matchDeleteCandidate.id}
                       >
@@ -10969,293 +11255,298 @@ const startConnectionsGame = (difficulty = null) => {
                           : matchDeleteCandidate.is_public
                           ? "Leave"
                           : "Delete"}
-                      </button>
+                      </Button>
                     </div>
-                  </div>
-                </div>
+                </Modal>
               )}
-            </motion.div>
-          </div>
-        ) : !modeMenuOpen ? (
-          <div className="main-menu">
-            <h1 className="main-title">BALL KNOWLEDGE</h1>
-
-            <motion.div
-              className={`home-progress-card home-progress-clickable level-${playerLevel.color}`}
-              onClick={openLevelModal}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  openLevelModal();
-                }
-              }}
-              role="button"
-              tabIndex={0}
-              whileTap={{ scale: 0.985, y: 3 }}
-            >
-              <div className="home-progress-top">
-                <button
-                  type="button"
-                  className="home-stat-pill home-streak-pill stat-clickable"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    openDailyRewardMeter();
-                  }}
-                >
-                  <span><BKIcon name="dailyStreak" size={24} /></span>
-                  <strong>{dailyStreak}</strong>
-                  <small>Daily streak</small>
-                </button>
-
-                <button
-                  type="button"
-                  className="home-stat-pill home-coins-pill coin-clickable"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    openCoinShop();
-                  }}
-                >
-                  <span><BKIcon name="coins" size={24} /></span>
-                  <strong>{coins}</strong>
-                  <small>Coins</small>
-                </button>
-              </div>
-
-              <div className="home-level-box">
-                <div className="home-level-left">
-                    <div className="home-level-emoji">
-                      <LevelIcon levelId={playerLevel.id} size={48} />
-                    </div>
-
-                  <div>
-                    <div className="profile-level-meta">
-                      Level {playerLevel.levelNumber}
-                    </div>
-
-                    <div className="home-level-name">{playerLevel.name}</div>
-                  </div>
-                </div>
-
-              <div className="home-level-score">Best: {highScore}</div>
-              </div>
-
-              <div className="home-level-bar-outer">
-                <div
-                  className="home-level-bar-inner"
-                  style={{ width: `${playerLevel.progress}%` }}
-                />
-              </div>
-
-              <div className="home-next-level">
-                {playerLevel.next
-                  ? `${levelObjectiveSummary} • Next: ${playerLevel.next.name}`
-                  : "Legend status • true ball knowledge"}
-              </div>
-
-              <div className="home-level-tap-hint">Tap for progress</div>
-            </motion.div>
-
-            <button
-              className="main-menu-button"
-              onClick={() => {
-                playClickSound();
-                setModeMenuOpen(true);
-              }}
-            >
-              <span className="main-menu-icon app-icon">
-                <BKIcon name="singlePlayer" size={42} />
-              </span>
-              <span className="main-menu-copy">
-                <strong>SINGLE PLAYER</strong>
-                <small>Train your ball knowledge</small>
-              </span>
-            </button>
-
-            <button
-              className="multiplayer-main-button home-action-card home-action-multiplayer"
-              onClick={openMultiplayer}
-            >
-              <span className="main-menu-icon app-icon">
-                <BKIcon name="multiplayer" size={42} />
-              </span>
-              <span className="main-menu-copy">
-                <strong>MULTIPLAYER</strong>
-                <small>Battle friends & rivals</small>
-              </span>
-            </button>
-
-            <button
-              className={`daily-main-button home-action-card home-action-daily ${
-                dailyPlayed ? "daily-completed" : ""
-              }`}
-              onClick={() => {
-                playClickSound();
-                startDailyChallenge();
-              }}
-              disabled={dailyPlayed}
-            >
-              <span className="main-menu-icon app-icon">
-                <BKIcon name="dailyChallenge" size={42} />
-              </span>
-              <span className="main-menu-copy">
-                <strong>{dailyPlayed ? "DAILY DONE" : "DAILY CHALLENGE"}</strong>
-                <small>{dailyPlayed ? "Come back tomorrow" : "Come back every day"}</small>
-              </span>
-            </button>
-
-            <div className="home-secondary-actions">
-              <button
-                className="profile-main-button home-action-card home-action-profile"
-                onClick={() => {
-                  playClickSound();
-                  setProfileOpen(true);
-                }}
-              >
-                <PlayerAvatar
-                  profile={{
-                    ...profile,
-                    avatar_emoji: profileAvatarEmoji,
-                    avatar_icon: profileAvatar.icon,
-                    avatar_style: profileAvatar.style,
-                    avatar_color: profileAvatar.color,
-                    avatar_bg: profileAvatar.bg,
-                  }}
-                  size="small"
-                />
-                <span className="main-menu-copy">
-                  <strong>PROFILE</strong>
-                  <small>Your football identity</small>
-                </span>
-              </button>
-
-              <button
-                className="leaderboard-main-button home-action-card home-action-ranking"
-                onClick={() => {
-                  playClickSound();
-                  setLeaderboardOpen(true);
-                }}
-              >
-                <span className="main-menu-icon app-icon">
-                  <BKIcon name="rankings" size={42} />
-                </span>
-                <span className="main-menu-copy">
-                  <strong>RANKINGS</strong>
-                  <small>Climb the leaderboard</small>
-                </span>
-              </button>
             </div>
-
-            {dailyPlayed && (
-              <div className="daily-completed-note">
-                Come back tomorrow
-                {lastDailyResult && (
-                  <span>
-                    {" "}
-                    • Last result: {lastDailyResult.found}/
-                    {lastDailyResult.total}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
+          </AppScreen>
         ) : (
-          <div className="mode-menu">
-            <button
-              className="mode-button mode-card mode-general"
-              onClick={() => {
-                playClickSound();
-                startGame("general");
+          <AppScreen className="bk-home-screen bk-matchday-home-v3">
+  <div className="bk-matchday-home-shell">
+
+    {/* TOP BAR */}
+    <header className="bk-matchday-topbar">
+      <button
+        type="button"
+        className="bk-matchday-user"
+        onClick={() => {
+          playClickSound();
+          setProfileOpen(true);
+        }}
+      >
+        <PlayerAvatar
+          profile={{
+            ...profile,
+            avatar_emoji: profileAvatarEmoji,
+            avatar_icon: profileAvatar.icon,
+            avatar_style: profileAvatar.style,
+            avatar_color: profileAvatar.color,
+            avatar_bg: profileAvatar.bg,
+          }}
+          size="small"
+          hideFlag
+        />
+
+        <span className="bk-matchday-user-copy">
+          <small>WELCOME BACK</small>
+          <strong>{displayName}</strong>
+        </span>
+      </button>
+
+      <div className="bk-matchday-top-stats">
+        <button
+          type="button"
+          className="bk-matchday-top-stat bk-matchday-top-stat--coins"
+          onClick={openCoinShop}
+          aria-label={`${coins} coins`}
+        >
+          <Coins className="bk-matchday-status-icon" size={18} aria-hidden="true" />
+          <strong>{coins.toLocaleString()}</strong>
+        </button>
+
+        <button
+          type="button"
+          className="bk-matchday-top-stat bk-matchday-top-stat--streak"
+          onClick={openDailyRewardMeter}
+          aria-label={`${dailyStreak} day streak`}
+        >
+          <Flame className="bk-matchday-status-icon" size={18} aria-hidden="true" />
+          <strong>{dailyStreak}</strong>
+        </button>
+      </div>
+    </header>
+
+    {/* MAIN PLAY HERO */}
+    <section className="bk-matchday-main-hero">
+      <span className="bk-matchday-pitch-line" aria-hidden="true" />
+      <span className="bk-matchday-hero-light" aria-hidden="true" />
+
+      <div className="bk-matchday-hero-copy">
+        <span className="bk-matchday-eyebrow">
+          <i aria-hidden="true" />
+          BALL KNOWLEDGE
+        </span>
+
+        <h1>
+          How good is your
+          <em> football IQ?</em>
+        </h1>
+
+        <p>
+          Put your knowledge to the test.
+          <br />
+          Play. Compete. Climb.
+        </p>
+      </div>
+
+      <div className="bk-matchday-play-grid">
+        <button
+  type="button"
+  className="bk-matchday-mode-card bk-matchday-mode-card--single"
+  disabled={modeLoading}
+  onClick={() => {
+    playClickSound();
+    setModeMenuOpen(true);
+  }}
+>
+  <span className="bk-matchday-mode-top">
+    <span className="bk-matchday-mode-icon">
+      <BKIcon name="singlePlayer" size={50} />
+    </span>
+
+    <span className="bk-matchday-mode-arrow" aria-hidden="true">
+      ›
+    </span>
+  </span>
+
+  <span className="bk-matchday-mode-copy">
+    <strong>Single Player</strong>
+    <span>Test your football IQ</span>
+  </span>
+</button>
+
+<button
+  type="button"
+  className="bk-matchday-mode-card bk-matchday-mode-card--multi"
+  onClick={openMultiplayer}
+>
+  <span className="bk-matchday-mode-icon">
+    <BKIcon name="multiplayer" size={50} />
+  </span>
+
+  <span className="bk-matchday-mode-copy">
+    <strong>Multiplayer</strong>
+    <span>Challenge rivals</span>
+  </span>
+</button>
+      </div>
+    </section>
+
+    {/* DAILY CHALLENGE */}
+    <button
+      type="button"
+      className={`bk-matchday-daily ${dailyPlayed ? "is-complete" : ""}`}
+      disabled={dailyPlayed}
+      onClick={() => {
+        playClickSound();
+        startDailyChallenge();
+      }}
+    >
+      <span className="bk-matchday-daily-badge">
+        {dailyPlayed ? "DONE" : "TODAY"}
+      </span>
+
+      <span className="bk-matchday-daily-icon">
+        <BKIcon
+          name={dailyPlayed ? "dailyStreak" : "dailyChallenge"}
+          size={27}
+        />
+      </span>
+
+      <span className="bk-matchday-daily-copy">
+        <small>DAILY CHALLENGE</small>
+
+        <strong>
+          {dailyPlayed ? "Challenge complete" : "Today's test is live"}
+        </strong>
+
+        <span>
+          {dailyPlayed
+            ? lastDailyResult
+              ? `Last result ${lastDailyResult.found}/${lastDailyResult.total}`
+              : "Come back tomorrow"
+            : `Keep your ${dailyStreak} day streak alive`}
+        </span>
+      </span>
+
+      <b aria-hidden="true">›</b>
+    </button>
+
+    {/* PROGRESSION */}
+    <button
+      type="button"
+      className="bk-matchday-progress"
+      onClick={openLevelModal}
+    >
+      <span className="bk-matchday-progress-head">
+        <span>
+          <small>YOUR SEASON</small>
+          <strong>{playerLevel.name}</strong>
+        </span>
+
+        <span className="bk-matchday-level-mark">
+          <small>LVL</small>
+          <b>{playerLevel.levelNumber}</b>
+        </span>
+      </span>
+
+      <ProgressBar
+        value={playerLevel.progress}
+        max={100}
+        label="Progress"
+        valueLabel={xpProgressLabel}
+      />
+
+      <span className="bk-matchday-progress-footer">
+        <span>{xpProgressLabel}</span>
+        <span>
+          {playerLevel.next
+            ? `Next: ${playerLevel.next.name}`
+            : "Legend status"}
+        </span>
+      </span>
+
+      <span className="bk-matchday-progress-best">
+        Best score <strong>{highScore}</strong>
+      </span>
+    </button>
+
+    {/* SECONDARY NAV */}
+    <section className="bk-matchday-clubhouse">
+      <header>
+        <span>CLUBHOUSE</span>
+        <small>More</small>
+      </header>
+
+      <div className="bk-matchday-clubhouse-grid">
+        <button
+          type="button"
+          className="bk-matchday-club-card bk-matchday-club-card--active"
+          onClick={openHomeActiveGames}
+        >
+          <span className="bk-matchday-club-icon">
+            <BKIcon name="activeMatches" size={47} />
+          </span>
+          {activeGames.length > 0 && (
+            <span className="bk-matchday-club-count">{activeGames.length}</span>
+          )}
+          <strong>Active Games</strong>
+          <small>
+            {activeGames.length > 0 ? "Continue battles" : "No active matches"}
+          </small>
+        </button>
+
+        <button
+          type="button"
+          className="bk-matchday-club-card bk-matchday-club-card--league"
+          onClick={() => {
+            openMultiplayer();
+            setMultiplayerStep("league-menu");
+          }}
+        >
+          <span className="bk-matchday-club-icon">
+            <BKIcon name="league" size={47} />
+          </span>
+          <strong>Leagues</strong>
+          <small>Climb together</small>
+        </button>
+
+        <button
+          type="button"
+          className="bk-matchday-club-card bk-matchday-club-card--rankings"
+          onClick={() => {
+            playClickSound();
+            setLeaderboardOpen(true);
+          }}
+        >
+          <span className="bk-matchday-club-icon">
+            <BKIcon name="rankings" size={47} />
+          </span>
+          <strong>Rankings</strong>
+          <small>See the best</small>
+        </button>
+
+        <button
+          type="button"
+          className="bk-matchday-club-card bk-matchday-club-card--profile"
+          onClick={() => {
+            playClickSound();
+            setProfileOpen(true);
+          }}
+        >
+          <span className="bk-matchday-club-avatar">
+            <PlayerAvatar
+              profile={{
+                ...profile,
+                avatar_emoji: profileAvatarEmoji,
+                avatar_icon: profileAvatar.icon,
+                avatar_style: profileAvatar.style,
+                avatar_color: profileAvatar.color,
+                avatar_bg: profileAvatar.bg,
               }}
-            >
-              <span className="mode-card-icon app-icon">
-                <BKIcon name="generalKnowledge" size={40} />
-              </span>
-              <span>
-                <strong>General Knowledge</strong>
-                <small>Classic football quiz</small>
-              </span>
-            </button>
-
-            <button
-              className="mode-button mode-card mode-career"
-              onClick={() => {
-                playClickSound();
-                startGame("career");
-              }}
-            >
-              <span className="mode-card-icon app-icon">
-                <BKIcon name="careerPath" size={40} />
-              </span>
-              <span>
-                <strong>Career Path</strong>
-                <small>Guess the player journey</small>
-              </span>
-            </button>
-
-            <button
-              className="mode-button mode-card mode-world-cup"
-              onClick={() => {
-                playClickSound();
-                startGame("world-cup");
-              }}
-            >
-              <span className="mode-card-icon app-icon">
-                <BKIcon name="worldCup" size={40} />
-              </span>
-              <span>
-                <strong>World Cup</strong>
-                <small>Tournament history</small>
-              </span>
-            </button>
-
-            <button
-              className="mode-button mode-card connections-mode-button"
-              onClick={openConnectionsDifficultyPicker}
-            >
-              <span className="mode-card-icon app-icon">
-                <BKIcon name="connections" size={40} />
-              </span>
-              <span>
-                <strong>Connections</strong>
-                <small>Find the 4 groups</small>
-              </span>
-            </button>
-
-            <button
-              className="mode-button mode-card mode-whoami"
-              onClick={() => startWhoAmIGame(getDailyDateKey())}
-            >
-              <span className="mode-card-icon app-icon">
-                <BKIcon name="whoAmI" size={40} />
-              </span>
-              <span>
-                <strong>Who Am I?</strong>
-                <small>Guess the player from clues</small>
-              </span>
-            </button>
-
-            <button
-              className="mode-button mode-card mode-find-player"
-              onClick={() => startFindPlayerGame(getDailyDateKey())}
-            >
-              <span className="mode-card-icon app-icon">
-                <BKIcon name="findThePlayer" size={40} />
-              </span>
-              <span>
-                <strong>Find the Player</strong>
-                <small>Guess by distance clues</small>
-              </span>
-            </button>
-
-            <GameTopNav
-              className="mode-back-button"
-              label="Back"
-              onClick={() => {
-                playClickSound();
-                setModeMenuOpen(false);
-              }}
+              size="small"
+              hideFlag
             />
-          </div>
+          </span>
+          <strong>Profile</strong>
+          <small>Your career</small>
+        </button>
+      </div>
+    </section>
+
+  </div>
+</AppScreen>
         )}
           </ScreenTransition>
         </AnimatePresence>
@@ -11263,759 +11554,218 @@ const startConnectionsGame = (difficulty = null) => {
     );
   }
 
-  if (gameMode === "who-am-i" && currentWhoAmI) {
+  if (gameMode === "who-am-i") {
+    if (!whoAmIQuestion) {
+      return <SinglePlayerFeatureFallback />;
+    }
+
     const todayKey = getDailyDateKey();
     const whoAmIDateLabel = formatDisplayDate(whoAmIDate);
 
     return (
-      <div
-        className="fullscreen-bg"
-        style={{
-          backgroundImage: `linear-gradient(rgba(10,8,35,0.18), rgba(0,0,0,0.58)), url(${stadiumBg})`,
-        }}
-      >
-        {coinShopModal}
-        {dailyRewardMeterModal}
-        {coinRewardToastOverlay}
-        {xpToastOverlay}
-        <ScreenTransition className="whoami-screen">
-          <GameTopNav
-            className="connections-back-button whoami-back-button premiumBackButton"
-            label="Back"
-            onClick={() => {
-              playClickSound();
-              setGameStarted(false);
-              setModeMenuOpen(true);
-              setGameMode("general");
-              setWhoAmIFeedback(null);
-            }}
-          />
-
-          <motion.div
-            className={`whoami-card ${whoAmIShake ? "shake" : ""}`}
-            key={currentWhoAmI.id}
-            animate={whoAmIShake ? { x: [0, -8, 8, -5, 5, 0] } : { x: 0 }}
-            transition={{ duration: 0.28 }}
-          >
-            <div className="whoami-top">
-              <div>
-                <div className="whoami-kicker">Daily Puzzle</div>
-                <h1>Daily Who Am I</h1>
-              </div>
-              <div className={`whoami-difficulty ${currentWhoAmI.difficulty.toLowerCase()}`}>
-                {currentWhoAmI.difficulty}
-              </div>
-            </div>
-
-            <div className="find-player-date-row whoami-date-row">
-              <button onClick={() => startWhoAmIGame(addDaysToDateKey(whoAmIDate, -1))}>
-                Previous Day
-              </button>
-              <strong>{whoAmIDateLabel}</strong>
-              <button
-                onClick={() => startWhoAmIGame(todayKey)}
-                disabled={whoAmIDate >= todayKey}
-              >
-                Today
-              </button>
-              <button
-                onClick={() => startWhoAmIGame(addDaysToDateKey(whoAmIDate, 1))}
-                disabled={whoAmIDate >= todayKey}
-              >
-                Next Day
-              </button>
-            </div>
-
-            <div className="whoami-hud">
-              <span>Score <strong>{whoAmIScore}</strong></span>
-              <span>Completed <strong>{whoAmIStreak}</strong></span>
-              <span>Rank <strong>-</strong></span>
-            </div>
-
-            <div className="whoami-mystery">
-              <motion.div
-                className="whoami-silhouette"
-                animate={{ scale: [1, 1.04, 1], rotate: [0, -1, 1, 0] }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <BKIcon name="whoAmI" size={64} />
-              </motion.div>
-              <div>
-                <span>Clue {whoAmIClueIndex + 1} / 10</span>
-                <strong>{whoAmIPointsAvailable} points available</strong>
-              </div>
-            </div>
-
-            <div className="whoami-clues">
-              <AnimatePresence initial={false}>
-                {visibleWhoAmIClues.map((clue, index) => (
-                  <motion.div
-                    className={`whoami-clue ${index === whoAmIClueIndex ? "latest" : ""}`}
-                    key={`${currentWhoAmI.id}-${index}`}
-                    initial={{ opacity: 0, y: 14, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <span>{index + 1}</span>
-                    <p>{clue}</p>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-
-            <AnimatePresence>
-              {whoAmIFeedback && (
-                <motion.div
-                  className={`whoami-feedback ${whoAmIFeedback.type}`}
-                  initial={{ opacity: 0, y: 10, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                >
-                  {whoAmIFeedback.text}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {whoAmIGameOver ? (
-              <motion.div
-                className="whoami-gameover"
-                initial={{ opacity: 0, scale: 0.9, y: 16 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-              >
-                <strong>Game Over</strong>
-                <span>Final score: {whoAmIScore}</span>
-                <button onClick={() => startWhoAmIGame(whoAmIDate)}>Play Again</button>
-              </motion.div>
-            ) : (
-              <GuessInput
-                answerType="player"
-                value={whoAmIInput}
-                onTextChange={setWhoAmIInput}
-                selectedPlayer={whoAmISelectedPlayer}
-                onSelectPlayer={setWhoAmISelectedPlayer}
-                onSubmit={() => {
-                  playClickSound();
-                  submitWhoAmIGuess();
-                }}
-                placeholder="Search player or type full name..."
-                disabled={Boolean(whoAmIFeedback?.locked)}
-                buttonLabel="Guess"
-                rowClassName="whoami-answer-row"
-                maxSuggestions={4}
-                autoFocus
-              />
-            )}
-          </motion.div>
-        </ScreenTransition>
-      </div>
-    );
-  }
-
-  if (gameMode === "find-player") {
-    const findPlayerDateLabel = formatDisplayDate(findPlayerDate);
-    const todayKey = getDailyDateKey();
-    const findPlayerSavedResult = findPlayerTarget
-      ? getDailyModeResult("find_player", findPlayerDate, findPlayerTarget.id)
-      : null;
-    const findPlayerSolvedBefore = Boolean(findPlayerSavedResult?.solved);
-    const findPlayerGaveUpBefore =
-      Boolean(findPlayerSavedResult?.gaveUp) && !findPlayerSolvedBefore;
-
-    return (
-      <div
-        className="fullscreen-bg"
-        style={{
-          backgroundImage: `linear-gradient(rgba(9,14,36,0.18), rgba(0,0,0,0.62)), url(${stadiumBg})`,
-        }}
-      >
-        {coinShopModal}
-        {dailyRewardMeterModal}
-        {coinRewardToastOverlay}
-        {xpToastOverlay}
-        <ScreenTransition className="whoami-screen find-player-screen">
-          <GameTopNav
-            className="connections-back-button whoami-back-button"
-            label="Back"
-            onClick={() => {
-              playClickSound();
-              setGameStarted(false);
-              setModeMenuOpen(true);
-              setGameMode("general");
-            }}
-          />
-
-          <motion.div className="whoami-card find-player-card">
-            <div className="whoami-top">
-              <div>
-                <div className="whoami-kicker">Daily Puzzle</div>
-                <h1>Find the Player</h1>
-              </div>
-              <div className="whoami-difficulty hard">Unlimited</div>
-            </div>
-
-            <div className="find-player-date-row">
-              <button onClick={() => shiftFindPlayerDate(-1)}>Previous Day</button>
-              <strong>{findPlayerDateLabel}</strong>
-              <button
-                onClick={() => startFindPlayerGame(todayKey)}
-                disabled={findPlayerDate >= todayKey}
-              >
-                Today
-              </button>
-              <button
-                onClick={() => shiftFindPlayerDate(1)}
-                disabled={findPlayerDate >= todayKey}
-              >
-                Next Day
-              </button>
-            </div>
-
-            {findPlayerStatus === "loading" && (
-              <div className="find-player-mystery-card">
-                <div className="whoami-mystery-icon">
-                  <BKIcon name="findThePlayer" size={34} />
-                </div>
-                <strong>Loading today’s player...</strong>
-              </div>
-            )}
-
-            {findPlayerStatus === "error" && (
-              <div className="whoami-gameover">
-                <strong>{findPlayerError || "Could not load puzzle"}</strong>
-                <button onClick={() => startFindPlayerGame(findPlayerDate)}>Retry</button>
-              </div>
-            )}
-
-            {findPlayerTarget && findPlayerStatus !== "loading" && findPlayerStatus !== "error" && (
-              <>
-                <div className="whoami-hud">
-                  <span>
-                    Guesses <strong>{findPlayerGuesses.length}</strong>
-                  </span>
-                  <span>
-                    Time <strong>{formatElapsedTime(findPlayerElapsed)}</strong>
-                  </span>
-                  <span>
-                    Status <strong>{findPlayerStatus === "won" ? "Solved" : findPlayerStatus === "gave-up" ? "Gave up" : "Hunting"}</strong>
-                  </span>
-                </div>
-
-                <div className="find-player-mystery-card">
-                  <div className="whoami-mystery-icon">
-                    <BKIcon name="findThePlayer" size={34} />
-                  </div>
-                  <div>
-                    <span>Hidden footballer</span>
-                    <strong>
-                      {findPlayerStatus === "won" || findPlayerStatus === "gave-up"
-                        ? findPlayerTarget.name
-                        : `Guesses: ${findPlayerGuesses.length}`}
-                    </strong>
-                    {findPlayerRanking.poolSize > 0 && (
-                      <small>{findPlayerRanking.poolSize} players ranked</small>
-                    )}
-                    {findPlayerSolvedBefore ? (
-                      <small>Replay mode · Full XP already claimed · Replay reward +10 XP</small>
-                    ) : findPlayerGaveUpBefore ? (
-                      <small>Try again · Full solve XP still available</small>
-                    ) : (
-                      <small>Solve to earn +100 XP</small>
-                    )}
-                  </div>
-                </div>
-
-                <div className="find-player-clue-panel">
-                  <div className="find-player-clue-list">
-                    {findPlayerClues.slice(0, findPlayerClueCount).map((clue) => (
-                      <span key={clue}>{clue}</span>
-                    ))}
-                    {findPlayerClueCount === 0 && (
-                      <small>Optional clue ready</small>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFindPlayerClueCount((count) =>
-                        Math.min(count + 1, findPlayerClues.length)
-                      )
-                    }
-                    disabled={
-                      findPlayerClueCount >= findPlayerClues.length ||
-                      findPlayerStatus !== "playing"
-                    }
-                  >
-                    Reveal clue
-                  </button>
-                </div>
-
-                {findPlayerStatus === "playing" && (
-                  <div className="find-player-input-row">
-                    <React.Suspense
-                      fallback={
-                        <input
-                          className="player-picker-input"
-                          placeholder="Loading player search..."
-                          disabled
-                        />
-                      }
-                    >
-                      <PlayerPicker
-                        value={findPlayerSelected}
-                        onSelect={setFindPlayerSelected}
-                        onSubmit={submitFindPlayerGuess}
-                        autoSubmitOnSelect
-                        placeholder="Search exact player..."
-                        compact
-                        maxSuggestions={5}
-                      />
-                    </React.Suspense>
-                    <button
-                      className="find-player-give-up-button"
-                      type="button"
-                      onClick={giveUpFindPlayer}
-                    >
-                      Give Up
-                    </button>
-                  </div>
-                )}
-
-                {findPlayerError && (
-                  <div className="whoami-feedback wrong">{findPlayerError}</div>
-                )}
-
-                {(findPlayerStatus === "won" || findPlayerStatus === "gave-up") && (
-                  <motion.div
-                    className={`whoami-feedback ${findPlayerStatus === "won" ? "correct" : "reveal"}`}
-                    initial={{ opacity: 0, scale: 0.94, y: 12 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                  >
-                    {findPlayerStatus === "won"
-                      ? `Solved in ${findPlayerGuesses.length} guesses • ${formatElapsedTime(findPlayerElapsed)}`
-                      : `Answer: ${findPlayerTarget.name} • ${findPlayerGuesses.length} guesses • ${formatElapsedTime(findPlayerElapsed)}`}
-                  </motion.div>
-                )}
-
-                <div className="find-player-guesses">
-                  {findPlayerGuesses.map((guess) => (
-                    <div
-                      key={`${guess.player.id}-${guess.distance}`}
-                      className={`find-player-guess ${guess.color} ${
-                        guess.latest ? "latest" : ""
-                      }`}
-                    >
-                      <div
-                        className="find-player-bar-fill"
-                        style={{ width: `${guess.barPercent || 12}%` }}
-                      />
-                      <div className="find-player-guess-content">
-                        <div>
-                          <strong>{guess.player.name}</strong>
-                          <span>
-                            {guess.player.nationality || "Unknown"} •{" "}
-                            {guess.player.position_group || guess.player.position || "Unknown"}
-                            {guess.player.birth_year ? ` • ${guess.player.birth_year}` : ""}
-                          </span>
-                        </div>
-                        <em>#{guess.rank || "?"}</em>
-                      </div>
-                      <small>
-                        Rank #{guess.rank || "?"}
-                        {guess.poolSize ? ` / ${guess.poolSize}` : ""} • {guess.label}
-                      </small>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </motion.div>
-        </ScreenTransition>
-      </div>
-    );
-  }
-  if (gameMode === "connections" && connectionsPuzzle) {
-    const revealedGroups = connectionsPuzzle.groups.map((group, index) => ({
-      ...group,
-      index,
-      solvedItems: group.items,
-    }));
-    const groupsToShow = connectionsGameOver ? revealedGroups : connectionsSolved;
-
-    return (
-      <div
-        className="fullscreen-bg connections-game-bg"
-        style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.05), rgba(0,0,0,0.48)), url(${stadiumBg})`,
-        }}
-      >
-        {coinShopModal}
-        {dailyRewardMeterModal}
-        {coinRewardToastOverlay}
-        {!connectionsRewardModal && xpToastOverlay}
-        {connectionsRewardOverlay}
-        <ScreenTransition className="connections-screen">
-          <GameTopNav
-            className="connections-back-button"
-            label="Back"
-            onClick={() => {
-              playClickSound();
-              setGameStarted(false);
-              setModeMenuOpen(true);
-              setGameMode("general");
-              setConnectionsFeedback(null);
-            }}
-          />
-
-          <div className="connections-card">
-            <div className="connections-header">
-              <div>
-                <div className="connections-title-row">
-                  <div className="connections-kicker">Single Player</div>
-                  <div className={`connections-difficulty ${connectionsPuzzle.difficulty?.toLowerCase() || "easy"}`}>
-                    {connectionsPuzzle.difficulty || "Easy"}
-                  </div>
-                </div>
-                <h1>Connections</h1>
-                <p>Find the 4 football groups</p>
-              </div>
-
-              <div className="connections-mistakes">
-                <span>Mistakes</span>
-                <strong>
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <span
-                      key={index}
-                      className={
-                        index < connectionsMistakes ? "mistake-used" : ""
-                      }
-                    >
-                      <BKIcon name="lives" size={16} />
-                    </span>
-                  ))}
-                </strong>
-                <small>{connectionsMistakesLeft} left</small>
-              </div>
-            </div>
-
-            <div className="connections-solved-list">
-              <AnimatePresence>
-                {groupsToShow.map((group) => (
-                  <motion.div
-                    key={group.category}
-                    className={`connections-solved-card ${group.color}`}
-                    initial={{ opacity: 0, scale: 0.88, y: 18 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                    transition={{ duration: 0.28 }}
-                  >
-                    <strong>{group.category}</strong>
-                    <span>{group.solvedItems.join(" • ")}</span>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-
-            <div className="connections-feedback-slot">
-              <AnimatePresence mode="wait">
-                {connectionsFeedback && (
-                  <motion.div
-                    key={`${connectionsFeedback.type}-${connectionsShake}`}
-                    className={`connections-feedback ${connectionsFeedback.type}`}
-                    initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                    animate={{
-                      opacity: 1,
-                      y: 0,
-                      scale: 1,
-                      x: connectionsFeedback.type === "wrong" ? [0, -5, 5, -3, 3, 0] : 0,
-                    }}
-                    exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                    transition={{ duration: 0.18 }}
-                  >
-                    {connectionsFeedback.text}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {!connectionsGameComplete && !connectionsGameOver && (
-              <motion.div
-                className="connections-grid"
-                key={connectionsShake}
-                animate={
-                  connectionsFeedback?.type === "wrong"
-                    ? { x: [0, -7, 7, -4, 4, 0] }
-                    : { x: 0 }
-                }
-                transition={{ duration: 0.28 }}
-              >
-                {connectionsVisibleTiles.map((tile) => {
-  const selectedOrder = connectionsSelected.indexOf(tile.id);
-  const selectedTile = selectedOrder !== -1;
-
-  return (
-    <button
-      key={tile.id}
-      className={`connections-tile ${
-        selectedTile ? "selected selected-strong" : ""
-      }`}
-      onClick={() => toggleConnectionTile(tile)}
-      style={{
-        position: "relative",
-        borderWidth: selectedTile ? 2 : undefined,
-        zIndex: selectedTile ? 5 : 1,
-      }}
-    >
-      {selectedTile && (
-        <span
-          style={{
-            position: "absolute",
-            top: 6,
-            right: 7,
-            width: 26,
-            height: 26,
-            borderRadius: 999,
-            display: "grid",
-            placeItems: "center",
-            background: "#ffffff",
-            color: "#4f46e5",
-            fontWeight: 1000,
-            fontSize: 14,
-            boxShadow: "0 0 18px rgba(255,255,255,0.85)",
+      <React.Suspense fallback={<SinglePlayerFeatureFallback />}>
+        <WhoAmIGame
+          key={`${whoAmIQuestion.id}:${whoAmIDate}:${whoAmIResumeVersion}`}
+          question={whoAmIQuestion}
+          dateLabel={whoAmIDateLabel}
+          todayKey={todayKey}
+          dateKey={whoAmIDate}
+          initialSnapshot={whoAmIGameSnapshot}
+          coinShopModal={coinShopModal}
+          dailyRewardMeterModal={dailyRewardMeterModal}
+          coinRewardToastOverlay={coinRewardToastOverlay}
+          xpToastOverlay={xpToastOverlay}
+          stadiumBackgroundImage={`linear-gradient(rgba(10,8,35,0.18), rgba(0,0,0,0.58)), url(${stadiumBg})`}
+          isCorrectAnswer={isCorrectWhoAmIPlayerAnswer}
+          onSolved={persistWhoAmISolved}
+          onMissed={persistWhoAmIMissed}
+          onBack={exitWhoAmIGame}
+          onStartDate={(dayOffset) => {
+            const nextDate = dayOffset === null
+              ? whoAmIDate
+              : dayOffset === 0
+              ? todayKey
+              : addDaysToDateKey(whoAmIDate, dayOffset);
+            startWhoAmIGame(nextDate);
           }}
-        >
-          {selectedOrder + 1}
-        </span>
-      )}
+          playClickSound={playClickSound}
+          playCorrectSound={playCorrectSound}
+          playWrongSound={playWrongSound}
+        />
+      </React.Suspense>
+    );
+  }
 
-      <span
-        style={{
-          position: "relative",
-          zIndex: 2,
-          color: selectedTile ? "#ffffff" : undefined,
-          textShadow: selectedTile ? "0 2px 12px rgba(0,0,0,0.35)" : undefined,
-        }}
-      >
-        {tile.item}
-      </span>
-    </button>
-  );
-})}
-              </motion.div>
-            )}
+  if (gameMode === "connections") {
+    if (!connectionsPuzzle) {
+      return <SinglePlayerFeatureFallback />;
+    }
 
-            {connectionsGameOver && (
-              <motion.div
-                className="connections-gameover-card"
-                initial={{ opacity: 0, scale: 0.9, y: 18 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.25 }}
-              >
-                <strong>Game Over</strong>
-                <span>Categories revealed. Run it back.</span>
-                <button onClick={startConnectionsGame}>Try New Puzzle</button>
-              </motion.div>
-            )}
-
-            {!connectionsGameComplete && !connectionsGameOver && (
-              <div className="connections-actions">
-                <button
-                  className="connections-secondary-button"
-                  onClick={() => {
-                    playClickSound();
-                    setConnectionsSelected([]);
-                    setConnectionsFeedback(null);
-                  }}
-                  disabled={connectionsSelected.length === 0}
-                >
-                  Deselect
-                </button>
-
-                <button
-                  className="connections-secondary-button"
-                  onClick={shuffleConnectionsTiles}
-                >
-                  Shuffle
-                </button>
-
-                <button
-                  className="connections-submit-button"
-                  onClick={submitConnectionsSelection}
-                  disabled={connectionsSelected.length !== 4}
-                >
-                  Submit
-                </button>
-              </div>
-            )}
-          </div>
-        </ScreenTransition>
-      </div>
+    return (
+      <React.Suspense fallback={<SinglePlayerFeatureFallback />}>
+        <ConnectionsGame
+          key={`${connectionsPuzzle.id}:${connectionsResumeVersion}`}
+          puzzle={connectionsPuzzle}
+          rewardModal={connectionsRewardModal}
+          rewardOverlay={connectionsRewardOverlay}
+          coinShopModal={coinShopModal}
+          dailyRewardMeterModal={dailyRewardMeterModal}
+          coinRewardToastOverlay={coinRewardToastOverlay}
+          xpToastOverlay={xpToastOverlay}
+          stadiumBackgroundImage={`linear-gradient(rgba(255,255,255,0.05), rgba(0,0,0,0.48)), url(${stadiumBg})`}
+          onBack={() => {
+            playClickSound();
+            setGameStarted(false);
+            setModeMenuOpen(true);
+            setGameMode("general");
+          }}
+          onComplete={persistConnectionsCompletion}
+          onTryNewPuzzle={() => startConnectionsGame()}
+          playClickSound={playClickSound}
+          playCorrectSound={playCorrectSound}
+          playWrongSound={playWrongSound}
+        />
+      </React.Suspense>
     );
   }
 
   if (gameMode === "daily-list" && !finished) {
     return (
-      <div
-        className="fullscreen-bg daily-game-bg"
-        style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.03), rgba(0,0,0,0.58)), url(${quizBg})`,
-        }}
-      >
-        {coinShopModal}
-        {dailyRewardMeterModal}
-        {xpToastOverlay}
-      <GameTopNav
-        className="home-button premiumBackButton"
-        label="Home"
-        variant="home"
-        onClick={restart}
-      />
+      <React.Suspense fallback={<SinglePlayerFeatureFallback />}>
+        <Top10Game
+          key={`${todayChallenge.id || getDailyDateKey()}:${top10ResumeVersion}`}
+          unavailable={dailyChallengeUnavailable}
+          challenge={todayChallenge}
+          answers={dailyAnswers}
+          ruleHint={dailyRuleHint}
+          targetCount={dailyTargetCount}
+          isPlayerChallenge={isDailyPlayerChallenge}
+          dateLabel={formatDisplayDate(getDailyDateKey())}
+          blocked={Boolean(rewardPopup || wrongPopup)}
+          coinShopModal={coinShopModal}
+          dailyRewardMeterModal={dailyRewardMeterModal}
+          xpToastOverlay={xpToastOverlay}
+          quizBackgroundImage={`linear-gradient(rgba(255,255,255,0.03), rgba(0,0,0,0.58)), url(${quizBg})`}
+          onHome={restart}
+          onAnswerFound={persistTop10AnswerFound}
+          onFinished={finishDaily}
+          playCorrectSound={playCorrectSound}
+          playWrongSound={playWrongSound}
+          getAnswerKey={getAnswerKey}
+          formatAnswerWithValue={formatAnswerWithValue}
+        />
+      </React.Suspense>
+    );
+  }
 
-        {dailyChallengeUnavailable ? (
-          <div className="daily-list-wrapper">
-            <div className="daily-question-card">
-              <h2 className="daily-list-label">Daily Challenge</h2>
-              <h1 className="daily-list-title">Challenge unavailable</h1>
-              <p className="daily-list-question">
-                Today’s list challenge could not be loaded. Please go back home and try again.
-              </p>
-              <button className="daily-submit-button" type="button" onClick={restart}>
-                Back to Home
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <AnimatePresence>
-          {dailyReveal?.phase === "result" && (
-            <motion.div
-              className={`rank-reveal-overlay ${dailyReveal.type || ""}`}
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.1 }}
-              transition={{ duration: 0.25 }}
-            >
-              <div className="rank-reveal-label">
-                {dailyReveal.type === "wrong"
-                  ? dailyReveal.displayRank === 0
-                    ? "NOT FOUND"
-                    : "SEARCHING"
-                  : dailyReveal.displayRank === dailyReveal.rank
-                  ? "FOUND"
-                  : "SCANNING"}
-              </div>
+  if (
+    gameStarted &&
+    gameMode === "world-cup" &&
+    !isMockMultiplayer &&
+    !finished
+  ) {
+    return (
+      <React.Suspense fallback={<SinglePlayerFeatureFallback />}>
+        <WorldCupGame
+          key={`${runId}:${worldCupResumeVersion}`}
+          questions={questions}
+          coins={coins}
+          highScore={highScore}
+          playerLevel={playerLevel}
+          xpProgressPercent={xpProgressPercent}
+          xpProgressLabel={xpProgressLabel}
+          xpToast={xpToast}
+          xpToastOverlay={xpToastOverlay}
+          objectiveProgressModal={objectiveProgressModal}
+          initialSnapshot={worldCupGameSnapshot}
+          isAnswerCorrect={isCorrectAnswer}
+          onCorrectAnswer={awardClassicQuizRunXp}
+          onCoinsChange={saveCoins}
+          onFinish={finishWorldCupGame}
+          onExit={exitWorldCupGame}
+          onOpenCoinShop={openCoinShop}
+          playClickSound={playClickSound}
+          playCorrectSound={playCorrectSound}
+          playWrongSound={playWrongSound}
+          playCoinSound={playCoinSound}
+          coinShopModal={coinShopModal}
+          dailyRewardMeterModal={dailyRewardMeterModal}
+          quizBackgroundImage={`linear-gradient(rgba(255,255,255,0.04), rgba(0,0,0,0.58)), url(${quizBg})`}
+        />
+      </React.Suspense>
+    );
+  }
 
-              <div className="rank-reveal-number">
-                {dailyReveal.displayRank > 0
-                  ? `#${dailyReveal.displayRank}`
-                  : "OUT"}
-              </div>
+  if (
+    gameStarted &&
+    gameMode === "career" &&
+    !isMockMultiplayer &&
+    !finished
+  ) {
+    return (
+      <React.Suspense fallback={<SinglePlayerFeatureFallback />}>
+        <CareerPathGame
+          key={`${runId}:${careerResumeVersion}`}
+          questions={questions}
+          coins={coins}
+          highScore={highScore}
+          playerLevel={playerLevel}
+          xpProgressPercent={xpProgressPercent}
+          xpProgressLabel={xpProgressLabel}
+          xpToast={xpToast}
+          xpToastOverlay={xpToastOverlay}
+          objectiveProgressModal={objectiveProgressModal}
+          initialSnapshot={careerGameSnapshot}
+          isAnswerCorrect={isCorrectAnswer}
+          isCorrectPlayerAnswer={isCorrectPlayerAnswer}
+          isTypedPlayerAnswerCorrect={isPlayerAnswerCorrect}
+          onCorrectAnswer={awardClassicQuizRunXp}
+          onCoinsChange={saveCoins}
+          onFinish={finishCareerGame}
+          onExit={exitCareerGame}
+          onOpenCoinShop={openCoinShop}
+          playClickSound={playClickSound}
+          playCorrectSound={playCorrectSound}
+          playWrongSound={playWrongSound}
+          playCoinSound={playCoinSound}
+          coinShopModal={coinShopModal}
+          dailyRewardMeterModal={dailyRewardMeterModal}
+          quizBackgroundImage={`linear-gradient(rgba(255,255,255,0.04), rgba(0,0,0,0.58)), url(${quizBg})`}
+        />
+      </React.Suspense>
+    );
+  }
 
-              {dailyReveal.type === "correct" &&
-                dailyReveal.displayRank === dailyReveal.rank && (
-                <div className="rank-reveal-player">
-                  {formatAnswerWithValue(dailyReveal.answer)}
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-            <div className="daily-list-wrapper">
-              <div className="daily-date-card">
-                <span>Daily</span>
-                <strong>{formatDisplayDate(getDailyDateKey())}</strong>
-                <span>Challenge</span>
-              </div>
-
-          <div className="daily-question-card">
-            <h2 className="daily-list-label">
-              <BKIcon name="dailyChallenge" size={34} /> DAILY CHALLENGE
-            </h2>
-
-            <h1 className="daily-list-title">{todayChallenge.label}</h1>
-
-            <p className="daily-list-question">{todayChallenge.question}</p>
-            {dailyRuleHint && (
-              <p className="daily-list-rule-hint">{dailyRuleHint}</p>
-            )}
-          </div>
-
-          <div className="daily-list-stats">
-            <span className="daily-stat-pill daily-stat-score">
-              Score <strong>{foundAnswers.length}</strong>
-            </span>
-
-            <span className="daily-stat-pill">
-              Completed <strong>{Math.min(foundAnswers.length, dailyTargetCount)}/{dailyTargetCount}</strong>
-            </span>
-
-            <span className="daily-stat-pill">
-              Rank <strong>-</strong>
-            </span>
-          </div>
-
-              <div className="pyramid-list">
-                {dailyAnswers.map((answer, index) => {
-              const isFound = foundAnswers.includes(answer);
-              const rank = index + 1;
-              const isScanning =
-                dailyReveal?.displayRank === rank && isRevealing;
-              const isRevealTarget =
-                dailyReveal?.type === "correct" && dailyReveal.rank === rank;
-              const isJustFound = dailyCelebratedAnswer === answer;
-              const width = 46 + index * 4.6;
-
-              return (
-                <motion.div
-                  key={getAnswerKey(answer, index)}
-                  className={`pyramid-slot ${isFound ? "found" : ""} ${
-                    isScanning ? "scanning" : ""
-                  } ${isRevealTarget ? "reveal-target" : ""} ${
-                    isJustFound ? "just-found" : ""
-                  }`}
-                  style={{ width: `${width}%` }}
-                  initial={false}
-	                  animate={
-	                    isJustFound
-	                      ? { scale: [1, 1.12, 1], y: [0, -7, 0] }
-	                      : isFound
-	                      ? { scale: [1, 1.08, 1] }
-	                      : {}
-	                  }
-	                  transition={{ duration: 0.45 }}
-                >
-                  <span className="pyramid-rank">#{rank}</span>
-                  <span>{isFound ? formatAnswerWithValue(answer) : <BKIcon name="questionMark" size={28} />}</span>
-                </motion.div>
-              );
-            })}
-              </div>
-
-          <GuessInput
-            answerType={isDailyPlayerChallenge ? "player" : "text"}
-            value={dailyInput}
-            onTextChange={setDailyInput}
-            selectedPlayer={dailySelectedPlayer}
-            onSelectPlayer={setDailySelectedPlayer}
-            onSubmit={checkDailyAnswer}
-            autoSubmitOnSelect
-            placeholder={
-              isDailyPlayerChallenge
-                ? "Search and select player..."
-                : "Type answer..."
-            }
-            buttonLabel="GUESS"
-            rowClassName="daily-input-row"
-            inputClassName="daily-list-input"
-            buttonClassName="daily-submit-button"
-            maxSuggestions={4}
-            autoFocus
-          />
-            </div>
-          </>
-        )}
-      </div>
+  if (gameStarted && gameMode === "general" && !isMockMultiplayer && !finished) {
+    return (
+      <React.Suspense fallback={<SinglePlayerFeatureFallback />}>
+        <GeneralKnowledgeGame
+          key={`${runId}:${generalResumeVersion}`}
+          questions={questions}
+          highScore={highScore}
+          coins={coins}
+          playerLevel={playerLevel}
+          xpProgressPercent={xpProgressPercent}
+          xpProgressLabel={xpProgressLabel}
+          xpToast={xpToast}
+          xpToastOverlay={xpToastOverlay}
+          objectiveProgressModal={objectiveProgressModal}
+          initialSnapshot={generalGameSnapshot}
+          runId={runId}
+          isAnswerCorrect={isCorrectAnswer}
+          onCorrectAnswer={awardGeneralRunXp}
+          onHighScore={handleGeneralHighScore}
+          onCoinsChange={saveCoins}
+          onFinish={finishGeneralGame}
+          onExit={exitGeneralGame}
+          playClickSound={playClickSound}
+          playCorrectSound={playCorrectSound}
+          playWrongSound={playWrongSound}
+          playCoinSound={playCoinSound}
+          coinShopModal={coinShopModal}
+          dailyRewardMeterModal={dailyRewardMeterModal}
+        />
+      </React.Suspense>
     );
   }
 
@@ -12068,7 +11818,7 @@ const startConnectionsGame = (difficulty = null) => {
               </div>
 
               <div className="daily-result-streak">
-                <BKIcon name="dailyStreak" size={24} /> Streak: {lastDailyResult?.streak || dailyStreak} days
+                <BKIcon name="dailyStreak" size={36} /> Streak: {lastDailyResult?.streak || dailyStreak} days
               </div>
 
               {(lastDailyResult?.streakBonus || streakRewardEarned) > 0 && (
@@ -12292,6 +12042,10 @@ const startConnectionsGame = (difficulty = null) => {
     );
   }
 
+  if (gameStarted && !current) {
+    return <SinglePlayerFeatureFallback />;
+  }
+
   return (
     <div
       className="fullscreen-bg"
@@ -12315,26 +12069,38 @@ const startConnectionsGame = (difficulty = null) => {
 
       <AnimatePresence>
         {rewardPopup && (
-          <motion.div
-            className="reward-overlay"
-            initial={{ opacity: 0, scale: 0.6, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: -30 }}
-            transition={{ duration: 0.35 }}
+          <Modal
+            title={`${rewardPopup.streak} streak`}
+            variant="reward"
+            showClose={false}
+            cardClassName="bk-reward-card"
+            onClose={() => {}}
           >
-            <div className="reward-title"><BKIcon name="dailyStreak" size={34} /> {rewardPopup.streak} STREAK</div>
-            <div className="reward-coins"><BKIcon name="coins" size={28} /> +{rewardPopup.coins} COINS</div>
+            <div className="bk-reward-summary">
+              <div>
+                <span>Streak</span>
+                <strong>
+                  <BKIcon name="dailyStreak" size={22} /> {rewardPopup.streak}
+                </strong>
+              </div>
+              <div>
+                <span>Coins</span>
+                <strong>
+                  <BKIcon name="coins" size={22} /> +{rewardPopup.coins}
+                </strong>
+              </div>
+            </div>
 
-            <button
-              className="collect-button"
+            <Button
               onClick={() => {
                 playClickSound();
                 collectReward();
               }}
+              fullWidth
             >
-              COLLECT
-            </button>
-          </motion.div>
+              Collect
+            </Button>
+          </Modal>
         )}
       </AnimatePresence>
 
@@ -12372,7 +12138,7 @@ const startConnectionsGame = (difficulty = null) => {
         </div>
       </div>
 
-      {!isMockMultiplayer && ["general", "world-cup", "career"].includes(gameMode) && (
+      {!isMockMultiplayer && ["world-cup", "career"].includes(gameMode) && (
         <div className="quiz-progress-card progressCard">
           <div className="quiz-progress-top">
             <strong>LEVEL {playerLevel.levelNumber} XP</strong>
@@ -12393,34 +12159,6 @@ const startConnectionsGame = (difficulty = null) => {
                 ? `Next: ${playerLevel.next.name}`
                 : "Max level"}
             </span>
-          </div>
-        </div>
-      )}
-
-      {gameMode === "general" && !isMockMultiplayer && (
-        <div className="combo-dock">
-          <div
-            className={`streak-meter ${streak > 0 ? "combo-active" : ""} ${
-              [5, 10, 20].includes(streak) ? "combo-milestone" : ""
-            }`}
-          >
-            <div className="streak-meter-top">
-              <div className="streak-left">
-                <span className="streak-fire"><BKIcon name="dailyStreak" size={24} /></span>
-                <span className="streak-title">COMBO x{streak}</span>
-              </div>
-
-              <div className="streak-right">
-                {streak >= 20 ? "MAX BONUS" : `Next: x${getNextStreakTarget(streak)}`}
-              </div>
-            </div>
-
-            <div className="streak-bar-outer">
-              <div
-                className="streak-bar-inner"
-                style={{ width: `${getStreakProgress(streak)}%` }}
-              />
-            </div>
           </div>
         </div>
       )}

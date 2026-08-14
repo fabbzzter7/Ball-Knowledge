@@ -1,8 +1,14 @@
+/* eslint-disable react-refresh/only-export-components */
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { Analytics } from "@vercel/analytics/react";
 import "./index.css";
+import "./components/ui/MatchdayTheme.css";
 import App from "./App.jsx";
+
+const DevDesignLab = import.meta.env.DEV
+  ? React.lazy(() => import("./designLab/DesignLab.jsx"))
+  : null;
 
 console.log("[boot] app start");
 
@@ -87,11 +93,20 @@ class ErrorBoundary extends React.Component {
 try {
   const rootElement = document.getElementById("root");
   const capacitorIos = isCapacitorIos();
+  const showDesignLab =
+    import.meta.env.DEV &&
+    new URLSearchParams(window.location.search).get("designLab") === "1";
   console.log("[boot] rendering React");
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <ErrorBoundary>
-        <App />
+        {showDesignLab && DevDesignLab ? (
+          <React.Suspense fallback={<div className="boot-error-screen">Loading Design Lab...</div>}>
+            <DevDesignLab />
+          </React.Suspense>
+        ) : (
+          <App />
+        )}
         {!capacitorIos && <Analytics />}
       </ErrorBoundary>
     </React.StrictMode>

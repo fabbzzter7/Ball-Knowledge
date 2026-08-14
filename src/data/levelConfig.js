@@ -41,7 +41,6 @@ export const LEVELS = [
     objectives: [
       { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 25 },
       { type: "xp", label: "XP earned", statKey: "xp_total", required: 4500 },
-      { type: "find_player", label: "Find the Player solved", statKey: "find_player_solved", required: 1 },
       { type: "daily", label: "Daily Challenges completed", statKey: "daily_challenges_completed", required: 3 },
     ],
   },
@@ -66,7 +65,6 @@ export const LEVELS = [
       { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 40 },
       { type: "xp", label: "XP earned", statKey: "xp_total", required: 12000 },
       { type: "daily", label: "Daily Challenges completed", statKey: "daily_challenges_completed", required: 7 },
-      { type: "find_player", label: "Find the Player solved", statKey: "find_player_solved", required: 5 },
     ],
   },
   {
@@ -113,7 +111,6 @@ export const LEVELS = [
     objectives: [
       { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 90 },
       { type: "xp", label: "XP earned", statKey: "xp_total", required: 75000 },
-      { type: "find_player", label: "Find the Player solved", statKey: "find_player_solved", required: 20 },
       { type: "h2h", label: "H2H wins", statKey: "h2h_wins", required: 10 },
     ],
   },
@@ -150,7 +147,6 @@ export const LEVELS = [
       { type: "general", label: "General Knowledge", statKey: "best_general_score", required: 130 },
       { type: "xp", label: "XP earned", statKey: "xp_total", required: 220000 },
       { type: "h2h", label: "H2H wins", statKey: "h2h_wins", required: 25 },
-      { type: "find_player", label: "Find the Player solved", statKey: "find_player_solved", required: 50 },
     ],
   },
 ];
