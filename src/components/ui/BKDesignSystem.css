@@ -105,7 +105,7 @@
 .bk-app-screen {
   --bk-app-screen-bg-image: none;
   position: relative;
-  display: flex;
+  display: block;
   min-height: 100svh;
   height: 100svh;
   width: 100%;
@@ -123,8 +123,14 @@
   min-height: 100svh;
   height: 100svh;
   overflow-y: auto;
+  touch-action: pan-y;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
+}
+
+.bk-scroll-page :where(button, [role="button"], .bk-surface-card--interactive) {
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .scrollable-game-screen {
@@ -150,7 +156,6 @@
   position: relative;
   z-index: var(--bk-z-base);
   display: flex;
-  flex: 0 0 auto;
   flex-direction: column;
   gap: var(--bk-space-24);
   width: min(var(--bk-screen-max-width, 520px), 100%);
@@ -563,7 +568,7 @@ button.bk-surface-card {
 }
 
 .bk-home-root > .screen-transition {
-  display: flex;
+  display: block;
   width: 100%;
   min-height: 100svh;
 }
@@ -1294,6 +1299,7 @@ button.bk-surface-card {
 .bk-profile-shell,
 .bk-leaderboard-shell,
 .bk-arena-shell,
+.bk-matchday-home-shell,
 .bk-sp-hub {
   min-height: 100%;
   height: auto;
@@ -1306,6 +1312,7 @@ button.bk-surface-card {
 .bk-profile-shell,
 .bk-leaderboard-shell,
 .bk-arena-shell,
+.bk-matchday-home-shell,
 .bk-sp-hub {
   padding-bottom: max(48px, env(safe-area-inset-bottom));
 }

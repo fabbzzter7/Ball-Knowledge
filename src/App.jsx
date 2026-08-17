@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   CheckCircle2,
-  Coins,
-  Flame,
   RotateCcw,
   Trophy,
   XCircle,
@@ -15,6 +13,7 @@ import GuessInput from "./components/GuessInput";
 import GameTopNav from "./components/GameTopNav";
 import BKIcon from "./components/BKIcon";
 import LevelIcon from "./components/LevelIcon";
+import { CoinEmblem, StreakEmblem } from "./components/RewardEmblems";
 import AppScreen from "./components/ui/AppScreen";
 import AuthNotice from "./components/ui/AuthNotice";
 import BackButton from "./components/ui/BackButton";
@@ -1744,13 +1743,6 @@ function DailyRewardSlot({ day, reached, currentDay }) {
   const prefersReducedMotion = useReducedMotion();
   const isMilestone = day.dayInRoad === 7;
   const stateLabel = reached ? "Claimed" : currentDay ? "Today" : "Upcoming";
-  const StateIcon = reached
-    ? CheckCircle2
-    : currentDay
-    ? Flame
-    : isMilestone
-    ? Trophy
-    : Coins;
 
   return (
     <motion.div
@@ -1763,14 +1755,22 @@ function DailyRewardSlot({ day, reached, currentDay }) {
       transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
     >
       <span className="bk-daily-streak-day__icon" aria-hidden="true">
-        <StateIcon size={currentDay ? 23 : 20} />
+        {reached ? (
+          <CheckCircle2 size={20} />
+        ) : currentDay ? (
+          <StreakEmblem size={23} />
+        ) : isMilestone ? (
+          <Trophy size={20} />
+        ) : (
+          <CoinEmblem size={20} />
+        )}
       </span>
       <span className="bk-daily-streak-day__copy">
         <strong>Day {day.day}</strong>
         <small>{stateLabel}</small>
       </span>
       <span className="bk-daily-streak-day__reward">
-        <Coins size={13} aria-hidden="true" />
+        <CoinEmblem size={13} />
         +{day.reward}
       </span>
     </motion.div>
@@ -3685,47 +3685,35 @@ const isHomeScreen =
     setLeaderboardOpen(false);
     setModeMenuOpen(false);
     setGameStarted(false);
-  };const openGuestSignup = () => {
-  playClickSound();
+  };
 
-  setAuthMode("signup");
-  setAuthEmail("");
-  setAuthPassword("");
-  setAuthUsername(
-    username && !username.startsWith("Guest-") ? username : ""
-  );
-  setAuthError("");
-  setAuthNotice("");
+  const openGuestSignup = () => {
+    playClickSound();
+    setAuthMode("signup");
+    setAuthEmail("");
+    setAuthPassword("");
+    setAuthUsername(
+      username && !username.startsWith("Guest-") ? username : ""
+    );
+    setAuthError("");
+    setAuthNotice("");
+    setAuthPrompt(
+      "Create an account to protect your progress. Your guest profile stays active until signup succeeds."
+    );
+  };
 
-  setGuestMode(false);
-  localStorage.removeItem("ballKnowledgeGuestMode");
-
-  setProfileOpen(false);
-  setLeaderboardOpen(false);
-  setMultiplayerOpen(false);
-  setModeMenuOpen(false);
-  setGameStarted(false);
-};
-
-const openGuestLogin = () => {
-  playClickSound();
-
-  setAuthMode("login");
-  setAuthEmail("");
-  setAuthPassword("");
-  setAuthUsername("");
-  setAuthError("");
-  setAuthNotice("");
-
-  setGuestMode(false);
-  localStorage.removeItem("ballKnowledgeGuestMode");
-
-  setProfileOpen(false);
-  setLeaderboardOpen(false);
-  setMultiplayerOpen(false);
-  setModeMenuOpen(false);
-  setGameStarted(false);
-};
+  const openGuestLogin = () => {
+    playClickSound();
+    setAuthMode("login");
+    setAuthEmail("");
+    setAuthPassword("");
+    setAuthUsername("");
+    setAuthError("");
+    setAuthNotice("");
+    setAuthPrompt(
+      "Log in to your saved account. Your current guest profile stays safe until login succeeds."
+    );
+  };
 
   const toggleSound = () => {
     const nextValue = !soundOn;
@@ -7537,7 +7525,7 @@ const startConnectionsGame = async (difficulty = null) => {
         >
             <div className="bk-coin-balance">
               <span>Current coins</span>
-              <strong><BKIcon name="coins" size={22} /> {coins}</strong>
+              <strong><CoinEmblem size={22} /> {coins}</strong>
             </div>
 
             <div className="bk-coin-shop-list">
@@ -7580,7 +7568,7 @@ const startConnectionsGame = async (difficulty = null) => {
           transition={{ duration: 0.22 }}
         >
           <div className="bk-reward-toast" role="status" aria-live="polite">
-            <span className="bk-reward-toast__icon"><BKIcon name="coins" size={24} /></span>
+            <span className="bk-reward-toast__icon"><CoinEmblem size={24} /></span>
             <div>
               <strong>+{coinRewardToast.amount} coins</strong>
               <small>{coinRewardToast.title}</small>
@@ -7715,7 +7703,7 @@ const startConnectionsGame = async (difficulty = null) => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
             >
-              <Flame size={36} />
+              <StreakEmblem size={36} />
             </motion.div>
 
             <div className="bk-daily-streak-hero__copy">
@@ -7730,7 +7718,7 @@ const startConnectionsGame = async (difficulty = null) => {
 
           <section className="bk-daily-streak-reward" aria-label="Today's reward">
             <span className="bk-daily-streak-reward__icon" aria-hidden="true">
-              <Coins size={24} />
+              <CoinEmblem size={24} />
             </span>
             <div>
               <span className="bk-type-label">Today's reward</span>
@@ -7766,15 +7754,15 @@ const startConnectionsGame = async (difficulty = null) => {
             <div>
               <span className="bk-type-label">Next reward</span>
               <strong>
-                Day {nextDailyReward.day} • +{nextDailyReward.reward} coins
+                Day {nextDailyReward.day} • <CoinEmblem size={16} /> +{nextDailyReward.reward}
               </strong>
             </div>
             <div>
               <span className="bk-type-label">Next milestone</span>
               <strong>
                 Day {nextMilestoneDay} • {daysToNextMilestone}{" "}
-                {daysToNextMilestone === 1 ? "day" : "days"} to go • +
-                {nextMilestoneReward}
+                {daysToNextMilestone === 1 ? "day" : "days"} to go •{" "}
+                <CoinEmblem size={16} /> +{nextMilestoneReward}
               </strong>
             </div>
           </div>
@@ -8003,7 +7991,7 @@ const startConnectionsGame = async (difficulty = null) => {
             <div className="bk-reward-summary">
               <div>
                 <span>Coins</span>
-                <strong><BKIcon name="coins" size={22} /> +{connectionsRewardModal.coins}</strong>
+                <strong><CoinEmblem size={22} /> +{connectionsRewardModal.coins}</strong>
               </div>
               <div>
                 <span>XP</span>
@@ -9102,7 +9090,7 @@ const startConnectionsGame = async (difficulty = null) => {
                 modeLabel="Day Complete"
                 metaValue={`${leagueResult.totalPoints}/${leagueSettings.maxDailyPoints}`}
               />
-              <div className="league-kicker"><BKIcon name="dailyStreak" size={22} /> Day Complete</div>
+              <div className="league-kicker"><Trophy size={22} aria-hidden="true" /> Day Complete</div>
               <h1>
                 {leagueResult.totalPoints}/{leagueSettings.maxDailyPoints} points
               </h1>
@@ -9590,7 +9578,7 @@ const startConnectionsGame = async (difficulty = null) => {
             >
               <div className="bk-progression-hero">
                 <div className="bk-progression-icon">
-                  <BKIcon name="dailyStreak" size={52} />
+                  <StreakEmblem size={52} />
                 </div>
 
                 <div className="bk-progression-copy">
@@ -9606,7 +9594,7 @@ const startConnectionsGame = async (difficulty = null) => {
                 <div>
                   <span>Coins</span>
                   <strong>
-                    <BKIcon name="coins" size={22} /> +{lastDailyResult.coins}
+                    <CoinEmblem size={22} /> +{lastDailyResult.coins}
                   </strong>
                 </div>
                 <div>
@@ -9617,7 +9605,7 @@ const startConnectionsGame = async (difficulty = null) => {
 
               {lastDailyResult.streakBonus > 0 && (
                 <AuthNotice tone="success">
-                  <BKIcon name="dailyStreak" size={20} /> Streak bonus +
+                  <StreakEmblem size={20} /> Streak bonus +
                   {lastDailyResult.streakBonus}
                 </AuthNotice>
               )}
@@ -9652,16 +9640,13 @@ const startConnectionsGame = async (difficulty = null) => {
                       }}
                     >
                       <div className="bk-streak-icon" aria-hidden="true">
-                        <BKIcon
-                          name={
-                            currentDay
-                              ? "dailyStreak"
-                              : reached
-                              ? "dailyChallenge"
-                              : "singlePlayer"
-                          }
-                          size={22}
-                        />
+                        {currentDay ? (
+                          <StreakEmblem size={22} />
+                        ) : reached ? (
+                          <CheckCircle2 size={22} />
+                        ) : (
+                          <CoinEmblem size={22} />
+                        )}
                       </div>
                       <strong>Day {day.day}</strong>
                       <small>{reached ? "Claimed" : "Upcoming"}</small>
@@ -9764,7 +9749,7 @@ const startConnectionsGame = async (difficulty = null) => {
           <h3>{levelUpPopup.newLevel.name}</h3>
           {levelUpPopup.coins ? (
             <AuthNotice tone="success">
-              <BKIcon name="coins" size={20} /> +{levelUpPopup.coins} coins
+              <CoinEmblem size={20} /> +{levelUpPopup.coins} coins
             </AuthNotice>
           ) : null}
         </div>
@@ -9808,24 +9793,27 @@ const startConnectionsGame = async (difficulty = null) => {
                 }
               />
 
-              <SurfaceCard className="bk-profile-identity">
-                <PlayerAvatar
-                  profile={{
-                    ...profile,
-                    avatar_emoji: profileAvatarEmoji,
-                    avatar_icon: profileAvatar.icon,
-                    avatar_style: profileAvatar.style,
-                    avatar_color: profileAvatar.color,
-                    avatar_bg: profileAvatar.bg,
-                  }}
-                  size="large"
-                  button
-                  onClick={openAvatarBuilder}
-                  label="Edit avatar"
-                />
+              <SurfaceCard className="bk-profile-identity bk-profile-hero-v3">
+                <div className="bk-profile-avatar-stage">
+                  <PlayerAvatar
+                    profile={{
+                      ...profile,
+                      avatar_emoji: profileAvatarEmoji,
+                      avatar_icon: profileAvatar.icon,
+                      avatar_style: profileAvatar.style,
+                      avatar_color: profileAvatar.color,
+                      avatar_bg: profileAvatar.bg,
+                    }}
+                    size="large"
+                    button
+                    onClick={openAvatarBuilder}
+                    label="Edit avatar"
+                  />
+                </div>
 
                 <div className="bk-profile-copy">
-                  <strong><span>{profileAvatar.flag}</span> {displayName}</strong>
+                  <span className="bk-profile-hero-kicker">Player card</span>
+                  <strong>{displayName}</strong>
                   <StatusBadge tone={profileStatus === "ready" ? "success" : "info"}>
                     {isGuest
                       ? "Guest profile"
@@ -9847,15 +9835,17 @@ const startConnectionsGame = async (difficulty = null) => {
               <SurfaceCard
                 as="button"
                 interactive
-                className="bk-profile-level"
+                className="bk-profile-level bk-profile-level-v3"
                 onClick={openLevelModal}
               >
                 <div className="bk-profile-level__top">
                   <div className="bk-row-copy">
-                    <small>Level {playerLevel.levelNumber}</small>
+                    <small>YOUR SEASON · LEVEL {playerLevel.levelNumber}</small>
                     <strong>{playerLevel.name}</strong>
                   </div>
-                  <LevelIcon levelId={playerLevel.id} size={42} />
+                  <div className="bk-profile-level-v3__badge">
+                    <LevelIcon levelId={playerLevel.id} size={46} />
+                  </div>
                 </div>
                 <ProgressBar
                   value={playerLevel.progress}
@@ -9863,16 +9853,17 @@ const startConnectionsGame = async (difficulty = null) => {
                   label="Progress"
                   valueLabel={playerLevel.next ? levelObjectiveSummary : "Legend status"}
                 />
+                <span className="bk-profile-level-v3__hint">Tap to view level journey</span>
               </SurfaceCard>
 
-              <div className="bk-stat-grid">
+              <div className="bk-stat-grid bk-profile-quick-stats">
                 <SurfaceCard
                   as="button"
                   interactive
                   onClick={openCoinShop}
-                  className="bk-stat-grid__item"
+                  className="bk-stat-grid__item bk-profile-stat-card bk-profile-stat-card--coins"
                 >
-                  <span><BKIcon name="coins" size={24} /></span>
+                  <span className="bk-profile-stat-card__icon"><CoinEmblem size={28} /></span>
                   <strong>{coins}</strong>
                   <small>Coins</small>
                 </SurfaceCard>
@@ -9881,19 +9872,25 @@ const startConnectionsGame = async (difficulty = null) => {
                   as="button"
                   interactive
                   onClick={openDailyRewardMeter}
-                  className="bk-stat-grid__item"
+                  className="bk-stat-grid__item bk-profile-stat-card bk-profile-stat-card--streak"
                 >
-                  <span><BKIcon name="dailyChallenge" size={65} /></span>
+                  <span className="bk-profile-stat-card__icon"><StreakEmblem size={42} /></span>
                   <strong>{dailyStreak}</strong>
                   <small>Daily streak</small>
                 </SurfaceCard>
               </div>
 
-              <SurfaceCard>
-                <p className="bk-section-title">Competitive record</p>
+              <SurfaceCard className="bk-profile-competitive-v3">
+                <div className="bk-profile-section-head">
+                  <div>
+                    <span className="bk-type-label">Career stats</span>
+                    <strong>Competitive record</strong>
+                  </div>
+                  <span className="bk-profile-round-count">{profileStats.multiplayerMatches} rounds</span>
+                </div>
                 <StatGrid
                   items={[
-                    { label: "Best score", value: highScore, icon: <BKIcon name="dailyStreak" size={22} /> },
+                    { label: "Best score", value: highScore, icon: <BKIcon name="rankings" size={22} /> },
                     { label: "Wins", value: profileStats.multiplayerWins, icon: <BKIcon name="h2h" size={22} /> },
                     { label: "Losses", value: profileStats.multiplayerLosses, icon: <BKIcon name="questionMark" size={22} /> },
                     { label: "Draws", value: profileStats.multiplayerDraws, icon: <BKIcon name="multiplayer" size={22} /> },
@@ -9901,9 +9898,6 @@ const startConnectionsGame = async (difficulty = null) => {
                     { label: "Level", value: playerLevel.levelNumber, icon: <LevelIcon levelId={playerLevel.id} size={22} /> },
                   ]}
                 />
-                <span className="bk-profile-record">
-                  Multiplayer rounds counted: {profileStats.multiplayerMatches}
-                </span>
               </SurfaceCard>
 
               {/* ACCOUNT */}
@@ -10731,23 +10725,36 @@ const startConnectionsGame = async (difficulty = null) => {
               )}
 
               {multiplayerStep === "create-league" && (
-                <SurfaceCard className="bk-form-grid bk-league-create-flow">
-                  <p className="bk-type-label">
-                    <BKIcon name="createLeague" size={22} /> Create League
-                  </p>
-                  <h2 className="bk-type-section-title">Start a Daily League</h2>
-                  <input
-                    value={leagueNameInput}
-                    onChange={(event) => setLeagueNameInput(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") createNewLeague();
-                    }}
-                    placeholder={`${username}'s League`}
-                    autoFocus
-                  />
+                <SurfaceCard className="bk-form-grid bk-league-create-flow bk-league-create-v3">
+                  <div className="bk-league-create-hero">
+                    <div className="bk-league-create-hero__icon">
+                      <BKIcon name="createLeague" size={38} />
+                    </div>
+                    <div className="bk-league-create-hero__copy">
+                      <p className="bk-type-label">Create League</p>
+                      <h2 className="bk-type-section-title">Build your competition.</h2>
+                      <span>Pick a format, set the pace and challenge your group every day.</span>
+                    </div>
+                  </div>
 
-                  <div className="bk-form-section">
-                    <strong className="bk-section-title">Format</strong>
+                  <label className="bk-league-name-field">
+                    <span>League name</span>
+                    <input
+                      value={leagueNameInput}
+                      onChange={(event) => setLeagueNameInput(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") createNewLeague();
+                      }}
+                      placeholder={`${username}'s League`}
+                      autoFocus
+                    />
+                  </label>
+
+                  <div className="bk-form-section bk-league-format-section">
+                    <div className="bk-league-section-heading">
+                      <strong>Choose format</strong>
+                      <span>Start with a preset or make it completely yours.</span>
+                    </div>
                     <div className="bk-category-grid bk-category-grid--league">
                       {Object.entries(LEAGUE_FORMATS).map(([format, config]) => (
                         <SurfaceCard
@@ -10756,10 +10763,10 @@ const startConnectionsGame = async (difficulty = null) => {
                           key={format}
                           type="button"
                           variant={leagueFormatInput === format ? "selected" : "default"}
-                          className="bk-category-card"
+                          className={`bk-category-card bk-league-format-card bk-league-format-card--${format}`}
                           onClick={() => setLeagueFormatInput(format)}
                         >
-                          <b><BKIcon name={config.icon} size={34} /></b>
+                          <b><BKIcon name={config.icon} size={36} /></b>
                           <span>{config.label}</span>
                           <small>{config.description}</small>
                         </SurfaceCard>
@@ -10771,16 +10778,20 @@ const startConnectionsGame = async (difficulty = null) => {
                     <Button
                       type="button"
                       variant="secondary"
+                      className="bk-league-customize-cta"
                       onClick={() => customizeLeaguePreset(leagueFormatInput)}
                     >
-                      Customize this
+                      Fine-tune this format
                     </Button>
                   )}
 
                   {leagueFormatInput === "custom" && (
                     <>
-                      <div className="bk-form-section">
-                        <strong className="bk-section-title">Length</strong>
+                      <div className="bk-form-section bk-league-length-section">
+                        <div className="bk-league-section-heading">
+                          <strong>League length</strong>
+                          <span>Keep it endless or set a finish line.</span>
+                        </div>
                         <div className="bk-category-grid bk-category-grid--compact">
                           {LEAGUE_DURATIONS.map((duration) => (
                             <SurfaceCard
@@ -10798,7 +10809,7 @@ const startConnectionsGame = async (difficulty = null) => {
                         </div>
                       </div>
 
-                      <SurfaceCard className="bk-setting-panel">
+                      <SurfaceCard className="bk-setting-panel bk-league-settings-v3">
                         <div className="bk-setting-row">
                           <span>Quick questions</span>
                           <div>
@@ -10857,8 +10868,8 @@ const startConnectionsGame = async (difficulty = null) => {
                     </>
                   )}
 
-                  <SurfaceCard variant="selected" className="bk-stack">
-                    <span>Your league</span>
+                  <SurfaceCard variant="selected" className="bk-stack bk-league-summary-v3">
+                    <span className="bk-league-summary-v3__eyebrow">Your league</span>
                     <strong>
                       {leagueSettings.quizCount} quiz · {leagueSettings.top10Count} Top 10 ·{" "}
                       {leagueSettings.whoamiCount} Who Am I
@@ -10871,6 +10882,7 @@ const startConnectionsGame = async (difficulty = null) => {
                   </SurfaceCard>
 
                   <Button
+                    className="bk-league-create-cta"
                     onClick={createNewLeague}
                     disabled={
                       leagueLoading ||
@@ -11301,7 +11313,7 @@ const startConnectionsGame = async (difficulty = null) => {
           onClick={openCoinShop}
           aria-label={`${coins} coins`}
         >
-          <Coins className="bk-matchday-status-icon" size={18} aria-hidden="true" />
+          <CoinEmblem className="bk-matchday-status-icon" size={18} />
           <strong>{coins.toLocaleString()}</strong>
         </button>
 
@@ -11311,7 +11323,7 @@ const startConnectionsGame = async (difficulty = null) => {
           onClick={openDailyRewardMeter}
           aria-label={`${dailyStreak} day streak`}
         >
-          <Flame className="bk-matchday-status-icon" size={18} aria-hidden="true" />
+          <StreakEmblem className="bk-matchday-status-icon" size={18} />
           <strong>{dailyStreak}</strong>
         </button>
       </div>
@@ -11395,7 +11407,7 @@ const startConnectionsGame = async (difficulty = null) => {
 
       <span className="bk-matchday-daily-icon">
         <BKIcon
-          name={dailyPlayed ? "dailyStreak" : "dailyChallenge"}
+          name="dailyChallenge"
           size={27}
         />
       </span>
@@ -11810,16 +11822,16 @@ const startConnectionsGame = async (difficulty = null) => {
               <div className="daily-result-subtitle">players found</div>
 
               <div className="daily-result-coins">
-                <BKIcon name="coins" size={24} /> +{lastDailyResult?.coins || dailyCoinsEarned} coins
+                <CoinEmblem size={24} /> +{lastDailyResult?.coins || dailyCoinsEarned} coins
               </div>
 
               <div className="daily-result-streak">
-                <BKIcon name="dailyStreak" size={36} /> Streak: {lastDailyResult?.streak || dailyStreak} days
+                <StreakEmblem size={36} /> Streak: {lastDailyResult?.streak || dailyStreak} days
               </div>
 
               {(lastDailyResult?.streakBonus || streakRewardEarned) > 0 && (
                 <div className="daily-result-streak-bonus">
-                  +{lastDailyResult?.streakBonus || streakRewardEarned} streak
+                  <StreakEmblem size={20} /> +{lastDailyResult?.streakBonus || streakRewardEarned} streak
                   bonus
                 </div>
               )}
@@ -11874,7 +11886,7 @@ const startConnectionsGame = async (difficulty = null) => {
             <>
               {!showingGeneralXp ? (
                 <>
-                  <p><BKIcon name="dailyStreak" size={22} /> Final Score: {score}</p>
+                  <p><BKIcon name="rankings" size={22} /> Final Score: {score}</p>
                   <p><BKIcon name="rankings" size={22} /> Best Score: {highScore}</p>
                   {score > runStartHighScore && (
                     <div className="general-run-highscore compact">
@@ -11982,7 +11994,7 @@ const startConnectionsGame = async (difficulty = null) => {
 
           {!showingGeneralXp && !isDaily && !isMockMultiplayer && reviveCost && coins >= reviveCost && (
             <button className="play-again-button" onClick={revive}>
-              <BKIcon name="lives" size={22} /> Buy extra life — {reviveCost} coins
+              <BKIcon name="lives" size={22} /> Buy extra life — <CoinEmblem size={18} /> {reviveCost}
             </button>
           )}
 
@@ -11996,7 +12008,7 @@ const startConnectionsGame = async (difficulty = null) => {
             reviveCost &&
             coins < reviveCost &&
             revivesUsed < 3 && (
-              <div className="revive-note">Need {reviveCost} coins for an extra life</div>
+              <div className="revive-note">Need <CoinEmblem size={16} /> {reviveCost} for an extra life</div>
             )}
 
           {isMockMultiplayer ? (
@@ -12076,13 +12088,13 @@ const startConnectionsGame = async (difficulty = null) => {
               <div>
                 <span>Streak</span>
                 <strong>
-                  <BKIcon name="dailyStreak" size={22} /> {rewardPopup.streak}
+                  <Trophy size={22} aria-hidden="true" /> {rewardPopup.streak}
                 </strong>
               </div>
               <div>
                 <span>Coins</span>
                 <strong>
-                  <BKIcon name="coins" size={22} /> +{rewardPopup.coins}
+                  <CoinEmblem size={22} /> +{rewardPopup.coins}
                 </strong>
               </div>
             </div>
@@ -12103,7 +12115,7 @@ const startConnectionsGame = async (difficulty = null) => {
       <div className="hud-row neon-stats-grid">
         <div className="hud-card statCard">
           <span className="hud-label">SCORE</span>
-          <span className="hud-value"><BKIcon name="dailyStreak" size={22} /> {score}</span>
+          <span className="hud-value"><BKIcon name="rankings" size={22} /> {score}</span>
         </div>
 
         <div className="hud-card statCard">
@@ -12113,7 +12125,7 @@ const startConnectionsGame = async (difficulty = null) => {
 
         <button className="hud-card hud-button statCard" type="button" onClick={openCoinShop}>
           <span className="hud-label">COINS</span>
-          <span className="hud-value"><BKIcon name="coins" size={22} /> {coins}</span>
+          <span className="hud-value"><CoinEmblem size={22} /> {coins}</span>
         </button>
 
         <div className="hud-card statCard">
@@ -12124,7 +12136,7 @@ const startConnectionsGame = async (difficulty = null) => {
             {gameMode === "general" && !isMockMultiplayer
               ? (
                   <>
-                    <BKIcon name="dailyStreak" size={20} /> x{streak}
+                    <Trophy size={20} aria-hidden="true" /> x{streak}
                   </>
                 )
               : Array.from({ length: lives }).map((_, i) => (

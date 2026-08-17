@@ -9,6 +9,7 @@ export default function AppScreen({
 }) {
   const classes = [
     "bk-app-screen",
+    scroll ? "bk-scroll-page" : "bk-static-page",
     scroll ? "bk-app-screen--scroll" : "",
     centered ? "bk-app-screen--center" : "",
     width === "wide" ? "bk-app-screen--wide" : "",

@@ -1,8 +1,9 @@
 import { Fragment } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, Trophy, XCircle } from "lucide-react";
 import BKIcon from "../../../components/BKIcon";
 import GuessInput from "../../../components/GuessInput";
+import { CoinEmblem } from "../../../components/RewardEmblems";
 import {
   GameplayHud,
   GameplayShell,
@@ -114,9 +115,9 @@ export default function ClassicQuizGame({
               exit={{ opacity: 0, y: 6, scale: 0.98 }}
               transition={{ duration: 0.22 }}
             >
-              <BKIcon name="dailyStreak" size={42} />
+              <Trophy size={42} aria-hidden="true" />
               <h2>{rewardPopup.streak} in a row</h2>
-              <p>+{rewardPopup.coins} coins earned</p>
+              <p><CoinEmblem size={18} /> +{rewardPopup.coins} coins earned</p>
               <button
                 className="gp-action-button"
                 type="button"

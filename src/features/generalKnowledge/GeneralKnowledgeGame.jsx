@@ -1,7 +1,8 @@
 import { useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Trophy } from "lucide-react";
 import GameTopNav from "../../components/GameTopNav";
-import BKIcon from "../../components/BKIcon";
+import { CoinEmblem } from "../../components/RewardEmblems";
 import quizBg from "../../assets/quiz-bg.png";
 import AnswerGrid from "./AnswerGrid";
 import QuestionCard from "./QuestionCard";
@@ -99,7 +100,7 @@ function MilestoneReward({ reward, onContinue }) {
         transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
       >
         <span className="gk-milestone-icon" aria-hidden="true">
-          <BKIcon name="dailyStreak" size={34} />
+          <Trophy size={34} />
         </span>
 
         <span className="gk-milestone-eyebrow">Milestone</span>
@@ -122,7 +123,7 @@ function MilestoneReward({ reward, onContinue }) {
             animate={{ scale: 1 }}
             transition={{ duration: 0.22, delay: 0.04, ease: [0.22, 1, 0.36, 1] }}
           >
-            <span aria-hidden="true"><BKIcon name="coins" size={22} /></span>
+            <span aria-hidden="true"><CoinEmblem size={22} /></span>
             <strong>+{reward.coins} Coins</strong>
           </motion.div>
         )}
